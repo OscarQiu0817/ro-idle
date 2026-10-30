@@ -120,43 +120,53 @@
 
     <!-- 頂部狀態列 -->
     <header class="hud-bar">
-      <div class="hud-left">
-        <div class="hud-name-row">
-          <span id="hud-name">—</span>
-          <span id="hud-job" class="hud-job-tag">—</span>
+      <div class="hud-who">
+        <span class="hud-name" id="hud-name">—</span>
+        <span class="hud-job" id="hud-job">—</span>
+        <div class="hud-zeny-line">
+          <span id="hud-gold">Zeny : 0</span>
+          <span id="hud-world-online" class="hud-world-online" hidden></span>
         </div>
-        <div class="hud-lv" id="hud-lv">—</div>
       </div>
-      <div class="hud-bars">
-        <div class="bar-track hp-track"><div id="hud-hp-bar" class="bar-fill hp-fill" style="width:100%"></div><span id="hud-hp-text" class="bar-text">HP</span></div>
-        <div id="hud-ail" class="hud-ail"></div>
-        <div class="bar-track sp-track"><div id="hud-sp-bar" class="bar-fill sp-fill" style="width:100%"></div><span id="hud-sp-text" class="bar-text">SP</span></div>
-        <div class="bar-track exp-track"><div id="hud-bexp-bar" class="bar-fill bexp-fill" style="width:0%"></div><span id="hud-bexp-text" class="bar-text">EXP</span></div>
-        <div class="bar-track exp-track small"><div id="hud-jexp-bar" class="bar-fill jexp-fill" style="width:0%"></div><span id="hud-jexp-text" class="bar-text">JOB</span></div>
-      </div>
-      <div class="hud-right">
-        <div id="hud-gold" class="hud-gold">0 鋅幣</div>
-        <button class="btn-save" onclick="manualSave()">💾 儲存</button>
-        <button class="btn-save" onclick="exportSlotSave(currentSlot)" title="匯出目前存檔成 JSON 檔">📤 匯出</button>
-        <button class="btn-save" onclick="backToTitle()" title="返回標題">🚪</button>
-        <button class="btn-save" onclick="openAboutModal()" title="關於本作／免責聲明">ⓘ</button>
-        <div class="volume-controls">
-          <label class="volume-label">🎵 <input type="range" id="vol-bgm" min="0" max="100" value="50" oninput="setBgmVolume(this.value)"><span id="vol-bgm-text">50%</span></label>
-          <label class="volume-label">🔊 <input type="range" id="vol-sfx" min="0" max="100" value="50" oninput="setSfxVolume(this.value)"><span id="vol-sfx-text">50%</span></label>
-          <label class="volume-label" title="玩家立繪的大小">🧍 <input type="range" id="sprite-scale" min="50" max="150" step="5" value="100" oninput="setSpriteScalePct(this.value)"><span id="sprite-scale-text">100%</span></label>
-          <label class="volume-label" title="施放技能時的立繪大小（相對於上面那支）。每個職業各記一份">✨ <input type="range" id="skill-scale" min="50" max="150" step="5" value="85" oninput="setSkillSpriteScalePct(this.value)"><span id="skill-scale-text">85%</span></label>
+      <div class="hud-vitals">
+        <div class="hud-vital">
+          <span class="hud-k">HP</span>
+          <div class="hud-track"><div class="hud-fill hp" id="hud-hp-bar"></div><span class="hud-num" id="hud-hp-text">0 / 0</span></div>
+          <span class="hud-pct" id="hud-hp-pct">100%</span>
         </div>
-        <!-- 掛機收益（#135）：按鈕在標頭的音量滑桿旁，面板是疊在戰鬥區的浮動視窗 -->
-        <button id="btn-idle-report" class="btn-idle-report" onclick="toggleIdleReport()" title="掛機收益：最近 3 筆離線／切分頁的結算">📈</button>
+        <div class="hud-vital">
+          <span class="hud-k">SP</span>
+          <div class="hud-track"><div class="hud-fill" id="hud-sp-bar"></div><span class="hud-num" id="hud-sp-text">0 / 0</span></div>
+          <span class="hud-pct" id="hud-sp-pct">100%</span>
+        </div>
+      </div>
+      <div class="hud-actions">
+        <button class="hud-act" onclick="openAttendanceModal()" title="每日簽到">簽到</button>
+        <button id="btn-ally" class="hud-act" onclick="toggleAllyPanel()" title="隊友：雇傭、喝水、復活">隊伍</button>
+        <button class="hud-act" onclick="backToTitle()" title="回到標題，換一個存檔角色">換角色</button>
         <button id="btn-jobchange-alert" class="btn-jobchange hidden" onclick="switchTab('jobtree')">🔔 可以轉職了！</button>
       </div>
+      <div class="hud-menu-slot">
+        <button id="btn-menu" class="hud-act btn-menu" onclick="toggleHudMenu(event)" title="音量、掛機收益、關於本作">☰</button>
+        <div id="hud-menu" class="hud-menu hidden" onclick="event.stopPropagation()">
+          <div class="volume-controls">
+            <label class="volume-label">🎵 <input type="range" id="vol-bgm" min="0" max="100" value="50" oninput="setBgmVolume(this.value)"><span id="vol-bgm-text">50%</span></label>
+            <label class="volume-label">🔊 <input type="range" id="vol-sfx" min="0" max="100" value="50" oninput="setSfxVolume(this.value)"><span id="vol-sfx-text">50%</span></label>
+            <label class="volume-label" title="玩家立繪的大小">🧍 <input type="range" id="sprite-scale" min="50" max="150" step="5" value="100" oninput="setSpriteScalePct(this.value)"><span id="sprite-scale-text">100%</span></label>
+            <label class="volume-label" title="施放技能時的立繪大小（相對於上面那支）。每個職業各記一份">✨ <input type="range" id="skill-scale" min="50" max="150" step="5" value="85" oninput="setSkillSpriteScalePct(this.value)"><span id="skill-scale-text">85%</span></label>
+          </div>
+          <button id="btn-mute" class="hud-menu-row" onclick="toggleMute()" title="靜音/取消靜音">🔊 靜音</button>
+          <button id="btn-idle-report" class="hud-menu-row" onclick="toggleIdleReport()" title="最近 3 筆離線／切分頁的結算">掛機收益</button>
+          <button class="hud-menu-row" onclick="openAboutModal();closeHudMenu()">關於本作</button>
+        </div>
+      </div>
+      <div id="hud-ail" class="hud-ail"></div>
     </header>
 
     <!-- 主體：戰鬥區 + 分頁面板 -->
     <div class="game-body">
       <section class="battle-panel">
         <div class="map-bg-layer"><img id="map-bg-img" alt="" onerror="this.onerror=null;this.src='images/_placeholder_map.png';"></div>
-        <button id="btn-mute" class="btn-mute" onclick="toggleMute()" title="靜音/取消靜音">🔊</button>
         <div id="idle-report-panel" class="idle-report-panel hidden">
           <div class="idle-report-head">
             <span>📈 掛機收益</span>
@@ -177,8 +187,6 @@
           <button class="gm-btn" onclick="gmUnlockHiddenCodex()" title="三大收集記錄灌滿（不發道具），解鎖圖鑑的「隱藏」分頁">🔓 隱藏圖鑑解鎖</button>
           <button class="gm-btn" onclick="gmBoxCodexBatch()" title="取得 100 件還沒開出過的神秘箱道具並記入隱藏圖鑑；連點續批，直到剩餘歸零（上限 500/次）">🎁 神秘箱批次 +100</button>
         </div>
-        <!-- 隊友：戰鬥地圖也開得起來（浮動視窗，不會擋住掛機） -->
-        <button id="btn-ally" class="btn-ally" onclick="toggleAllyPanel()" title="隊友：雇傭、喝水、復活">🤝 隊友</button>
         <!-- 浮動式隊友面板：疊在戰鬥區上，遊戲照跑 -->
         <div id="ally-panel" class="ally-panel hidden">
           <div class="ally-panel-head">
@@ -188,6 +196,7 @@
           <div id="ally-panel-body"></div>
         </div>
         <div class="battle-scene" id="battle-scene">
+          <div id="battle-buffs" class="battle-buffs"></div>
           <div class="player-area">
             <!-- 隊友站在玩家的上下方、往後靠（left 較小）；有沒有人由 renderAllySprites() 決定 -->
             <div class="ally-sprite" id="ally-sprite-0"></div>
@@ -199,28 +208,47 @@
           <div class="monster-area-right" id="monster-area"></div>
           <div id="damage-container" class="damage-container"></div>
         </div>
-        <!-- 畫面上的技能按鈕列已移除（#101）：技能一律在自動戰鬥分頁設定 -->
         <!-- 資訊欄三塊：一般戰鬥／技能（雙方）／隊友 -->
         <div class="combat-log">
-          <div class="log-pane"><div class="log-pane-head">戰鬥</div><div id="log-main" class="log-pane-body"></div></div>
-          <div class="log-pane"><div class="log-pane-head">技能</div><div id="log-skill" class="log-pane-body"></div></div>
-          <div class="log-pane"><div class="log-pane-head">隊友</div><div id="log-ally" class="log-pane-body"></div></div>
+          <div class="log-tabs">
+            <button type="button" class="log-tab active" data-lane="world" onclick="switchLogTab('world')">世界頻道</button>
+            <button type="button" class="log-tab" data-lane="main" onclick="switchLogTab('main')">戰鬥訊息</button>
+            <button type="button" class="log-tab" data-lane="skill" onclick="switchLogTab('skill')">技能訊息</button>
+            <button type="button" class="log-tab" data-lane="ally" onclick="switchLogTab('ally')">隊友訊息</button>
+          </div>
+          <div class="log-pane-stack">
+          <div class="log-pane active" data-lane="world">
+            <button type="button" id="log-paused-world" class="log-paused-bar hidden" onclick="resumeWorldChatLog()">⏸ 暫停更新 — 點此返回</button>
+            <div id="world-chat-root" class="world-chat-log"></div>
+          </div>
+          <div class="log-pane" data-lane="main"><button type="button" id="log-paused-main" class="log-paused-bar hidden" onclick="resumeLogLane('main')">⏸ 暫停更新 — 點此返回</button><div id="log-main" class="log-pane-body"></div></div>
+          <div class="log-pane" data-lane="skill"><button type="button" id="log-paused-skill" class="log-paused-bar hidden" onclick="resumeLogLane('skill')">⏸ 暫停更新 — 點此返回</button><div id="log-skill" class="log-pane-body"></div></div>
+          <div class="log-pane" data-lane="ally"><button type="button" id="log-paused-ally" class="log-paused-bar hidden" onclick="resumeLogLane('ally')">⏸ 暫停更新 — 點此返回</button><div id="log-ally" class="log-pane-body"></div></div>
+          </div>
         </div>
       </section>
 
       <section class="side-panel">
-        <nav class="tab-nav">
-          <button class="tab-btn active" data-tab="map" onclick="switchTab('map')">🗺️ 地圖</button>
-          <button class="tab-btn" data-tab="autobattle" onclick="switchTab('autobattle')">⚔️ 自動戰鬥</button>
-          <button class="tab-btn" data-tab="character" onclick="switchTab('character')">🧍 角色</button>
-          <button class="tab-btn" data-tab="skills" onclick="switchTab('skills')">📖 技能</button>
-          <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')">🎒 背包</button>
-          <button class="tab-btn" data-tab="equip" onclick="switchTab('equip')">🎽 裝備</button>
+        <nav class="tab-groups">
+          <button type="button" class="tab-group-btn active" data-group="fight" onclick="openTabGroup('fight')">打怪</button>
+          <button type="button" class="tab-group-btn" data-group="grow" onclick="openTabGroup('grow')">升級</button>
+          <button type="button" class="tab-group-btn" data-group="gear" onclick="openTabGroup('gear')">物品</button>
+          <button type="button" class="tab-group-btn" data-group="social" onclick="openTabGroup('social')">收集</button>
+        </nav>
+        <nav class="tab-nav group-fight">
+          <button class="tab-btn active" data-tab="map" data-group="fight" onclick="switchTab('map')">🗺️ 地圖</button>
+          <button class="tab-btn" data-tab="autobattle" data-group="fight" onclick="switchTab('autobattle')">⚔️ 自動戰鬥</button>
+          <button class="tab-btn" data-tab="quests" data-group="fight" onclick="switchTab('quests')">📜 討伐</button>
+          <button class="tab-btn" data-tab="character" data-group="grow" onclick="switchTab('character')">🧍 角色</button>
+          <button class="tab-btn" data-tab="skills" data-group="grow" onclick="switchTab('skills')">📖 技能</button>
+          <button class="tab-btn" data-tab="jobtree" data-group="grow" onclick="switchTab('jobtree')">🌳 轉職樹</button>
+          <button class="tab-btn" data-tab="inventory" data-group="gear" onclick="switchTab('inventory')">🎒 背包</button>
+          <button class="tab-btn" data-tab="equip" data-group="gear" onclick="switchTab('equip')">🎽 裝備</button>
           <!-- 鍛造不是分頁，是開一個不擋掛機的浮動視窗；只有鐵匠系看得到（#103） -->
-          <button class="tab-btn hidden" id="tab-btn-forge" onclick="openForge()">🔨 鍛造</button>
-          <button class="tab-btn" data-tab="jobtree" onclick="switchTab('jobtree')">🌳 轉職樹</button>
-          <button class="tab-btn" data-tab="codex" onclick="switchTab('codex')">📕 圖鑑</button>
-          <button class="tab-btn" data-tab="achievements" onclick="switchTab('achievements')">🏆 成就</button>
+          <button class="tab-btn" id="tab-btn-forge" data-group="gear" onclick="openForge()" disabled title="需先學會鍛造相關技能">🔨 鍛造</button>
+          <button class="tab-btn" data-tab="codex" data-group="social" onclick="switchTab('codex')">📕 圖鑑</button>
+          <button class="tab-btn" data-tab="achievements" data-group="social" onclick="switchTab('achievements')">🏆 成就</button>
+          <button class="tab-btn" data-tab="pets" data-group="social" onclick="switchTab('pets')">🐾 寵物</button>
         </nav>
         <div class="tab-content">
           <div id="tab-map" class="tab-panel active"></div>
@@ -232,14 +260,17 @@
           <div id="tab-jobtree" class="tab-panel"></div>
           <div id="tab-codex" class="tab-panel"></div>
           <div id="tab-achievements" class="tab-panel"></div>
+          <div id="tab-attendance" class="tab-panel"></div>
+          <div id="tab-quests" class="tab-panel"></div>
+          <div id="tab-pets" class="tab-panel"></div>
         </div>
-        <!-- 常駐頁尾：遊戲中一直看得到，內容由 renderDisclaimers() 填 -->
-        <div class="disclaimer-footer" id="game-disclaimer" onclick="openAboutModal()"
-             title="點開看完整聲明"></div>
       </section>
     </div>
   </div>
 </div>
+
+<!-- 裝備／商店共用的浮動說明。放在分頁外面，地圖頁滑過商店物品時才不會被藏起來。 -->
+<div id="ro-equip-tooltip" class="ro-equip-tooltip"></div>
 
 <!-- ===================== 首次開啟的一次性確認（#121）=====================
      只在沒勾過的瀏覽器出現一次；勾過就記在 localStorage。
@@ -258,6 +289,32 @@
 </div>
 
 <!-- ===================== 關於本作／免責聲明 ===================== -->
+<div id="attendance-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeAttendanceModal()">
+  <div class="modal-box modal-box-tall">
+    <h3 class="modal-title">每日簽到</h3>
+    <div id="attendance-modal-body"></div>
+    <button class="btn btn-primary modal-confirm" onclick="closeAttendanceModal()">關閉</button>
+  </div>
+</div>
+
+<div id="stat-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeStatInfo()">
+  <div class="modal-box">
+    <div class="stat-modal-head">
+      <h3 id="stat-modal-title" class="modal-title"></h3>
+      <button class="btn-small" onclick="closeStatInfo()">× 關閉</button>
+    </div>
+    <div id="stat-modal-body"></div>
+  </div>
+</div>
+
+<div id="hair-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeHairPick()">
+  <div class="modal-box">
+    <h3 id="hair-modal-title" class="modal-title">選擇</h3>
+    <div id="hair-modal-body"></div>
+    <button class="btn btn-primary modal-confirm" onclick="closeHairPick()">取消</button>
+  </div>
+</div>
+
 <div id="about-modal" class="modal-overlay hidden">
   <div class="modal-box modal-box-tall">
     <h3 class="modal-title">ⓘ 關於本作</h3>
@@ -267,6 +324,14 @@
 </div>
 
 <!-- ===================== 離線掛機結算彈窗 ===================== -->
+<div id="tab-lock-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 class="modal-title">此分頁已暫停</h3>
+    <p>遊戲正在另一個分頁進行。這個分頁不再打怪，也不會存檔。</p>
+    <button class="btn btn-primary modal-confirm" onclick="location.reload()">改在這個分頁繼續</button>
+  </div>
+</div>
+
 <div id="offline-modal" class="modal-overlay hidden">
   <div class="modal-box">
     <h3 class="modal-title">🌙 冒險回顧</h3>
@@ -291,10 +356,24 @@
 <script src="js/relics.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/mob_anim_index.js"></script>
+<script src="js/paperdoll_layers.js"></script>
 <script src="js/ui.js"></script>
 <script>
   window.addEventListener('load', initApp);
   window.addEventListener('beforeunload', () => { if (typeof state !== 'undefined' && state) saveGame(); });
+</script>
+<script>
+  if (location.protocol === 'file:') {
+    document.addEventListener('DOMContentLoaded', () => {
+      const r = document.getElementById('world-chat-root');
+      if (r) r.innerHTML = '<div class="log-line world-chat-offline">世界聊天室僅在線上版提供</div>';
+    });
+  }
+</script>
+<script type="module">
+  import { initWorldChatLog } from './chat/game-world-chat.js';
+  initWorldChatLog();
 </script>
 </body>
 </html>

@@ -141,20 +141,29 @@ ro_items_data/
 ro_monster_data/
 ro_npcshop_data/
 ro_skills_data/
-# tools/ 大多是一次性的資料搬遷腳本（add_* / backfill_* / fix_* 那 190 多支），
-# 跑完就沒用了，而且都依賴不在版控裡的原始資料檔——留著只會誤導 fork 的人。
-# 只把「別人真的用得到」的三樣加回版控：測試治具、測試套件、打包腳本。
+# 開發用腳本與測試（本機保留，不進版控）。repo 上 tools/ 只留 README。
 tools/*
-!tools/harness.js
-!tools/test.js
-!tools/test_*.js
-!tools/pack_release.js
 !tools/README.md
-# 經驗曲線的量測與校準（data.js 的註解會指到這幾支，不進版控的話就是斷掉的指路）
-!tools/exp_simlib.js
-!tools/measure_exp_curve.js
-!tools/measure_exp_100_200.js
-!tools/tune_exp_100_200.js
+Test_Mock/
+ro_skill_data/
+ro_combo_data/
+ro_job_data.json
+ro_map_data.json
+ro_refine_data.json
+item_db_etc.yml
+item_db_usable.yml
+mob_db_re.yml
+package.json
+package-lock.json
+.claude/
+.cursor/
+derr.txt
+temp_pairs.txt
+temp_t3_empty.txt
+basic_equipwin_bg.bmp
+images/player_anim/
+爆擊特效/
+技能特效/
 暴擊特效/
 職業攻擊圖/
 
@@ -167,3 +176,6 @@ frames_png/
 
 # 打包產物
 dist/
+
+# 從 GRF 抽出的客戶端圖與對照表，只供紙娃娃試驗，不進版控
+grf_ex/

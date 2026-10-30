@@ -13,7 +13,7 @@
 
 This is a build-free Ragnarok Online-inspired idle game. `index.html` is the entry point and defines the ordered loading of browser scripts. Keep that order intact: the files in `js/` share globals rather than ES modules. Core simulation and persistence live in `js/engine.js`; UI rendering and DOM events live in `js/ui.js`; game data is divided among `data.js`, `skills.js`, `jobs.js`, `monster_skills.js`, and supporting tables.
 
-Use `css/style.css` for layout and component styling, and `css/ro-theme.css` for theme tokens. Runtime assets belong in `images/`, `music/`, and `WAV/`; preserve ID-based filenames such as `images/items/501.png`. Source datasets and conversion inputs live in the `ro_*_data/` directories and root YAML/JSON files. Keep implementation notes and plans in `docs/`; reserve `tools/` for Node/Python data-maintenance scripts and test suites.
+Use `css/style.css` for layout and component styling, and `css/ro-theme.css` for theme tokens. Runtime assets belong in `images/`, `music/`, and `WAV/`; preserve ID-based filenames such as `images/items/501.png`. Source datasets and conversion inputs live in the `ro_*_data/` directories and root YAML/JSON files. Keep implementation notes and plans in `docs/`; `tools/` holds local-only Node scripts (tests, pack, exp tuning)—gitignored except `tools/README.md`.
 
 ## Build, Test, and Development Commands
 

@@ -505,7 +505,7 @@ const ITEMS = {
   "slayer_": {"id":"slayer_","imgId":1152,"name":"雙手劍 [3]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":2,"atk":90,"weaponWeight":-130,"weight":130,"sell":180,"buyPrice":360,"desc":"用於制伏敵人時，有不錯效果的雙手劍。 系列: 雙手劍 攻擊: 90 重量: 130 武器等級: 2 要求等級: 18 裝備: 劍士系列專用","slots":3,"weaponCat":"tsword","reqLevel":18,"reqJob":["swordsman"]},
   "bastard_sword_": {"id":"bastard_sword_","imgId":1155,"name":"亞爾特劍 [3]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":2,"atk":115,"weaponWeight":-160,"weight":160,"sell":230,"buyPrice":460,"desc":"不論什麼砍殺或是刺殺時都很好使用的雙手劍。 系列: 雙手劍 攻擊: 115 重量: 160 武器等級: 2 要求等級: 18 裝備: 劍士系列專用","slots":3,"weaponCat":"tsword","reqLevel":18,"reqJob":["swordsman"]},
   "two_hand_sword_": {"id":"two_hand_sword_","imgId":1158,"name":"雙手巨劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":160,"weaponWeight":-220,"weight":220,"sell":320,"buyPrice":640,"desc":"以重量和揮舞速度來制伏敵人的雙手巨劍。 系列: 雙手劍 攻擊: 160 重量: 220 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":2,"weaponCat":"tsword","reqLevel":33,"reqJob":["swordsman"]},
-  "broad_sword_": {"id":"broad_sword_","imgId":1162,"name":"雙手重劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":140,"weaponWeight":-200,"weight":200,"sell":280,"buyPrice":560,"desc":"厚實的刀刃，既可攻擊又可防禦，多用途的雙手巨劍。 DEF+5 系列: 雙手劍 攻擊: 140 重量: 200 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":2,"weaponCat":"tsword","reqLevel":33,"reqJob":["swordsman"]},
+  "broad_sword_": {"id":"broad_sword_","imgId":1162,"name":"雙手重劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":140,"weaponWeight":-200,"weight":200,"sell":280,"buyPrice":560,"desc":"厚實的刀刃，既可攻擊又可防禦，多用途的雙手巨劍。 DEF+5 系列: 雙手劍 攻擊: 140 重量: 200 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":2,"weaponCat":"tsword","reqLevel":33,"reqJob":["swordsman"],"bonus":{"def":5}},
   "zweihander_": {"id":"zweihander_","imgId":1171,"name":"巨大雙手劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":200,"weaponWeight":-220,"weight":220,"sell":400,"buyPrice":800,"desc":"有著對阻擋的東西都可以破壞般的刃是超大型的雙手劍 不可破壞。 系列: 雙手劍 攻擊: 200 重量: 220 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":2,"weaponCat":"tsword","reqLevel":48,"reqJob":["swordsman"]},
   "claymore_": {"id":"claymore_","imgId":1172,"name":"十字巨劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":180,"weaponWeight":-250,"weight":250,"sell":360,"buyPrice":720,"desc":"把手以十字架模樣做成的簡潔型態的大型雙手劍 系列: 雙手劍 攻擊: 180 重量: 250 武器等級: 3 要求等級: 33 裝備: 騎士/十字軍專用","slots":2,"weaponCat":"tsword","reqLevel":33,"reqJob":["knight","swordsman"]},
   "knife_": {"id":"knife_","imgId":1202,"name":"短劍 [4]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":1,"atk":17,"weaponWeight":-40,"weight":40,"sell":34,"buyPrice":68,"desc":"為了方便任何人使用所製作出來的短劍。 系列: 短劍 攻擊: 17 重量: 40 武器等級: 1 要求等級: 無 裝備: 初學者/劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":4,"weaponCat":"dagger","reqJob":["novice","swordsman","merchant","thief","mage","archer"]},
@@ -528,12 +528,12 @@ const ITEMS = {
   "katar_of_raging_blaze": {"id":"katar_of_raging_blaze","imgId":1258,"name":"火靈拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":3,"atk":105,"weaponWeight":-120,"weight":120,"sell":210,"buyPrice":420,"desc":"以火晶所做成的火屬性拳刃，有一定的機率，使敵人陷入沉默的狀態 系列: 拳刃 攻擊: 105 重量: 120 屬性: 火 武器等級: 3 要求等級: 55 裝載: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":55,"element":"fire","ailment":[{"on":"attack","type":"silence","chance":5}]},
   "katar_of_piercing_wind": {"id":"katar_of_piercing_wind","imgId":1259,"name":"風靈拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":3,"atk":105,"weaponWeight":-120,"weight":120,"sell":210,"buyPrice":420,"desc":"以風晶所做成的風屬性拳刃，有一定的機率，使敵人陷入睡眠狀態 系列: 拳刃 攻擊: 105 重量: 120 屬性: 風 武器等級: 3 要求等級: 55 裝載: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":55,"element":"wind","ailment":[{"on":"attack","type":"sleep","chance":5}]},
   "ghoul_leg": {"id":"ghoul_leg","imgId":1260,"name":"骸靈拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":3,"atk":150,"weaponWeight":-170,"weight":170,"sell":300,"buyPrice":600,"desc":"以邪骸之王的骨頭做成的不死屬性拳刃，圍繞著死亡的氣息 系列: 拳刃 攻擊: 150 重量: 170 屬性: 不死 武器等級: 3 要求等級: 65 裝載: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":65,"element":"undead"},
-  "infiltrator": {"id":"infiltrator","imgId":1261,"name":"刺殺拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":140,"weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"desc":"專門尋找敵人的弱點的拳刃，為了暗殺所做出來的武器 增加對人型魔物50%傷害 DEF+3 完全迴避+2 FLEE+5 系列: 拳刃 攻擊: 140 重量: 150 屬性: 無 武器等級: 4 要求等級: 75 裝載: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":75,"element":"none","flee":5,"reqJob":["assassin"],"perfectDodge":2},
-  "nail_of_loki": {"id":"nail_of_loki","imgId":1262,"name":"洛奇的指甲","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":3,"atk":115,"weaponWeight":-120,"weight":120,"sell":230,"buyPrice":460,"desc":"被製作成兩段式的刀刃拳刃，割傷的話將造成不能縫合的傷口，慢慢地把敵人帶入死亡。 當攻擊時，有較低的機率讓敵人得到出血。 系列: 拳刃 攻擊: 115 重量: 120 屬性: 無 武器等級: 3 要求等級: 55 裝備: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":55,"reqJob":["assassin"],"element":"none"},
-  "unholy_touch": {"id":"unholy_touch","imgId":1263,"name":"邪惡拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":151,"weaponWeight":-125,"weight":125,"sell":302,"buyPrice":604,"desc":"據說是理奇把死者的怨恨聚集起來，所製作的拳刃。 攻擊時，有較低的機率讓敵人得到詛咒。 CRI-1 不可破壞。 系列: 拳刃 攻擊: 151 重量: 125 屬性: 暗 武器等級: 4 要求等級: 70 裝備: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":70,"reqJob":["assassin"],"element":"shadow"},
-  "various_jur": {"id":"various_jur","imgId":1264,"name":"多變拳刃 [4]","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":1,"atk":90,"weaponWeight":-80,"weight":80,"sell":180,"buyPrice":360,"desc":"把插槽數大量增加的拳刃，因為使用起來很費力氣有時會傷到自身，以較低的機率自身會得到出血 系列: 拳刃 攻擊: 90 重量: 80 武器等級: 1 裝備: 刺客專用","slots":4,"weaponCat":"katar","reqJob":["assassin"]},
+  "infiltrator": {"id":"infiltrator","imgId":1261,"name":"刺殺拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":140,"weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"desc":"專門尋找敵人的弱點的拳刃，為了暗殺所做出來的武器 增加對人型魔物50%傷害 DEF+3 完全迴避+2 FLEE+5 系列: 拳刃 攻擊: 140 重量: 150 屬性: 無 武器等級: 4 要求等級: 75 裝載: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":75,"element":"none","flee":5,"reqJob":["assassin"],"perfectDodge":2,"bonus":{"raceDmg_humanoid":50,"def":3}},
+  "nail_of_loki": {"id":"nail_of_loki","imgId":1262,"name":"洛奇的指甲","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":3,"atk":115,"weaponWeight":-120,"weight":120,"sell":230,"buyPrice":460,"desc":"被製作成兩段式的刀刃拳刃，割傷的話將造成不能縫合的傷口，慢慢地把敵人帶入死亡。 當攻擊時，有較低的機率讓敵人得到出血。 系列: 拳刃 攻擊: 115 重量: 120 屬性: 無 武器等級: 3 要求等級: 55 裝備: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":55,"reqJob":["assassin"],"element":"none","ailment":[{"on":"attack","type":"bleed","chance":3}]},
+  "unholy_touch": {"id":"unholy_touch","imgId":1263,"name":"邪惡拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":151,"weaponWeight":-125,"weight":125,"sell":302,"buyPrice":604,"desc":"據說是理奇把死者的怨恨聚集起來，所製作的拳刃。 攻擊時，有較低的機率讓敵人得到詛咒。 CRI-1 不可破壞。 系列: 拳刃 攻擊: 151 重量: 125 屬性: 暗 武器等級: 4 要求等級: 70 裝備: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":70,"reqJob":["assassin"],"element":"shadow","critRate":-1,"ailment":[{"on":"attack","type":"curse","chance":3}]},
+  "various_jur": {"id":"various_jur","imgId":1264,"name":"多變拳刃 [4]","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":1,"atk":90,"weaponWeight":-80,"weight":80,"sell":180,"buyPrice":360,"desc":"把插槽數大量增加的拳刃，因為使用起來很費力氣有時會傷到自身，以較低的機率自身會得到出血 系列: 拳刃 攻擊: 90 重量: 80 武器等級: 1 裝備: 刺客專用","slots":4,"weaponCat":"katar","reqJob":["assassin"],"ailment":[{"on":"attack","type":"bleed","chance":3,"target":"self"}]},
   "bloody_roar": {"id":"bloody_roar","imgId":1265,"name":"血拳刃","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":120,"weaponWeight":-100,"weight":100,"sell":240,"buyPrice":480,"desc":"被血沾溼的話武器會自身哭喊故取名為血拳刃，對人型系敵人有較高的能力 對人型系敵人無視防禦力，FLEE急速下降，HP和SP不會自動恢復。 系列: 拳刃 攻擊: 120 重量: 100 武器等級: 4 要求等級: 75 裝備: 刺客專用","slots":0,"weaponCat":"katar","reqLevel":75,"reqJob":["assassin"],"bonus":{"defIgnoreRace_humanoid":100,"flee":-50,"hpRegenPct":-100,"spRegenPct":-100}},
-  "infiltrator_": {"id":"infiltrator_","imgId":1266,"name":"刺殺拳刃 [1]","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":140,"weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"desc":"有著人類的型態，為了攻擊敵人的要害輕易製作出來的拳刃，為了暗殺所製作出來的武器 對於人型系敵人對 50%的增加傷害 DEF+3 FLEE+5 完全迴避+2 系列: 拳刃 攻擊: 140 重量: 150 屬性: 無 武器等級: 4 要求等級: 75 裝備: 刺客專用","slots":1,"weaponCat":"katar","reqLevel":75,"element":"none","flee":5,"reqJob":["assassin"],"perfectDodge":2,"bonus":{"raceDmg_humanoid":50}},
+  "infiltrator_": {"id":"infiltrator_","imgId":1266,"name":"刺殺拳刃 [1]","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":140,"weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"desc":"有著人類的型態，為了攻擊敵人的要害輕易製作出來的拳刃，為了暗殺所製作出來的武器 對於人型系敵人對 50%的增加傷害 DEF+3 FLEE+5 完全迴避+2 系列: 拳刃 攻擊: 140 重量: 150 屬性: 無 武器等級: 4 要求等級: 75 裝備: 刺客專用","slots":1,"weaponCat":"katar","reqLevel":75,"element":"none","flee":5,"reqJob":["assassin"],"perfectDodge":2,"bonus":{"raceDmg_humanoid":50,"def":3}},
   "wild_beast_claw": {"id":"wild_beast_claw","imgId":1268,"name":"巨魔指甲 [1]","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":160,"weaponWeight":-145,"weight":145,"sell":320,"buyPrice":640,"desc":"利用巨大野獸的腳趾所製成的拳刃。受到攻擊的敵人會得到致命傷會喪失掉恢復能力， 有一定的機率啟動武器能力時，對對方致命的傷害，治癒術、光耀之堂、藥水投擲的恢復量減少20% 吃下部分恢復物品恢復量也是減少20%， 當精煉 9以上時，所減少的恢復量增加為40% 系列: 拳刃 攻擊: 160 重量: 145 武器等級: 4 要求等級: 55 裝備: 十字刺客專用","slots":1,"weaponCat":"katar","reqLevel":55,"reqJob":["assassin"]},
   "inverse_scale": {"id":"inverse_scale","imgId":1269,"name":"龍之咆哮","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":140,"weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"desc":"用龍的逆鱗所製成的拳刃。看它投入戰鬥的模樣可讓對方感覺到相當的威脅感。 當攻擊時，有一定的機率以自身為中心的5*5空格範圍內，對所有的敵人賦予特定狀態異常效果 聖屬性 系列: 拳刃 攻擊: 140 重量: 150 武器等級: 4 要求等級: 55 裝備: 十字刺客專用","slots":0,"weaponCat":"katar","reqLevel":55,"reqJob":["assassin"],"ailment":[{"on":"attack","type":"stun","chance":5}]},
   "drill_katar": {"id":"drill_katar","imgId":1270,"name":"鑽孔拳刃 [1]","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":4,"atk":110,"weaponWeight":-140,"weight":140,"sell":220,"buyPrice":440,"desc":"不是刀刃而是以旋轉的鑽孔機所裝備的拳刃。被旋轉的鑽孔機觸碰時不管什麼樣的防禦具都是沒有用的。 有一定的機率讓對方強制解除武裝 HIT+30 系列: 拳刃 攻擊: 110 重量: 140 武器等級: 4 要求等級: 55 裝備: 十字刺客專用","slots":1,"weaponCat":"katar","reqLevel":55,"reqJob":["assassin"],"hit":30},
@@ -580,7 +580,7 @@ const ITEMS = {
   "book_of_mother_earth": {"id":"book_of_mother_earth","imgId":1554,"name":"地靈之書","type":"weapon","icon":"📖","weight":75,"sell":1,"desc":"燃燒太陽的熱氣之書。 系列: 書 攻擊力: 90 重量: 75 屬性: 地 武器等級: 3 要求等級: 27 裝備: 牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":90,"weaponLv":3,"reqLevel":27,"element":"earth","slots":0,"reqJob":["mage","priest","acolyte"]},
   "book_of_blazing_sun": {"id":"book_of_blazing_sun","imgId":1555,"name":"火靈之書","type":"weapon","icon":"📖","weight":75,"sell":1,"desc":"燃燒的太陽之書。 系列: 書 攻擊力: 90 重量: 75 屬性: 火 武器等級: 3 要求等級: 27 裝備: 牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":90,"weaponLv":3,"reqLevel":27,"element":"fire","slots":0,"reqJob":["mage","priest","acolyte"]},
   "book_of_gust_of_wind": {"id":"book_of_gust_of_wind","imgId":1556,"name":"風靈之書","type":"weapon","icon":"📖","weight":75,"sell":1,"desc":"貧瘠的風之書。 系列: 書 攻擊力: 90 重量: 75 屬性: 風 武器等級: 3 要求等級: 27 裝備: 牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":90,"weaponLv":3,"reqLevel":27,"element":"wind","slots":0,"reqJob":["mage","priest","acolyte"]},
-  "book_of_the_apocalypse": {"id":"book_of_the_apocalypse","imgId":1557,"name":"預言錄","type":"weapon","icon":"📖","weight":80,"sell":1,"desc":"預言世界末日的書籍。 暗屬性 對地 水 火 風屬性魔物增加7%的傷害。 對聖屬性魔物會額外獲得5%的額外傷害 系列: 書 攻擊力: 120 重量: 80 屬性: 暗 武器等級: 4 要求等級: 40 裝備: 牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":120,"weaponLv":4,"element":"shadow","slots":0,"reqJob":["mage","priest","acolyte"],"reqLevel":40},
+  "book_of_the_apocalypse": {"id":"book_of_the_apocalypse","imgId":1557,"name":"預言錄","type":"weapon","icon":"📖","weight":80,"sell":1,"desc":"預言世界末日的書籍。 暗屬性 對地 水 火 風屬性魔物增加7%的傷害。 對聖屬性魔物會額外獲得5%的額外傷害 系列: 書 攻擊力: 120 重量: 80 屬性: 暗 武器等級: 4 要求等級: 40 裝備: 牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":120,"weaponLv":4,"element":"shadow","slots":0,"reqJob":["mage","priest","acolyte"],"reqLevel":40,"bonus":{"eleDmg_earth":7,"eleDmg_water":7,"eleDmg_fire":7,"eleDmg_wind":7,"eleDmg_holy":5}},
   "hardback": {"id":"hardback","imgId":1561,"name":"精裝之書 [1]","type":"weapon","icon":"📖","weaponType":"book","weaponLv":4,"atk":140,"weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"desc":"非常厚看起來蠻有重量的書，被書角打到的話應該會很痛的。 STR+3，DEX+2 系列: 書 攻擊: 140 重量: 150 武器等級: 4 要求等級: 55 裝備: 牧師/賢者/拳聖可以裝備","slots":1,"weaponCat":"book","reqLevel":55,"reqJob":["mage","priest","acolyte"],"str":3,"dex":2},
   "encyclopedia": {"id":"encyclopedia","imgId":1564,"name":"大百科全書 [2]","type":"weapon","icon":"📖","weaponType":"book","weaponLv":3,"atk":110,"weaponWeight":-200,"weight":200,"sell":220,"buyPrice":440,"desc":"因書邊很硬而有名的普隆德拉某出版社的大百科全書。被這個書邊捅到的人 誤以為是被3克拉鑽石捅到的感覺是非常堅硬的。 MATK+100，INT+3，DEX+2，CRI+20 純以LUK數值的不同 CRI額外的增加 系列: 書 攻擊: 110 重量: 200 武器等級: 3 要求等級: 70 裝備: 牧師/賢者/拳聖專用","slots":2,"weaponCat":"book","reqLevel":70,"reqJob":["mage","priest","acolyte"],"int":3,"dex":2,"critRate":20,"matk":100},
   "book_of_billows_": {"id":"book_of_billows_","imgId":1568,"name":"水靈之書 [3]","type":"weapon","icon":"📖","weight":75,"sell":1,"desc":"夾帶波浪的海之書。 系列: 書 攻擊力:90 重量: 75 屬性:水 武器等級: 3 要求等級: 27 裝備:牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":90,"weaponLv":3,"reqLevel":27,"element":"water","slots":3,"reqJob":["mage","priest","acolyte"]},
@@ -588,7 +588,7 @@ const ITEMS = {
   "book_of_blazing_sun_": {"id":"book_of_blazing_sun_","imgId":1570,"name":"火靈之書 [3]","type":"weapon","icon":"📖","weight":75,"sell":1,"desc":"燃燒的太陽之書。 系列: 書 攻擊力: 90 重量: 75 屬性: 火 武器等級: 3 要求等級: 27 裝備: 牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":90,"weaponLv":3,"reqLevel":27,"element":"fire","slots":3,"reqJob":["mage","priest","acolyte"]},
   "book_of_gust_of_wind_": {"id":"book_of_gust_of_wind_","imgId":1571,"name":"風靈之書 [3]","type":"weapon","icon":"📖","weight":75,"sell":1,"desc":"貧瘠的風之書。 系列: 書 攻擊力: 90 重量: 75 屬性: 風 武器等級: 3 要求等級: 27 裝備: 牧師/賢者/拳聖可以裝備","weaponType":"book","weaponCat":"book","atk":90,"weaponLv":3,"reqLevel":27,"element":"wind","slots":3,"reqJob":["mage","priest","acolyte"]},
   "principles_of_magic": {"id":"principles_of_magic","imgId":1572,"name":"魔法策略 [2]","type":"weapon","icon":"📖","weaponType":"book","weaponLv":3,"atk":60,"weaponWeight":-30,"weight":30,"sell":120,"buyPrice":240,"desc":"針對基礎不穩的學生們，加強了想成為魔法師所需的魔學方面的知識。-作者 : 賢者修恩 MATK+160，INT+3，SP恢復速度提升5% 系列: 書 攻擊: 60 重量: 30 屬性: 無 武器等級: 3 要求等級: 60 裝備: 牧師，賢者，拳聖","slots":2,"weaponCat":"book","reqLevel":60,"reqJob":["mage","priest","acolyte"],"element":"none","int":3,"matk":160},
-  "ancient_magic": {"id":"ancient_magic","imgId":1573,"name":"遠古魔法 [2]","type":"weapon","icon":"📖","weaponType":"book","weaponLv":3,"atk":30,"weaponWeight":-70,"weight":70,"sell":60,"buyPrice":120,"desc":"學問沒有王道'令人印象深刻的標題，\"只要持續、正確、迅速地反覆練習施法的話，就能自然而然地提升實力了\" MATK+140，與魔法外套一起裝備時，MDEF+8，MSP+10%，INT+4 系列: 書 攻擊: 30 重量: 70 屬性: 無 武器等級: 3 要求等級: 70 裝備: 牧師，賢者，拳聖","slots":2,"weaponCat":"book","reqLevel":70,"reqJob":["mage","priest","acolyte"],"element":"none","int":4,"mdef":8,"matk":140},
+  "ancient_magic": {"id":"ancient_magic","imgId":1573,"name":"遠古魔法 [2]","type":"weapon","icon":"📖","weaponType":"book","weaponLv":3,"atk":30,"weaponWeight":-70,"weight":70,"sell":60,"buyPrice":120,"desc":"學問沒有王道'令人印象深刻的標題，\"只要持續、正確、迅速地反覆練習施法的話，就能自然而然地提升實力了\" MATK+140，與魔法外套一起裝備時，MDEF+8，MSP+10%，INT+4 系列: 書 攻擊: 30 重量: 70 屬性: 無 武器等級: 3 要求等級: 70 裝備: 牧師，賢者，拳聖","slots":2,"weaponCat":"book","reqLevel":70,"reqJob":["mage","priest","acolyte"],"element":"none","matk":140},
   "rod": {"id":"rod","imgId":1601,"name":"手杖 [3]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":1,"atk":15,"matk":30,"weaponWeight":-40,"weight":40,"sell":30,"buyPrice":60,"desc":"輕巧又短小的手杖。 MATK上升30 系列: 單手杖 攻擊: 15 重量: 40 武器等級: 1 要求等級: 無 裝備: 初學者/魔法師系列/服事系列/悟靈士可以裝備","slots":3,"weaponCat":"rod","reqJob":["novice","mage","acolyte"]},
   "rod_": {"id":"rod_","imgId":1602,"name":"手杖 [4]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":1,"atk":15,"matk":30,"weaponWeight":-40,"weight":40,"sell":30,"buyPrice":60,"desc":"輕巧又短小的手杖。 MATK上升30 系列: 單手杖 攻擊: 15 重量: 40 武器等級: 1 要求等級: 無 裝備: 初學者/魔法師系列/服事系列/悟靈士可以裝備","slots":4,"weaponCat":"rod","reqJob":["novice","mage","acolyte"]},
   "wand": {"id":"wand","imgId":1604,"name":"橡木魔杖 [2]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":2,"atk":25,"matk":45,"weaponWeight":-40,"weight":40,"sell":50,"buyPrice":100,"desc":"蘊含魔力的手杖。 INT+1，MATK上升45 系列: 單手杖 攻擊: 25 重量: 40 武器等級: 2 要求等級: 12 裝備: 初學者/魔法師系列/服事系列/悟靈士可以裝備","slots":2,"weaponCat":"rod","reqLevel":12,"reqJob":["novice","mage","acolyte"],"int":1},
@@ -605,7 +605,7 @@ const ITEMS = {
   "survival_rod_": {"id":"survival_rod_","imgId":1618,"name":"生存的魔杖 [1]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":3,"atk":50,"weaponWeight":-100,"weight":100,"sell":100,"buyPrice":200,"desc":"為了苦行的修行者們，魔法師公會和教團所協力完成的手杖，有兩種類型。 DEX+3，MATK+120，HP+400 系列: 單手杖 攻擊: 50 重量: 100 屬性:無 武器等級: 3 要求等級: 24 裝備: 魔法師系列/服事系列/悟靈士專用","slots":1,"weaponCat":"rod","reqLevel":24,"reqJob":["mage","acolyte"],"element":"none","dex":3,"matk":120,"hp":400},
   "survival_rod2": {"id":"survival_rod2","imgId":1619,"name":"高等生存的魔杖","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":3,"atk":50,"weaponWeight":-100,"weight":100,"sell":100,"buyPrice":200,"desc":"為了苦行的修行者們，魔法師公會和教團所協力完成的手杖，有兩種類型。 INT+2，MATK+120，HP+300 系列: 單手杖 攻擊: 50 重量: 100 屬性:無 武器等級: 3 要求等級: 24 裝備: 魔法師系列/服事系列/悟靈士專用","slots":0,"weaponCat":"rod","reqLevel":24,"reqJob":["mage","acolyte"],"element":"none","int":2,"matk":120,"hp":300},
   "survival_rod2_": {"id":"survival_rod2_","imgId":1620,"name":"高等生存的魔杖 [1]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":3,"atk":50,"weaponWeight":-100,"weight":100,"sell":100,"buyPrice":200,"desc":"為了苦行的修行者們，魔法師公會和教團所協力完成的手杖，有兩種類型。 INT+3，MATK+120，HP+400 系列: 單手杖 攻擊: 50 重量: 100 屬性:無 武器等級: 3 要求等級: 24 裝備: 魔法師系列/服事系列/悟靈士專用","slots":1,"weaponCat":"rod","reqLevel":24,"reqJob":["mage","acolyte"],"element":"none","int":3,"matk":120,"hp":400},
-  "lich_bone_wand": {"id":"lich_bone_wand","imgId":1624,"name":"巫妖之骨杖 [2]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":3,"atk":60,"weaponWeight":-80,"weight":80,"sell":120,"buyPrice":240,"desc":"用強壯的裡奇的骷髏所做成的杖，從杖裡不斷湧出的詛咒的氣息，對威脅杖的主人下達詛咒 MATK+170，INT+1，DEX+1 當受到物理攻擊時，以較低的機率對畫面裡的所有敵人施展詛咒， 根據精煉的不同得到詛咒的機率更高， 當精煉 9以上時，額外增加MATK+3%，MSP+300 不死系屬性 系列: 單手杖 攻擊: 60 重量: 80 武器等級: 3 要求等級: 70 裝備: 轉生魔法師/服事系列專用","slots":2,"weaponCat":"rod","reqLevel":70,"reqJob":["mage","acolyte"],"int":1,"dex":1,"matk":170,"sp":300},
+  "lich_bone_wand": {"id":"lich_bone_wand","imgId":1624,"name":"巫妖之骨杖 [2]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":3,"atk":60,"weaponWeight":-80,"weight":80,"sell":120,"buyPrice":240,"desc":"用強壯的裡奇的骷髏所做成的杖，從杖裡不斷湧出的詛咒的氣息，對威脅杖的主人下達詛咒 MATK+170，INT+1，DEX+1 當受到物理攻擊時，以較低的機率對畫面裡的所有敵人施展詛咒， 根據精煉的不同得到詛咒的機率更高， 當精煉 9以上時，額外增加MATK+3%，MSP+300 不死系屬性 系列: 單手杖 攻擊: 60 重量: 80 武器等級: 3 要求等級: 70 裝備: 轉生魔法師/服事系列專用","slots":2,"weaponCat":"rod","reqLevel":70,"reqJob":["mage","acolyte"],"int":1,"dex":1,"matk":170,"condBonus":[{"when":{"refineMin":9},"bonus":{"matkPct":3,"sp":300}}]},
   "healing_staff": {"id":"healing_staff","imgId":1625,"name":"恢復之杖","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":3,"atk":10,"weaponWeight":-40,"weight":40,"sell":20,"buyPrice":40,"desc":"用受到祝福的天地樹樹枝做為治療目的所做成的杖，杖上用古代語寫著『祈願無病長壽』的字樣 MATK+105 根據精煉的不同自身所使用的治癒術、光耀之堂技能的恢復量+ 聖屬性 系列: 單手杖 攻擊: 10 重量: 40 武器等級: 3 要求等級: 55 裝備: 服事系列專用","slots":0,"weaponCat":"rod","reqLevel":55,"reqJob":["acolyte"],"matk":105},
   "walking_stick": {"id":"walking_stick","imgId":1629,"name":"紳士的手杖 [1]","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":4,"atk":40,"weaponWeight":-50,"weight":50,"sell":80,"buyPrice":160,"desc":"某國紳士所愛用的手杖，在某些手杖的內側藏有細劍 MATK+125，DEX+1 與魔術師帽一起裝備時，DEX+2，INT+2，SP恢復速度增加5%，依精煉的程度，魔法攻擊力增加 系列: 單手杖 攻擊: 40 重量: 50 屬性: 無 武器等級: 4 要求等級: 50 裝備: 魔法師，服事系列，悟靈士","slots":1,"weaponCat":"rod","reqLevel":50,"reqJob":["mage","acolyte"],"element":"none","int":2,"dex":1,"matk":125},
   "release_of_wish": {"id":"release_of_wish","imgId":1630,"name":"許願之杖","type":"weapon","icon":"✨","weaponType":"rod","weaponLv":3,"atk":30,"weaponWeight":-50,"weight":50,"sell":60,"buyPrice":120,"desc":"由水晶所製成，被光線折射時尤其美麗，具有恢復手杖主人的功能 MATK+125，INT+3 使用恢復技能時，恢復量增加5%，魔法攻擊時有較低機率可稍許恢復HP，SP 系列: 單手杖 攻擊: 30 重量: 50 屬性: 無 武器等級: 3 要求等級: 50 裝備: 魔法師系列/悟靈士專用","slots":0,"weaponCat":"rod","reqLevel":50,"reqJob":["mage"],"element":"none","int":3,"matk":125},
@@ -713,7 +713,7 @@ const ITEMS = {
   "silver_robe_": {"id":"silver_robe_","imgId":2333,"name":"秘銀之衣 [1]","type":"armor","icon":"🦺","armorType":"leather","def":23,"weight":70,"sell":92,"buyPrice":184,"desc":"以價值不斐的銀絲所編製成的衣服。 系列: 鎧甲 防禦: 23 重量: 70 裝備: 魔法師系列/悟靈士專用","slots":1,"reqJob":["mage"]},
   "thief_clothes_": {"id":"thief_clothes_","imgId":2336,"name":"盜賊之衣 [1]","type":"armor","icon":"🦺","armorType":"leather","def":40,"weight":10,"sell":160,"buyPrice":320,"desc":"相當輕便的衣服。 AGI+1 系列: 鎧甲 防禦: 40 重量: 10 裝備: 盜賊系列專用","slots":1,"reqJob":["thief"],"agi":1},
   "full_plate_armor_": {"id":"full_plate_armor_","imgId":2342,"name":"秘銀金屬盔甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":79,"weight":550,"sell":316,"buyPrice":632,"desc":"包紮全身型態的鎧甲，想找一個縫隙用刺的都很難攻擊的鎧甲 系列: 鎧甲 防禦: 79 重量: 550 要求等級: 70 裝備: 十字軍專用","slots":1,"reqLevel":70,"reqJob":["swordsman"]},
-  "flame_sprits_armor_": {"id":"flame_sprits_armor_","imgId":2345,"name":"火鱗盔甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":220,"sell":100,"buyPrice":200,"desc":"當穿上時會感覺到一股熱氣，快要把身體燃燒似的鎧甲 鎧甲本身永遠賦予火屬性 系列: 鎧甲 防禦: 25 重量: 220 要求等級: 45 裝備: 除初心者以外的所有職業","slots":1,"reqLevel":45},
+  "flame_sprits_armor_": {"id":"flame_sprits_armor_","imgId":2345,"name":"火鱗盔甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":220,"sell":100,"buyPrice":200,"desc":"當穿上時會感覺到一股熱氣，快要把身體燃燒似的鎧甲 鎧甲本身永遠賦予火屬性 系列: 鎧甲 防禦: 25 重量: 220 要求等級: 45 裝備: 除初心者以外的所有職業","slots":1,"reqLevel":45,"bonus":{"armorEle_fire":1}},
   "g_strings_": {"id":"g_strings_","imgId":2371,"name":"三角褲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":22,"weight":10,"sell":88,"buyPrice":176,"desc":"三角形的貼身衣物。 系列: 鎧甲 防禦: 22 重量: 10 裝備: 所有職業","slots":1},
   "mage_coat_": {"id":"mage_coat_","imgId":2372,"name":"魔法外套 [1]","type":"armor","icon":"🦺","armorType":"leather","def":40,"weight":60,"sell":160,"buyPrice":320,"desc":"古代魔道士所傳下來的衣服，穿著時會提高精神力。 MDEF+5，INT+1 系列: 鎧甲 防禦: 40 重量: 60 要求等級: 50 裝備: 魔法師系列/悟靈士專用","slots":1,"reqLevel":50,"reqJob":["mage"],"int":1,"mdef":5},
   "krieger_suit1": {"id":"krieger_suit1","imgId":2394,"name":"華麗的勇士紫光外套","type":"armor","icon":"🦺","armorType":"leather","def":0,"weight":0,"sell":20,"buyPrice":40,"desc":"HP+20% 受到人型系敵人的傷害減少7%， 與華麗的勇士安全鞋、華麗的勇士披肩一起裝備時，對所有敵人的傷害增加5%、MATK+5%，自身所使用之治癒術、藥水投擲、光耀之堂的恢復量增加3%，決不被施凍冰。 系列: 鎧甲 防禦: 0 重量: 0 要求等級: 81 裝備: 除初心者系列以外的所有職業","slots":0,"reqLevel":81,"matk":5,"condBonus":[{"when":{"withItems":["krieger_shoes1","krieger_muffler1"]},"bonus":{"allTargetDmgPct":5,"matkPct":5}}]},
@@ -1332,7 +1332,7 @@ const ITEMS = {
   "munak_turban_": {"id":"munak_turban_","imgId":5167,"name":"殭屍帽 [1]","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":30,"sell":20,"buyPrice":40,"desc":"是魔物殭屍所戴的帽子，在巨大的帽子上貼著不知名的符咒也有著辮子的樣子，對不死系敵人的攻擊傷害減少10% 不可精煉 系列: 頭盔 防禦: 5 位置: 頭上中下 重量: 30 裝備: 所有職業","slots":1,"bonus":{"raceDmgReduce_undead":10}},
   "bongun_hat_": {"id":"bongun_hat_","imgId":5168,"name":"妖道帽 [1]","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":30,"sell":20,"buyPrice":40,"desc":"是魔物妖道所戴的帽子重點是前面部分被撕掉一半的符咒，相當的堅固同時被撕掉的符咒因而減少了視線上的障礙 不可精煉 系列: 頭盔 防禦: 5 位置: 頭上中下 重量: 30 裝備: 所有職業","slots":1},
   "pirate_bandana_": {"id":"pirate_bandana_","imgId":5350,"name":"海盜頭巾 [1]","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":20,"buyPrice":40,"desc":"有象徵海盜骷髏頭的圖案，會賦予佩帶此頭巾的人勇猛的力量。 STR+1 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除了初學者系列外全職業都可以裝備","slots":1,"str":1,"reqJob":["novice"]},
-  "sunflower_": {"id":"sunflower_","imgId":5351,"name":"向日葵頭飾 [1]","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":20,"buyPrice":40,"desc":"戴在頭上裝飾用的向日葵頭飾。 受到昆蟲系魔物的攻擊時，可減少10%的傷害 系列: 頭盔 防禦: 2 位置: 頭上 重量: 10 裝備: 所有職業","slots":1},
+  "sunflower_": {"id":"sunflower_","imgId":5351,"name":"向日葵頭飾 [1]","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":20,"buyPrice":40,"desc":"戴在頭上裝飾用的向日葵頭飾。 受到昆蟲系魔物的攻擊時，可減少10%的傷害 系列: 頭盔 防禦: 2 位置: 頭上 重量: 10 裝備: 所有職業","slots":1,"bonus":{"raceDmgReduce_insect":10}},
       "fur": {"id":"fur","imgId":6020,"name":"銀色毛皮","type":"material","icon":"📦","weight":1,"sell":352,"desc":"銀色美麗的毛皮，可高價賣給收集商人 _ 重量: 1 ","buyPrice":704},
   "peaked_hat": {"id":"peaked_hat","imgId":6021,"name":"紅色高帽","type":"material","icon":"📦","weight":1,"sell":216,"desc":"紅色的小高帽，可高價賣給收集商人 _ 重量: 1 ","buyPrice":433},
   "hard_skin": {"id":"hard_skin","imgId":6022,"name":"堅硬的皮膚","type":"material","icon":"📦","weight":1,"sell":442,"desc":"灰色的堅硬角皮，因太過堅硬似乎很難加工，可高價賣給收集商人 _ 重量: 1 ","buyPrice":884},
@@ -1932,14 +1932,14 @@ const ITEMS = {
   "slapping_herb": {"id":"slapping_herb","imgId":12814,"name":"薄荷藥草","type":"material","icon":"📦","weight":1,"sell":1,"desc":"其強烈氣味會直衝腦門兒的藥草，但具有心曠神怡的效果。 可治療眩暈、恐怖、混亂、幻覺。 冷卻時間5秒。 重量: 1 "},
   "yggdrasil_dust": {"id":"yggdrasil_dust","imgId":12815,"name":"世界樹之塵","type":"material","icon":"📦","weight":1,"sell":1,"desc":"又名生命樹，散布在神聖天地樹的樹幹及樹葉上的灰塵，但長年累月吸收了生命樹的日月精華而具有高度的精華效果。 石化、黑暗、詛咒、毒、緩速術、變成獸人面孔。 冷卻時間5秒。 重量: 1 "},
             "golden_potion_rg": {"id":"golden_potion_rg","imgId":12858,"name":"RG黃金藥水","type":"consumable","icon":"📦","weight":3,"sell":1,"desc":"米德加茲的鍊金術師藥水學的集大成。現有的藥水中最好的藥水，用一點點也能發揮出非同凡響的效果。大家都把它稱之為神水。 恢復使用者所有的HP和SP，並對自身施展霸邪之陣10Lv。 再次使用待機時間 :  ","healPct":100,"restoreSpPct":100},
-  "coward_": {"id":"coward_","imgId":13004,"name":"考爾德短刀 [2]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":3,"atk":80,"weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"desc":"有一位膽小的刺客，對自身的職業不重視防禦特性而感到不滿，為了生存而奮鬥所製作的短劍。 DEF+5 系列: 短劍 攻擊: 80 重量: 70 屬性: 無 武器等級: 3 要求等級: 55 裝備: 盜賊系列/忍者專用","slots":2,"weaponCat":"dagger","reqLevel":55,"reqJob":["thief"],"element":"none"},
+  "coward_": {"id":"coward_","imgId":13004,"name":"考爾德短刀 [2]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":3,"atk":80,"weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"desc":"有一位膽小的刺客，對自身的職業不重視防禦特性而感到不滿，為了生存而奮鬥所製作的短劍。 DEF+5 系列: 短劍 攻擊: 80 重量: 70 屬性: 無 武器等級: 3 要求等級: 55 裝備: 盜賊系列/忍者專用","slots":2,"weaponCat":"dagger","reqLevel":55,"reqJob":["thief"],"element":"none","bonus":{"def":5}},
   "jitte_": {"id":"jitte_","imgId":13008,"name":"鉤子 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":2,"atk":70,"weaponWeight":-40,"weight":40,"sell":140,"buyPrice":280,"desc":"在棍棒上有著凸出的掛鉤，可以用這個來奪取對方的武器，殺傷力較低不過很容易使用 近距離物理攻擊時，以較低的機率破壞敵人的武器 系列: 短劍 攻擊: 70 重量: 40 武器等級: 2 要求等級: 35 裝備: 忍者專用","slots":1,"weaponCat":"dagger","reqLevel":35},
   "murasame_": {"id":"murasame_","imgId":13013,"name":"流水劍 [2]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":2,"atk":95,"weaponWeight":-70,"weight":70,"sell":190,"buyPrice":380,"desc":"據說可以砍劈流水的名劍，那銳利太強了只要劃開天空的話會有流水的傳說 近距離物理攻擊時，對人型系魔物CRI+10 系列: 短劍 攻擊: 95 重量: 70 屬性: 水 武器等級: 2 要求等級: 24 裝備: 忍者專用","slots":2,"weaponCat":"dagger","reqLevel":24,"element":"water","critRate":10,"bonus":{"raceCrit_humanoid":10}},
   "hakujin_": {"id":"hakujin_","imgId":13015,"name":"骨頭劍 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":3,"atk":120,"weaponWeight":-80,"weight":80,"sell":240,"buyPrice":480,"desc":"刀刃是耀眼的白色，刀的材質是以骨骼做成的做刺殺比砍劈來的適用 近距離物理攻擊時，以較低的機率給自身使用治癒術 1技能 系列: 短劍 攻擊: 120 重量: 80 武器等級: 3 要求等級: 42 裝備: 忍者專用","slots":1,"weaponCat":"dagger","reqLevel":42},
-  "poison_knife_": {"id":"poison_knife_","imgId":13016,"name":"巨毒短劍 [2]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":3,"atk":64,"weaponWeight":-80,"weight":80,"sell":128,"buyPrice":256,"desc":"紫色閃爍的刀刃讓看到的人有點恐懼感的短劍，上面塗抹著強烈的毒 有較高的機率對敵人對象打擊時會中毒 系列: 短劍 攻擊: 64 重量: 80 武器等級: 3 要求等級: 65 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者","slots":2,"weaponCat":"dagger","reqLevel":65,"reqJob":["swordsman","merchant","thief","mage","archer"]},
+  "poison_knife_": {"id":"poison_knife_","imgId":13016,"name":"巨毒短劍 [2]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":3,"atk":64,"weaponWeight":-80,"weight":80,"sell":128,"buyPrice":256,"desc":"紫色閃爍的刀刃讓看到的人有點恐懼感的短劍，上面塗抹著強烈的毒 有較高的機率對敵人對象打擊時會中毒 系列: 短劍 攻擊: 64 重量: 80 武器等級: 3 要求等級: 65 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者","slots":2,"weaponCat":"dagger","reqLevel":65,"reqJob":["swordsman","merchant","thief","mage","archer"],"ailment":[{"on":"attack","type":"poison","chance":10}]},
   "house_auger_": {"id":"house_auger_","imgId":13017,"name":"破甲短錐 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":70,"weaponWeight":-60,"weight":60,"sell":140,"buyPrice":280,"desc":"纖細又非常的尖銳，對任何防禦具的縫隙都可以鑽進去樣子的武器 當對方的防禦力越高時，會對更強烈的攻擊力 系列: 短劍 攻擊: 70 重量: 60 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者","slots":1,"weaponCat":"dagger","reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"]},
-  "sucsamad_": {"id":"sucsamad_","imgId":13018,"name":"砂塵短劍 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":140,"weaponWeight":-80,"weight":80,"sell":280,"buyPrice":560,"desc":"在沙漠裡從一個小的部落所留傳下來，以特殊的精煉方法所製成的短劍 不可破壞。 對於地屬性的魔物對10%的傷害增加 對於風屬性的魔物對10%的傷害增加 系列: 短劍 攻擊: 140 重量: 80 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者","slots":1,"weaponCat":"dagger","reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"]},
-  "ginnungagap_": {"id":"ginnungagap_","imgId":13019,"name":"卡卡普劍 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":148,"weaponWeight":-70,"weight":70,"sell":296,"buyPrice":592,"desc":"有著漆黑般的劍刃短劍， 劍刃的顏色在表達這劍是危險性警告似的， 攻擊時，對敵人5%機率得到黑暗， 攻擊時，對自身以0.5%機率得到黑暗 系列: 短劍 攻擊: 148 重量: 70 屬性: 暗 武器等級: 4 要求等級: 70 裝備: 除了服事系列之外的全職業","slots":1,"weaponCat":"dagger","reqLevel":70,"element":"shadow","reqJob":["acolyte"]},
+  "sucsamad_": {"id":"sucsamad_","imgId":13018,"name":"砂塵短劍 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":140,"weaponWeight":-80,"weight":80,"sell":280,"buyPrice":560,"desc":"在沙漠裡從一個小的部落所留傳下來，以特殊的精煉方法所製成的短劍 不可破壞。 對於地屬性的魔物對10%的傷害增加 對於風屬性的魔物對10%的傷害增加 系列: 短劍 攻擊: 140 重量: 80 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者","slots":1,"weaponCat":"dagger","reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"bonus":{"eleDmg_earth":10,"eleDmg_wind":10}},
+  "ginnungagap_": {"id":"ginnungagap_","imgId":13019,"name":"卡卡普劍 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":148,"weaponWeight":-70,"weight":70,"sell":296,"buyPrice":592,"desc":"有著漆黑般的劍刃短劍， 劍刃的顏色在表達這劍是危險性警告似的， 攻擊時，對敵人5%機率得到黑暗， 攻擊時，對自身以0.5%機率得到黑暗 系列: 短劍 攻擊: 148 重量: 70 屬性: 暗 武器等級: 4 要求等級: 70 裝備: 除了服事系列之外的全職業","slots":1,"weaponCat":"dagger","reqLevel":70,"element":"shadow","reqJob":["acolyte"],"ailment":[{"on":"attack","type":"blind","chance":5},{"on":"attack","type":"blind","chance":0.5,"target":"self"}]},
   "counter_dagger_c": {"id":"counter_dagger_c","imgId":13022,"name":"反擊短劍","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":209,"weaponWeight":0,"weight":0,"sell":418,"buyPrice":836,"desc":"租賃物品 有較高可能性對對方致命一擊的短劍 CRI+90(限定無法交易、丟棄) 系列: 短劍 攻擊: 209 重量: 0 武器等級: 4 要求等級: 1 裝備: 魔法師系列/悟靈士專用","slots":0,"weaponCat":"dagger","reqLevel":1,"reqJob":["mage"],"critRate":90},
   "asura_c": {"id":"asura_c","imgId":13023,"name":"匕首","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":1,"atk":120,"weaponWeight":0,"weight":0,"sell":240,"buyPrice":480,"desc":"租賃物品 在遠古時候神賜予人類的劍，只要握著這把劍的話會感覺到一股破壞的衝動 MATK+98 (限定無法交易、丟棄) 系列: 短劍 攻擊: 120 重量: 0 武器等級: 1 要求等級: 1 裝備: 忍者專用","slots":0,"weaponCat":"dagger","reqLevel":1,"matk":98},
   "dragon_killer_": {"id":"dragon_killer_","imgId":13030,"name":"天龍短劍 [2]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":110,"weaponWeight":-90,"weight":90,"sell":220,"buyPrice":440,"desc":"用龍牙所做成的短劍，可以輕易的刺破龍族的厚皮，無視龍族魔物的防禦力。 擊殺龍族魔物時，增加10%的經驗值。 系列: 短劍 攻擊: 110 重量: 90 屬性: 無 武器等級: 4 要求等級: 60 裝備: 初學者系列/劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者","slots":2,"weaponCat":"dagger","reqLevel":60,"reqJob":["novice","swordsman","merchant","thief","mage","archer"],"element":"none","bonus":{"defIgnoreRace_dragon":100,"expRace_dragon":10}},
@@ -1949,7 +1949,7 @@ const ITEMS = {
   "crimson_bolt_": {"id":"crimson_bolt_","imgId":13103,"name":"鮮紅閃電手槍 [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":2,"atk":45,"weaponWeight":-45,"weight":45,"sell":90,"buyPrice":180,"desc":"聯想到血腥般深紅色的手槍，據說有著收到詛咒的傳聞 Hit-10 系列: 手槍 攻擊: 45 重量: 45 武器等級: 2 要求等級: 35 裝備: 神槍手專用","slots":2,"weaponCat":"pistol","reqLevel":35},
   "the_garrison": {"id":"the_garrison","imgId":13104,"name":"格林手槍 [1]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":2,"atk":70,"weaponWeight":-50,"weight":50,"sell":140,"buyPrice":280,"desc":"以訂單方式製作的稍微稀有的手槍，據說真品上刻有製作人的姓名 Hit-10 系列: 手槍 攻擊: 70 重量: 50 武器等級: 2 要求等級: 55 裝備: 神槍手專用","slots":1,"weaponCat":"pistol","reqLevel":55},
   "the_garrison_": {"id":"the_garrison_","imgId":13105,"name":"格林手槍 [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":2,"atk":70,"weaponWeight":-50,"weight":50,"sell":140,"buyPrice":280,"desc":"以訂單方式製作的稍微稀有的手槍，據說真品上刻有製作人的姓名 Hit-10 系列: 手槍 攻擊: 70 重量: 50 武器等級: 2 要求等級: 55 裝備: 神槍手專用","slots":2,"weaponCat":"pistol","reqLevel":55},
-  "gold_lux": {"id":"gold_lux","imgId":13106,"name":"黃金勒克斯手槍","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":20,"weaponWeight":-50,"weight":50,"sell":40,"buyPrice":80,"desc":"比技能面反而注重了裝飾面的黃金色耀眼的手槍，攜帶它的話確實會變為視覺交點， 攻擊時以較低的機率會自動念咒裝滿硬幣 (技能等級以現在所學習的技能等級為主) Hit-10 系列: 手槍 攻擊: 20 重量: 50 武器等級: 3 要求等級: 12 裝備: 神槍手專用","slots":0,"weaponCat":"pistol","reqLevel":12},
+  "gold_lux": {"id":"gold_lux","imgId":13106,"name":"黃金勒克斯手槍","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":20,"weaponWeight":-50,"weight":50,"sell":40,"buyPrice":80,"desc":"比技能面反而注重了裝飾面的黃金色耀眼的手槍，攜帶它的話確實會變為視覺交點， 攻擊時以較低的機率會自動念咒裝滿硬幣 (技能等級以現在所學習的技能等級為主) Hit-10 系列: 手槍 攻擊: 20 重量: 50 武器等級: 3 要求等級: 12 裝備: 神槍手專用","slots":0,"weaponCat":"pistol","reqLevel":12,"hit":-10},
   "wasteland_outlaw": {"id":"wasteland_outlaw","imgId":13107,"name":"荒野的無法者 [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":68,"weaponWeight":-58,"weight":58,"sell":136,"buyPrice":272,"desc":"有著手槍特有的連射力高HIT為自豪的槍，曾經在荒野裡克服了所有的困難為了紀念這位無名的神槍手所做成的手槍 根據AGI數值的不同 Hit 及攻擊速度增加 系列: 手槍 攻擊: 68 重量: 58 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":2,"weaponCat":"pistol","reqLevel":70},
   "scarlet_revolver": {"id":"scarlet_revolver","imgId":13127,"name":"緋紅色左輪手槍 [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":100,"weaponWeight":-100,"weight":100,"sell":200,"buyPrice":400,"desc":"槍身上散發著紅光的手槍。 ATK增加至(精煉*精煉) (套用至精煉+15) 角色等級70以上 : BaseLv每上升10時ATK+5。 系列: 槍枝類 攻擊: 100 重量: 100 武器等級: 3 要求等級: 70 裝備: 神槍手系列","slots":2,"weaponCat":"pistol","reqLevel":70,"perRefineSquare":{"atk":1},"perBaseLv10_atk":5},
   "branch": {"id":"branch","imgId":13150,"name":"布爾其來復槍 [3]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":1,"atk":50,"weaponWeight":-50,"weight":50,"sell":100,"buyPrice":200,"desc":"把槍身變長讓射程距離和HIT提升的小型火器，看起來反而比手槍更好使用 系列: 來復槍 攻擊: 50 重量: 50 武器等級: 1 要求等級: 1 裝備: 神槍手專用","slots":3,"weaponCat":"rifle","reqLevel":1},
@@ -1960,12 +1960,12 @@ const ITEMS = {
   "drifter": {"id":"drifter","imgId":13157,"name":"漂流者格林機槍 [1]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":2,"atk":50,"weaponWeight":-230,"weight":230,"sell":100,"buyPrice":200,"desc":"有著'漂流者'意義的，電動迴轉式的多連發火器 系列: 格林機槍 攻擊: 50 重量: 230 武器等級: 2 要求等級: 55 裝備: 神槍手專用","slots":1,"weaponCat":"gatling","reqLevel":55},
   "destroyer": {"id":"destroyer","imgId":13160,"name":"破壞者榴彈槍","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":2,"atk":220,"weaponWeight":-120,"weight":120,"sell":440,"buyPrice":880,"desc":"有著破壞者的名稱，並且炫耀著強烈火力的榴彈發射器 近距離物理攻擊時，有較低的機率把敵人的鎧甲破壞 系列: 榴彈槍 攻擊: 220 重量: 120 武器等級: 2 要求等級: 52 裝備: 神槍手專用","slots":0,"weaponCat":"grenade","reqLevel":52},
   "destroyer_": {"id":"destroyer_","imgId":13161,"name":"破壞者榴彈槍 [1]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":2,"atk":220,"weaponWeight":-120,"weight":120,"sell":440,"buyPrice":880,"desc":"有著破壞者的名稱，並且炫耀著強烈火力的榴彈發射器 近距離物理攻擊時，有較低的機率把敵人的鎧甲破壞 系列: 榴彈槍 攻擊: 220 重量: 120 武器等級: 2 要求等級: 52 裝備: 神槍手專用","slots":1,"weaponCat":"grenade","reqLevel":52},
-  "long_barrel": {"id":"long_barrel","imgId":13163,"name":"長身來復槍","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":150,"weaponWeight":-100,"weight":100,"sell":300,"buyPrice":600,"desc":"拉長槍身而提高精確度的狙擊步槍。 CRI+20，攻擊速度-3% 攻擊時低機率觸發5級百步穿楊。 系列: 來復槍 攻擊: 150 重量: 100 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":0,"weaponCat":"rifle","reqLevel":70,"critRate":20},
-  "long_barrel_": {"id":"long_barrel_","imgId":13164,"name":"長身來復槍 [1]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":150,"weaponWeight":-100,"weight":100,"sell":300,"buyPrice":600,"desc":"拉長槍身而提高精確度的來復槍。 CRI+20，攻擊速度-3% 攻擊時低機率觸發5級百步穿楊。 系列: 來復槍 攻擊: 150 重量: 100 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":1,"weaponCat":"rifle","reqLevel":70,"critRate":20},
+  "long_barrel": {"id":"long_barrel","imgId":13163,"name":"長身來復槍","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":150,"weaponWeight":-100,"weight":100,"sell":300,"buyPrice":600,"desc":"拉長槍身而提高精確度的狙擊步槍。 CRI+20，攻擊速度-3% 攻擊時低機率觸發5級百步穿楊。 系列: 來復槍 攻擊: 150 重量: 100 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":0,"weaponCat":"rifle","reqLevel":70,"critRate":20,"bonus":{"aspdPct":-3}},
+  "long_barrel_": {"id":"long_barrel_","imgId":13164,"name":"長身來復槍 [1]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":150,"weaponWeight":-100,"weight":100,"sell":300,"buyPrice":600,"desc":"拉長槍身而提高精確度的來復槍。 CRI+20，攻擊速度-3% 攻擊時低機率觸發5級百步穿楊。 系列: 來復槍 攻擊: 150 重量: 100 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":1,"weaponCat":"rifle","reqLevel":70,"critRate":20,"bonus":{"aspdPct":-3}},
   "gate_keeperdd": {"id":"gate_keeperdd","imgId":13167,"name":"短口槍-DD","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":4,"atk":200,"weaponWeight":-130,"weight":130,"sell":400,"buyPrice":800,"desc":"用神之金屬製作的短口槍身，其堅固的耐久度和可靠度可以阻擋射來的子彈。 射擊時DEX+1，以較低機率觸發火力全開Lv6。 根據精煉的提升增加DEF 系列: 霰彈槍 攻擊: 200 重量: 130 武器等級: 4 要求等級: 70 裝備: 神槍手專用","slots":0,"weaponCat":"shotgun","reqLevel":70,"dex":1},
-  "thunder_p": {"id":"thunder_p","imgId":13168,"name":"THUNDER-P [1]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":80,"weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"desc":"獵槍，斷掉槍身前身，HIT下跌，但攻擊速度非常快。 射擊打擊。HIT-5，攻擊速度提高 20%。 系列: 霰彈槍 攻擊: 80 重量: 70 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":1,"weaponCat":"shotgun","reqLevel":70},
-  "thunder_p_": {"id":"thunder_p_","imgId":13169,"name":"THUNDER-P [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":80,"weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"desc":"手槍型獵槍，截斷槍的前身部分，HIT下跌，但攻擊速度快。 射擊打擊。HIT-5，攻擊速度提高提高 20%。 系列: 霰彈槍 攻擊: 80 重量: 70 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":2,"weaponCat":"shotgun","reqLevel":70},
-  "lever_action_rifle": {"id":"lever_action_rifle","imgId":13170,"name":"優化的來復槍 [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":138,"weaponWeight":-77,"weight":77,"sell":276,"buyPrice":552,"desc":"把來復槍的性能發揮到極大的名作。漂亮的槍身瞬間獲取神槍手的心，那致命的性能瞬間穿透敵人的心臟。假如有缺點的話是操作杆方式裝填子彈，使得連射速度變慢 HIT+20，Cri+50，攻速減少5% 系列: 來復槍 攻擊: 138 重量: 77 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":2,"weaponCat":"rifle","reqLevel":70,"critRate":50,"hit":20},
+  "thunder_p": {"id":"thunder_p","imgId":13168,"name":"THUNDER-P [1]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":80,"weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"desc":"獵槍，斷掉槍身前身，HIT下跌，但攻擊速度非常快。 射擊打擊。HIT-5，攻擊速度提高 20%。 系列: 霰彈槍 攻擊: 80 重量: 70 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":1,"weaponCat":"shotgun","reqLevel":70,"bonus":{"aspdPct":20},"hit":-5},
+  "thunder_p_": {"id":"thunder_p_","imgId":13169,"name":"THUNDER-P [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":80,"weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"desc":"手槍型獵槍，截斷槍的前身部分，HIT下跌，但攻擊速度快。 射擊打擊。HIT-5，攻擊速度提高提高 20%。 系列: 霰彈槍 攻擊: 80 重量: 70 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":2,"weaponCat":"shotgun","reqLevel":70,"bonus":{"aspdPct":20},"hit":-5},
+  "lever_action_rifle": {"id":"lever_action_rifle","imgId":13170,"name":"優化的來復槍 [2]","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":138,"weaponWeight":-77,"weight":77,"sell":276,"buyPrice":552,"desc":"把來復槍的性能發揮到極大的名作。漂亮的槍身瞬間獲取神槍手的心，那致命的性能瞬間穿透敵人的心臟。假如有缺點的話是操作杆方式裝填子彈，使得連射速度變慢 HIT+20，Cri+50，攻速減少5% 系列: 來復槍 攻擊: 138 重量: 77 武器等級: 3 要求等級: 70 裝備: 神槍手專用","slots":2,"weaponCat":"rifle","reqLevel":70,"critRate":50,"hit":20,"bonus":{"aspdPct":-5}},
   "infamous": {"id":"infamous","imgId":13188,"name":"惡名昭彰來復槍","type":"weapon","icon":"🔫","weaponType":"gun","weaponLv":3,"atk":150,"weaponWeight":-110,"weight":110,"sell":300,"buyPrice":600,"desc":"中階使用者專用突擊步槍，使用上較容易且安全。 HIT+10/CRI+20/觸發瞬速子彈時傷害+50 系列: 來復槍 攻擊: 150 重量: 110 武器等級: 3 要求等級: 105 裝備: 反叛者專用","slots":0,"weaponCat":"rifle","reqLevel":105,"critRate":20,"hit":10},
   "shuriken": {"id":"shuriken","imgId":13250,"name":"飛鏢","type":"consumable","icon":"📦","weight":1,"sell":0,"desc":"藏在手後面的劍，因為長的像十字也被稱為十字劍。 系列: 投擲類武器 攻擊: 10 重量: 0.1 屬性: 無 ","buyPrice":2},
   "huuma_bird_wing": {"id":"huuma_bird_wing","imgId":13300,"name":"風魔翼飛鏢","type":"material","icon":"📦","weight":300,"sell":1,"desc":"那模樣相似鳥的翅膀所以才會這樣命名，是風魔一族的武器較有名 AGI-1 DEX-2 系列: 風魔    攻擊: 150 重量: 300     屬性: 風 武器等級: 4 要求等級: 65 裝備: 忍"},
@@ -1974,7 +1974,7 @@ const ITEMS = {
   "huuma_blaze": {"id":"huuma_blaze","imgId":13303,"name":"風魔熱火飛鏢","type":"material","icon":"📦","weight":150,"sell":1,"desc":"有著火屬性的風魔飛鏢，旋轉時火花會四射，讓人聯想到煙火秀 近距離物理攻擊時，以較低的機率給敵人火球術 5技能 DEX-2 系列: 風魔    攻擊: 185 重量: 150     屬性: 火 武器等"},
   "huuma_calm_mind": {"id":"huuma_calm_mind","imgId":13304,"name":"風魔飛鏢:啟明星 [2]","type":"material","icon":"📦","weight":155,"sell":1,"desc":"風魔飛鏢明淨 讓使用者的精神維持清醒 讓使用者有一顆不動搖的心。不管在多困難的狀況下不被動搖的一顆心對戰鬥是很有幫助的。 投擲風魔飛鏢技能的傷害增加30%， 施展不會被打斷 系列: 風魔    攻擊:"},
   "scarlet_huuma": {"id":"scarlet_huuma","imgId":13327,"name":"緋紅色風魔飛鏢 [2]","type":"material","icon":"📦","weight":100,"sell":1,"desc":"刀刃上散發著紅光的風魔飛鏢。 ATK增加至(精煉*精煉) (套用至精煉+15) MATK增加至(精煉*精煉)/2 (套用至精煉+15) 角色等級70以上 : BaseLv每上升10時ATK+5。 不可"},
-  "cutlas_": {"id":"cutlas_","imgId":13400,"name":"狂擊之劍 [1]","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":4,"atk":150,"weaponWeight":-90,"weight":90,"sell":300,"buyPrice":600,"desc":"船員們所使用的使用性的劍 可使用狂擊技能5級 STR+2 DEF+1 系列: 劍 攻擊: 150 重量: 90 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":1,"weaponCat":"sword","reqLevel":40,"reqJob":["swordsman","merchant","thief"],"str":2},
+  "cutlas_": {"id":"cutlas_","imgId":13400,"name":"狂擊之劍 [1]","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":4,"atk":150,"weaponWeight":-90,"weight":90,"sell":300,"buyPrice":600,"desc":"船員們所使用的使用性的劍 可使用狂擊技能5級 STR+2 DEF+1 系列: 劍 攻擊: 150 重量: 90 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":1,"weaponCat":"sword","reqLevel":40,"reqJob":["swordsman","merchant","thief"],"str":2,"bonus":{"def":1},"grantSkill":[{"id":"bash","lv":5}]},
   "elemental_sword": {"id":"elemental_sword","imgId":13414,"name":"元素之劍 [3]","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":3,"atk":105,"weaponWeight":-120,"weight":120,"sell":210,"buyPrice":420,"desc":"擁有四大屬性力量之魔法劍，可對敵人有效發揮水風地火的元素4； STR+2，INT+4，DEX+1，MATK+95 對無屬性魔物的傷害增加10%； 物理或特定攻擊時，增加冰箭術、火箭術、雷擊術等魔法攻擊 系列: 單手劍 攻擊: 105 重量: 120 武器等級: 3 要求等級: 70 裝備: 轉生劍士/商人/盜賊系列","slots":3,"weaponCat":"sword","reqLevel":70,"reqJob":["swordsman","merchant","thief"],"str":2,"int":4,"dex":1,"matk":95,"bonus":{"eleDmg_none":10},"autoSpell":[{"on":"attack","skill":"coldbolt","lv":3,"chance":5,"melee":true},{"on":"chain","after":"coldbolt","skill":"firebolt","lv":3,"chance":100},{"on":"chain","after":"firebolt","skill":"lightningbolt","lv":3,"chance":100},{"on":"chain","after":"lightningbolt","skill":"earthspike","lv":3,"chance":100}]},
   "meteor_10_scroll": {"id":"meteor_10_scroll","imgId":14512,"name":"隕石術10級捲軸","type":"material","icon":"📦","weight":1,"sell":1,"desc":"無法交易。 可以觸發隕石術10級的捲軸。 _ 重量: 1 "},
   "storm_10_scroll": {"id":"storm_10_scroll","imgId":14513,"name":"暴風雪10級捲軸","type":"material","icon":"📦","weight":1,"sell":1,"desc":"無法交易。 可以觸發暴風雪10級的捲軸。 _ 重量: 1 "},
@@ -2097,8 +2097,8 @@ const ITEMS = {
   "headless_mule_card": {"id":"headless_mule_card","imgId":27125,"name":"無頭騾卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"水屬性、聖屬性魔法傷害+20%。 系列: 卡片 裝備: 飾品 重量: 1 ","buyPrice":20},
   "boitata_card": {"id":"boitata_card","imgId":27126,"name":"波伊塔塔卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"對動物型、昆蟲型、風屬性、地屬性魔物的物理傷害+40%。 系列: 卡片 裝備: 鎧甲 重量: 1 ","buyPrice":20},
   "scarlet_katar": {"id":"scarlet_katar","imgId":28007,"name":"緋紅色拳刃 [2]","type":"weapon","icon":"🗡️","weaponType":"katar","weaponLv":3,"atk":130,"weaponWeight":-130,"weight":130,"sell":260,"buyPrice":520,"desc":"刀刃上散發著紅光的拳刃。 ATK增加至(精煉*精煉) (套用至精煉+15) 角色等級70以上 : BaseLv每上升10時ATK+5。 系列: 拳刃 攻擊: 130 重量: 130 武器等級: 3 要求等級: 70 裝備: 刺客系列","slots":2,"weaponCat":"katar","reqLevel":70,"reqJob":["assassin"],"perRefineSquare":{"atk":1},"perBaseLv10_atk":5},
-  "vesper_core01_": {"id":"vesper_core01_","imgId":28302,"name":"晚禱鐘核心01 [1]","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":20,"buyPrice":40,"desc":"組成晚禱鐘的一種零件，擁有可以讓精神變好的魔法。 MDEF+3、INT+2、MAXSP+5% 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":1,"int":2,"mdef":3},
-  "vesper_core02_": {"id":"vesper_core02_","imgId":28303,"name":"晚禱鐘核心02 [1]","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":20,"buyPrice":40,"desc":"組成晚禱鐘的一種零件，擁有可以讓力量變強的魔法。 MDEF+3、STR+3 ATK+10 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":1,"str":3,"mdef":3},
+  "vesper_core01_": {"id":"vesper_core01_","imgId":28302,"name":"晚禱鐘核心01 [1]","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":20,"buyPrice":40,"desc":"組成晚禱鐘的一種零件，擁有可以讓精神變好的魔法。 MDEF+3、INT+2、MAXSP+5% 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":1,"int":2,"mdef":3,"spPct":5},
+  "vesper_core02_": {"id":"vesper_core02_","imgId":28303,"name":"晚禱鐘核心02 [1]","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":20,"buyPrice":40,"desc":"組成晚禱鐘的一種零件，擁有可以讓力量變強的魔法。 MDEF+3、STR+3 ATK+10 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":1,"str":3,"mdef":3,"atk":10},
   "vesper_core03_": {"id":"vesper_core03_","imgId":28304,"name":"晚禱鐘核心03 [1]","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":20,"buyPrice":40,"desc":"組成晚禱鐘的一種零件，擁有可以讓身體變輕的魔法。 MDEF+3、AGI+3 FLEE+5 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":1,"agi":3,"mdef":3,"flee":5},
   "vesper_core04_": {"id":"vesper_core04_","imgId":28305,"name":"晚禱鐘核心04 [1]","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":20,"buyPrice":40,"desc":"組成晚禱鐘的一種零件，擁有可以讓準確度和專注力提高的魔法。 MDEF+3、DEX+3 HIT+10 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":1,"dex":3,"mdef":3,"hit":10},
   "scarlet_bible": {"id":"scarlet_bible","imgId":28604,"name":"緋紅色聖言之書 [2]","type":"weapon","icon":"📖","weaponType":"book","weaponLv":3,"atk":45,"weaponWeight":-45,"weight":45,"sell":90,"buyPrice":180,"desc":"紅色封面的書籍。 ATK增加至(精煉*精煉) (套用至精煉+15) MATK增加至(精煉*精煉)/2 (套用至精煉+15) 角色等級70以上 : BaseLv每上升10時ATK+5。 系列: 書 攻擊: 45 重量: 45 武器等級: 3 要求等級: 70 裝備: 牧師系列/賢者系列/拳聖","slots":2,"weaponCat":"book","reqLevel":70,"reqJob":["mage","priest","acolyte"],"perRefineSquare":{"atk":1},"perRefineSquareMatkHalf":{"matk":1},"perBaseLv10_atk":5},
@@ -2306,22 +2306,22 @@ const ITEMS = {
   "orcish_sword": {"id":"orcish_sword","imgId":1124,"name":"獸人刀","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":3,"atk":90,"weaponWeight":-80,"weight":80,"sell":180,"buyPrice":360,"reqLevel":5,"reqJob":["novice","swordsman","merchant","thief"],"desc":"獸人族所使用的劍。這把劍象徵著獸人族中貴族的地位，因此相當珍貴。 絕對不會受損。 系列: 劍 攻擊: 90 重量: 80 武器等級: 3 要求等級: 5 裝備: 初學者/劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword"},
   "saber": {"id":"saber","imgId":1126,"name":"騎兵之劍 [2]","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":3,"atk":115,"weaponWeight":-100,"weight":100,"sell":230,"buyPrice":460,"reqLevel":27,"reqJob":["swordsman","merchant","thief"],"desc":"騎兵們專用的單手劍。不過使用於騎兵儀式方面較多。 系列: 劍 攻擊: 115 重量: 100 武器等級: 3 要求等級: 27 裝備: 劍士系列/商人系列/盜賊系列專用","slots":2,"weaponCat":"sword"},
   "hae_dong_gum": {"id":"hae_dong_gum","imgId":1128,"name":"海東劍 [2]","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":3,"atk":120,"weaponWeight":-90,"weight":90,"sell":240,"buyPrice":480,"reqLevel":27,"reqJob":["swordsman","merchant","thief"],"int":3,"desc":"在遙遠的東方神秘島國所製作出來的劍，不只殺傷用據說做人格修養時也可以使用。 INT+3 系列: 劍 攻擊: 120 重量: 90 武器等級: 3 要求等級: 27 裝備: 劍士系列/商人系列/盜賊系列專用","slots":2,"weaponCat":"sword"},
-  "edge": {"id":"edge","imgId":1132,"name":"秘劍 慕戀","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":4,"atk":115,"weaponWeight":-70,"weight":70,"sell":230,"buyPrice":460,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"desc":"一旦出手就可能產生無法挽回的結果。 以較低的機率，得到【頻死之術】。 攻擊時，有3%的機率使敵人陷入詛咒狀態。 系列: 劍 攻擊: 115 重量: 70 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword"},
+  "edge": {"id":"edge","imgId":1132,"name":"秘劍 慕戀","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":4,"atk":115,"weaponWeight":-70,"weight":70,"sell":230,"buyPrice":460,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"desc":"一旦出手就可能產生無法挽回的結果。 以較低的機率，得到【頻死之術】。 攻擊時，有3%的機率使敵人陷入詛咒狀態。 系列: 劍 攻擊: 115 重量: 70 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword","ailment":[{"on":"attack","type":"curse","chance":3}]},
   "solar_sword": {"id":"solar_sword","imgId":1136,"name":"烈陽之劍","type":"weapon","icon":"🗡️","weaponType":"sword","atk":85,"element":"fire","weaponWeight":-120,"weight":120,"sell":170,"buyPrice":340,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"desc":"畫有太陽模樣的劍。擁有強韌的生命力以及戰鬥傾向。 每次攻擊時，受攻擊的傷害1%會吸收到HP。 裝備者每10秒中，會持續的消耗15的SP。 系列: 劍 攻擊: 85 重量: 120 屬性: 火 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponLv":4,"weaponCat":"sword"},
   "excalibur": {"id":"excalibur","imgId":1137,"name":"石中劍","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":4,"atk":150,"element":"holy","weaponWeight":-120,"weight":120,"sell":300,"buyPrice":600,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"int":5,"luk":10,"desc":"插在石頭上的劍。會自我選擇持有者，且擁有神聖的力量。 INT+5 LUK+10 DEX-1 系列: 劍 攻擊: 150 重量: 120 屬性: 聖 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword"},
-  "mysteltainn": {"id":"mysteltainn","imgId":1138,"name":"妖劍 弒光","type":"weapon","icon":"🗡️","weaponType":"sword","atk":170,"element":"shadow","weaponWeight":-100,"weight":100,"sell":340,"buyPrice":680,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"dex":3,"desc":"傳說中殺死光神的武器。 對念屬性魔物增加15%的傷害。 DEX+3 攻擊時，一定機率施展【自動念咒】石化術Lv3。 系列: 劍 攻擊: 170 重量: 100 屬性: 黑暗 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponLv":4,"weaponCat":"sword","autoSpell":[{on:"attack",skill:"stonecurse",lv:3,chance:5}]},
-  "byeorrun_gum": {"id":"byeorrun_gum","imgId":1140,"name":"首領之劍","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":4,"atk":150,"weaponWeight":-90,"weight":90,"sell":300,"buyPrice":600,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"desc":"只首領可戴的大劍。 AllState+2 對Boss級魔物增加50%的傷害。 對一般魔物增加10%的傷害。 系列: 劍 攻擊: 150 重量: 90 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword"},
+  "mysteltainn": {"id":"mysteltainn","imgId":1138,"name":"妖劍 弒光","type":"weapon","icon":"🗡️","weaponType":"sword","atk":170,"element":"shadow","weaponWeight":-100,"weight":100,"sell":340,"buyPrice":680,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"dex":3,"desc":"傳說中殺死光神的武器。 對念屬性魔物增加15%的傷害。 DEX+3 攻擊時，一定機率施展【自動念咒】石化術Lv3。 系列: 劍 攻擊: 170 重量: 100 屬性: 黑暗 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponLv":4,"weaponCat":"sword","autoSpell":[{on:"attack",skill:"stonecurse",lv:3,chance:5}],"bonus":{"eleDmg_ghost":15}},
+  "byeorrun_gum": {"id":"byeorrun_gum","imgId":1140,"name":"首領之劍","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":4,"atk":150,"weaponWeight":-90,"weight":90,"sell":300,"buyPrice":600,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"desc":"只首領可戴的大劍。 AllState+2 對Boss級魔物增加50%的傷害。 對一般魔物增加10%的傷害。 系列: 劍 攻擊: 150 重量: 90 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword","bonus":{"allStat":2,"allTargetDmgPct":10,"bossDmgPct":40}},
   "immaterial_sword": {"id":"immaterial_sword","imgId":1141,"name":"聖劍 混沌","type":"weapon","icon":"🗡️","weaponType":"sword","atk":140,"weaponWeight":-90,"weight":90,"sell":280,"buyPrice":560,"reqLevel":40,"reqJob":["swordsman","merchant","thief"],"desc":"有形似無形的念力屬性劍。可以擾亂敵人的精神。 絕對不會受損。 每次攻擊時，會消耗掉1的SP。 以較低的機率，對被攻擊的對象會消耗掉30%的SP。 系列: 劍 攻擊: 140 重量: 90 屬性: 念力 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponLv":4,"weaponCat":"sword"},
   "holy_avenger": {"id":"holy_avenger","imgId":1145,"name":"神聖復仇者之劍","type":"weapon","icon":"🗡️","weaponType":"sword","weaponLv":3,"atk":125,"weaponWeight":-135,"weight":135,"sell":250,"buyPrice":500,"reqLevel":75,"desc":"擁有神聖的神的懲罰，可以攻擊敵人的神之劍 聖屬性 系列: 劍 攻擊: 125 重量: 135 武器等級: 3 要求等級: 75 裝備: 十字軍專用","slots":0,"weaponCat":"sword","reqJob":["swordsman"]},
   "slayer": {"id":"slayer","imgId":1151,"name":"雙手劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":2,"atk":90,"weaponWeight":-130,"weight":130,"sell":180,"buyPrice":360,"reqLevel":18,"reqJob":["swordsman"],"desc":"用於制伏敵人時，有不錯效果的雙手劍。 系列: 雙手劍 攻擊: 90 重量: 130 武器等級: 2 要求等級: 18 裝備: 劍士系列專用","slots":2,"weaponCat":"tsword"},
   "bastard_sword": {"id":"bastard_sword","imgId":1154,"name":"亞爾特劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":2,"atk":115,"weaponWeight":-160,"weight":160,"sell":230,"buyPrice":460,"reqLevel":18,"reqJob":["swordsman"],"desc":"不論什麼砍殺或是刺殺時都很好使用的雙手劍。 系列: 雙手劍 攻擊: 115 重量: 160 武器等級: 2 要求等級: 18 裝備: 劍士系列專用","slots":2,"weaponCat":"tsword"},
   "two_hand_sword": {"id":"two_hand_sword","imgId":1157,"name":"雙手巨劍 [1]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":160,"weaponWeight":-220,"weight":220,"sell":320,"buyPrice":640,"reqLevel":33,"reqJob":["swordsman"],"desc":"以重量和揮舞速度來制伏敵人的雙手巨劍。 系列: 雙手劍 攻擊: 160 重量: 220 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":1,"weaponCat":"tsword"},
-  "broad_sword": {"id":"broad_sword","imgId":1160,"name":"雙手重劍 [1]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":140,"weaponWeight":-200,"weight":200,"sell":280,"buyPrice":560,"reqLevel":33,"reqJob":["swordsman"],"desc":"厚實的刀刃，既可攻擊又可防禦，多用途的雙手巨劍。 DEF+5 系列: 雙手劍 攻擊: 140 重量: 200 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":1,"weaponCat":"tsword"},
+  "broad_sword": {"id":"broad_sword","imgId":1160,"name":"雙手重劍 [1]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":140,"weaponWeight":-200,"weight":200,"sell":280,"buyPrice":560,"reqLevel":33,"reqJob":["swordsman"],"desc":"厚實的刀刃，既可攻擊又可防禦，多用途的雙手巨劍。 DEF+5 系列: 雙手劍 攻擊: 140 重量: 200 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":1,"weaponCat":"tsword","bonus":{"def":5}},
   "claymore": {"id":"claymore","imgId":1163,"name":"十字巨劍","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":3,"atk":180,"weaponWeight":-250,"weight":250,"sell":360,"buyPrice":720,"reqLevel":33,"reqJob":["knight","swordsman"],"desc":"相當巨大的劍，握柄為十字模樣。 系列: 雙手劍 攻擊: 180 重量: 250 武器等級: 3 要求等級: 33 裝備: 騎士/十字軍專用","slots":0,"weaponCat":"tsword"},
   "muramasa": {"id":"muramasa","imgId":1164,"name":"名刀 不知火","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":155,"weaponWeight":-100,"weight":100,"sell":310,"buyPrice":620,"reqLevel":48,"reqJob":["swordsman"],"critRate":30,"desc":"蘊含著邪惡氣息，被稱之為妖道的刀，不過他的威力不可被忽視。 CRI+30 攻擊速度增加8% 很罕見的會對自身詛咒。 系列: 雙手劍 攻擊: 155 重量: 100 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponLv":4,"weaponCat":"tsword","bonus":{"aspdPct":8}},
-  "masamune": {"id":"masamune","imgId":1165,"name":"秘刀 十六夜月","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":200,"weaponWeight":-100,"weight":100,"sell":400,"buyPrice":800,"reqLevel":48,"reqJob":["swordsman"],"flee":30,"desc":"以靈魂鑄入而製作而成的劍。不僅美麗，且力量強大。 FLEE+30 裝備者的所有防禦力，會下降到1/3。 攻擊速度+2 STR-5 系列: 雙手劍 攻擊: 200 重量: 100 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponLv":4,"weaponCat":"tsword"},
+  "masamune": {"id":"masamune","imgId":1165,"name":"秘刀 十六夜月","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":200,"weaponWeight":-100,"weight":100,"sell":400,"buyPrice":800,"reqLevel":48,"reqJob":["swordsman"],"flee":30,"desc":"以靈魂鑄入而製作而成的劍。不僅美麗，且力量強大。 FLEE+30 裝備者的所有防禦力，會下降到1/3。 攻擊速度+2 STR-5 系列: 雙手劍 攻擊: 200 重量: 100 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponLv":4,"weaponCat":"tsword","str":-5,"bonus":{"aspdFlat":2,"defPct":-67}},
   "zweihander": {"id":"zweihander","imgId":1168,"name":"巨大雙手劍","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":200,"weaponWeight":-220,"weight":220,"sell":400,"buyPrice":800,"reqLevel":48,"reqJob":["swordsman"],"desc":"巨大的雙手劍。 絕對不會破壞。 系列: 雙手劍 攻擊: 200 重量: 220 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponCat":"tsword"},
-  "katzbalger": {"id":"katzbalger","imgId":1170,"name":"亞藍斯之劍","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":175,"weaponWeight":-200,"weight":200,"sell":350,"buyPrice":700,"reqLevel":48,"reqJob":["swordsman"],"vit":5,"desc":"專門用來'廝殺'用的劍。手柄部分為特殊的S型。 VIT+5 DEF+10 系列: 雙手劍 攻擊: 175 重量: 200 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponCat":"tsword"},
+  "katzbalger": {"id":"katzbalger","imgId":1170,"name":"亞藍斯之劍","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":175,"weaponWeight":-200,"weight":200,"sell":350,"buyPrice":700,"reqLevel":48,"reqJob":["swordsman"],"vit":5,"desc":"專門用來'廝殺'用的劍。手柄部分為特殊的S型。 VIT+5 DEF+10 系列: 雙手劍 攻擊: 175 重量: 200 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponCat":"tsword","bonus":{"def":10}},
   "tae_goo_lyeon": {"id":"tae_goo_lyeon","imgId":1181,"name":"太刀 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":250,"element":"none","weaponWeight":-200,"weight":200,"sell":500,"buyPrice":1000,"reqLevel":90,"reqJob":["swordsman"],"perfectDodge":10,"desc":"東方的某位英勇將軍所流傳下來的寶劍，完全迴避+10 JOB等級為70時，物理攻擊時有較低機率的10秒鐘 ATK+50 精煉為9以上時，使用技能會消耗SP，後延遲減少20% 系列: 雙手劍 攻擊: 250 重量: 200 屬性: 無 武器等級: 4 要求等級: 90 裝備: 轉生劍士系列專用","slots":2,"weaponLv":4,"weaponCat":"tsword"},
   "bloody_eater": {"id":"bloody_eater","imgId":1182,"name":"嗜血者 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":200,"element":"ghost","weaponWeight":-120,"weight":120,"sell":400,"buyPrice":800,"reqLevel":50,"reqJob":["swordsman"],"critRate":100,"desc":"陰森森的會發出靈氣的魔劍 物理攻擊時，以較低的機率5秒內CRI+100。ATK+50，近身物理攻擊消滅魔物時，恢復100的HP 系列: 雙手劍 攻擊: 200 重量: 120 屬性: 念 武器等級: 4 要求等級: 50 裝備: 轉生劍士系列專用","slots":2,"weaponLv":4,"weaponCat":"tsword"},
   "veteran_sword": {"id":"veteran_sword","imgId":1188,"name":"老兵之劍 [1]","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":180,"weaponWeight":-200,"weight":200,"sell":360,"buyPrice":720,"reqLevel":80,"reqJob":["swordsman"],"str":1,"dex":1,"desc":"唯有對劍的熟練度達到極致的高手才能使用的劍， 熟練度越高越能操作自如， 狂擊最高級時狂擊傷害+50%。 怪物互擊最高級時怪物互擊傷害+50% STR+1，DEX+1 系列: 雙手劍 攻擊: 180 重量: 200 武器等級: 4 要求等級: 80 裝備: 劍士系專用","slots":1,"weaponLv":4,"weaponCat":"tsword"},
@@ -2339,12 +2339,12 @@ const ITEMS = {
   "item_1229": {"id":"item_1229","imgId":1229,"name":"廚刀","type":"weapon","icon":"🔪","weaponType":"dagger","atk":75,"weaponWeight":-50,"weight":50,"sell":150,"buyPrice":300,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"critRate":30,"desc":"切肉片時非常有用的刀，使用方法很簡單，所以很多人都會使用。 CRI+30 對人型系魔物增加3%的傷害。 動物系魔物死亡時身上的肉脫落的機率50%。 系列: 短劍 攻擊: 75 重量: 50 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger","bonus":{"raceDmg_humanoid":3},"killDrop":[{"race":"brute","items":["meat"],"chance":50}]},
   "house_auger": {"id":"house_auger","imgId":1230,"name":"破甲短錐","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":80,"weaponWeight":-60,"weight":60,"sell":160,"buyPrice":320,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"desc":"細長但尖硬的錐子。可以輕易的刺穿防具。 假如對方的防禦力越來越高的話，可以執行更強烈的攻擊。 系列: 短劍 攻擊: 80 重量: 60 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponCat":"dagger"},
   "bazerald": {"id":"bazerald","imgId":1231,"name":"華麗短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":70,"matk":105,"element":"fire","weaponWeight":-50,"weight":50,"sell":140,"buyPrice":280,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"int":5,"desc":"擁有相當華麗外觀的短劍。擁有高貴身份的人常拿它來當做裝飾品或典禮時使用。 INT+5 MATK+105 系列: 短劍 攻擊: 70 重量: 50 屬性: 火 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger"},
-  "assasin_dagger": {"id":"assasin_dagger","imgId":1232,"name":"妖短劍 泣神怨","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":140,"element":"shadow","weaponWeight":-60,"weight":60,"sell":280,"buyPrice":560,"reqLevel":36,"hp":20,"sp":15,"desc":"暗殺者的短劍。 MAXSP上升15% MAXHP上升20% 有較小的攻擊速度加快。 系列: 短劍 攻擊: 140 重量: 60 屬性: 黑暗 武器等級: 4 要求等級: 36 裝備: 暗殺者專用","slots":0,"weaponCat":"dagger"},
+  "assasin_dagger": {"id":"assasin_dagger","imgId":1232,"name":"妖短劍 泣神怨","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":140,"element":"shadow","weaponWeight":-60,"weight":60,"sell":280,"buyPrice":560,"reqLevel":36,"hpPct":20,"spPct":15,"desc":"暗殺者的短劍。 MAXSP上升15% MAXHP上升20% 有較小的攻擊速度加快。 系列: 短劍 攻擊: 140 重量: 60 屬性: 黑暗 武器等級: 4 要求等級: 36 裝備: 暗殺者專用","slots":0,"weaponCat":"dagger"},
   "moonlight_sword": {"id":"moonlight_sword","imgId":1234,"name":"月靈短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":50,"weaponWeight":-70,"weight":70,"sell":100,"buyPrice":200,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"sp":10,"desc":"吸取月光精華而做成的劍，把對方的精神力吸收，以補充自身的精神力。 MAXSP上升10% 每次攻擊時，會恢復3的SP。 系列: 短劍 攻擊: 50 重量: 70 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger"},
-  "sucsamad": {"id":"sucsamad","imgId":1236,"name":"砂塵短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":140,"weaponWeight":-80,"weight":80,"sell":280,"buyPrice":560,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"desc":"沙漠某部落流傳下來的特殊煉法所製成的短劍。 絕對不會受損。 對地屬性魔物增加10%的傷害。 對風屬性魔物增加10%的傷害。 系列: 短劍 攻擊: 140 重量: 80 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger"},
+  "sucsamad": {"id":"sucsamad","imgId":1236,"name":"砂塵短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":140,"weaponWeight":-80,"weight":80,"sell":280,"buyPrice":560,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"desc":"沙漠某部落流傳下來的特殊煉法所製成的短劍。 絕對不會受損。 對地屬性魔物增加10%的傷害。 對風屬性魔物增加10%的傷害。 系列: 短劍 攻擊: 140 重量: 80 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger","bonus":{"eleDmg_earth":10,"eleDmg_wind":10}},
   "grimtooth": {"id":"grimtooth","imgId":1237,"name":"魔短劍 闇噬","type":"weapon","icon":"🔪","weaponType":"dagger","atk":180,"element":"none","weaponWeight":-80,"weight":80,"sell":360,"buyPrice":720,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"flee":10,"perfectDodge":5,"desc":"用魔物尖硬的牙只所製作而成的短劍。 裝備者的所有防禦力，會下降到1/2。 FLEE+10 完全迴避+5 系列: 短劍 攻擊: 180 重量: 80 屬性: 無 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger"},
-  "poison_knife": {"id":"poison_knife","imgId":1239,"name":"巨毒短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":64,"weaponWeight":-80,"weight":80,"sell":128,"buyPrice":256,"reqLevel":65,"desc":"紫色閃爍的刀刃，讓看到這把刀的人，會感覺到害怕。在刀上面塗有強烈的劇毒。 有高几率使敵人陷入中毒狀態。 系列: 短劍 攻擊: 64 重量: 80 武器等級: 3 要求等級: 65 裝載: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":3,"weaponCat":"dagger","reqJob":["swordsman","merchant","thief","mage","archer"]},
-  "cursed_dagger": {"id":"cursed_dagger","imgId":1241,"name":"詛咒的短劍","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":55,"weaponWeight":-40,"weight":40,"sell":110,"buyPrice":220,"reqLevel":85,"reqJob":["mage"],"desc":"鑽進受傷人的傷口，讓對方得到詛咒威力的短劍 讓受傷的人，有較小的機率得到詛咒 系列: 短劍 攻擊: 55 重量: 40 武器等級: 4 要求等級: 85 裝備: 魔法師系列/悟靈士專用","slots":0,"weaponCat":"dagger"},
+  "poison_knife": {"id":"poison_knife","imgId":1239,"name":"巨毒短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":64,"weaponWeight":-80,"weight":80,"sell":128,"buyPrice":256,"reqLevel":65,"desc":"紫色閃爍的刀刃，讓看到這把刀的人，會感覺到害怕。在刀上面塗有強烈的劇毒。 有高几率使敵人陷入中毒狀態。 系列: 短劍 攻擊: 64 重量: 80 武器等級: 3 要求等級: 65 裝載: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":3,"weaponCat":"dagger","reqJob":["swordsman","merchant","thief","mage","archer"],"ailment":[{"on":"attack","type":"poison","chance":10}]},
+  "cursed_dagger": {"id":"cursed_dagger","imgId":1241,"name":"詛咒的短劍","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":55,"weaponWeight":-40,"weight":40,"sell":110,"buyPrice":220,"reqLevel":85,"reqJob":["mage"],"desc":"鑽進受傷人的傷口，讓對方得到詛咒威力的短劍 讓受傷的人，有較小的機率得到詛咒 系列: 短劍 攻擊: 55 重量: 40 武器等級: 4 要求等級: 85 裝備: 魔法師系列/悟靈士專用","slots":0,"weaponCat":"dagger","ailment":[{"on":"attack","type":"curse","chance":3}]},
   "counter_dagger": {"id":"counter_dagger","imgId":1242,"name":"反擊短劍","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":4,"atk":140,"weaponWeight":-55,"weight":55,"sell":280,"buyPrice":560,"reqLevel":55,"reqJob":["mage"],"desc":"給對方致命的攻擊，可能性很高的短劍 CRI上升 系列: 短劍 攻擊: 140 重量: 55 武器等級: 4 要求等級: 55 裝備: 魔法師系列/悟靈士專用","slots":0,"weaponCat":"dagger"},
   "cinquedea": {"id":"cinquedea","imgId":1245,"name":"五指劍 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":3,"atk":110,"element":"none","weaponWeight":-70,"weight":70,"sell":220,"buyPrice":440,"reqLevel":30,"reqJob":["novice"],"desc":"在西方製作的刀刃，寬度相當寬的短劍。 系列: 短劍 攻擊: 110 重量: 70 屬性: 無 武器等級: 3 要求等級: 30 裝備: 初學者系列專用","slots":1,"weaponCat":"dagger"},
   "kindling_dagger": {"id":"kindling_dagger","imgId":1247,"name":"易燃短劍","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":1,"atk":39,"element":"fire","weaponWeight":-60,"weight":60,"sell":78,"buyPrice":156,"reqJob":["acolyte"],"desc":"經常在生火時使用的關係，最後變成火屬性的短劍。 系列: 短劍 攻擊: 39 重量: 60 屬性: 火 武器等級: 1 要求等級: 沒有 裝備: 除了服事和槍手系列外全職業都可以裝備","slots":0,"weaponCat":"dagger"},
@@ -2353,14 +2353,14 @@ const ITEMS = {
   "axe": {"id":"axe","imgId":1301,"name":"斧 [3]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":1,"atk":38,"weaponWeight":-80,"weight":80,"sell":76,"buyPrice":152,"reqLevel":3,"reqJob":["novice","swordsman","merchant","assassin"],"desc":"簡單的使用方法，方便任何人使用的斧。 系列: 斧 攻擊: 38 重量: 80 武器等級: 1 要求等級: 3 裝備: 初學者/劍士系列/商人系列/刺客可以裝備","slots":3,"weaponCat":"axe1"},
   "orcish_axe": {"id":"orcish_axe","imgId":1304,"name":"獸人斧","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":75,"weaponWeight":-150,"weight":150,"sell":150,"buyPrice":300,"reqLevel":3,"reqJob":["novice","swordsman","merchant","assassin"],"desc":"獸人使用的斧。 系列: 斧 攻擊: 75 重量: 150 武器等級: 3 要求等級: 3 裝備: 初學者/劍士系列/商人系列/刺客可以裝備","slots":0,"weaponCat":"axe1"},
   "war_axe": {"id":"war_axe","imgId":1306,"name":"血腥戰斧 [1]","type":"weapon","icon":"🔨","weaponType":"mace","atk":140,"weaponWeight":-420,"weight":420,"sell":280,"buyPrice":560,"reqLevel":76,"dex":2,"luk":2,"desc":"在戰場上揮舞著斧沾滿了血，呈現出可怕的殺氣 用這殘忍的斧刃對著敵人時，敵人會陷入死亡的恐懼中，是可怕的斧。 DEX+2 LUK+2 系列: 斧 攻擊: 140 重量: 420 武器等級: 3 要求等級: 76 裝載: 鐵匠/鍊金術師可以裝備","slots":1,"weaponLv":3,"weaponCat":"axe1"},
-  "windhawk": {"id":"windhawk","imgId":1307,"name":"希爾之斧","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":2,"atk":115,"weaponWeight":-150,"weight":150,"sell":230,"buyPrice":460,"reqLevel":14,"reqJob":["swordsman","merchant","thief"],"desc":"把斧頭類的缺點，慢的攻擊速度補強的斧頭，賦予風屬性對於慢的攻擊速度補強。 增加攻擊速度5% 系列: 單手斧 攻擊: 115 重量: 150 武器等級: 2 要求等級: 14 裝備: 7劍士系列/商人系列/盜賊系列","slots":0,"weaponCat":"axe1"},
+  "windhawk": {"id":"windhawk","imgId":1307,"name":"希爾之斧","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":2,"atk":115,"weaponWeight":-150,"weight":150,"sell":230,"buyPrice":460,"reqLevel":14,"reqJob":["swordsman","merchant","thief"],"desc":"把斧頭類的缺點，慢的攻擊速度補強的斧頭，賦予風屬性對於慢的攻擊速度補強。 增加攻擊速度5% 系列: 單手斧 攻擊: 115 重量: 150 武器等級: 2 要求等級: 14 裝備: 7劍士系列/商人系列/盜賊系列","slots":0,"weaponCat":"axe1","bonus":{"aspdPct":5},"element":"wind"},
   "battle_axe": {"id":"battle_axe","imgId":1351,"name":"巨斧 [3]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":1,"atk":80,"weaponWeight":-150,"weight":150,"sell":160,"buyPrice":320,"reqLevel":3,"reqJob":["swordsman","merchant"],"desc":"多人戰鬥時所使用的雙手斧。 系列: 斧 攻擊: 80 重量: 150 武器等級: 1 要求等級: 3 裝備: 劍士系列/商人系列專用","slots":3,"weaponCat":"axe1"},
   "hammer": {"id":"hammer","imgId":1354,"name":"鋼斧 [2]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":2,"atk":120,"weaponWeight":-200,"weight":200,"sell":240,"buyPrice":480,"reqLevel":16,"reqJob":["swordsman","merchant"],"desc":"威力非常強的錘子。 系列: 斧 攻擊: 120 重量: 200 武器等級: 2 要求等級: 16 裝備: 劍士系列/商人系列專用","slots":2,"weaponCat":"axe1"},
   "buster": {"id":"buster","imgId":1357,"name":"毀滅之斧 [1]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":155,"weaponWeight":-220,"weight":220,"sell":310,"buyPrice":620,"reqLevel":30,"reqJob":["swordsman","merchant"],"desc":"無堅不摧的斧。 系列: 斧 攻擊: 155 重量: 220 武器等級: 3 要求等級: 30 裝備: 劍士系列/商人系列專用","slots":1,"weaponCat":"axe1"},
   "two_handed_axe": {"id":"two_handed_axe","imgId":1360,"name":"雙手斧 [1]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":185,"weaponWeight":-250,"weight":250,"sell":370,"buyPrice":740,"reqLevel":30,"reqJob":["swordsman","merchant"],"desc":"利用重量與加速度的配合，產生極大的破壞力，非常厲害的雙手斧。 系列: 斧 攻擊: 185 重量: 250 武器等級: 3 要求等級: 30 裝備: 劍士系列/商人系列專用","slots":1,"weaponCat":"axe1"},
   "brood_axe": {"id":"brood_axe","imgId":1363,"name":"血斧","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":4,"atk":170,"weaponWeight":-400,"weight":400,"sell":340,"buyPrice":680,"reqLevel":44,"reqJob":["swordsman","merchant"],"str":10,"desc":"蘊含著魔性的斧頭，會變成興奮嗜血的狀態，去尋找敵人的斧。 STR+10 使用時移動速度會增快。 系列: 斧 攻擊: 170 重量: 400 武器等級: 4 要求等級: 44 裝備: 劍士系列/商人系列專用","slots":0,"weaponCat":"axe1"},
   "guillotine": {"id":"guillotine","imgId":1369,"name":"斬首之斧","type":"weapon","icon":"🔨","weaponType":"mace","atk":215,"weaponWeight":-300,"weight":300,"sell":430,"buyPrice":860,"reqLevel":44,"reqJob":["swordsman","merchant"],"desc":"執行死刑時用來砍下頭顱的斷頭台造型。 對人型系魔物會以較低的機率，得到【頻死之術】。 每次攻擊人型系魔物時，會恢復2的SP。 以近身物理攻擊消滅人型系魔物時，會恢復20的SP。 系列: 斧 攻擊: 215 重量: 300 武器等級: 4 要求等級: 44 裝備: 劍士系列/商人系列專用","slots":0,"weaponLv":4,"weaponCat":"axe1"},
-  "berdysz": {"id":"berdysz","imgId":1375,"name":"強襲戰斧 [2]","type":"weapon","icon":"🔨","weaponType":"mace","atk":200,"weaponWeight":-250,"weight":250,"sell":400,"buyPrice":800,"reqLevel":70,"reqJob":["swordsman","merchant"],"desc":"刃的長度較長戰鬥用的斧。頭部補強的部分和厚厚的把手固定在一起，在肉搏戰裡發揮極大的威力 從中型魔物所受到的傷害減少13%， 從大型魔物所受到的傷害減少15% 系列: 斧 攻擊: 200 重量: 250 武器等級: 3 要求等級: 70 裝備: 轉生劍士/商人系列專用","slots":2,"weaponLv":3,"weaponCat":"axe1"},
+  "berdysz": {"id":"berdysz","imgId":1375,"name":"強襲戰斧 [2]","type":"weapon","icon":"🔨","weaponType":"mace","atk":200,"weaponWeight":-250,"weight":250,"sell":400,"buyPrice":800,"reqLevel":70,"reqJob":["swordsman","merchant"],"desc":"刃的長度較長戰鬥用的斧。頭部補強的部分和厚厚的把手固定在一起，在肉搏戰裡發揮極大的威力 從中型魔物所受到的傷害減少13%， 從大型魔物所受到的傷害減少15% 系列: 斧 攻擊: 200 重量: 250 武器等級: 3 要求等級: 70 裝備: 轉生劍士/商人系列專用","slots":2,"weaponLv":3,"weaponCat":"axe1","bonus":{"sizeDmgReduce_medium":13,"sizeDmgReduce_large":15}},
   "heart_breaker": {"id":"heart_breaker","imgId":1376,"name":"碎心斧 [1]","type":"weapon","icon":"🔨","weaponType":"mace","atk":175,"weaponWeight":-200,"weight":200,"sell":350,"buyPrice":700,"reqLevel":70,"reqJob":["swordsman","merchant"],"critRate":20,"desc":"直接傳達衝擊力的雙手斧，特殊加工的斧刃可以砸爛任何鎧甲。 CRI+20，攻擊速度增加5% 根據精煉的不同額外的增加暴擊機率 當神工匠、創造者，攻擊時有一定的機率啟動自動念咒、大地之擊 3級 系列: 斧 攻擊: 175 重量: 200 武器等級: 4 要求等級: 70 裝備: 轉生劍士/商人系列專用","slots":1,"weaponLv":4,"weaponCat":"axe1","perRefine":{"critRate":1},"autoSpell":[{"on":"attack","skill":"hammerfall","lv":3,"chance":3,"when":{"jobIs":["whitesmith","creator"]}}],"bonus":{"aspdPct":5}},
   "end_sektura": {"id":"end_sektura","imgId":1393,"name":"急凍戰斧 [1]","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":250,"element":"water","weaponWeight":-190,"weight":190,"sell":500,"buyPrice":1000,"reqLevel":95,"reqJob":["swordsman","merchant"],"desc":"用極地酷寒地區之礦石製作的斧頭，有股寒風刺骨的感覺。 近距離物理攻擊時有機率對敵人和自身觸發冷凍。 不可破壞。 系列: 雙手斧 攻擊: 250 重量: 190 屬性: 水 武器等級: 4 要求等級: 95 裝備: 轉生劍士/商人系列","slots":1,"weaponLv":4,"weaponCat":"axe2"},
   "velum_guillotine": {"id":"velum_guillotine","imgId":1396,"name":"戰神斬首之斧","type":"weapon","icon":"⚔️","weaponType":"tsword","atk":300,"weaponWeight":-550,"weight":550,"sell":600,"buyPrice":1200,"reqLevel":95,"reqJob":["swordsman","merchant"],"desc":"※PvP，攻城戰地區新增功能。 對玩家的物理傷害+40%、物理傷害無視 30%。 精煉能力+6時，迴旋斧，揮斧重擊的傷害+80%。 精煉能力+9時，對玩家的物理攻擊力再+60%。 在HE攻城戰地圖屬性不生效。 系列: 雙手斧 攻擊: 300 重量: 550 武器等級: 4 要求等級: 95 裝備: 劍士系列/商人系列","slots":0,"weaponLv":4,"weaponCat":"axe2"},
@@ -2370,14 +2370,14 @@ const ITEMS = {
   "gelerdria": {"id":"gelerdria","imgId":1414,"name":"地靈之矛","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":4,"atk":145,"weaponWeight":-70,"weight":70,"sell":290,"buyPrice":580,"reqLevel":48,"reqJob":["swordsman"],"hp":800,"desc":"可讓使用者的體力新陳代謝更好。 地屬性 MAXHP+800 MAXSP-50 系列: 矛 攻擊: 145 重量: 70 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponCat":"spear"},
   "pole_axe": {"id":"pole_axe","imgId":1417,"name":"鐮戟 [1]","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":3,"atk":160,"weaponWeight":-380,"weight":380,"sell":320,"buyPrice":640,"reqLevel":71,"str":1,"int":2,"dex":1,"desc":"大型單手槍，長槍再加上鐮刀，可做多樣性攻擊的全方面武器。 STR+1 INT+2 DEX+1 系列: 矛 攻擊: 160 重量: 380 武器等級: 3 要求等級: 71 裝載: 劍士系列專用","slots":1,"weaponCat":"spear","reqJob":["swordsman"]},
   "pole_axe_c": {"id":"pole_axe_c","imgId":1419,"name":"鐮戟","type":"weapon","icon":"🔱","weaponType":"spear","atk":195,"weaponWeight":-480,"weight":480,"sell":390,"buyPrice":780,"reqLevel":1,"str":1,"int":2,"dex":1,"desc":"租賃物品 是大型的單手槍，有著長長軀體的槍和鐮刀在一起的兵器，有著各式各樣攻擊方式全天候的槍 STR+1 INT+2 DEX+1 (限定無法交易、丟棄) 系列: 矛 攻擊: 195 重量: 480 武器等級: 3 要求等級: 1 裝備: 劍士系列專用","slots":0,"weaponLv":3,"weaponCat":"spear","reqJob":["swordsman"]},
-  "long_horn": {"id":"long_horn","imgId":1420,"name":"長角之矛 [1]","type":"weapon","icon":"🔱","weaponType":"spear","atk":150,"weaponWeight":-100,"weight":100,"sell":300,"buyPrice":600,"reqLevel":65,"reqJob":["swordsman"],"desc":"用神聖獨角獸的角所做成的槍。有著解毒的能力、據說被那個尖角刺到的話會血流不停的。 有一定的機率讓敵人出血， 可使用解毒技能， 聖屬性，絕對不會有損傷， 當和瓦爾基里亞鋼盾一起裝備時，受到傷害時對自身以較低的機率啟動自動念咒、聖母之祈福 2級 系列: 矛 攻擊: 150 重量: 100 武器等級: 4 要求等級: 65 裝備: 轉生劍士系列專用","slots":1,"weaponLv":4,"weaponCat":"spear","ailment":[{"on":"attack","type":"bleed","chance":5}],"grantSkill":[{"id":"detoxify","lv":1}]},
+  "long_horn": {"id":"long_horn","imgId":1420,"name":"長角之矛 [1]","type":"weapon","icon":"🔱","weaponType":"spear","atk":150,"weaponWeight":-100,"weight":100,"sell":300,"buyPrice":600,"reqLevel":65,"reqJob":["swordsman"],"desc":"用神聖獨角獸的角所做成的槍。有著解毒的能力、據說被那個尖角刺到的話會血流不停的。 有一定的機率讓敵人出血， 可使用解毒技能， 聖屬性，絕對不會有損傷， 當和瓦爾基里亞鋼盾一起裝備時，受到傷害時對自身以較低的機率啟動自動念咒、聖母之祈福 2級 系列: 矛 攻擊: 150 重量: 100 武器等級: 4 要求等級: 65 裝備: 轉生劍士系列專用","slots":1,"weaponLv":4,"weaponCat":"spear","ailment":[{"on":"attack","type":"bleed","chance":5}],"grantSkill":[{"id":"detoxify","lv":1}],"element":"holy","autoSpell":[{"on":"hit","skill":"hp_assumptio","lv":2,"chance":3,"when":{"withItems":["item_2115"]}}]},
   "battle_hook": {"id":"battle_hook","imgId":1421,"name":"強襲戰矛 [1]","type":"weapon","icon":"🔱","weaponType":"spear","atk":140,"weaponWeight":-90,"weight":90,"sell":280,"buyPrice":560,"reqLevel":65,"reqJob":["swordsman"],"desc":"尾端是製成鉤鉤模樣的槍，可抓住對方退移讓他活動不方便 當攻擊時，有5%的機率對敵人眩暈 對於人型系魔物增加20%的傷害 可使用連刺攻擊 3級 系列: 矛 攻擊: 140 重量: 90 武器等級: 4 要求等級: 65 裝備: 轉生劍士系列專用","slots":1,"weaponLv":4,"weaponCat":"spear","bonus":{"raceDmg_humanoid":20},"ailment":[{"on":"attack","type":"stun","chance":5}],"grantSkill":[{"id":"pierce","lv":3}]},
   "hunting_spear": {"id":"hunting_spear","imgId":1422,"name":"狩獵之矛 [1]","type":"weapon","icon":"🔱","weaponType":"spear","atk":180,"weaponWeight":-420,"weight":420,"sell":360,"buyPrice":720,"reqLevel":60,"reqJob":["swordsman"],"desc":"以狩獵為目的所做成的槍，尾端是製成樹葉模樣，不是用刺的而是用重量去壓做為打擊為目的的槍。 對動物系魔物的防禦力無視，對動物系魔物狩獵時，有一定的機率會掉落肉 當攻擊時，有一定的機率啟動自動念咒、巧打 3級 系列: 矛 攻擊: 180 重量: 420 武器等級: 4 要求等級: 60 裝備: 轉生劍士系列專用","slots":1,"weaponLv":4,"weaponCat":"spear","bonus":{"defIgnoreRace_brute":100},"killDrop":[{"race":"brute","items":["meat"],"chance":5}],"autoSpell":[{"on":"attack","skill":"lk_jointbeat","lv":3,"chance":5}]},
   "guisarme": {"id":"guisarme","imgId":1451,"name":"彎刃長矛 [2]","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":2,"atk":84,"weaponWeight":-100,"weight":100,"sell":168,"buyPrice":336,"reqLevel":18,"reqJob":["swordsman"],"desc":"有著向內彎曲的刀刃之長矛。 系列: 矛 攻擊: 84 重量: 100 武器等級: 2 要求等級: 18 裝備: 劍士系列專用","slots":2,"weaponCat":"spear"},
   "glaive": {"id":"glaive","imgId":1454,"name":"長槍 [2]","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":2,"atk":104,"weaponWeight":-120,"weight":120,"sell":208,"buyPrice":416,"reqLevel":18,"reqJob":["swordsman"],"desc":"是劍還是長矛已經不清楚了，有著大刀刃的長矛。 系列: 矛 攻擊: 104 重量: 120 武器等級: 2 要求等級: 18 裝備: 劍士系列專用","slots":2,"weaponCat":"spear"},
   "halberd": {"id":"halberd","imgId":1463,"name":"斧錘長矛 [1]","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":3,"atk":165,"weaponWeight":-250,"weight":250,"sell":330,"buyPrice":660,"reqLevel":33,"reqJob":["swordsman"],"desc":"可以揮舞各式各樣的動作，非常順手的雙手矛，在狹小的地方不好使用為缺點。 系列: 矛 攻擊: 165 重量: 250 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":1,"weaponCat":"spear"},
   "crescent_scythe": {"id":"crescent_scythe","imgId":1466,"name":"死神之鐮","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":4,"atk":180,"weaponWeight":-250,"weight":250,"sell":360,"buyPrice":720,"reqLevel":48,"reqJob":["swordsman"],"hit":10,"critRate":30,"desc":"巨大的圓月鐮刀，令人為之驚懼。 CRI+30 HIT+10 系列: 矛 攻擊: 180 重量: 250 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":0,"weaponCat":"spear"},
-  "cardo": {"id":"cardo","imgId":1484,"name":"柱槍 [1]","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":4,"atk":150,"weaponWeight":-560,"weight":560,"sell":300,"buyPrice":600,"reqLevel":70,"reqJob":["knight"],"desc":"類似古神殿柱子的縮小版形狀之雙手槍； 攻擊速度-10%，依精煉額外增加DEF 系列: 矛 攻擊: 150 重量: 560 武器等級: 4 要求等級: 70 裝備: 騎士領主專用","slots":1,"weaponCat":"spear"},
+  "cardo": {"id":"cardo","imgId":1484,"name":"柱槍 [1]","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":4,"atk":150,"weaponWeight":-560,"weight":560,"sell":300,"buyPrice":600,"reqLevel":70,"reqJob":["knight"],"desc":"類似古神殿柱子的縮小版形狀之雙手槍； 攻擊速度-10%，依精煉額外增加DEF 系列: 矛 攻擊: 150 重量: 560 武器等級: 4 要求等級: 70 裝備: 騎士領主專用","slots":1,"weaponCat":"spear","bonus":{"aspdPct":-10}},
   "battle_fork": {"id":"battle_fork","imgId":1485,"name":"三叉戰戟 [4]","type":"weapon","icon":"🔱","weaponType":"spear","weaponLv":2,"atk":112,"weaponWeight":-70,"weight":70,"sell":224,"buyPrice":448,"reqLevel":50,"reqJob":["swordsman"],"desc":"通常稱之謂三叉戟的雙手槍，即輕便又實用 系列: 矛 攻擊: 112 重量: 70 武器等級: 2 要求等級: 50 裝備: 轉生劍士系列","slots":4,"weaponCat":"spear"},
   "club": {"id":"club","imgId":1501,"name":"木錘 [3]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":1,"atk":23,"weaponWeight":-70,"weight":70,"sell":46,"buyPrice":92,"reqLevel":2,"reqJob":["novice","swordsman","merchant","acolyte"],"desc":"木製的鈍器，任何人都方便使用。 系列: 鈍器 攻擊: 23 重量: 70 武器等級: 1 要求等級: 2 裝備: 初學者/劍士系列/服事系列/商人系列可以裝備","slots":3,"weaponCat":"mace"},
   "mace": {"id":"mace","imgId":1504,"name":"鐵錘 [3]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":1,"atk":37,"weaponWeight":-80,"weight":80,"sell":74,"buyPrice":148,"reqLevel":2,"reqJob":["novice","swordsman","merchant","acolyte"],"desc":"鐵製的鈍器，是一種可以對對方痛擊的鈍器。 系列: 鈍器 攻擊: 37 重量: 80 武器等級: 1 要求等級: 2 裝備: 初學者/劍士系列/服事系列/商人系列可以裝備","slots":3,"weaponCat":"mace"},
@@ -2386,13 +2386,13 @@ const ITEMS = {
   "morning_star": {"id":"morning_star","imgId":1513,"name":"日星錘 [1]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":110,"weaponWeight":-150,"weight":150,"sell":220,"buyPrice":440,"reqLevel":27,"reqJob":["swordsman","merchant","acolyte"],"desc":"看起來非常兇暴，是種大型的鈍器。 系列: 鈍器 攻擊: 110 重量: 150 武器等級: 3 要求等級: 27 裝備: 劍士系列/服事系列/商人系列可以裝備","slots":1,"weaponCat":"mace"},
   "sword_mace": {"id":"sword_mace","imgId":1516,"name":"尖刃鐵錘","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":130,"weaponWeight":-120,"weight":120,"sell":260,"buyPrice":520,"reqLevel":27,"reqJob":["swordsman","merchant","acolyte"],"desc":"上頭懸掛著鐵鏈，感覺更威武的鈍器。 系列: 鈍器 攻擊: 130 重量: 120 武器等級: 3 要求等級: 27 裝備: 劍士系列/服事系列/商人系列可以裝備","slots":0,"weaponCat":"mace"},
   "chain": {"id":"chain","imgId":1519,"name":"鏈錘 [2]","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":2,"atk":84,"weaponWeight":-80,"weight":80,"sell":168,"buyPrice":336,"reqLevel":14,"reqJob":["swordsman","merchant","acolyte"],"desc":"上頭懸掛著鐵鏈的鈍器。 系列: 鈍器 攻擊: 84 重量: 80 武器等級: 2 要求等級: 14 裝備: 劍士系列/服事系列/商人系列可以裝備","slots":2,"weaponCat":"mace"},
-  "stunner": {"id":"stunner","imgId":1522,"name":"昏迷之錘","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":140,"weaponWeight":-200,"weight":200,"sell":280,"buyPrice":560,"reqLevel":27,"reqJob":["acolyte"],"desc":"一旦被擊中後必定會喪失神志氣絕身亡的鈍器。 攻擊時，以10%機率眩暈敵人 系列: 鈍器 攻擊: 140 重量: 200 武器等級: 3 要求等級: 27 裝備: 服事系列專用","slots":0,"weaponCat":"mace"},
+  "stunner": {"id":"stunner","imgId":1522,"name":"昏迷之錘","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":140,"weaponWeight":-200,"weight":200,"sell":280,"buyPrice":560,"reqLevel":27,"reqJob":["acolyte"],"desc":"一旦被擊中後必定會喪失神志氣絕身亡的鈍器。 攻擊時，以10%機率眩暈敵人 系列: 鈍器 攻擊: 140 重量: 200 武器等級: 3 要求等級: 27 裝備: 服事系列專用","slots":0,"weaponCat":"mace","ailment":[{"on":"attack","type":"stun","chance":10}]},
   "spike": {"id":"spike","imgId":1523,"name":"闇盲之錘","type":"weapon","icon":"🔨","weaponType":"mace","atk":85,"weaponWeight":-70,"weight":70,"sell":170,"buyPrice":340,"reqLevel":40,"reqJob":["acolyte"],"critRate":40,"desc":"覆蓋著兇暴的鐵釘所做成的恐怖鈍器。不小心被擊中後可能會導致失明。 CRI+40 裝備者的所有防禦力，會下降到1/3。 系列: 鈍器 攻擊: 85 重量: 70 武器等級: 4 要求等級: 40 裝備: 服事系列專用","slots":0,"weaponLv":4,"weaponCat":"mace"},
   "long_mace": {"id":"long_mace","imgId":1525,"name":"秘銀長錘","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":4,"atk":135,"weaponWeight":-80,"weight":80,"sell":270,"buyPrice":540,"reqLevel":40,"reqJob":["acolyte"],"desc":"比起一般鈍器來說，它的攻擊範圍更加廣大。 可以攻擊3格以上的敵方。 受到遠程傷害減少10%。 系列: 鈍器 攻擊: 135 重量: 80 武器等級: 4 要求等級: 40 裝備: 服事系列專用","slots":0,"weaponCat":"mace"},
-  "quadrille": {"id":"quadrille","imgId":1527,"name":"秘錘 冷月","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":4,"atk":165,"weaponWeight":-90,"weight":90,"sell":330,"buyPrice":660,"reqLevel":40,"reqJob":["acolyte"],"desc":"有巨大圓頂的超大型鈍器。 對不死系和人型系還有地屬性魔物增加10%的傷害。 系列: 鈍器 攻擊: 165 重量: 90 武器等級: 4 要求等級: 40 裝備: 服事系列專用","slots":0,"weaponCat":"mace"},
+  "quadrille": {"id":"quadrille","imgId":1527,"name":"秘錘 冷月","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":4,"atk":165,"weaponWeight":-90,"weight":90,"sell":330,"buyPrice":660,"reqLevel":40,"reqJob":["acolyte"],"desc":"有巨大圓頂的超大型鈍器。 對不死系和人型系還有地屬性魔物增加10%的傷害。 系列: 鈍器 攻擊: 165 重量: 90 武器等級: 4 要求等級: 40 裝備: 服事系列專用","slots":0,"weaponCat":"mace","bonus":{"raceDmg_undead":10,"raceDmg_humanoid":10,"eleDmg_earth":10}},
   "iron_driver": {"id":"iron_driver","imgId":1529,"name":"高爾夫球桿","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":3,"atk":155,"weaponWeight":-300,"weight":300,"sell":310,"buyPrice":620,"reqLevel":78,"desc":"據說某種運動所使用的器材，鈍器尾端以圓頭處理，以較輕的碳燒鋼製成，可提高殺傷力 系列: 鈍器 攻擊: 155 重量: 300 武器等級: 3 要求等級: 78 裝載: 牧師/武僧可以裝備","slots":0,"weaponCat":"mace"},
   "spanner": {"id":"spanner","imgId":1531,"name":"鈑手","type":"weapon","icon":"🔨","weaponType":"mace","atk":115,"weaponWeight":-250,"weight":250,"sell":230,"buyPrice":460,"reqLevel":55,"desc":"又重又鈍以碳燒鋼製成不會輕易的被破壞。簡單的構造和較高的使用率，是受歡迎的工具也是鈍器的一種 眩暈，黑暗，中毒，凍冰的效果中臨時選一種，對被攻擊的對象。 系列: 鈍器 攻擊: 115 重量: 250 武器等級: 3 要求等級: 55 裝載: 服事系列專用","slots":0,"weaponLv":3,"weaponCat":"mace"},
-  "lunakaligo": {"id":"lunakaligo","imgId":1544,"name":"月之平底鍋 [3]","type":"weapon","icon":"🔨","weaponType":"mace","atk":110,"weaponWeight":-70,"weight":70,"sell":220,"buyPrice":440,"reqLevel":50,"reqJob":["acolyte"],"desc":"感覺有歲月痕跡的黑色大平底鍋，純STR為77以上時，攻擊速度+4%，物理攻擊時有 15%機率施以眩暈； 當消滅動物系、植物系、魚貝系魔物時，有5%機率會掉落料理 系列: 鈍器 攻擊: 110 重量: 70 武器等級: 3 要求等級: 50 裝備: 轉生服事系列","slots":3,"weaponLv":3,"weaponCat":"mace"},
+  "lunakaligo": {"id":"lunakaligo","imgId":1544,"name":"月之平底鍋 [3]","type":"weapon","icon":"🔨","weaponType":"mace","atk":110,"weaponWeight":-70,"weight":70,"sell":220,"buyPrice":440,"reqLevel":50,"reqJob":["acolyte"],"desc":"感覺有歲月痕跡的黑色大平底鍋，純STR為77以上時，攻擊速度+4%，物理攻擊時有 15%機率施以眩暈； 當消滅動物系、植物系、魚貝系魔物時，有5%機率會掉落料理 系列: 鈍器 攻擊: 110 重量: 70 武器等級: 3 要求等級: 50 裝備: 轉生服事系列","slots":3,"weaponLv":3,"weaponCat":"mace","ailment":[{"on":"attack","type":"stun","chance":15}],"killDrop":[{"race":"brute","pool":"food","chance":5},{"race":"plant","pool":"food","chance":5},{"race":"fish","pool":"food","chance":5}],"condBonus":[{"when":{"statMin":{"str":77}},"bonus":{"aspdPct":4}}]},
   "veteran_hammer": {"id":"veteran_hammer","imgId":1548,"name":"老兵之錘 [2]","type":"weapon","icon":"🔨","weaponType":"mace","atk":160,"weaponWeight":-180,"weight":180,"sell":320,"buyPrice":640,"reqLevel":80,"reqJob":["acolyte"],"int":1,"luk":1,"critRate":2,"desc":"用隕石碎片製成的硬錘。 古代聖職人員以為具有神聖的力量。 天使之護等級每+1時，治癒術恢復量+1% 令牌使用熟練度等級每+1時，CRI+2 INT+1，LUK+1 系列: 鈍器 攻擊: 160 重量: 180 武器等級: 3 要求等級: 80 裝備: 服事系專用","slots":2,"weaponLv":3,"weaponCat":"mace"},
   "bow": {"id":"bow","imgId":1701,"name":"弓 [3]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":1,"atk":15,"weaponWeight":-50,"weight":50,"sell":30,"buyPrice":60,"reqLevel":4,"reqJob":["archer","thief"],"desc":"傷害並不是很高，但使用起來很方便的弓。 系列: 弓 攻擊: 15 重量: 50 武器等級: 1 要求等級: 4 裝備: 弓箭手系列/盜賊/流氓可以裝備","slots":3,"weaponCat":"bow"},
   "composite_bow": {"id":"composite_bow","imgId":1704,"name":"坎普茲弓 [3]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":1,"atk":29,"weaponWeight":-60,"weight":60,"sell":58,"buyPrice":116,"reqLevel":4,"reqJob":["archer","thief"],"desc":"用各種材料混合而成的弓，擁有較高的傷害為重點。 系列: 弓 攻擊: 29 重量: 60 武器等級: 1 要求等級: 4 裝備: 弓箭手系列/盜賊/流氓可以裝備","slots":3,"weaponCat":"bow"},
@@ -2403,7 +2403,7 @@ const ITEMS = {
   "hunter_bow": {"id":"hunter_bow","imgId":1718,"name":"獵人之弓","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":3,"atk":125,"weaponWeight":-150,"weight":150,"sell":250,"buyPrice":500,"reqLevel":33,"reqJob":["hunter"],"desc":"有精準的射擊和較高的傷害，此項優點讓使用者更加喜歡。 系列: 弓 攻擊: 125 重量: 150 武器等級: 3 要求等級: 33 裝備: 獵人專用","slots":0,"weaponCat":"bow"},
   "repeting_cross_bow": {"id":"repeting_cross_bow","imgId":1721,"name":"十字機弩 [1]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":3,"atk":95,"weaponWeight":-200,"weight":200,"sell":190,"buyPrice":380,"reqLevel":65,"reqJob":["thief","hunter"],"desc":"結合箭矢筒，輕巧可連發所製作而成的自動弓 系列: 弓 攻擊: 95 重量: 200 武器等級: 3 要求等級: 65 裝備: 盜賊/獵人/流氓可以裝備","slots":1,"weaponCat":"bow"},
   "balistar": {"id":"balistar","imgId":1722,"name":"貝利斯塔強弩","type":"weapon","icon":"🏹","weaponType":"bow","atk":145,"weaponWeight":-350,"weight":350,"sell":290,"buyPrice":580,"reqLevel":77,"reqJob":["hunter","bard","dancer"],"desc":"本來是在攻城戰裡所使用的大型弓， 原本是要攻擊城牆或城門之用，把大小和傷害減少之後變成可裝備的武器，重新誕生的弓 系列: 弓 攻擊: 145 重量: 350 武器等級: 4 要求等級: 77 裝備: 獵人/詩人/舞娘可以裝備","slots":0,"weaponLv":4,"weaponCat":"bow"},
-  "luna_bow": {"id":"luna_bow","imgId":1723,"name":"露娜弓 [2]","type":"weapon","icon":"🏹","weaponType":"bow","atk":100,"element":"none","weaponWeight":-200,"weight":200,"sell":200,"buyPrice":400,"reqLevel":30,"reqJob":["hunter"],"desc":"用月石做成的弓，弓帶有刀刃變防禦敵人的攻擊並射擊，有一點重是它的缺點。 DEF+2 精煉6以上時，Def+3 精煉9以上時，Def+5 系列: 弓 攻擊: 100 重量: 200 屬性: 無 武器等級: 3 要求等級: 30 裝備: 獵人專用","slots":2,"weaponLv":3,"weaponCat":"bow"},
+  "luna_bow": {"id":"luna_bow","imgId":1723,"name":"露娜弓 [2]","type":"weapon","icon":"🏹","weaponType":"bow","atk":100,"element":"none","weaponWeight":-200,"weight":200,"sell":200,"buyPrice":400,"reqLevel":30,"reqJob":["hunter"],"desc":"用月石做成的弓，弓帶有刀刃變防禦敵人的攻擊並射擊，有一點重是它的缺點。 DEF+2 精煉6以上時，Def+3 精煉9以上時，Def+5 系列: 弓 攻擊: 100 重量: 200 屬性: 無 武器等級: 3 要求等級: 30 裝備: 獵人專用","slots":2,"weaponLv":3,"weaponCat":"bow","bonus":{"def":2},"condBonus":[{"when":{"refineMin":6,"refineMax":8},"bonus":{"def":3}},{"when":{"refineMin":9},"bonus":{"def":5}}]},
   "burning_bow": {"id":"burning_bow","imgId":1730,"name":"燃燒之弓 [1]","type":"weapon","icon":"🏹","weaponType":"bow","atk":95,"weaponWeight":-140,"weight":140,"sell":190,"buyPrice":380,"reqLevel":55,"reqJob":["archer","thief"],"desc":"熱騰騰燃燒模樣般的弓，看起來很燙很難握在手裡的樣子 受到火屬性的傷害減少10%。 當裝備火箭矢時 攻擊傷害增加25% 系列: 弓 攻擊: 95 重量: 140 武器等級: 3 要求等級: 55 裝備: 弓箭手系列/流氓","slots":1,"weaponLv":3,"weaponCat":"bow","condBonus":[{"when":{"ammo":"fire_arrow"},"bonus":{"rangedDmgPct":25}}],"bonus":{"eleReduce_fire":10}},
   "frozen_bow": {"id":"frozen_bow","imgId":1731,"name":"冰凍之弓 [1]","type":"weapon","icon":"🏹","weaponType":"bow","atk":100,"weaponWeight":-140,"weight":140,"sell":200,"buyPrice":400,"reqLevel":55,"reqJob":["archer","thief"],"desc":"凍成冷冰冰的弓，至於能不能拉是有點疑問 有一定的機率把對象給冰凍， 當裝備水靈箭矢時 攻擊傷害增加25% 系列: 弓 攻擊: 100 重量: 140 武器等級: 3 要求等級: 55 裝備: 弓箭手系列/流氓","slots":1,"weaponLv":3,"weaponCat":"bow","ailment":[{"on":"attack","type":"freeze","chance":5}],"condBonus":[{"when":{"ammo":"crystal_arrow"},"bonus":{"rangedDmgPct":25}}]},
   "earth_bow": {"id":"earth_bow","imgId":1732,"name":"大地之弓 [1]","type":"weapon","icon":"🏹","weaponType":"bow","atk":105,"weaponWeight":-140,"weight":140,"sell":210,"buyPrice":420,"reqLevel":55,"reqJob":["archer","thief"],"desc":"好像是自然所做成的看起來很自然的弓， 當裝備地靈箭矢時，攻擊傷害增加25%，對攻擊對象有一定的機率施展黑暗 系列: 弓 攻擊: 105 重量: 140 武器等級: 3 要求等級: 55 裝備: 弓箭手系列/流氓","slots":1,"weaponLv":3,"weaponCat":"bow","ailment":[{"on":"attack","type":"blind","chance":5}],"condBonus":[{"when":{"ammo":"stone_arrow"},"bonus":{"rangedDmgPct":25}}]},
@@ -2412,7 +2412,7 @@ const ITEMS = {
   "double_bound": {"id":"double_bound","imgId":1736,"name":"雙發神弓 [3]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":3,"atk":70,"weaponWeight":-90,"weight":90,"sell":140,"buyPrice":280,"reqLevel":70,"desc":"具有敏銳又精準外觀的二連發弓，專為攻擊之用 攻擊時有一定機率會依自身學習的等級觸發自動念咒、二連矢 系列: 弓 攻擊: 70 重量: 90 武器等級: 3 要求等級: 70 裝備: 神射手專用","slots":3,"weaponCat":"bow","autoSpell":[{"on":"attack","skill":"doublestrafe","lv":5,"chance":5,"useLearnedLv":true}]},
   "ixion_wing": {"id":"ixion_wing","imgId":1737,"name":"伊克西翁之翼 [1]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":4,"atk":135,"weaponWeight":-30,"weight":30,"sell":270,"buyPrice":540,"reqLevel":70,"desc":"純白的羽翼猶如孔雀開屏般美麗的弓 攻擊時有較低機率 7秒鐘攻擊速度提高7%，精煉越高几率也越高。 系列: 弓 攻擊: 135 重量: 30 武器等級: 4 要求等級: 70 裝備: 神射手專用","slots":1,"weaponCat":"bow"},
   "nepenthes_bow": {"id":"nepenthes_bow","imgId":1740,"name":"豬籠草之弓 [2]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":4,"atk":105,"weaponWeight":-100,"weight":100,"sell":210,"buyPrice":420,"reqLevel":60,"desc":"使用忘憂草駭蟲的堅韌觸鬚當作弓線而做的精弓； 使用二連矢時，有一定機率會觸發衝鋒箭、自動念咒 系列: 弓 攻擊: 105 重量: 100 武器等級: 4 要求等級: 60 裝備: 神射手專用","slots":2,"weaponCat":"bow","autoSpell":[{"on":"attack","skill":"chargearrow","lv":1,"chance":5}]},
-  "cursed_lyre": {"id":"cursed_lyre","imgId":1741,"name":"詛咒之弓 [1]","type":"weapon","icon":"🏹","weaponType":"bow","atk":125,"weaponWeight":-125,"weight":125,"sell":250,"buyPrice":500,"reqLevel":80,"reqJob":["archer"],"desc":"傳說中古老時代射殺過東方小國英雄而受到詛咒的弓，因弓本身有詛咒之力量，所以會降低裝備者的運氣，LUK-2； 遠程攻擊時，有4%機率使目標陷入詛咒； 系列: 弓 攻擊: 125 重量: 125 武器等級: 4 要求等級: 80 裝備: 轉生弓箭手系列","slots":1,"weaponLv":4,"weaponCat":"bow"},
+  "cursed_lyre": {"id":"cursed_lyre","imgId":1741,"name":"詛咒之弓 [1]","type":"weapon","icon":"🏹","weaponType":"bow","atk":125,"weaponWeight":-125,"weight":125,"sell":250,"buyPrice":500,"reqLevel":80,"reqJob":["archer"],"desc":"傳說中古老時代射殺過東方小國英雄而受到詛咒的弓，因弓本身有詛咒之力量，所以會降低裝備者的運氣，LUK-2； 遠程攻擊時，有4%機率使目標陷入詛咒； 系列: 弓 攻擊: 125 重量: 125 武器等級: 4 要求等級: 80 裝備: 轉生弓箭手系列","slots":1,"weaponLv":4,"weaponCat":"bow","luk":-2,"ailment":[{"on":"attack","type":"curse","chance":4}]},
   "falken_blitz": {"id":"falken_blitz","imgId":1745,"name":"獵鷹閃電弓 [2]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":3,"atk":100,"weaponWeight":-100,"weight":100,"sell":200,"buyPrice":400,"reqLevel":50,"desc":"【武器等級：3】 摹仿飛翔中的隼之英姿的紅弓，姿態優雅，技能使用上特殊化了， 銳利射擊，二連矢，衝鋒箭的傷害增加10% 系列: 弓 攻擊: 100 重量: 100 要求等級: 50 裝備: 神射手專用","slots":2,"weaponCat":"bow","bonus":{"skillDmg_sn_sharpshooting":10,"skillDmg_doublestrafe":10,"skillDmg_chargearrow":10}},
   "elven_bow": {"id":"elven_bow","imgId":1746,"name":"小精靈弓 [1]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":3,"atk":160,"weaponWeight":-150,"weight":150,"sell":320,"buyPrice":640,"reqLevel":100,"reqJob":["archer"],"dex":2,"desc":"根據古代守衛森林的種族使用的弓的樣子製作而成。 DEX+2。 搭配精靈箭矢時，遠程傷害+50%。 系列: 弓 攻擊: 160 重量: 150 武器等級: 3 要求等級: 100 裝備: 3轉弓箭手系列","slots":1,"weaponCat":"bow","condBonus":[{"when":{"ammo":"arrow_of_elf"},"bonus":{"rangedDmgPct":50}}]},
   "sinister_fist": {"id":"sinister_fist","imgId":1800,"name":"邪念之升龍拳套 [1]","type":"weapon","icon":"👊","weaponType":"knuckle","weaponLv":4,"atk":150,"weaponWeight":-150,"weight":150,"sell":300,"buyPrice":600,"reqLevel":160,"desc":"蘊含著邪惡的升龍拳套。 ATK增加至(精煉值*精煉值)。(上限為精煉+15) 系列: 拳套 攻擊: 150 重量: 150 武器等級: 4 要求等級: 160 裝備: 牧師系列/武僧系列","slots":1,"weaponCat":"knuckle","reqJob":["priest","acolyte"]},
@@ -2459,16 +2459,16 @@ const ITEMS = {
   "holy_guard": {"id":"holy_guard","imgId":2110,"name":"聖耀之盾","type":"armor","icon":"🛡️","armorType":"shield","def":110,"weight":140,"sell":440,"buyPrice":880,"reqLevel":68,"vit":2,"desc":"有象徵神象徵物的，神聖的盾牌 VIT+2，MDEF+2，不可精煉 系列: 盾牌 防禦: 110 重量: 140 要求等級: 68 裝備: 十字軍專用","slots":0,"reqJob":["swordsman"],"mdef":2},
   "herald_of_god": {"id":"herald_of_god","imgId":2111,"name":"大天使之盾","type":"armor","icon":"🛡️","armorType":"shield","def":120,"weight":140,"sell":480,"buyPrice":960,"reqLevel":83,"vit":3,"int":2,"desc":"擁有神的旨意，從神的傳令那裡神直接賜給他，具有象徵性的盾牌。 INT+2，VIT+3，MDEF+3，不可破壞。 系列: 盾牌 防禦: 120 重量: 140 要求等級: 83 裝備: 十字軍專用","slots":0,"reqJob":["swordsman"],"mdef":3},
   "novice_shield": {"id":"novice_shield","imgId":2113,"name":"初學者鋼盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":20,"weight":100,"sell":80,"buyPrice":160,"reqLevel":40,"reqJob":["novice"],"desc":"為了初學者特別製作的，以特殊金屬做成的可愛鋼盾 除了無屬性外，對所有屬性傷害減少20% 系列: 盾牌 防禦: 20 重量: 100 要求等級: 40 裝備: 初學者系列專用","slots":1},
-  "stone_buckler": {"id":"stone_buckler","imgId":2114,"name":"石制圓盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":45,"weight":150,"sell":180,"buyPrice":360,"reqLevel":65,"str":2,"desc":"托爾把巨人族王，赫魯格尼樂殺死後所得到的石制盾牌，可以感覺到和神們對打的巨人們，他們的潛力 從大型魔物受到的傷害減少5%， 和奧丁的祝福、和魔術無邊帽一起裝備時 STR+2，DEF+5，MDEF+5。劍士系列裝備時 DEF+6。 系列: 盾牌 防禦: 45 重量: 150 要求等級: 65 裝備: 除初心者以外的所有職業","slots":1,"mdef":5,"condBonus":[{when:{withItems:["item_2353","magni_cap"]},bonus:{str:2,def:5,mdef:5}}]},
+  "stone_buckler": {"id":"stone_buckler","imgId":2114,"name":"石制圓盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":45,"weight":150,"sell":180,"buyPrice":360,"reqLevel":65,"desc":"托爾把巨人族王，赫魯格尼樂殺死後所得到的石制盾牌，可以感覺到和神們對打的巨人們，他們的潛力 從大型魔物受到的傷害減少5%， 和奧丁的祝福、和魔術無邊帽一起裝備時 STR+2，DEF+5，MDEF+5。劍士系列裝備時 DEF+6。 系列: 盾牌 防禦: 45 重量: 150 要求等級: 65 裝備: 除初心者以外的所有職業","slots":1,"bonus":{"sizeDmgReduce_large":5},"condBonus":[{when:{withItems:["item_2353","magni_cap"]},bonus:{str:2,def:5,mdef:5}},{when:{jobLine:"swordsman"},bonus:{def:6}}]},
   "item_2116": {"id":"item_2116","imgId":2116,"name":"天使的保護 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":30,"weight":40,"sell":120,"buyPrice":240,"reqLevel":20,"reqJob":["novice"],"desc":"負責超級初學者天使的盾牌，裡面滲透著打敗惡的神聖的力量 對惡魔型魔物傷害減少5% 系列: 盾牌 防禦: 30 重量: 40 要求等級: 20 裝備: 初學者系列專用","slots":1},
   "arm_guard": {"id":"arm_guard","imgId":2117,"name":"手臂防護具","type":"armor","icon":"🛡️","armorType":"shield","def":50,"weight":15,"sell":200,"buyPrice":400,"reqLevel":20,"desc":"忍者專用的手臂防禦具，裡面插入有鐵條和鐵板，看起來有著相當的耐久力而感到自豪 系列: 盾牌 防禦: 50 重量: 15 要求等級: 20 裝備: 忍者專用","slots":0},
   "orleans_server": {"id":"orleans_server","imgId":2123,"name":"奧爾里昂的鐵盤 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":75,"weight":100,"sell":300,"buyPrice":600,"reqLevel":55,"reqJob":["novice"],"desc":"好像是裝上料理送菜的寬式圓形鐵盤，擦拭的很乾淨而發亮， 有5%的機率讓魔法反射 MDEF+2 當和奧爾里昂的手套一起裝備時，變動施法時間減少10%。 系列: 盾牌 防禦: 75 重量: 100 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1,"mdef":2,"bonus":{"magicReflectChance":5},"condBonus":[{when:{withAnyItem:["orleans_glove"]},bonus:{skillCdFlat:-1}}]},
-  "thorny_buckler": {"id":"thorny_buckler","imgId":2124,"name":"刺盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":85,"weight":100,"sell":340,"buyPrice":680,"reqLevel":55,"reqJob":["novice"],"desc":"前面全部以刺針覆蓋稍微有點粗獷感覺的盾牌，反而要來攻擊的敵人會受到到傷害 MDEF+2 當和野牛之角一起裝備時，攻擊速度提高10%，對所受到的物理傷害有5%的反射 系列: 盾牌 防禦: 85 重量: 100 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1,"mdef":2},
+  "thorny_buckler": {"id":"thorny_buckler","imgId":2124,"name":"刺盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":85,"weight":100,"sell":340,"buyPrice":680,"reqLevel":55,"reqJob":["novice"],"desc":"前面全部以刺針覆蓋稍微有點粗獷感覺的盾牌，反而要來攻擊的敵人會受到到傷害 MDEF+2 當和野牛之角一起裝備時，攻擊速度提高10%，對所受到的物理傷害有5%的反射 系列: 盾牌 防禦: 85 重量: 100 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1,"mdef":2,"condBonus":[{"when":{"withItems":["bison_horn"]},"bonus":{"aspdPct":10,"reflectPct":5}}]},
   "cross_shield": {"id":"cross_shield","imgId":2130,"name":"十字鋼盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":130,"weight":200,"sell":520,"buyPrice":1040,"reqLevel":80,"str":1,"desc":"巨大並厚實的十字形盾牌，STR+1 連續盾擊，迴旋盾擊的傷害增加30%，使用技能時SP消耗量增加10% 系列: 盾牌 防禦: 130 重量: 200 要求等級: 80 裝備: 十字軍專用","slots":1,"reqJob":["swordsman"]},
   "magic_study_vol1": {"id":"magic_study_vol1","imgId":2131,"name":"魔力書籍第一卷 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":18,"weight":100,"sell":72,"buyPrice":144,"reqLevel":70,"reqJob":["mage"],"int":2,"desc":"記錄著密密麻麻難懂文字的厚厚書籍，應該是出版了一系列的書籍 MDEF+3 INT+2，受到攻擊時有一定機率對敵人施展眩暈 系列: 盾牌 防禦: 18 重量: 100 要求等級: 70 裝備: 魔法師系列/悟靈士專用","slots":1,"mdef":3,"ailment":[{"on":"hit","type":"stun","chance":5}]},
-  "tournament_shield": {"id":"tournament_shield","imgId":2133,"name":"錦標賽之盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":105,"weight":100,"sell":420,"buyPrice":840,"reqLevel":50,"reqJob":["swordsman"],"desc":"馬上比武用的盾牌，在盾牌中間有個凹槽可放置長槍，可利用長槍以發揮更強的防禦效果； 對所有階級敵人的物理傷害+1%， 與長角之矛、強襲戰矛、狩獵之矛一起裝置時 DEF+2，對所有階級敵人的物理傷害+4%， 當裝備者為騎士領主時，攻擊速度減少5% 系列: 盾牌 防禦: 105 重量: 100 要求等級: 50 裝備: 轉生劍士系列","slots":1},
+  "tournament_shield": {"id":"tournament_shield","imgId":2133,"name":"錦標賽之盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":105,"weight":100,"sell":420,"buyPrice":840,"reqLevel":50,"reqJob":["swordsman"],"desc":"馬上比武用的盾牌，在盾牌中間有個凹槽可放置長槍，可利用長槍以發揮更強的防禦效果； 對所有階級敵人的物理傷害+1%， 與長角之矛、強襲戰矛、狩獵之矛一起裝置時 DEF+2，對所有階級敵人的物理傷害+4%， 當裝備者為騎士領主時，攻擊速度減少5% 系列: 盾牌 防禦: 105 重量: 100 要求等級: 50 裝備: 轉生劍士系列","slots":1,"bonus":{"sizeDmg_small":1,"sizeDmg_medium":1,"sizeDmg_large":1},"condBonus":[{"when":{"withAnyItem":["long_horn","battle_hook","hunting_spear"]},"bonus":{"def":2,"sizeDmg_small":4,"sizeDmg_medium":4,"sizeDmg_large":4}},{"when":{"jobIs":"lordknight"},"bonus":{"aspdPct":-5}}]},
   "shield_of_naga": {"id":"shield_of_naga","imgId":2134,"name":"納迦鱗盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":35,"weight":50,"sell":140,"buyPrice":280,"desc":"利用納加蛇的鱗片而製作的盾牌，即堅固又精細，靠近它恐怕被鱗片割傷，MDEF+3； 受到物理傷害時，有一定機率會反射物理傷害 5秒鐘； 傷害反射率是當盾牌精煉每提高1點時，增加3% 系列: 盾牌 防禦: 35 重量: 50 裝備: 轉生2轉專用","slots":1,"mdef":3,"perRefine":{"reflectPct":3}},
-  "shadow_guard": {"id":"shadow_guard","imgId":2135,"name":"陰影守護 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":52,"weight":80,"sell":208,"buyPrice":416,"reqLevel":70,"flee":20,"desc":"可裝置在手臂上的黑色小盾牌， 與陰影之靴一起裝置時，對攻擊我的敵人有較高几率施以黑暗； 另外受到攻擊時，會有10秒鐘 FLEE+20 的機率 系列: 盾牌 防禦: 52 重量: 80 要求等級: 70 裝備: 神行太保專用","slots":1},
+  "shadow_guard": {"id":"shadow_guard","imgId":2135,"name":"陰影守護 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":52,"weight":80,"sell":208,"buyPrice":416,"reqLevel":70,"desc":"可裝置在手臂上的黑色小盾牌， 與陰影之靴一起裝置時，對攻擊我的敵人有較高几率施以黑暗； 另外受到攻擊時，會有10秒鐘 FLEE+20 的機率 系列: 盾牌 防禦: 52 重量: 80 要求等級: 70 裝備: 神行太保專用","slots":1,"ailment":[{"on":"hit","type":"blind","chance":10,"when":{"withItems":["shadow_walk"]}}],"onAttackBuff":[{"on":"hit","chance":5,"durSec":10,"buffType":"flee","buffFlat":20,"buffName":"陰影守護"}]},
   "bradium_shield": {"id":"bradium_shield","imgId":2138,"name":"魔力之石盾牌 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":98,"weight":180,"sell":392,"buyPrice":784,"reqLevel":65,"desc":"使用魔力之石所製成的堅固盾牌， MHP+500 使用迴旋盾擊時傷害+60% AGI-1 系列: 盾牌 防禦: 98 重量: 180 要求等級: 65 裝備: 轉生2轉職業以上","slots":1,"hp":500},
   "siver_guard": {"id":"siver_guard","imgId":2146,"name":"銀色盾牌 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":60,"weight":30,"sell":240,"buyPrice":480,"reqLevel":22,"desc":"把銀和鐵混合而成的一般薄盾，據說反射光線時很炫。 系列: 盾牌 防禦: 60 重量: 30 要求等級: 22 裝備: 所有職業","slots":1},
   "round_buckler": {"id":"round_buckler","imgId":2147,"name":"鋁製圓盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":90,"weight":60,"sell":360,"buyPrice":720,"reqLevel":22,"reqJob":["novice"],"desc":"普遍廣泛被使用的圓形盾牌，外框上使用鋁以加強防禦力。 系列: 盾牌 防禦: 90 重量: 60 要求等級: 22 裝備: 除了初學者以外的所有轉生職業群","slots":1},
@@ -2477,18 +2477,18 @@ const ITEMS = {
   "geffenia_book_water": {"id":"geffenia_book_water","imgId":2161,"name":"葛帔尼亞的古書(水) [1]","type":"armor","icon":"🛡️","armorType":"shield","def":30,"weight":100,"sell":120,"buyPrice":240,"reqLevel":100,"int":1,"desc":"遺忘的大陸-葛帔尼亞的秘籍之一，但真正會使用此魔力的人很少。 INT+1，MDEF+2。 純INT120時 MATK+10，MHP+800。 與暴風雪法杖一起裝備時，凍僵術、寒冰濃霧、暴風雪的變動詠唱減少%為盾牌精煉的4倍。 系列: 盾牌 防禦: 30 重量: 100 要求等級: 100 裝備: 大法師","slots":1,"matk":10,"mdef":2,"hp":800},
   "bible_of_promise2": {"id":"bible_of_promise2","imgId":2162,"name":"誓約之書(第二卷) [1]","type":"armor","icon":"🛡️","armorType":"shield","def":20,"weight":50,"sell":80,"buyPrice":160,"reqLevel":140,"desc":"記錄著在大聖堂所流傳下來的音樂古書，當時是以系列叢書出版且非常暢銷。 MDEF+5，可使用\"奧丁之神力Lv2\"， 自身使用的治癒量+5%。 系列: 盾牌 防禦: 20 重量: 50 要求等級: 140 裝備: 大主教","slots":1,"mdef":5},
   "kalasak": {"id":"kalasak","imgId":2169,"name":"卡拉沙矩盾","type":"armor","icon":"🛡️","armorType":"shield","def":40,"weight":40,"sell":160,"buyPrice":320,"desc":"以藤盾製作之堅固又輕盈的盾牌。 每3點精煉受到BOSS怪的傷害-1%。 與魔幻紫藤盾，寶箱巨鱷披風，巴庫暴龍鱗片鎧甲，噩夢死神長靴一起裝備時 在菲律賓地圖內受到魔物的傷害-30%，MHP+20%，MSP+10%。 系列: 盾牌 防禦: 40 重量: 40 裝備: 所有職業","slots":0,"hpPct":20,"spPct":10},
-  "sunglasses": {"id":"sunglasses","imgId":2201,"name":"太陽眼鏡","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"黑色的眼鏡，可用來阻擋太陽用或當做時髦的裝飾品用。 受到攻擊時，被黑暗的機率降低5%。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
+  "sunglasses": {"id":"sunglasses","imgId":2201,"name":"太陽眼鏡","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"黑色的眼鏡，可用來阻擋太陽用或當做時髦的裝飾品用。 受到攻擊時，被黑暗的機率降低5%。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 裝備: 所有職業","slots":0,"bonus":{"ailResist_blind":5}},
   "glasses": {"id":"glasses","imgId":2203,"name":"眼鏡","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"用玻璃壓縮做成的眼鏡，佩戴這眼鏡的人，視力都不太好。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
   "item_2205": {"id":"item_2205","imgId":2205,"name":"泳鏡","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"在街上攜帶這眼鏡的話，會引起他人注目。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
   "wedding_veil": {"id":"wedding_veil","imgId":2206,"name":"婚禮頭紗","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"婚禮時，女生戴在頭上的紗，男生戴在頭上的話，會有可能被人家誤會。 MDEF+5 系列: 頭盔 防禦: 0 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"mdef":5},
-  "fancy_flower": {"id":"fancy_flower","imgId":2207,"name":"花朵頭飾","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"用來插在頭上當裝飾的花。 受到植物系魔物的攻擊時，可減少10% 的傷害。 系列: 頭盔 防禦: 0 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
+  "fancy_flower": {"id":"fancy_flower","imgId":2207,"name":"花朵頭飾","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"用來插在頭上當裝飾的花。 受到植物系魔物的攻擊時，可減少10% 的傷害。 系列: 頭盔 防禦: 0 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"bonus":{"raceDmgReduce_plant":10}},
   "ribbon": {"id":"ribbon","imgId":2208,"name":"紫蝶髮帶","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":10,"sell":4,"buyPrice":8,"desc":"用布條做成的蝴蝶髮帶，主要是給女性使用。 MDEF+3 系列: 頭盔 防禦: 1 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"mdef":3},
   "hair_band": {"id":"hair_band","imgId":2210,"name":"髮箍","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":10,"sell":4,"buyPrice":8,"desc":"為了長髮族群固定頭髮時，所使用的髮圈。 系列: 頭盔 防禦: 1 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
   "bandana": {"id":"bandana","imgId":2211,"name":"方頭巾","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":10,"sell":4,"buyPrice":8,"desc":"為了女性洗臉時，固定頭髮所使用的頭巾。 系列: 頭盔 防禦: 1 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
   "eye_bandage": {"id":"eye_bandage","imgId":2212,"name":"獨眼龍眼罩","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"當眼睛受傷時為了保護眼睛，覆蓋在眼睛上的眼罩。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
   "cat_hairband": {"id":"cat_hairband","imgId":2213,"name":"貓耳髮圈","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":8,"buyPrice":16,"desc":"貓耳模樣的髮圈。 系列: 頭盔 防禦: 2 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
   "biretta": {"id":"biretta","imgId":2216,"name":"聖職之帽","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"reqJob":["acolyte"],"desc":"戴上去會有權威感，象徵聖職者的帽子。 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 服事系列","slots":0},
-  "flu_mask": {"id":"flu_mask","imgId":2218,"name":"口罩","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"當感冒或保暖時，所戴的口罩。 受到攻擊時，被沉默的機率降低減少10%。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 所有職業","slots":0},
+  "flu_mask": {"id":"flu_mask","imgId":2218,"name":"口罩","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"當感冒或保暖時，所戴的口罩。 受到攻擊時，被沉默的機率降低減少10%。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 所有職業","slots":0,"bonus":{"ailResist_silence":10}},
   "hat": {"id":"hat","imgId":2220,"name":"漁夫帽","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":20,"sell":8,"buyPrice":16,"desc":"可以遮蔽陽光的寬鬆帽子。 系列: 頭盔 防禦: 2 位置: 頭上 重量: 20 裝備: 所有職業","slots":0},
   "turban": {"id":"turban","imgId":2222,"name":"圓帽","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":30,"sell":20,"buyPrice":40,"desc":"圓形帽子，讓使用者變得更可愛的帽子。 系列: 頭盔 防禦: 5 位置: 頭上 重量: 30 裝備: 除初心者以外的所有職業","slots":0},
   "goggle": {"id":"goggle","imgId":2224,"name":"防風皮革眼鏡","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":30,"sell":20,"buyPrice":40,"reqJob":["swordsman","archer","merchant","thief"],"desc":"皮革製成的防風眼鏡。 系列: 頭盔 位置: 頭上中 防禦: 5 重量: 30 裝備: 劍士系列/弓箭手系列/商人系列/盜賊系列","slots":0},
@@ -2501,8 +2501,8 @@ const ITEMS = {
   "null": {"id":"null","imgId":2236,"name":"聖誕帽","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":8,"buyPrice":16,"luk":1,"desc":"用紅色布料做成的特殊帽子。 MDEF+1，LUK+1 系列: 頭盔 防禦: 2 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"mdef":1},
   "one_eyed_glass": {"id":"one_eyed_glass","imgId":2239,"name":"單眼眼鏡","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"只能蓋住一邊眼睛的眼鏡，比起實用性來說，人們大多將它視為裝飾用的時髦物品。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
   "granpa_beard": {"id":"granpa_beard","imgId":2241,"name":"白鬍鬚","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"佩帶的時候，會有忠厚感覺的鬍鬚。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 所有職業","slots":0},
-  "luxury_sunglasses": {"id":"luxury_sunglasses","imgId":2242,"name":"高級太陽眼鏡","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":8,"buyPrice":16,"desc":"比一般太陽眼鏡質量還要高級的特製品。在阻擋太陽光方面效果也更為顯著。 受到攻擊時，被黑暗的機率降低10%。 系列: 頭盔 防禦: 2 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
-  "spinning_eyes": {"id":"spinning_eyes","imgId":2243,"name":"旋轉眼鏡","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":10,"sell":4,"buyPrice":8,"desc":"使用時眼前可以看到不斷旋轉的圖案之神奇眼鏡。 旋轉眼鏡 戴上這種眼鏡會讓人產生眩暈的感覺，事實上在別人眼中看來這跟其他一般眼鏡沒有什麼兩樣。 受到攻擊時，被黑暗的機率降低10%。 系列: 頭盔 防禦: 1 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
+  "luxury_sunglasses": {"id":"luxury_sunglasses","imgId":2242,"name":"高級太陽眼鏡","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":8,"buyPrice":16,"desc":"比一般太陽眼鏡質量還要高級的特製品。在阻擋太陽光方面效果也更為顯著。 受到攻擊時，被黑暗的機率降低10%。 系列: 頭盔 防禦: 2 位置: 頭中 重量: 10 裝備: 所有職業","slots":0,"bonus":{"ailResist_blind":10}},
+  "spinning_eyes": {"id":"spinning_eyes","imgId":2243,"name":"旋轉眼鏡","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":10,"sell":4,"buyPrice":8,"desc":"使用時眼前可以看到不斷旋轉的圖案之神奇眼鏡。 旋轉眼鏡 戴上這種眼鏡會讓人產生眩暈的感覺，事實上在別人眼中看來這跟其他一般眼鏡沒有什麼兩樣。 受到攻擊時，被黑暗的機率降低10%。 系列: 頭盔 防禦: 1 位置: 頭中 重量: 10 裝備: 所有職業","slots":0,"bonus":{"ailResist_blind":10}},
   "sweet_gents": {"id":"sweet_gents","imgId":2245,"name":"紳士帽","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":40,"sell":20,"buyPrice":40,"desc":"紳士們戴的時髦帽子，外觀給人感覺莊重大方。 系列: 頭盔 防禦: 5 位置: 頭上 重量: 40 裝備: 除初心者以外的所有職業","slots":0},
   "golden_gear": {"id":"golden_gear","imgId":2246,"name":"黃金帽","type":"armor","icon":"👑","armorType":"headgear","def":9,"weight":90,"sell":36,"buyPrice":72,"reqLevel":40,"desc":"用黃金製成的保護頭部用器具。因為主要的原料為黃金，所以相當的堅硬，防禦力強。 絕對不會受損。 系列: 頭盔 防禦: 9 位置: 頭上 重量: 90 要求等級: 40 裝備: 除初心者以外的所有職業","slots":0},
   "item_2247": {"id":"item_2247","imgId":2247,"name":"回憶帽","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":40,"sell":20,"buyPrice":40,"desc":"年老者戴的帽子，可以讓人回想起年少時期的歡樂時光。 系列: 頭盔 防禦: 5 位置: 頭上 重量: 40 裝備: 除初心者以外的所有職業","slots":0},
@@ -2511,8 +2511,8 @@ const ITEMS = {
   "fillet": {"id":"fillet","imgId":2250,"name":"粉紗髮圈","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":8,"buyPrice":16,"desc":"用來固定頭髮的髮圈，上面有一個小蝴蝶結為重點。 最大SP+20 系列: 頭盔 防禦: 2 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0},
   "holy_bonnet": {"id":"holy_bonnet","imgId":2251,"name":"神聖之帽","type":"armor","icon":"👑","armorType":"headgear","def":10,"weight":10,"sell":40,"buyPrice":80,"reqJob":["acolyte"],"desc":"神聖的聖職者所戴的帽子。 MDEF+3 系列: 頭盔 防禦: 10 位置: 頭上 重量: 10 裝備: 服事系列專用","slots":0,"mdef":3},
   "star_sparkling": {"id":"star_sparkling","imgId":2252,"name":"魔法帽","type":"armor","icon":"👑","armorType":"headgear","def":7,"weight":30,"sell":28,"buyPrice":56,"reqJob":["mage"],"desc":"配帶時，可讓詠唱魔法次數增加的神奇帽子。 MSP+100 系列: 頭盔 防禦: 7 位置: 頭上 重量: 30 裝備: 魔法師系列/悟靈士專用","slots":0,"sp":100},
-  "sunflower": {"id":"sunflower","imgId":2253,"name":"向日葵頭飾","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":10,"sell":4,"buyPrice":8,"desc":"戴在頭上裝飾用的向日葵頭飾。 受到昆蟲系魔物的攻擊時，可減少10%的傷害 系列: 頭盔 防禦: 1 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
-  "angelic_chain": {"id":"angelic_chain","imgId":2254,"name":"天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"agi":1,"luk":1,"desc":"搜集天使的羽毛所製成的髮圈。 AGI+1，LUK+1 MDEF+3 受到惡魔系魔物的攻擊時，可減少3%的傷害 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
+  "sunflower": {"id":"sunflower","imgId":2253,"name":"向日葵頭飾","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":10,"sell":4,"buyPrice":8,"desc":"戴在頭上裝飾用的向日葵頭飾。 受到昆蟲系魔物的攻擊時，可減少10%的傷害 系列: 頭盔 防禦: 1 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"bonus":{"raceDmgReduce_insect":10}},
+  "angelic_chain": {"id":"angelic_chain","imgId":2254,"name":"天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"agi":1,"luk":1,"desc":"搜集天使的羽毛所製成的髮圈。 AGI+1，LUK+1 MDEF+3 受到惡魔系魔物的攻擊時，可減少3%的傷害 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"mdef":3,"bonus":{"raceDmgReduce_demon":3}},
   "satanic_chain": {"id":"satanic_chain","imgId":2255,"name":"惡魔髮圈","type":"armor","icon":"👑","armorType":"headgear","def":6,"weight":10,"sell":24,"buyPrice":48,"str":1,"desc":"依照惡魔的翅膀模樣所製做的髮圈。 STR+1，MDEF+2 系列: 頭盔 防禦: 6 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"mdef":2},
   "magestic_goat": {"id":"magestic_goat","imgId":2256,"name":"山羊頭盔","type":"armor","icon":"👑","armorType":"headgear","def":9,"weight":80,"sell":36,"buyPrice":72,"reqJob":["swordsman","merchant","acolyte"],"str":1,"desc":"上頭有著山羊的角的頭具。宗教意味濃厚。 STR+1 系列: 頭盔 防禦: 9 位置: 頭上 重量: 80 裝備: 劍士系列/商人系列/跆拳/拳聖專用","slots":0},
   "snowy_horn": {"id":"snowy_horn","imgId":2257,"name":"獸角頭飾","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"desc":"純白色的角，尾端不但不尖銳，還相當的圓滑。 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
@@ -2521,19 +2521,19 @@ const ITEMS = {
   "pierrot_nose": {"id":"pierrot_nose","imgId":2262,"name":"小丑鼻子","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"小丑戴在鼻子上的飾品。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 所有職業","slots":0},
   "gangster_patch": {"id":"gangster_patch","imgId":2263,"name":"時髦眼罩","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"時髦的眼罩。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 裝備: 除初心者以外的所有職業","slots":0},
   "munak_turban": {"id":"munak_turban","imgId":2264,"name":"殭屍帽","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":30,"sell":20,"buyPrice":40,"desc":"魔物殭屍戴的帽子。帽子上有不知名的符咒以及長辮子。 對不死系魔物的損害，10%下降。 不可精煉 系列: 頭盔 防禦: 5 位置: 頭上中下 重量: 30 裝備: 所有職業","slots":0,"bonus":{"raceDmgReduce_undead":10}},
-  "ganster_mask": {"id":"ganster_mask","imgId":2265,"name":"侍衛口罩","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"口罩上畫有一個大大的X標記，涵義是要規範所有侍衛貫徹上司所下達的所有命令。 受到攻擊時，被沉默的機率降低減少15%。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 所有職業","slots":0},
+  "ganster_mask": {"id":"ganster_mask","imgId":2265,"name":"侍衛口罩","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"口罩上畫有一個大大的X標記，涵義是要規範所有侍衛貫徹上司所下達的所有命令。 受到攻擊時，被沉默的機率降低減少15%。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 所有職業","slots":0,"bonus":{"ailResist_silence":15}},
   "iron_cane": {"id":"iron_cane","imgId":2266,"name":"金屬口罩","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":30,"sell":16,"buyPrice":32,"reqLevel":50,"reqJob":["swordsman"],"desc":"用堅硬的金屬製造而成的口罩。 系列: 頭盔 防禦: 4 位置: 頭下 重量: 30 要求等級: 50 裝備: 劍士系列專用","slots":0},
-  "cigar": {"id":"cigar","imgId":2267,"name":"香菸","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"reqJob":["novice"],"desc":"吸菸有害人體健康，未成年的人絕對禁止吸菸。 受到昆蟲系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 初學者禁止吸菸","slots":0},
-  "smoking_pipe": {"id":"smoking_pipe","imgId":2268,"name":"菸斗","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"reqJob":["novice"],"desc":"可以將香菸裝進菸斗中，因為上面附有濾嘴，這樣可以減低香菸對身體的危害 吸菸有害人體健康，未成年的人絕對禁止吸菸。 受到昆蟲系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 初學者禁止吸菸","slots":0},
-  "centimental_flower": {"id":"centimental_flower","imgId":2269,"name":"花葉","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"小小的花葉，含在嘴裡會讓人有幸福浪漫的感覺。 受到植物系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 除初心者以外的所有職業","slots":0},
-  "centimental_leaf": {"id":"centimental_leaf","imgId":2270,"name":"草葉","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"草葉，含在嘴裡時，會隨著風飄蕩，有到處流浪的感覺。 受到植物系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 除初心者以外的所有職業","slots":0},
+  "cigar": {"id":"cigar","imgId":2267,"name":"香菸","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"reqJob":["novice"],"desc":"吸菸有害人體健康，未成年的人絕對禁止吸菸。 受到昆蟲系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 初學者禁止吸菸","slots":0,"bonus":{"raceDmgReduce_insect":3}},
+  "smoking_pipe": {"id":"smoking_pipe","imgId":2268,"name":"菸斗","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"reqJob":["novice"],"desc":"可以將香菸裝進菸斗中，因為上面附有濾嘴，這樣可以減低香菸對身體的危害 吸菸有害人體健康，未成年的人絕對禁止吸菸。 受到昆蟲系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 初學者禁止吸菸","slots":0,"bonus":{"raceDmgReduce_insect":3}},
+  "centimental_flower": {"id":"centimental_flower","imgId":2269,"name":"花葉","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"小小的花葉，含在嘴裡會讓人有幸福浪漫的感覺。 受到植物系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"bonus":{"raceDmgReduce_plant":3}},
+  "centimental_leaf": {"id":"centimental_leaf","imgId":2270,"name":"草葉","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"草葉，含在嘴裡時，會隨著風飄蕩，有到處流浪的感覺。 受到植物系敵人的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"bonus":{"raceDmgReduce_plant":3}},
   "stop_post": {"id":"stop_post","imgId":2272,"name":"停止標誌頭飾","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":40,"sell":4,"buyPrice":8,"desc":"上面寫著STOP的標誌板。 系列: 頭盔 防禦: 1 位置: 頭上 重量: 40 裝備: 所有職業","slots":0},
-  "ghost_bandana": {"id":"ghost_bandana","imgId":2274,"name":"亡者髮箍","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"agi":2,"desc":"東方某個小國逝者所佩戴的三角形帽子。 AGI+2 受到暗屬性的傷害減少15%。 系列: 頭盔 防禦: 0 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0},
+  "ghost_bandana": {"id":"ghost_bandana","imgId":2274,"name":"亡者髮箍","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"agi":2,"desc":"東方某個小國逝者所佩戴的三角形帽子。 AGI+2 受到暗屬性的傷害減少15%。 系列: 頭盔 防禦: 0 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"bonus":{"eleReduce_shadow":15}},
   "red_bandana": {"id":"red_bandana","imgId":2275,"name":"頭巾","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"desc":"可防止陽光照射，擁有相當好的隔熱能力。用通風材料做成的頭巾。 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
   "eagle_eyes": {"id":"eagle_eyes","imgId":2276,"name":"大眼睛眼鏡","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":8,"buyPrice":16,"desc":"外觀上有睜大眼睛模樣的眼鏡。 系列: 頭盔 防禦: 2 位置: 頭中 重量: 10 裝備: 所有職業","slots":0},
   "nurse_cap": {"id":"nurse_cap","imgId":2277,"name":"護士帽","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"reqJob":["acolyte"],"int":1,"desc":"可以代替醫生照顧患者的護士所戴的帽子。 INT+1 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 服事系列專用","slots":0},
   "bomb_wick": {"id":"bomb_wick","imgId":2279,"name":"火線頭飾","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":8,"buyPrice":16,"desc":"仿照火線樣式製造而成的頭飾。 系列: 頭盔 防禦: 2 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
-  "spirit_chain": {"id":"spirit_chain","imgId":2282,"name":"光環","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"亡者前往天國時頭上出現的光環，配帶時並不會有隱匿的效果。 受到聖屬性的傷害減少15%。 系列: 頭盔 防禦: 0 位置: 頭上 重量: 10 裝備: 所有職業","slots":0},
+  "spirit_chain": {"id":"spirit_chain","imgId":2282,"name":"光環","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"desc":"亡者前往天國時頭上出現的光環，配帶時並不會有隱匿的效果。 受到聖屬性的傷害減少15%。 系列: 頭盔 防禦: 0 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"bonus":{"eleReduce_holy":15}},
   "apple_of_archer": {"id":"apple_of_archer","imgId":2285,"name":"蘋果頭飾","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":20,"sell":4,"buyPrice":8,"reqLevel":30,"dex":3,"desc":"據說那蘋果是古代某位神射手在相當遠的距離下所射中的蘋果。 DEX+3 系列: 頭盔 防禦: 1 位置: 頭上 重量: 20 要求等級: 30 裝備: 除初心者以外的所有職業","slots":0},
   "elven_ears": {"id":"elven_ears","imgId":2286,"name":"妖精長耳朵飾","type":"armor","icon":"👑","armorType":"headgear","weight":10,"sell":20,"buyPrice":40,"reqLevel":70,"desc":"仿照妖精的耳朵做成的，配帶時可以感覺到變身為妖精的感覺。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 10 要求等級: 70 裝備: 除初心者以外的所有職業","slots":0},
   "pirate_bandana": {"id":"pirate_bandana","imgId":2287,"name":"海盜頭巾","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":10,"sell":12,"buyPrice":24,"str":1,"desc":"有象徵海盜骷髏頭的圖案，會賦予佩帶此頭巾的人勇猛的力量。 STR+1 系列: 頭盔 防禦: 3 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0},
@@ -2572,14 +2572,14 @@ const ITEMS = {
   "novice_breast": {"id":"novice_breast","imgId":2340,"name":"初學者胸鎧 [1]","type":"armor","icon":"🦺","armorType":"leather","def":32,"weight":50,"sell":128,"buyPrice":256,"reqLevel":10,"reqJob":["novice"],"desc":"為了初學者特別的，可愛製作成的胸鎧 系列: 鎧甲 防禦: 32 重量: 50 要求等級: 10 裝備: 初學者專用","slots":1},
   "full_plate_armor": {"id":"full_plate_armor","imgId":2341,"name":"秘銀金屬盔甲","type":"armor","icon":"🦺","armorType":"leather","def":79,"weight":550,"sell":316,"buyPrice":632,"reqLevel":70,"desc":"包紮全身型態的鎧甲，想找一個縫隙用刺的都很難攻擊的鎧甲 系列: 鎧甲 防禦: 79 重量: 550 要求等級: 70 裝備: 十字軍專用","slots":0,"reqJob":["swordsman"]},
   "robe_of_casting": {"id":"robe_of_casting","imgId":2343,"name":"創作者外袍","type":"armor","icon":"🦺","armorType":"leather","def":40,"weight":110,"sell":160,"buyPrice":320,"reqLevel":75,"reqJob":["wizard","mage"],"desc":"裝備後會有減少施法時間好處的外袍 變動施法時間減少3% 系列: 鎧甲 防禦: 40 重量: 110 要求等級: 75 裝備: 巫師/賢者/悟靈士可以裝備","slots":0},
-  "flame_sprits_armor": {"id":"flame_sprits_armor","imgId":2344,"name":"火鱗盔甲","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":220,"sell":100,"buyPrice":200,"reqLevel":45,"desc":"當穿上時會感覺到一股熱氣，快要把身體燃燒似的鎧甲 鎧甲本身永遠賦予火屬性 系列: 鎧甲 防禦: 25 重量: 220 要求等級: 45 裝備: 劍士系列/商人系列專用","slots":0,"reqJob":["swordsman","merchant"]},
+  "flame_sprits_armor": {"id":"flame_sprits_armor","imgId":2344,"name":"火鱗盔甲","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":220,"sell":100,"buyPrice":200,"reqLevel":45,"desc":"當穿上時會感覺到一股熱氣，快要把身體燃燒似的鎧甲 鎧甲本身永遠賦予火屬性 系列: 鎧甲 防禦: 25 重量: 220 要求等級: 45 裝備: 劍士系列/商人系列專用","slots":0,"reqJob":["swordsman","merchant"],"bonus":{"armorEle_fire":1}},
   "water_sprits_armor": {"id":"water_sprits_armor","imgId":2346,"name":"水鱗盔甲","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":220,"sell":100,"buyPrice":200,"reqLevel":45,"desc":"當穿上時會感覺到一股涼氣滲透到肚子裡，快要把身體包紮似的鎧甲 鎧甲本身永遠賦予水屬性 系列: 鎧甲 防禦: 25 重量: 220 要求等級: 45 裝備: 劍士系列/商人系列專用","slots":0,"reqJob":["swordsman","merchant"]},
   "wind_sprits_armor": {"id":"wind_sprits_armor","imgId":2348,"name":"風鱗盔甲","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":220,"sell":100,"buyPrice":200,"reqLevel":45,"desc":"當穿上時會感覺到一股強風圍繞著身上，快要把身體拋出天空似的鎧甲 鎧甲本身永遠賦予風屬性 系列: 鎧甲 防禦: 25 重量: 220 要求等級: 45 裝備: 劍士系列/商人系列專用","slots":0,"reqJob":["swordsman","merchant"]},
   "earth_sprits_armor": {"id":"earth_sprits_armor","imgId":2350,"name":"地鱗盔甲","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":220,"sell":100,"buyPrice":200,"reqLevel":45,"desc":"當穿上時會感覺到尖硬大地的信任和溫暖，快要把身體包紮似的鎧甲 鎧甲本身永遠賦予地屬性 系列: 鎧甲 防禦: 25 重量: 220 要求等級: 45 裝備: 劍士系列/商人系列專用","slots":0,"reqJob":["swordsman","merchant"]},
   "item_2353": {"id":"item_2353","imgId":2353,"name":"奧丁的祝福 [1]","type":"armor","icon":"🦺","armorType":"leather","def":53,"weight":250,"sell":212,"buyPrice":424,"reqLevel":65,"desc":"是海羅默德套裝的基本鎧甲，和奧丁的祝福……一起裝備時……可以把隱藏的力量拉出來 系列: 鎧甲 防禦: 53 重量: 250 要求等級: 65 裝備: 除初心者以外的所有職業","slots":1},
   "item_2354": {"id":"item_2354","imgId":2354,"name":"哥夫內的盔甲","type":"armor","icon":"🦺","armorType":"leather","def":58,"weight":350,"sell":232,"buyPrice":464,"reqLevel":54,"reqJob":["novice"],"vit":2,"desc":"打鐵匠人哥夫內在工作時喝的不老不死的麥酒，不小心掉在鎧甲上所擁有特別能力的鎧甲 VIT+2 MHP+10% 系列: 鎧甲 防禦: 58 重量: 350 要求等級: 54 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0,"hpPct":10},
   "item_2355": {"id":"item_2355","imgId":2355,"name":"天使的加護 [1]","type":"armor","icon":"🦺","armorType":"leather","def":25,"weight":60,"sell":100,"buyPrice":200,"reqLevel":40,"reqJob":["novice"],"desc":"負責超級初學者天使的外袍，把全身輕柔包圍的試穿感最棒了！ MDEF+20 當把天使的加護、天使的降臨、天使的保護、天使的溫氣、天使之吻 一起裝備時， HP+900，SP+100，受到物理攻擊時，以較低的機率給自身聖母之祈福 1技能 系列: 鎧甲 防禦: 25 重量: 60 要求等級: 40 裝備: 初學者系列專用","slots":1,"mdef":20},
-  "valkyrie_armor": {"id":"valkyrie_armor","imgId":2357,"name":"瓦爾基里的盔甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":55,"weight":280,"sell":220,"buyPrice":440,"str":1,"agi":1,"vit":1,"int":1,"dex":1,"luk":1,"desc":"當她們穿上崇拜奧丁的，'打仗的處女'的鎧甲時，會發出白色的光芒 All State+1 不可破壞。 魔法師，弓箭手，服事系列裝備時被沉默機率降低50%。 劍士，商人，盜賊系列裝備時被眩暈機率降低50%。 系列: 鎧甲 防禦: 55 重量: 280 裝備: 除初心者以外的所有轉生後職業","slots":1,"reqJob":["novice"]},
+  "valkyrie_armor": {"id":"valkyrie_armor","imgId":2357,"name":"瓦爾基里的盔甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":55,"weight":280,"sell":220,"buyPrice":440,"str":1,"agi":1,"vit":1,"int":1,"dex":1,"luk":1,"desc":"當她們穿上崇拜奧丁的，'打仗的處女'的鎧甲時，會發出白色的光芒 All State+1 不可破壞。 魔法師，弓箭手，服事系列裝備時被沉默機率降低50%。 劍士，商人，盜賊系列裝備時被眩暈機率降低50%。 系列: 鎧甲 防禦: 55 重量: 280 裝備: 除初心者以外的所有轉生後職業","slots":1,"reqJob":["novice"],"condBonus":[{"when":{"jobLine":"mage"},"bonus":{"ailResist_silence":50}},{"when":{"jobLine":"archer"},"bonus":{"ailResist_silence":50}},{"when":{"jobLine":"acolyte"},"bonus":{"ailResist_silence":50}},{"when":{"jobLine":"swordsman"},"bonus":{"ailResist_stun":50}},{"when":{"jobLine":"merchant"},"bonus":{"ailResist_stun":50}},{"when":{"jobLine":"thief"},"bonus":{"ailResist_stun":50}}]},
   "meteo_plate_armor": {"id":"meteo_plate_armor","imgId":2364,"name":"隕石盔甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":85,"weight":300,"sell":340,"buyPrice":680,"reqLevel":55,"reqJob":["swordsman","merchant"],"desc":"用不知明的隕石所製成的強化鋼鐵鎧甲 受到攻擊時，被冰凍的機率降低30% 受到攻擊時，被眩暈的機率降低30% 系列: 鎧甲 防禦: 85 重量: 300 要求等級: 55 裝備: 轉生劍士/商人系列專用","slots":1},
   "orleans_gown": {"id":"orleans_gown","imgId":2365,"name":"奧爾里昂的制服 [1]","type":"armor","icon":"🦺","armorType":"leather","def":15,"weight":30,"sell":60,"buyPrice":120,"reqLevel":55,"reqJob":["novice"],"desc":"有著強烈潔癖症的座廷料理師所穿的制服，當他開始對料理說教的時候 任何人都不能對他所說的話叫停， 詠唱時間增加15%，魔法不會被解除 系列: 鎧甲 防禦: 15 重量: 30 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1},
   "divine_cloth": {"id":"divine_cloth","imgId":2366,"name":"銀質外袍 [1]","type":"armor","icon":"🦺","armorType":"leather","def":50,"weight":150,"sell":200,"buyPrice":400,"reqLevel":55,"reqJob":["novice"],"desc":"在長久的時間之內經過宗教的儀式所製作的衣服，好像在衣服裡可以感覺到神聖的氣息的樣子， 受到攻擊時，被詛咒的機率降低5% 受到攻擊時，被沉默的機率降低5% 受到攻擊時，被眩暈的機率降低5% 受到攻擊時，被睡眠的機率降低5% 受到攻擊時，被石化的機率降低5% 系列: 鎧甲 防禦: 50 重量: 150 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1},
@@ -2587,8 +2587,8 @@ const ITEMS = {
   "diabolus_armor": {"id":"diabolus_armor","imgId":2375,"name":"恐懼戰甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":79,"weight":60,"sell":316,"buyPrice":632,"reqLevel":60,"reqJob":["swordsman","merchant","thief"],"str":2,"dex":1,"desc":"用人間不存在的金屬所製成的鎧甲，隱藏著非常神秘的力量 STR+2，DEX+1，MHP+150， 受到攻擊時，被眩暈的機率降低5%， 受到攻擊時，被石化的機率降低5%。 恐懼指環一起裝備時， 對所有階級敵人的物理傷害+3% MATK+3% (在窗口上不會顯示出增加的百分比數值) 系列: 鎧甲 防禦: 79 重量: 60 要求等級: 60 裝備: 轉生劍士，商人，盜賊系列","slots":1,"hp":150,"matk":3},
   "chameleon_armor": {"id":"chameleon_armor","imgId":2386,"name":"變色龍盔甲","type":"armor","icon":"🦺","armorType":"leather","def":55,"weight":170,"sell":220,"buyPrice":440,"reqLevel":70,"desc":"依裝備者的能力，可轉變自身能力的神奇鎧甲， HP與SP可增加至BaseLv的同等數值， 受到魔法攻擊時，有一定機率會觸發鎧甲的能力後，有2秒鐘時間不會受任何魔法的影響； 劍士/商人/盜賊系列 裝備時，DEF+3 魔法師/服事/弓箭手系列裝備時，MDEF+5 系列: 鎧甲 防禦: 55 重量: 170 要求等級: 70 裝備: 轉生2轉專用","slots":0,"mdef":5,"condBonus":[{"when":{"jobLine":"swordsman"},"bonus":{"def":3}},{"when":{"jobLine":"merchant"},"bonus":{"def":3}},{"when":{"jobLine":"thief"},"bonus":{"def":3}},{"when":{"jobLine":"mage"},"bonus":{"mdef":5}},{"when":{"jobLine":"acolyte"},"bonus":{"mdef":5}},{"when":{"jobLine":"archer"},"bonus":{"mdef":5}}]},
   "sprint_mail": {"id":"sprint_mail","imgId":2387,"name":"奔跑盔甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":20,"weight":100,"sell":80,"buyPrice":160,"vit":1,"desc":"可全力衝刺又靈巧的鎧甲，有點像內衣，但具有鎧甲的效果； Vit+1，HP恢復力增加5%； 治癒術與恢復物品的效果增加3% 系列: 鎧甲 防禦: 20 重量: 100 裝備: 轉生2轉專用","slots":1},
-  "kandura": {"id":"kandura","imgId":2388,"name":"中東長袍 [1]","type":"armor","icon":"🦺","armorType":"leather","def":36,"weight":30,"sell":144,"buyPrice":288,"reqLevel":70,"reqJob":["assassin"],"agi":1,"flee":5,"desc":"中東人常穿的服裝，很適合當地的氣候 AGI+1 FLEE+5，攻擊速度+2% 系列: 鎧甲 防禦: 36 重量: 30 要求等級: 70 裝備: 十字刺客專用","slots":1},
-  "armor_of_naga": {"id":"armor_of_naga","imgId":2389,"name":"納迦鱗甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":45,"weight":100,"sell":180,"buyPrice":360,"desc":"利用納加蛇的鱗片而製作的鎧甲，尖銳與閃爍的程度令人刺眼，靠近它恐怕被鱗片割傷； MDEF+2 有一定機率在物理攻擊時，10秒鐘有 ATK+20 的效果 系列: 鎧甲 防禦: 45 重量: 100 裝備: 轉生2轉專用","slots":1,"mdef":2},
+  "kandura": {"id":"kandura","imgId":2388,"name":"中東長袍 [1]","type":"armor","icon":"🦺","armorType":"leather","def":36,"weight":30,"sell":144,"buyPrice":288,"reqLevel":70,"reqJob":["assassin"],"agi":1,"flee":5,"desc":"中東人常穿的服裝，很適合當地的氣候 AGI+1 FLEE+5，攻擊速度+2% 系列: 鎧甲 防禦: 36 重量: 30 要求等級: 70 裝備: 十字刺客專用","slots":1,"bonus":{"aspdPct":2}},
+  "armor_of_naga": {"id":"armor_of_naga","imgId":2389,"name":"納迦鱗甲 [1]","type":"armor","icon":"🦺","armorType":"leather","def":45,"weight":100,"sell":180,"buyPrice":360,"desc":"利用納加蛇的鱗片而製作的鎧甲，尖銳與閃爍的程度令人刺眼，靠近它恐怕被鱗片割傷； MDEF+2 有一定機率在物理攻擊時，10秒鐘有 ATK+20 的效果 系列: 鎧甲 防禦: 45 重量: 100 裝備: 轉生2轉專用","slots":1,"mdef":2,"onAttackBuff":[{"on":"attack","chance":5,"durSec":10,"buffType":"atkflat","buffFlat":20,"buffName":"納迦鱗甲"}]},
   "improved_tights": {"id":"improved_tights","imgId":2390,"name":"改良型緊身便衣 [1]","type":"armor","icon":"🦺","armorType":"leather","def":38,"weight":40,"sell":152,"buyPrice":304,"reqLevel":75,"reqJob":["archer"],"perfectDodge":3,"desc":"使用更加貼身的改良型素材，是雷根貝勒公司的最新產品； MDEF+2，完全迴避+3 系列: 鎧甲 防禦: 38 重量: 40 要求等級: 75 裝備: 轉生弓箭手系列","slots":1,"mdef":2},
   "life_link": {"id":"life_link","imgId":2391,"name":"生命之環 [1]","type":"armor","icon":"🦺","armorType":"leather","def":75,"weight":350,"sell":300,"buyPrice":600,"reqLevel":82,"reqJob":["swordsman"],"vit":2,"desc":"傳說是女神為了治癒勇士而製作的神聖鎧甲，裝備者的自然恢復速度惠飛快提升； vit+2，MDEF+5 HP自然恢復速度增加50% 系列: 鎧甲 防禦: 75 重量: 350 要求等級: 82 裝備: 轉生劍士系列","slots":1,"mdef":5},
   "dragon_vest": {"id":"dragon_vest","imgId":2399,"name":"龍之襯衣 [1]","type":"armor","icon":"🦺","armorType":"leather","def":20,"weight":50,"sell":80,"buyPrice":160,"reqJob":["novice"],"agi":5,"flee":15,"desc":"使用暴躁龍的鬃毛所製成的內衣， MDEF+3。 搭配暴躁龍斗篷時，額外 AGI+5/FLEE+15。 系列: 鎧甲 防禦: 20 重量: 50 裝備: 除了初學者系列以外的所有轉生職業群","slots":1,"mdef":3},
@@ -2604,14 +2604,14 @@ const ITEMS = {
   "item_2418": {"id":"item_2418","imgId":2418,"name":"迪塔樂長靴","type":"armor","icon":"👢","armorType":"footgear","def":13,"weight":65,"sell":52,"buyPrice":104,"reqLevel":65,"vit":5,"desc":"奧丁的兒子迪塔樂，把狼菲力勒殺死時所穿的靴子，裡面有菲力勒能承受的強烈的體力和精神力。 MHP，MSP+9% 和奧丁的祝福、貝利的斗篷一起裝備時 Vit+5，HP，SP恢復速度增加10% 系列: 鞋子 防禦: 13 重量: 65 要求等級: 65 裝備: 除初心者以外的所有職業","slots":0,"spPct":9,"condBonus":[{when:{withItems:["item_2353","item_2517"]},bonus:{spRegenPct:10}}]},
   "item_2419": {"id":"item_2419","imgId":2419,"name":"哥夫內軍靴","type":"armor","icon":"👢","armorType":"footgear","def":13,"weight":70,"sell":52,"buyPrice":104,"reqLevel":54,"reqJob":["novice"],"desc":"哥夫內為了和死對手多芙下賭注，所製作出來的靴子 MHP+5%，MSP+5% 系列: 鞋子 防禦: 13 重量: 70 要求等級: 54 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0,"hpPct":5,"spPct":5},
   "item_2420": {"id":"item_2420","imgId":2420,"name":"天使的降臨 [1]","type":"armor","icon":"👢","armorType":"footgear","def":8,"weight":30,"sell":32,"buyPrice":64,"reqLevel":25,"reqJob":["novice"],"desc":"負責超級初學者天使的涼鞋，穿著這雙涼鞋跳躍的話，感覺上可以跳到天空似的。 MHP+100 系列: 鞋子 防禦: 8 重量: 30 要求等級: 25 裝備: 初學者系列專用","slots":1,"hp":100},
-  "valkyrie_shoes": {"id":"valkyrie_shoes","imgId":2421,"name":"瓦爾基里的長靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":13,"weight":50,"sell":52,"buyPrice":104,"desc":"當用崇拜奧丁的，'打仗的處女'的長靴時，使裝備的人一起成長外長靴能力也會成長 不可破壞。 魔法師、弓箭手、服事系列裝備時，根據自身的BaseLv5倍來增加MHP 劍士、商人、盜賊系列裝備時，根據自身的JobLv2倍來增加MSP 系列: 鞋子 防禦: 13 重量: 50 裝備: 除初心者以外的所有轉生後職業","slots":1,"reqJob":["novice"]},
+  "valkyrie_shoes": {"id":"valkyrie_shoes","imgId":2421,"name":"瓦爾基里的長靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":13,"weight":50,"sell":52,"buyPrice":104,"desc":"當用崇拜奧丁的，'打仗的處女'的長靴時，使裝備的人一起成長外長靴能力也會成長 不可破壞。 魔法師、弓箭手、服事系列裝備時，根據自身的BaseLv5倍來增加MHP 劍士、商人、盜賊系列裝備時，根據自身的JobLv2倍來增加MSP 系列: 鞋子 防禦: 13 重量: 50 裝備: 除初心者以外的所有轉生後職業","slots":1,"reqJob":["novice"],"condBonus":[{"when":{"jobLine":"mage"},"bonus":{"perBaseLv1_hp":5}},{"when":{"jobLine":"archer"},"bonus":{"perBaseLv1_hp":5}},{"when":{"jobLine":"acolyte"},"bonus":{"perBaseLv1_hp":5}}]},
   "high_fashion_sandals": {"id":"high_fashion_sandals","imgId":2422,"name":"高級涼鞋 [1]","type":"armor","icon":"👢","armorType":"footgear","def":7,"weight":20,"sell":28,"buyPrice":56,"reqLevel":40,"reqJob":["mage","acolyte"],"desc":"有著金色線條和寶石做過特殊處理的高級輕便鞋，做成為可方便穿戴的模樣 MDEF+10 系列: 鞋子 防禦: 7 重量: 20 要求等級: 40 裝備: 魔法師系列/服事系列/悟靈士專用","slots":1,"mdef":10},
-  "tidal_shoes": {"id":"tidal_shoes","imgId":2424,"name":"防水靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":13,"weight":30,"sell":52,"buyPrice":104,"reqLevel":55,"reqJob":["novice"],"desc":"經過特殊考究的防水處理和底部收邊，在滑滑的冰地或溼溼的道路上最適合穿的靴子 受到水屬性的傷害減少5%。 當和羊毛領巾裝備時，增加HP恢復力+5%，增加MHP10% 系列: 鞋子 防禦: 13 重量: 30 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1},
+  "tidal_shoes": {"id":"tidal_shoes","imgId":2424,"name":"防水靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":13,"weight":30,"sell":52,"buyPrice":104,"reqLevel":55,"reqJob":["novice"],"desc":"經過特殊考究的防水處理和底部收邊，在滑滑的冰地或溼溼的道路上最適合穿的靴子 受到水屬性的傷害減少5%。 當和羊毛領巾裝備時，增加HP恢復力+5%，增加MHP10% 系列: 鞋子 防禦: 13 重量: 30 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1,"bonus":{"eleReduce_water":5}},
   "black_leather_boots": {"id":"black_leather_boots","imgId":2425,"name":"黑皮靴","type":"armor","icon":"👢","armorType":"footgear","def":4,"weight":50,"sell":16,"buyPrice":32,"reqLevel":55,"reqJob":["novice"],"agi":1,"desc":"非常堅固用輕的皮革所做成的長靴，只要是穿上的話就會有想要跑的欲望 AGI+1 當精煉 9以上時，額外的增加AGI+2 系列: 鞋子 防禦: 4 重量: 50 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":0,"condBonus":[{when:{refineMin:9},bonus:{agi:2}}]},
   "shadow_walk": {"id":"shadow_walk","imgId":2426,"name":"陰影之靴","type":"armor","icon":"👢","armorType":"footgear","weight":200,"sell":20,"buyPrice":40,"reqLevel":75,"reqJob":["novice"],"desc":"利用黑暗為材料所做成的靴子，幫助穿戴者很容易融入到黑暗裡。製作這長靴的魔法師對穿戴者碰到危機時，靴子會對穿戴者自動的啟動保護的效果， 當受到魔法攻擊時，有一定的機率使用自動念咒偽裝 2級， 當習得偽裝3級以上時，會啟動到學習技能的等級 MDEF+10 系列: 鞋子 防禦: 0 重量: 200 要求等級: 75 裝備: 除了初學者之外所有轉生職業群","slots":0,"mdef":10,"autoSpell":[{"on":"hit","skill":"cloaking","lv":2,"chance":5}]},
   "diabolus_boots": {"id":"diabolus_boots","imgId":2433,"name":"恐懼戰靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":15,"weight":25,"sell":60,"buyPrice":120,"desc":"可自動調整穿者大小的神秘長靴，就好像有生命力一樣 裝備時MAXHP+到 Base等級*10 水平 系列: 鞋子 防禦: 15 重量: 25 裝備: 轉生2轉以上職業","slots":1},
   "sprint_shoes": {"id":"sprint_shoes","imgId":2440,"name":"奔跑長靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":10,"weight":30,"sell":40,"buyPrice":80,"agi":1,"desc":"可全速衝刺又舒適的鞋子，綁鞋帶後能讓鞋子更加牢靠。 AGI+1，SP恢復力增加5% 與奔跑鎧甲、奔跑戒指穿成一套時，MHP/MSP+7%， 變動施法時間減少3%，技能後延遲減少15% 系列: 鞋子 防禦: 10 重量: 30 裝備: 轉生2轉專用","slots":1,"spPct":7},
-  "dance_shoes": {"id":"dance_shoes","imgId":2465,"name":"舞鞋 [1]","type":"armor","icon":"👢","armorType":"footgear","def":15,"weight":30,"sell":60,"buyPrice":120,"reqLevel":105,"agi":1,"desc":"適合用來跳舞的跳舞專用皮鞋。 AGI+1，攻擊速度增加(攻擊後延遲時間減少2%)。 使用搖擺舞時消耗的SP減少32。 系列：鞋子 防禦：15 重量：30 要求等級：105 裝備：漫遊舞者專用","slots":1},
+  "dance_shoes": {"id":"dance_shoes","imgId":2465,"name":"舞鞋 [1]","type":"armor","icon":"👢","armorType":"footgear","def":15,"weight":30,"sell":60,"buyPrice":120,"reqLevel":105,"agi":1,"desc":"適合用來跳舞的跳舞專用皮鞋。 AGI+1，攻擊速度增加(攻擊後延遲時間減少2%)。 使用搖擺舞時消耗的SP減少32。 系列：鞋子 防禦：15 重量：30 要求等級：105 裝備：漫遊舞者專用","slots":1,"bonus":{"aspdPct":2}},
   "siege_greave": {"id":"siege_greave","imgId":2483,"name":"城戰重靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":30,"weight":75,"sell":120,"buyPrice":240,"reqLevel":95,"reqJob":["swordsman","merchant"],"desc":"MDEF+1。 ※PvP，攻城戰地區新增功能。 受到人型系敵人的傷害減少2%。 在HE攻城戰地圖屬性不生效。 系列: 鞋子 防禦: 30 重量: 75 要求等級: 95 裝備: 劍士系列/商人系列","slots":1,"mdef":1},
   "siege_boots": {"id":"siege_boots","imgId":2484,"name":"城戰戰士長靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":20,"weight":50,"sell":80,"buyPrice":160,"reqLevel":95,"reqJob":["swordsman","merchant","thief","archer","acolyte"],"desc":"MDEF+5。 ※PvP，攻城戰地區新增功能。 受到人型系敵人的傷害減少1%。 在HE攻城戰地圖屬性不生效。 系列: 鞋子 防禦: 20 重量: 50 要求等級: 95 裝備: 劍士系列/商人系列/盜賊系列/弓箭手系列/跆拳/拳聖/神槍手/忍者","slots":1,"mdef":5},
   "siege_shoes": {"id":"siege_shoes","imgId":2485,"name":"城戰長靴 [1]","type":"armor","icon":"👢","armorType":"footgear","def":15,"weight":35,"sell":60,"buyPrice":120,"reqLevel":95,"reqJob":["novice","mage","acolyte"],"desc":"MDEF+10。 ※PvP，攻城戰地區新增功能。 受到人型系敵人的傷害減少1%。 在HE攻城戰地圖屬性不生效。 系列: 鞋子 防禦: 15 重量: 35 要求等級: 95 裝備: 初心者系列/魔法師系列/服事系列/悟靈士","slots":1,"mdef":10},
@@ -2633,7 +2633,7 @@ const ITEMS = {
   "item_2520": {"id":"item_2520","imgId":2520,"name":"哥夫內肩飾","type":"armor","icon":"🧣","armorType":"garment","def":11,"weight":70,"sell":44,"buyPrice":88,"reqLevel":54,"reqJob":["novice"],"desc":"哥夫內第一次做的防具，據說他非常珍惜這肩飾 受到的遠程傷害-10%，MDEF+2 系列: 披肩 防禦: 11 重量: 70 要求等級: 54 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0,"mdef":2},
   "item_2521": {"id":"item_2521","imgId":2521,"name":"天使的溫氣 [1]","type":"armor","icon":"🧣","armorType":"garment","def":6,"weight":40,"sell":24,"buyPrice":48,"reqLevel":20,"reqJob":["novice"],"desc":"負責超級初學者天使的小背心，披在身上的話較暖和，即使睡在外面好像也不會被著涼的。 HP自然恢復力增加5% 系列: 披肩 防禦: 6 重量: 40 要求等級: 20 裝備: 初學者系列專用","slots":1},
   "undershirt": {"id":"undershirt","imgId":2522,"name":"襯衫","type":"armor","icon":"🧣","armorType":"garment","def":5,"weight":15,"sell":20,"buyPrice":40,"agi":5,"flee":10,"desc":"是以輕便的純棉所做成的防具，和三角褲一起裝備的話好像太輕了要飛走似的。 MDEF+1 和三角褲一起裝備時，AGI+5，FLEE+10。 系列: 披肩 防禦: 5 重量: 15 裝備: 所有職業","slots":0,"mdef":1,"condBonus":[{when:{withAnyItem:["g_strings","g_strings_"]},bonus:{agi:5,flee:10}}]},
-  "valkyrie_manteau": {"id":"valkyrie_manteau","imgId":2524,"name":"瓦爾基里的披風 [1]","type":"armor","icon":"🧣","armorType":"garment","def":10,"weight":50,"sell":40,"buyPrice":80,"perfectDodge":5,"desc":"侍奉奧丁的'戰爭姑娘'的披風，華麗且輕巧。 不可破壞。 魔法師、弓箭手、服事系列裝備時完全迴避+5， 根據精煉的2倍來增加完全迴避， 劍士，商人，盜賊系列裝備時，鄰近物理傷害反射率+5% 以精煉的2倍增加傷害反射率(但完全迴避或反射率增加只套用至精煉+10) 系列: 披肩 防禦: 10 重量: 50 裝備: 除初心者以外的所有轉生後職業","slots":1,"reqJob":["novice"]},
+  "valkyrie_manteau": {"id":"valkyrie_manteau","imgId":2524,"name":"瓦爾基里的披風 [1]","type":"armor","icon":"🧣","armorType":"garment","def":10,"weight":50,"sell":40,"buyPrice":80,"desc":"侍奉奧丁的'戰爭姑娘'的披風，華麗且輕巧。 不可破壞。 魔法師、弓箭手、服事系列裝備時完全迴避+5， 根據精煉的2倍來增加完全迴避， 劍士，商人，盜賊系列裝備時，鄰近物理傷害反射率+5% 以精煉的2倍增加傷害反射率(但完全迴避或反射率增加只套用至精煉+10) 系列: 披肩 防禦: 10 重量: 50 裝備: 除初心者以外的所有轉生後職業","slots":1,"reqJob":["novice"],"condBonus":[{"when":{"jobLine":"mage"},"bonus":{"perfectDodge":5}},{"when":{"jobLine":"mage","refineMin":1},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":2},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":3},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":4},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":5},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":6},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":7},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":8},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":9},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"mage","refineMin":10},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer"},"bonus":{"perfectDodge":5}},{"when":{"jobLine":"archer","refineMin":1},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":2},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":3},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":4},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":5},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":6},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":7},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":8},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":9},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"archer","refineMin":10},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte"},"bonus":{"perfectDodge":5}},{"when":{"jobLine":"acolyte","refineMin":1},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":2},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":3},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":4},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":5},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":6},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":7},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":8},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":9},"bonus":{"perfectDodge":2}},{"when":{"jobLine":"acolyte","refineMin":10},"bonus":{"perfectDodge":2}}].concat([{"when":{"jobLine":"swordsman"},"bonus":{"reflectPct":5}},{"when":{"jobLine":"swordsman","refineMin":1},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":2},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":3},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":4},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":5},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":6},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":7},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":8},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":9},"bonus":{"reflectPct":2}},{"when":{"jobLine":"swordsman","refineMin":10},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant"},"bonus":{"reflectPct":5}},{"when":{"jobLine":"merchant","refineMin":1},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":2},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":3},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":4},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":5},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":6},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":7},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":8},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":9},"bonus":{"reflectPct":2}},{"when":{"jobLine":"merchant","refineMin":10},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief"},"bonus":{"reflectPct":5}},{"when":{"jobLine":"thief","refineMin":1},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":2},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":3},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":4},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":5},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":6},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":7},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":8},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":9},"bonus":{"reflectPct":2}},{"when":{"jobLine":"thief","refineMin":10},"bonus":{"reflectPct":2}}])},
   "dragon_breath": {"id":"dragon_breath","imgId":2527,"name":"龍之呼吸 [1]","type":"armor","icon":"🧣","armorType":"garment","def":16,"weight":60,"sell":64,"buyPrice":128,"reqLevel":48,"reqJob":["novice"],"desc":"把龍的呼吸吹進到裡面的圍巾，有著暖暖的黏稠的感覺是無法避免的。 從龍族魔物那裡得到的傷害減少15%， 當和龍牙劍、天龍短劍、加野矛一起裝備時，對龍族增加5%的傷害。 系列: 披肩 防禦: 16 重量: 60 要求等級: 48 裝備: 除了初學者之外所有轉生職業群","slots":1},
   "wool_scarf": {"id":"wool_scarf","imgId":2528,"name":"羊毛圍巾 [1]","type":"armor","icon":"🧣","armorType":"garment","def":11,"weight":50,"sell":44,"buyPrice":88,"reqLevel":55,"reqJob":["novice"],"desc":"用最上等的羊毛密密麻麻織成的領巾，溫暖的感覺讓全身變得很清爽 MDEF+4 系列: 披肩 防禦: 11 重量: 50 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":1,"mdef":4},
   "rider_insignia": {"id":"rider_insignia","imgId":2529,"name":"奔跑者徽章","type":"armor","icon":"🧣","armorType":"garment","def":13,"weight":50,"sell":52,"buyPrice":104,"reqLevel":55,"reqJob":["novice"],"agi":2,"flee":10,"desc":"據說是喜歡快跑的人們所使用過的標示，只要是貼在身上的話就想飛快跑去似的。 AGI+2 當和黑色皮革長靴一起裝備時 FLEE+10 系列: 披肩 防禦: 13 重量: 50 要求等級: 55 裝備: 除了初學者之外所有轉生職業群","slots":0},
@@ -2668,14 +2668,14 @@ const ITEMS = {
   "novice_armlet": {"id":"novice_armlet","imgId":2628,"name":"初學者手鐲 [1]","type":"armor","icon":"💍","armorType":"accessory","weight":20,"sell":20,"buyPrice":40,"desc":"初學者所裝備的手鐲 系列: 飾品 防禦: 0 重量: 20 裝載: 初學者專用","slots":1},
   "item_2648": {"id":"item_2648","imgId":2648,"name":"摩菲斯戒指","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":33,"reqJob":["novice"],"int":1,"desc":"為了要解開摩菲斯的封印三把鑰匙其中之一的戒指，據說這戒指有著命運之石的力量 INT+1，MSP+5% 系列: 飾品 防禦: 0 重量: 10 要求等級: 33 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0,"spPct":5},
   "item_2649": {"id":"item_2649","imgId":2649,"name":"摩菲斯臂環","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":33,"reqJob":["novice"],"int":1,"desc":"為了要解開摩菲斯的封印三把鑰匙其中之一的臂環，據說這臂環是摩菲斯喜愛的女人之遺物。 INT+1，MSP+5% 系列: 飾品 防禦: 0 重量: 10 要求等級: 33 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0,"spPct":5},
-  "item_2650": {"id":"item_2650","imgId":2650,"name":"茉莉雅娜腰帶","type":"armor","icon":"💍","armorType":"accessory","weight":20,"sell":20,"buyPrice":40,"reqLevel":61,"reqJob":["novice"],"critRate":3,"desc":"酷忽林戰死後整理他的屍體時，做為遺物所留下來的腰帶 ATK+5，CRI+3 系列: 飾品 防禦: 0 重量: 20 要求等級: 61 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0},
+  "item_2650": {"id":"item_2650","imgId":2650,"name":"茉莉雅娜腰帶","type":"armor","icon":"💍","armorType":"accessory","weight":20,"sell":20,"buyPrice":40,"reqLevel":61,"reqJob":["novice"],"critRate":3,"desc":"酷忽林戰死後整理他的屍體時，做為遺物所留下來的腰帶 ATK+5，CRI+3 系列: 飾品 防禦: 0 重量: 20 要求等級: 61 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0,"atk":5},
   "item_2651": {"id":"item_2651","imgId":2651,"name":"茉莉雅娜墜子","type":"armor","icon":"💍","armorType":"accessory","weight":20,"sell":20,"buyPrice":40,"reqLevel":61,"reqJob":["novice"],"str":2,"critRate":3,"desc":"茉莉雅娜從愛人酷忽林所得到的墜子，雖然最後被酷忽林所遺棄，不過可以感受到珍惜這墜子的那女人的崇高的愛。 STR+2，CRI+3 系列: 飾品 防禦: 0 重量: 20 要求等級: 61 裝備: 除了初學者系列之外，全職業都可以裝備","slots":0},
   "cursed_lucky_brooch": {"id":"cursed_lucky_brooch","imgId":2652,"name":"受詛咒的幸運別針","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":40,"critRate":6,"desc":"得到詛咒的幸運的女神別針，不知道是好是壞一思不解是重點 CRI+6，攻擊時以較低的機率自身會得到詛咒 系列: 飾品 防禦: 0 重量: 10 要求等級: 40 裝備: 所有職業","slots":0},
   "item_2654": {"id":"item_2654","imgId":2654,"name":"火忍西怒畢的腰帶","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":30,"sell":4,"buyPrice":8,"reqLevel":30,"reqJob":["thief"],"str":1,"agi":1,"desc":"有名的忍者所裝備過的腰帶，高級的圖樣帶有神秘的光芒，好像有點魔法力似的。 STR+1，AGI+1，MDEF+1 和忍服血櫻一起裝備時，減少消耗SP20%，MHP+300。 系列: 飾品 防禦: 1 重量: 30 要求等級: 30 裝備: 盜賊系列/忍者專用","slots":0,"mdef":1,"hp":300,"condBonus":[{when:{withAnyItem:["ninja_suit","ninja_suit_"]},bonus:{hp:300}}]},
   "bloody_iron_ball": {"id":"bloody_iron_ball","imgId":2655,"name":"血跡鐵球","type":"armor","icon":"💍","armorType":"accessory","weight":400,"sell":20,"buyPrice":40,"desc":"古時候對兇惡的罪人以控制他的行動，所做的腳鐐鐵球，不過那些罪人據說把那些鐵球當做自身的武器使用。 和腳鏈一起裝備時ATK+50，對腐屍戰俘卡片、邪骸戰俘卡片減少20%的傷害。 系列: 飾品 防禦: 0 重量: 400 裝備: 除初心者以外的所有職業","slots":0},
   "hyper_changer": {"id":"hyper_changer","imgId":2656,"name":"過度的改變","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":100,"sell":4,"buyPrice":8,"reqJob":["swordsman","merchant","thief"],"desc":"在普通的鎧甲上賦予強烈的防禦力，是神秘古代的人造物品，只是每當防禦力上升時身體會變得笨拙是缺點。 MHP+50 和鐵製鎧甲一起裝備時 DEF+5，MHP+150。 系列: 飾品 防禦: 1 重量: 100 裝備: 劍士系列/商人系列/盜賊系列 可以裝備","slots":0,"hp":50},
-  "vesper_core01": {"id":"vesper_core01","imgId":2659,"name":"晚禱鐘核心 01","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":4,"buyPrice":8,"int":2,"sp":5,"desc":"好像是構成晚禱鐘零件的一部分，據說有提神的魔法力存在 MDEF+3，INT+2，MAXSP+5% 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":0,"mdef":3},
-  "vesper_core02": {"id":"vesper_core02","imgId":2660,"name":"晚禱鐘核心 02","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":4,"buyPrice":8,"str":3,"desc":"好像是構成晚禱鐘零件的一部分，據說有提高力量的魔法力存在 MDEF+3，STR+3，ATK+10 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":0,"mdef":3},
+  "vesper_core01": {"id":"vesper_core01","imgId":2659,"name":"晚禱鐘核心 01","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":4,"buyPrice":8,"int":2,"spPct":5,"desc":"好像是構成晚禱鐘零件的一部分，據說有提神的魔法力存在 MDEF+3，INT+2，MAXSP+5% 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":0,"mdef":3},
+  "vesper_core02": {"id":"vesper_core02","imgId":2660,"name":"晚禱鐘核心 02","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":4,"buyPrice":8,"str":3,"desc":"好像是構成晚禱鐘零件的一部分，據說有提高力量的魔法力存在 MDEF+3，STR+3，ATK+10 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":0,"mdef":3,"atk":10},
   "vesper_core03": {"id":"vesper_core03","imgId":2661,"name":"晚禱鐘核心 03","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":4,"buyPrice":8,"agi":3,"flee":5,"desc":"好像是構成晚禱鐘零件的一部分，據說可以讓身體變輕的魔法力存在 MDEF+3，AGI+3，FLEE+5 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群","slots":0,"mdef":3},
   "vesper_core04": {"id":"vesper_core04","imgId":2662,"name":"晚禱鐘核心 04","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":10,"sell":4,"buyPrice":8,"dex":3,"hit":10,"desc":"好像是構成晚禱鐘零件的一部分，據說有提高正確性和集中力魔法力的存在 MDEF+3，DEX+3，HIT+10 系列: 飾品 防禦: 1 重量: 10 裝備: 轉生2轉職業群，","slots":0,"mdef":3},
   "spiritual_ring": {"id":"spiritual_ring","imgId":2677,"name":"精靈戒指","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"int":2,"dex":1,"desc":"擁有著精靈力量漂亮的戒指，當符合相性的物品一起裝備時，會有驚人的增幅效果出現 INT+2 DEX+1 當和大巫師之杖或是靈魂之杖一起裝備時，MATK+6%，DEX+2，根據武器的精煉變動施法時間以%減少。 若和髮夾，或是幸運珠鏈一起裝備時，用治癒術技能攻擊不死系魔物時，攻擊力增加50%，十字驅魔攻擊的傷害增加30%，SP恢復速度增加9% 系列: 飾品 防禦: 0 重量: 10 裝備: 所有職業","slots":0},
@@ -2689,14 +2689,14 @@ const ITEMS = {
   "brooch_c": {"id":"brooch_c","imgId":2693,"name":"敏捷別針","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":1,"agi":4,"desc":"租賃物品 可在衣服等的布料上做裝飾，更使得活潑可愛的裝飾物 AGI+4 (限定無法交易、丟棄) 系列: 飾品 防禦: 0 重量: 10 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0},
   "rosary_c": {"id":"rosary_c","imgId":2694,"name":"幸運珠鏈","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":1,"luk":4,"desc":"租賃物品 擁有著神的加護十字型態的美麗裝飾物，木珠 LUK+4，MDEF+5 (限定無法交易、丟棄) 系列: 飾品 防禦: 0 重量: 10 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":5},
   "safety_ring_c": {"id":"safety_ring_c","imgId":2695,"name":"防禦戒指","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":1,"desc":"租賃物品 發揮著一種魔法般的能力來保護配戴者，把傷害遞減魔法的戒指 DEF+8，MDEF+8 (限定無法交易、丟棄) 系列: 飾品 防禦: 0 重量: 10 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":8},
-  "vesper_core01_c": {"id":"vesper_core01_c","imgId":2696,"name":"晚禱鐘核心01","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":50,"sell":4,"buyPrice":8,"reqLevel":1,"int":2,"sp":5,"desc":"租賃物品 好像是構成晚禱鐘零件的一部分，據說有著讓精神清澈的魔法力量存在 MDEF+3，INT+2，MAXSP+5% (限定無法交易、丟棄) 系列: 飾品 防禦: 1 重量: 50 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
-  "vesper_core02_c": {"id":"vesper_core02_c","imgId":2697,"name":"晚禱鐘核心02","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":50,"sell":4,"buyPrice":8,"reqLevel":1,"str":3,"desc":"租賃物品 好像是構成晚禱鐘零件的一部分，據說有著強而有力的魔法力量存在 MDEF+3，STR+3 ATK+10 (限定無法交易、丟棄) 系列: 飾品 防禦: 1 重量: 50 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
+  "vesper_core01_c": {"id":"vesper_core01_c","imgId":2696,"name":"晚禱鐘核心01","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":50,"sell":4,"buyPrice":8,"reqLevel":1,"int":2,"spPct":5,"desc":"租賃物品 好像是構成晚禱鐘零件的一部分，據說有著讓精神清澈的魔法力量存在 MDEF+3，INT+2，MAXSP+5% (限定無法交易、丟棄) 系列: 飾品 防禦: 1 重量: 50 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
+  "vesper_core02_c": {"id":"vesper_core02_c","imgId":2697,"name":"晚禱鐘核心02","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":50,"sell":4,"buyPrice":8,"reqLevel":1,"str":3,"desc":"租賃物品 好像是構成晚禱鐘零件的一部分，據說有著強而有力的魔法力量存在 MDEF+3，STR+3 ATK+10 (限定無法交易、丟棄) 系列: 飾品 防禦: 1 重量: 50 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":3,"atk":10},
   "vesper_core03_c": {"id":"vesper_core03_c","imgId":2698,"name":"晚禱鐘核心03","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":50,"sell":4,"buyPrice":8,"reqLevel":1,"agi":3,"flee":5,"desc":"租賃物品 好像是構成晚禱鐘零件的一部分，據說有著讓身體變輕盈的魔法力量存在 MDEF+3，AGI+3 FLEE+5 (限定無法交易、丟棄) 系列: 飾品 防禦: 1 重量: 50 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
   "vesper_core04_c": {"id":"vesper_core04_c","imgId":2699,"name":"晚禱鐘核心04","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":50,"sell":4,"buyPrice":8,"reqLevel":1,"dex":3,"hit":10,"desc":"租賃物品 好像是構成晚禱鐘零件的一部分，據說有著提高正確性和集中力的魔法力量存在 MDEF+3，DEX+3 HIT+10 (限定無法交易、丟棄) 系列: 飾品 防禦: 1 重量: 50 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
   "red_silk_seal": {"id":"red_silk_seal","imgId":2700,"name":"封印的紅色綢緞","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":60,"reqJob":["swordsman"],"desc":"有著聖女強烈意志想要封印惡勢力的紅色綢緞 當和妖怪的槍一起裝備時，自身所得到混亂的機率會減少 系列: 飾品 防禦: 0 重量: 10 要求等級: 60 裝備: 轉生劍士系列專用","slots":0},
   "orleans_glove": {"id":"orleans_glove","imgId":2701,"name":"奧爾里昂的手套 [1]","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":90,"reqJob":["novice"],"dex":2,"desc":"是最高的座廷料理師所使用的手套，只要戴上的話好像可以模仿出他的手藝似的。 DEX+2，MATK+3% 系列: 飾品 防禦: 0 重量: 10 要求等級: 90 裝備: 除了初學者之外所有轉生職業群","slots":1,"matk":3},
   "expert_ring": {"id":"expert_ring","imgId":2703,"name":"強化指環 [1]","type":"armor","icon":"💍","armorType":"accessory","weight":15,"sell":20,"buyPrice":40,"reqLevel":50,"reqJob":["novice"],"desc":"達到極限的人們根據自身所擁有的能力為根據，讓自身的能力可特化性。可是無條件的特化是不可能的，有得必有失 請銘記這一點 技能後延遲減少5%，使用技能時SP消耗量增加5% 系列: 飾品 防禦: 0 重量: 15 要求等級: 50 裝備: 除了初學者之外所有轉生職業群","slots":1},
-  "librarian_glove": {"id":"librarian_glove","imgId":2716,"name":"圖書管理員的手套 [1]","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":80,"reqJob":["wizard","mage"],"int":5,"desc":"圖書館管理員們所喜愛的手套，SP+20 遠古魔法(或魔法策略)與懷錶一起裝備時，INT+5，HP+700，攻擊速度+5% 系列: 飾品 防禦: 0 重量: 10 要求等級: 80 裝備: 巫師，賢者，悟靈士","slots":1,"condBonus":[{when:{withAnyItem:["pocket_watch_","pocket_watch"]},bonus:{int:5}}]},
+  "librarian_glove": {"id":"librarian_glove","imgId":2716,"name":"圖書管理員的手套 [1]","type":"armor","icon":"💍","armorType":"accessory","weight":10,"sell":20,"buyPrice":40,"reqLevel":80,"reqJob":["wizard","mage"],"sp":20,"desc":"圖書館管理員們所喜愛的手套，SP+20 遠古魔法(或魔法策略)與懷錶一起裝備時，INT+5，HP+700，攻擊速度+5% 系列: 飾品 防禦: 0 重量: 10 要求等級: 80 裝備: 巫師，賢者，悟靈士","slots":1,"condBonus":[{"when":{"withItems":["ancient_magic","pocket_watch"]},"bonus":{"int":5,"hp":700,"aspdPct":5}},{"when":{"withItems":["ancient_magic","pocket_watch_"]},"bonus":{"int":5,"hp":700,"aspdPct":5}},{"when":{"withItems":["principles_of_magic","pocket_watch"]},"bonus":{"int":5,"hp":700,"aspdPct":5}},{"when":{"withItems":["principles_of_magic","pocket_watch_"]},"bonus":{"int":5,"hp":700,"aspdPct":5}}]},
   "pocket_watch": {"id":"pocket_watch","imgId":2717,"name":"懷錶","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":20,"sell":4,"buyPrice":8,"reqLevel":80,"reqJob":["mage","acolyte"],"desc":"帶有表鏈的銀色懷錶。 搭配單眼眼鏡，單眼眼鏡【1】，謊言記錄本，謊言記錄本【1】時，HP，SP恢復速度+15%，MATK+7%。 系列: 飾品 防禦: 1 重量: 20 要求等級: 80 裝備: 法師系列/悟靈士專用","slots":0,"matk":7},
   "lunatic_brooch": {"id":"lunatic_brooch","imgId":2718,"name":"月亮胸針 [1]","type":"armor","icon":"💍","armorType":"accessory","weight":20,"sell":20,"buyPrice":40,"reqLevel":65,"reqJob":["archer"],"dex":1,"desc":"新月形狀的金色閃亮別針 與露娜弓一起裝備時，DEX+1，SP+50，SP恢復速度+10% 系列: 飾品 防禦: 0 重量: 20 要求等級: 65 裝備: 弓箭手系列專用","slots":1},
   "iron_wrist": {"id":"iron_wrist","imgId":2719,"name":"鐵護腕","type":"armor","icon":"💍","armorType":"accessory","def":1,"weight":70,"sell":4,"buyPrice":8,"reqLevel":50,"reqJob":["swordsman","merchant"],"desc":"用鋼鐵製成的堅固護腕。 狂擊，金錢攻擊傷害增加6%。 系列: 飾品 防禦: 1 重量: 70 要求等級: 50 裝備: 劍士，商人系列專用","slots":0},
@@ -2774,9 +2774,9 @@ const ITEMS = {
   "magni_cap": {"id":"magni_cap","imgId":5122,"name":"魔術無邊帽","type":"armor","icon":"👑","armorType":"headgear","def":9,"weight":100,"sell":36,"buyPrice":72,"reqLevel":65,"reqJob":["novice"],"str":2,"desc":"托爾的兒子瑪格尼所袋的帽子，傳授托爾強烈力量的瑪格尼力量，在裡面似的。 STR+2 系列: 頭盔 防禦: 9 位置: 頭上 重量: 100 要求等級: 65 裝備: 除了初學者系列之外全職業都可以裝備","slots":0},
   "fricca_circlet": {"id":"fricca_circlet","imgId":5124,"name":"菲力卡的頭箍","type":"armor","icon":"👑","armorType":"headgear","def":6,"weight":30,"sell":24,"buyPrice":48,"reqLevel":65,"reqJob":["novice"],"int":2,"desc":"受到巴圖肋母親，女神菲力卡祝福的頭箍，可以看到女神一點點的智慧似的。 MDEF+10，INT+2，MSP+50 系列: 頭盔 防禦: 6 位置: 頭上 重量: 30 要求等級: 65 裝備: 除了初學者系列之外全職業都可以裝備","slots":0,"mdef":10,"sp":50},
   "kiss_of_angel": {"id":"kiss_of_angel","imgId":5125,"name":"天使之吻 [1]","type":"armor","icon":"👑","armorType":"headgear","def":6,"weight":30,"sell":24,"buyPrice":48,"reqLevel":50,"reqJob":["novice"],"desc":"受到負責超級初學者天使之吻的頭具裝飾，若對這頭具來一個吻的話，也許就是跟天使來一個間接之吻。 SP自然恢復力增加3% 系列: 頭盔 防禦: 6 位置: 頭上 重量: 30 要求等級: 50 裝備: 初學者系列專用","slots":1},
-  "item_5126": {"id":"item_5126","imgId":5126,"name":"摩菲斯的頭巾","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":20,"sell":12,"buyPrice":24,"reqLevel":33,"int":2,"desc":"據說有摩菲斯真正的力量所封印的頭巾，為了解開封印據說要需要幾樣物品似的。 INT+2 把摩菲斯的套裝全部裝備時，增加INT+5，MDEF+11，MSP20% 使用魔法時不會中間停止，魔法使用延遲時間增加25% 系列: 頭盔 防禦: 3 位置: 頭上 重量: 20 要求等級: 33 裝備: 除初心者以外的所有職業","slots":0,"mdef":11},
-  "item_5127": {"id":"item_5127","imgId":5127,"name":"茉莉雅娜的頭盔","type":"armor","icon":"👑","armorType":"headgear","def":8,"weight":50,"sell":32,"buyPrice":64,"reqLevel":61,"reqJob":["novice"],"str":2,"luk":2,"critRate":13,"perfectDodge":13,"desc":"典章的女神們中，可以說是可以證明為首腦的頭具，可以完全呈現出那女人灰色光芒的印象 LUK+2，ATK+3 把茉莉雅娜的套裝全部裝備時，STR+2，LUK+9，CRI+13，ATK+18，完全迴避+13 系列: 頭盔 防禦: 8 位置: 頭上 重量: 50 要求等級: 61 裝備: 除了初學者系列之外全職業都可以裝備","slots":0},
-  "item_5128": {"id":"item_5128","imgId":5128,"name":"哥夫內的頭具","type":"armor","icon":"👑","armorType":"headgear","def":10,"weight":50,"sell":40,"buyPrice":80,"reqLevel":54,"reqJob":["novice"],"vit":3,"desc":"這是主要做武器的哥夫內，沒幾個防具中的其中之一個，神們對哥夫內的防具對比武器更好的評價 VIT+3，MDEF+3，變動施法時間增加25% 把哥夫內的套裝全部裝備時，VIT+5，MHP+15%，MSP+5%，DEF+5，MDEF+15，對水、風、地、火屬性減少10% 系列: 頭盔 防禦: 10 位置: 頭上 重量: 50 要求等級: 54 裝備: 除了初學者系列之外全職業都可以裝備","slots":0,"mdef":3,"hpPct":15,"spPct":5},
+  "item_5126": {"id":"item_5126","imgId":5126,"name":"摩菲斯的頭巾","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":20,"sell":12,"buyPrice":24,"reqLevel":33,"int":2,"desc":"據說有摩菲斯真正的力量所封印的頭巾，為了解開封印據說要需要幾樣物品似的。 INT+2 把摩菲斯的套裝全部裝備時，增加INT+5，MDEF+11，MSP20% 使用魔法時不會中間停止，魔法使用延遲時間增加25% 系列: 頭盔 防禦: 3 位置: 頭上 重量: 20 要求等級: 33 裝備: 除初心者以外的所有職業","slots":0},
+  "item_5127": {"id":"item_5127","imgId":5127,"name":"茉莉雅娜的頭盔","type":"armor","icon":"👑","armorType":"headgear","def":8,"weight":50,"sell":32,"buyPrice":64,"reqLevel":61,"reqJob":["novice"],"luk":2,"atk":3,"desc":"典章的女神們中，可以說是可以證明為首腦的頭具，可以完全呈現出那女人灰色光芒的印象 LUK+2，ATK+3 把茉莉雅娜的套裝全部裝備時，STR+2，LUK+9，CRI+13，ATK+18，完全迴避+13 系列: 頭盔 防禦: 8 位置: 頭上 重量: 50 要求等級: 61 裝備: 除了初學者系列之外全職業都可以裝備","slots":0},
+  "item_5128": {"id":"item_5128","imgId":5128,"name":"哥夫內的頭具","type":"armor","icon":"👑","armorType":"headgear","def":10,"weight":50,"sell":40,"buyPrice":80,"reqLevel":54,"reqJob":["novice"],"vit":3,"desc":"這是主要做武器的哥夫內，沒幾個防具中的其中之一個，神們對哥夫內的防具對比武器更好的評價 VIT+3，MDEF+3，變動施法時間增加25% 把哥夫內的套裝全部裝備時，VIT+5，MHP+15%，MSP+5%，DEF+5，MDEF+15，對水、風、地、火屬性減少10% 系列: 頭盔 防禦: 10 位置: 頭上 重量: 50 要求等級: 54 裝備: 除了初學者系列之外全職業都可以裝備","slots":0,"mdef":3},
   "pumpkin_hat": {"id":"pumpkin_hat","imgId":5134,"name":"南瓜帽子","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":20,"sell":12,"buyPrice":24,"desc":"戴著這個像南瓜先生一樣跳躍的話，應該就不會不好意思了。 系列: 頭盔 防禦: 3 位置: 頭上 重量: 20 要求等級: 沒有 裝備: 所有職業","slots":0},
   "marionette_doll": {"id":"marionette_doll","imgId":5141,"name":"傀儡娃娃 [1]","type":"armor","icon":"👑","armorType":"headgear","def":1,"weight":40,"sell":4,"buyPrice":8,"reqLevel":30,"str":1,"desc":"根據人氣魔物傀儡娃娃的模樣所做成的娃娃，感覺頭上有一股寒意 STR+1， 系列: 頭盔 防禦: 1 位置: 頭上 重量: 40 要求等級: 30 裝備: 除初心者以外的所有職業","slots":1},
   "beret": {"id":"beret","imgId":5172,"name":"貝雷帽","type":"armor","icon":"👑","armorType":"headgear","weight":70,"sell":20,"buyPrice":40,"desc":"亮麗綠色光的帽子稍微傾斜的部分更加漂亮，有著象徵著某種勇猛部隊的謠言 對於人型系敵人傷害減少10% 不可精煉 系列: 頭盔 防禦: 0 位置: 頭上 重量: 70 裝備: 所有職業","slots":0,"bonus":{"raceDmgReduce_humanoid":10}},
@@ -2816,8 +2816,8 @@ const ITEMS = {
   "sp_increase_potion_s": {"id":"sp_increase_potion_s","imgId":12425,"name":"SP增加藥水(小)","type":"consumable","icon":"🧪","weight":2,"sell":50,"buyPrice":100,"desc":"可增加MSP的小型藥水；500秒內MSP會微幅上升，約2%還有SP恢復的效果。重量: 2","slots":0,"restoreSpPct":2},
   "jujube_dagger": {"id":"jujube_dagger","imgId":13000,"name":"刺棗短劍","type":"weapon","icon":"🔪","weaponType":"dagger","weaponLv":1,"atk":39,"element":"wind","weaponWeight":-60,"weight":60,"sell":78,"buyPrice":156,"reqJob":["acolyte"],"desc":"用被雷擊中的棗樹所做成的把柄短刀，很奇怪的滲透著雷的力量。 系列: 短劍 攻擊: 39 重量: 60 屬性: 風 武器等級: 1 要求等級: 沒有 裝備: 除了服事和槍手系列外全職業都可以裝備","slots":0,"weaponCat":"dagger"},
   "dragon_killer": {"id":"dragon_killer","imgId":13001,"name":"天龍短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":110,"element":"none","weaponWeight":-90,"weight":90,"sell":220,"buyPrice":440,"reqLevel":60,"reqJob":["novice","swordsman","merchant","thief","mage","archer"],"desc":"用龍牙所做成的短劍，可以輕易的刺破龍族的厚皮，無視龍族魔物的防禦力。 擊殺龍族魔物時，增加10%的經驗值。 系列: 短劍 攻擊: 110 重量: 90 屬性: 無 武器等級: 4 要求等級: 60 裝備: 初學者系列/劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者","slots":0,"weaponLv":4,"weaponCat":"dagger","bonus":{"defIgnoreRace_dragon":100,"expRace_dragon":10}},
-  "ginnungagap": {"id":"ginnungagap","imgId":13002,"name":"卡卡普劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":148,"element":"shadow","weaponWeight":-70,"weight":70,"sell":296,"buyPrice":592,"reqLevel":70,"desc":"有著深黑色劍刃的短劍，劍刃的顏色，好像警告著這把劍的危險性似的，攻擊時有5%的機率對敵人黑暗， 攻擊時有0.5%的機率，讓自身得到黑暗。 系列: 短劍 攻擊: 148 重量: 70 屬性: 暗 武器等級: 4 要求等級: 70 裝備: 除了服事和槍手系列外全職業都可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger","reqJob":["acolyte"],"ailment":[{"on":"attack","type":"blind","chance":5}]},
-  "coward": {"id":"coward","imgId":13003,"name":"考爾德短刀 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","atk":80,"element":"none","weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"reqLevel":55,"reqJob":["thief"],"desc":"有一位膽小的刺客，對自身的職業不重視防禦特性而感到不滿，為了生存而奮鬥所製作的短劍。 DEF+5 系列: 短劍 攻擊: 80 重量: 70 屬性: 無 武器等級: 3 要求等級: 55 裝備: 盜賊系列/忍者專用","slots":1,"weaponLv":3,"weaponCat":"dagger"},
+  "ginnungagap": {"id":"ginnungagap","imgId":13002,"name":"卡卡普劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":148,"element":"shadow","weaponWeight":-70,"weight":70,"sell":296,"buyPrice":592,"reqLevel":70,"desc":"有著深黑色劍刃的短劍，劍刃的顏色，好像警告著這把劍的危險性似的，攻擊時有5%的機率對敵人黑暗， 攻擊時有0.5%的機率，讓自身得到黑暗。 系列: 短劍 攻擊: 148 重量: 70 屬性: 暗 武器等級: 4 要求等級: 70 裝備: 除了服事和槍手系列外全職業都可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger","reqJob":["acolyte"],"ailment":[{"on":"attack","type":"blind","chance":5},{"on":"attack","type":"blind","chance":0.5,"target":"self"}]},
+  "coward": {"id":"coward","imgId":13003,"name":"考爾德短刀 [1]","type":"weapon","icon":"🔪","weaponType":"dagger","atk":80,"element":"none","weaponWeight":-70,"weight":70,"sell":160,"buyPrice":320,"reqLevel":55,"reqJob":["thief"],"desc":"有一位膽小的刺客，對自身的職業不重視防禦特性而感到不滿，為了生存而奮鬥所製作的短劍。 DEF+5 系列: 短劍 攻擊: 80 重量: 70 屬性: 無 武器等級: 3 要求等級: 55 裝備: 盜賊系列/忍者專用","slots":1,"weaponLv":3,"weaponCat":"dagger","bonus":{"def":5}},
   "khukri": {"id":"khukri","imgId":13006,"name":"龍鱗","type":"weapon","icon":"🔪","weaponType":"dagger","atk":150,"element":"shadow","weaponWeight":-60,"weight":60,"sell":300,"buyPrice":600,"reqLevel":65,"reqJob":["thief"],"desc":"把手用黑龍的鱗片，有著龍的鱗片黑暗氣息讓刀的存在更為不安 近距離物理攻擊時，以較低的機率對敵人詛咒 系列: 短劍 攻擊: 150 重量: 60 屬性: 暗 武器等級: 3 要求等級: 65 裝備: 忍者專用","slots":0,"weaponLv":3,"weaponCat":"dagger"},
   "jitte": {"id":"jitte","imgId":13007,"name":"鉤子","type":"weapon","icon":"🔪","weaponType":"dagger","atk":70,"weaponWeight":-40,"weight":40,"sell":140,"buyPrice":280,"reqLevel":35,"desc":"在棍棒上有著凸出的掛鉤，可以用這個來奪取對方的武器，殺傷力較低不過很容易使用 近距離物理攻擊時，以較低的機率破壞敵人的武器 系列: 短劍 攻擊: 70 重量: 40 武器等級: 2 要求等級: 35 裝備: 忍者專用","slots":0,"weaponLv":2,"weaponCat":"dagger"},
   "kamaitachi": {"id":"kamaitachi","imgId":13009,"name":"真空刀","type":"weapon","icon":"🔪","weaponType":"dagger","atk":125,"element":"wind","weaponWeight":-90,"weight":90,"sell":250,"buyPrice":500,"reqLevel":70,"reqJob":["thief"],"critRate":3,"desc":"傳說中的武器一種，因真空的刀刃關係那銳利是無法用言語來形容的。 CRI+3，攻擊速度增加3% 系列: 短劍 攻擊: 125 重量: 90 屬性: 風 武器等級: 4 要求等級: 70 裝備: 忍者專用","slots":0,"weaponLv":4,"weaponCat":"dagger","bonus":{"aspdPct":3}},
@@ -3006,9 +3006,9 @@ const ITEMS = {
   "exercise": {"id":"exercise","imgId":1233,"name":"除靈短劍","type":"weapon","icon":"🔪","weaponType":"dagger","atk":90,"weaponWeight":-70,"weight":70,"sell":180,"buyPrice":360,"reqLevel":36,"reqJob":["swordsman","merchant","thief","mage","archer"],"desc":"除靈儀式時所使用的短劍。強力地抵抗魔力。 無視惡魔型魔物的防禦力。 對惡魔系魔物的攻擊，可減少5% 的傷害。 對人型系魔物會多得到，10%的額外傷害。 系列: 短劍 攻擊: 90 重量: 70 武器等級: 4 要求等級: 36 裝備: 劍士系列/魔法師系列/弓箭手系列/商人系列/盜賊系列/悟靈士/忍者可以裝備","slots":0,"weaponLv":4,"weaponCat":"dagger","bonus":{"defIgnoreRace_demon":100,"raceDmg_demon":10}},
   "sabbath": {"id":"sabbath","imgId":1365,"name":"暗靈之斧","type":"weapon","icon":"🔨","weaponType":"mace","atk":120,"element":"shadow","weaponWeight":-230,"weight":230,"sell":240,"buyPrice":480,"reqLevel":44,"reqJob":["swordsman","merchant"],"critRate":50,"desc":"可令在九泉之下徘徊不去的靈魂安息的斧。 只對不死系魔物範圍內，CRI+50 對惡魔系的魔物會以較低的機率，得到【頻死之術】。 系列: 斧 攻擊: 120 重量: 230 屬性: 黑暗 武器等級: 4 要求等級: 44 裝備: 劍士系列/商人系列專用","slots":0,"weaponLv":4,"weaponCat":"axe1"},
   "tomahawk": {"id":"tomahawk","imgId":1368,"name":"風靈之斧","type":"weapon","icon":"🔨","weaponType":"mace","weaponLv":4,"atk":165,"element":"wind","weaponWeight":-250,"weight":250,"sell":330,"buyPrice":660,"reqLevel":44,"reqJob":["swordsman","merchant"],"desc":"當投擲斧頭時，會順著風追逐敵人的恐怖斧頭。 可以裝備 【投擲風屬性斧錘】 技能。 系列: 斧 攻擊: 165 重量: 250 屬性: 風 武器等級: 4 要求等級: 44 裝備: 劍士系列/商人系列專用","slots":0,"weaponCat":"axe1"},
-  "grand_cross": {"id":"grand_cross","imgId":1528,"name":"聖錘 十字星","type":"weapon","icon":"🔨","weaponType":"mace","atk":140,"element":"holy","weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"reqLevel":40,"reqJob":["acolyte"],"desc":"擁有神聖力量的十字形鈍器。 聖屬性 攻擊時自動念咒、有機率性施展等級3的轉生術。 以近身物理攻擊消滅不死系魔物時，會恢復1的SP。 不死系魔物死亡時，3的SP會恢復。 系列: 鈍器 攻擊: 140 重量: 150 屬性: 聖 武器等級: 4 要求等級: 40 裝備: 服事系列專用","slots":0,"weaponLv":4,"weaponCat":"mace"},
+  "grand_cross": {"id":"grand_cross","imgId":1528,"name":"聖錘 十字星","type":"weapon","icon":"🔨","weaponType":"mace","atk":140,"element":"holy","weaponWeight":-150,"weight":150,"sell":280,"buyPrice":560,"reqLevel":40,"reqJob":["acolyte"],"desc":"擁有神聖力量的十字形鈍器。 聖屬性 攻擊時自動念咒、有機率性施展等級3的轉生術。 以近身物理攻擊消滅不死系魔物時，會恢復1的SP。 不死系魔物死亡時，3的SP會恢復。 系列: 鈍器 攻擊: 140 重量: 150 屬性: 聖 武器等級: 4 要求等級: 40 裝備: 服事系列專用","slots":0,"weaponLv":4,"weaponCat":"mace","bonus":{"spOnKillRace_undead":3},"autoSpell":[{"on":"attack","skill":"turnundead","lv":3,"chance":5}]},
   "bow_of_rudra": {"id":"bow_of_rudra","imgId":1720,"name":"熾天使之弓","type":"weapon","icon":"🏹","weaponType":"bow","atk":150,"element":"holy","weaponWeight":-120,"weight":120,"sell":300,"buyPrice":600,"reqLevel":48,"reqJob":["archer","thief"],"int":5,"desc":"擁有神聖的力量，可對較高的傷害，讓玩家的潛力徹底發揮。 有50%機率躲過中毒 詛咒 沉默 混亂 黑暗的異常狀態。 INT+5 可施展1級的【治療術】技能。 可施展1級的【治癒術】技能。 系列: 弓 攻擊: 150 重量: 120 屬性: 聖 武器等級: 4 要求等級: 48 裝備: 弓箭手系列/流氓可以裝備","slots":0,"weaponLv":4,"weaponCat":"bow"},
-  "dragon_wing": {"id":"dragon_wing","imgId":1724,"name":"天龍之翼","type":"weapon","icon":"🏹","weaponType":"bow","atk":100,"element":"none","weaponWeight":-120,"weight":120,"sell":200,"buyPrice":400,"reqLevel":60,"reqJob":["archer","thief"],"desc":"以龍的翅膀為形狀化的弓，據說是用龍的骨頭做成的，對龍族致命的威力。 無視龍族魔物的防禦力。 當擊殺龍族魔物時，有3%機率可獲得神之金屬箭矢。 系列: 弓 攻擊: 100 重量: 120 屬性: 無 武器等級: 4 要求等級: 60 裝備: 弓箭手系列/盜賊/流氓 可以裝備","slots":0,"weaponLv":4,"weaponCat":"bow","bonus":{"raceDmg_dragon":10}},
+  "dragon_wing": {"id":"dragon_wing","imgId":1724,"name":"天龍之翼","type":"weapon","icon":"🏹","weaponType":"bow","atk":100,"element":"none","weaponWeight":-120,"weight":120,"sell":200,"buyPrice":400,"reqLevel":60,"reqJob":["archer","thief"],"desc":"以龍的翅膀為形狀化的弓，據說是用龍的骨頭做成的，對龍族致命的威力。 無視龍族魔物的防禦力。 當擊殺龍族魔物時，有3%機率可獲得神之金屬箭矢。 系列: 弓 攻擊: 100 重量: 120 屬性: 無 武器等級: 4 要求等級: 60 裝備: 弓箭手系列/盜賊/流氓 可以裝備","slots":0,"weaponLv":4,"weaponCat":"bow","bonus":{"defIgnoreRace_dragon":100},"killDrop":[{"race":"dragon","items":["oridecon_arrow"],"chance":3}]},
   "b_eremes_card": {"id":"b_eremes_card","imgId":4359,"name":"闇●十字刺客 艾勒梅斯卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"可使用偽裝 3級 系列: 卡片 裝備: 披肩 重量: 1 ","buyPrice":20},
   "b_harword_card": {"id":"b_harword_card","imgId":4361,"name":"闇●神工匠 哈沃得卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"物理攻擊時，有10%的機率破壞武器，有7%的機率破壞防禦具 系列: 卡片 裝備: 武器 重量: 1 ","buyPrice":20},
   "b_magaleta_card": {"id":"b_magaleta_card","imgId":4363,"name":"闇●神官 瑪嘉雷特卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"當受到物理或是魔法攻擊時，對自身有一定的機率會啟動自動念咒聖母之祈福Lv1 系列: 卡片 裝備: 鎧甲 重量: 1 ","buyPrice":20},
@@ -3116,7 +3116,7 @@ const ITEMS = {
   "lapier_": {"id":"lapier_","imgId":1111,"name":"擊刺長劍 [3]","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":2,"atk":70,"weaponWeight":-50,"weight":50,"sell":140,"buyPrice":280,"desc":"有著細長刃的劍，專門做刺穿用。 系列: 劍 攻擊: 70 重量: 50 武器等級: 2 要求等級: 14 裝備: 初學者/劍士系列/商人系列/盜賊系列可以裝備","slots":3,"weaponCat":"sword","reqLevel":14,"reqJob":["novice","swordsman","merchant","thief"]},
   "scimiter": {"id":"scimiter","imgId":1113,"name":"彎刀 [2]","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":2,"atk":85,"weaponWeight":-70,"weight":70,"sell":170,"buyPrice":340,"desc":"刀刃適當的彎曲，適合砍殺任何東西。 系列: 刀 攻擊: 85 重量: 70 武器等級: 2 要求等級: 14 裝備: 初學者/劍士系列/商人系列/盜賊系列可以裝備","slots":2,"weaponCat":"sword","reqLevel":14,"reqJob":["novice","swordsman","merchant","thief"]},
   "scimiter_": {"id":"scimiter_","imgId":1114,"name":"彎刀 [3]","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":2,"atk":85,"weaponWeight":-70,"weight":70,"sell":170,"buyPrice":340,"desc":"刀刃適當的彎曲，適合砍殺任何東西。 系列: 刀 攻擊: 85 重量: 70 武器等級: 2 要求等級: 14 裝備: 初學者/劍士系列/商人系列/盜賊系列可以裝備","slots":3,"weaponCat":"sword","reqLevel":14,"reqJob":["novice","swordsman","merchant","thief"]},
-  "mysteltainn_": {"id":"mysteltainn_","imgId":1138,"name":"妖劍 弒光","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":4,"atk":170,"weaponWeight":-100,"weight":100,"sell":340,"buyPrice":680,"desc":"傳說中殺死光神的武器。 對念屬性魔物增加15%的傷害。 DEX+3 攻擊時，一定機率施展【自動念咒】石化術Lv3。 系列: 劍 攻擊: 170 重量: 100 屬性: 黑暗 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword","reqLevel":40,"reqJob":["swordsman","merchant","thief"],"dex":3,"autoSpell":[{on:"attack",skill:"stonecurse",lv:3,chance:5}]},
+  "mysteltainn_": {"id":"mysteltainn_","imgId":1138,"name":"妖劍 弒光","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":4,"atk":170,"weaponWeight":-100,"weight":100,"sell":340,"buyPrice":680,"desc":"傳說中殺死光神的武器。 對念屬性魔物增加15%的傷害。 DEX+3 攻擊時，一定機率施展【自動念咒】石化術Lv3。 系列: 劍 攻擊: 170 重量: 100 屬性: 黑暗 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword","reqLevel":40,"reqJob":["swordsman","merchant","thief"],"dex":3,"autoSpell":[{on:"attack",skill:"stonecurse",lv:3,chance:5}],"bonus":{"eleDmg_ghost":15},"element":"shadow"},
   "tale_fing_": {"id":"tale_fing_","imgId":1139,"name":"魔刀 吞神","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":4,"atk":200,"weaponWeight":-100,"weight":100,"sell":400,"buyPrice":800,"desc":"會為使用者帶來不幸的魔劍。 裝備者每10秒中，會持續的消耗35的HP。 系列: 劍 攻擊: 200 重量: 100 屬性: 黑暗 武器等級: 4 要求等級: 40 裝備: 劍士系列/商人系列/盜賊系列專用","slots":0,"weaponCat":"sword","reqLevel":40,"reqJob":["swordsman","merchant","thief"]},
   "flamberge_": {"id":"flamberge_","imgId":1149,"name":"水紋之劍 [2]","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":3,"atk":150,"weaponWeight":-150,"weight":150,"sell":300,"buyPrice":600,"desc":"劍刃以水紋模樣的漂亮的劍，比起美麗的外觀卻有著殘忍的威力 系列: 劍 攻擊: 150 重量: 150 武器等級: 3 要求等級: 27 裝備: 騎士/十字軍","slots":2,"weaponCat":"sword","reqLevel":27,"reqJob":["knight","swordsman"]},
   "p_slayer1": {"id":"p_slayer1","imgId":1192,"name":"P.雙手劍 Ⅰ","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":2,"atk":162,"weaponWeight":0,"weight":0,"sell":324,"buyPrice":648,"desc":"由樂園團所自製的劍，適合新手劍士使用的雙手劍， 不可精煉。 系列: 雙手劍 攻擊: 162 重量: 0 武器等級: 2 要求等級: 26 裝備: 劍士系列","slots":0,"weaponCat":"tsword","reqLevel":26,"reqJob":["swordsman"]},
@@ -3542,7 +3542,7 @@ const ITEMS = {
   "phrygian_cap_": {"id":"phrygian_cap_","imgId":5180,"name":"國慶日帽子","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":10,"sell":20,"buyPrice":40,"desc":"在西方某個國家為了紀念國慶節而製成的帽子 VIT+1 系列: 頭盔 防禦: 2 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"vit":1},
   "baseball_cap_": {"id":"baseball_cap_","imgId":5190,"name":"獨立紀念帽子 [1]","type":"armor","icon":"👑","armorType":"headgear","def":5,"weight":1,"sell":20,"buyPrice":40,"desc":"紀念印度尼西亞獨立 系列: 頭盔 防禦: 5 位置: 頭上 裝備: 所有職業","slots":1},
   "pumpkin_hat_": {"id":"pumpkin_hat_","imgId":5202,"name":"更好的南瓜帽子","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":20,"sell":20,"buyPrice":40,"desc":"有著南瓜先生的用心，更升級一層的帽子 戴著這個也許會跟南瓜先生一樣試著想要跳躍也不一定 從惡魔系魔物那裡減少5%的傷害 擊殺人型系魔物時，有較少的機率會掉落糖果物品 系列: 頭盔 防禦: 3 位置: 頭上 重量: 20 要求等級: 沒有 裝備: 所有職業","slots":0},
-  "angelic_chain_": {"id":"angelic_chain_","imgId":5215,"name":"進化的天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":20,"buyPrice":40,"desc":"收集了天使的羽毛貼在髮箍上所做成的漂亮翅膀模樣的帽子，因柔軟羽毛的觸覺使的氣氛上升在不知不覺中動作變得勤快及快活起來了 DEX+1 INT+1 MDEF+3 從惡魔系那裡得到傷害時減少3% (限定無法交易、丟棄) 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"int":1,"dex":1,"mdef":3},
+  "angelic_chain_": {"id":"angelic_chain_","imgId":5215,"name":"進化的天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":20,"buyPrice":40,"desc":"收集了天使的羽毛貼在髮箍上所做成的漂亮翅膀模樣的帽子，因柔軟羽毛的觸覺使的氣氛上升在不知不覺中動作變得勤快及快活起來了 DEX+1 INT+1 MDEF+3 從惡魔系那裡得到傷害時減少3% (限定無法交易、丟棄) 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"int":1,"dex":1,"mdef":3,"bonus":{"raceDmgReduce_demon":3}},
   "satanic_chain_": {"id":"satanic_chain_","imgId":5216,"name":"進化的惡魔髮圈","type":"armor","icon":"👑","armorType":"headgear","def":6,"weight":10,"sell":24,"buyPrice":48,"desc":"據說參考了惡魔背部上的翅膀所做成的髮箍，當戴上時有股某種力量可以感覺到自身變得很強壯 STR+1 AGI+1 FLEE+3 從惡魔系那裡得到傷害時減少3% (限定無法交易、丟棄) 系列: 頭盔 防禦: 6 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"str":1,"agi":1,"flee":3},
   "bunny_band_": {"id":"bunny_band_","imgId":5218,"name":"進化的兔耳髮圈","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":10,"sell":20,"buyPrice":40,"desc":"在髮箍上參考兔子耳朵所做的裝飾髮箍，看起來很難抓到中心的樣子不過卻意外的很有活動性的樣子 INT+2 (限定無法交易、丟棄) 系列: 頭盔 防禦: 3 位置: 頭上 重量: 10 裝備: 所有職業","slots":0,"int":2},
   "drooping_kitty_": {"id":"drooping_kitty_","imgId":5219,"name":"進化的懶洋洋的貓","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":50,"sell":20,"buyPrice":40,"desc":"可以放在頭上可攜帶做成的娃娃，在哪裡會聽到貓咪的叫聲或是在頭頂上感覺到貓咪在動，純是心理作用的關係 MDEF+18，FLEE+3 (限定無法交易、丟棄) 系列: 頭盔 防禦: 3 位置: 頭上 重量: 50 要求等級: 沒有 裝備: 除初心者以外的所有職業","slots":0,"mdef":18,"flee":3},
@@ -5018,13 +5018,13 @@ const ITEMS = {
   "angeling_potion": {"id":"angeling_potion","imgId":12350,"name":"天使波利藥水","type":"material","icon":"📦","weight":10,"sell":10,"desc":"可愛歸可愛，還是有妙用的唷。使用後對自身施展天使之賜福Lv5、天使之障壁Lv5。 _ 重量: 10 ","buyPrice":20},
   "shout_megaphone": {"id":"shout_megaphone","imgId":12351,"name":"大聲吶喊喇叭","type":"material","icon":"📦","weight":5,"sell":10,"desc":"能夠讓人吶喊的道具，心情不好的時候喊了以後心情會比較好，似乎也能夠激勵人心。施展大聲吶喊Lv1。 _ 重量: 5 Design by 吶喊的擴聲器 ODIN/-闇煌- ","buyPrice":20},
   "xmas_gift": {"id":"xmas_gift","imgId":12355,"name":"聖誕禮物","type":"material","icon":"📦","weight":10,"sell":1,"desc":"一年之間，只有一次的獲得機會。若你哭泣的話聖誕老公公不給你禮物喔！ _ 重量: 10 ","buyPrice":2},
-  "shiny_wing_gown": {"id":"shiny_wing_gown","imgId":12357,"name":"","type":"material","icon":"📦","weight":1,"sell":10,"desc":"","buyPrice":20},
+  "shiny_wing_gown": {"id":"shiny_wing_gown","imgId":12357,"name":"絢麗羽衣","type":"material","icon":"📦","weight":1,"sell":10,"desc":"","buyPrice":3000},
   "fan_of_wind": {"id":"fan_of_wind","imgId":12358,"name":"徐風魔扇","type":"material","icon":"📦","weight":5,"sell":10,"desc":"蘊含著徐風魔力之扇，是狐仙的最愛。 種類: 認養寵物之物品 重量: 5 ","buyPrice":20},
   "very_soft_plant": {"id":"very_soft_plant","imgId":12359,"name":"光滑柔軟草","type":"material","icon":"📦","weight":5,"sell":10,"desc":"淡綠色非常柔軟光滑的草，好像群葉貓非常喜歡。 活動魔物、小兵魔物無法被認養。  種類: 認養道具 重量: 5 ","buyPrice":20},
   "very_red_juice": {"id":"very_red_juice","imgId":12360,"name":"紅色果汁","type":"material","icon":"📦","weight":5,"sell":10,"desc":"味道有點奇特的紅色果汁，是銀月魔女的最愛。 活動魔物、小兵魔物不能被認養。 種類: 認養物品 重量: 5 ","buyPrice":20},
   "delicious_shaved_ice": {"id":"delicious_shaved_ice","imgId":12361,"name":"戀夏雪花冰","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"冰到腦門的刨冰，是傀儡娃娃的最愛。 為活動魔物、小兵魔物不能被認養寵物。 種類: 認養寵物物品 重量: 0 "},
   "kuloren": {"id":"kuloren","imgId":12362,"name":"黑夢魔劍","type":"material","icon":"📦","weight":5,"sell":10,"desc":"天津町匠人所製作的名劍，是火忍西怒畢的最愛。 種類: 認養寵物之物品 重量: 5 ","buyPrice":20},
-  "fit_pipe": {"id":"fit_pipe","imgId":12363,"name":"橡木棺","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"大小適中的小棺木，是白幽靈的最愛。 為活動魔物、小兵魔物不能被認養寵物。 種類: 認養寵物物品 重量: 0 "},
+  "fit_pipe": {"id":"fit_pipe","imgId":12363,"name":"橡木棺","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"大小適中的小棺木，是白幽靈的最愛。 為活動魔物、小兵魔物不能被認養寵物。 種類: 認養寵物物品 重量: 0 ","buyPrice":30000},
   "staff_of_leader": {"id":"staff_of_leader","imgId":12364,"name":"領袖手杖","type":"material","icon":"📦","weight":5,"sell":10,"desc":"機動性佳的塑料手杖，是哥布靈首領的最愛。 種類: 認養寵物之物品 重量: 5 ","buyPrice":20},
   "charming_lotus": {"id":"charming_lotus","imgId":12365,"name":"賞心悅目的蓮花","type":"material","icon":"📦","weight":5,"sell":10,"desc":"長著美麗蓮蓓蕾的花，是妖仙女的最愛。 種類: 認養寵物之物品 重量: 5 ","buyPrice":20},
   "gril_doll": {"id":"gril_doll","imgId":12366,"name":"恐怖女娃娃","type":"material","icon":"📦","weight":5,"sell":10,"desc":"在恐怖電影中會出現的破舊女娃娃，是米雅畢的最愛。 活動魔物、小兵魔物不能被認養。 種類: 認養物品 重量: 5 ","buyPrice":20},
@@ -5773,12 +5773,12 @@ const ITEMS = {
   "fire_cracker_vday": {"id":"fire_cracker_vday","imgId":14548,"name":"情人節鞭炮","type":"material","icon":"📦","weight":2,"sell":1,"desc":"和漂亮的煙火一起呈現出 HAPPY VALENTINE's DAY！的字樣，因為很危險請勿讓小朋友觸摸 _ 重量: 2 ","buyPrice":2},
   "fire_cracker_bday": {"id":"fire_cracker_bday","imgId":14549,"name":"生日鞭炮","type":"material","icon":"📦","weight":2,"sell":1,"desc":"和漂亮的煙火一起呈現出 HAPPY BIRTHDAY的字樣，因為很危險請勿讓小朋友觸摸 _ 重量: 2 ","buyPrice":2},
   "fire_cracker_xmas": {"id":"fire_cracker_xmas","imgId":14550,"name":"聖誕快樂煙花","type":"material","icon":"📦","weight":2,"sell":1,"desc":"和漂亮的煙火一起呈現出 MERRY CHRISTMAS的字樣。 因為很危險請勿讓小朋友觸摸。 _ 重量: 2 ","buyPrice":2},
-  "knife_goblin_ring": {"id":"knife_goblin_ring","imgId":14569,"name":"刺刀哥布靈的戒指","type":"material","icon":"📦","weight":1,"sell":1,"desc":"擦的很亮而閃爍的戒指，魔物刺刀哥布靈，非常喜歡此項物品 種類: 認養寵物之物品 "},
-  "flail_goblin_ring": {"id":"flail_goblin_ring","imgId":14570,"name":"鏈錘哥布靈的戒指","type":"material","icon":"📦","weight":1,"sell":1,"desc":"擦的很亮而閃爍的戒指，魔物鏈錘哥布靈，非常喜歡此項物品 種類: 認養寵物之物品 "},
-  "hammer_goblin_ring": {"id":"hammer_goblin_ring","imgId":14571,"name":"榔頭哥布靈的戒指","type":"material","icon":"📦","weight":1,"sell":1,"desc":"擦的很亮而閃爍的戒指，魔物榔頭哥布靈，非常喜歡此項物品 種類: 認養寵物之物品 "},
-  "holy_marble": {"id":"holy_marble","imgId":14572,"name":"火珠","type":"material","icon":"📦","weight":1,"sell":1,"desc":"有著紅色圓圓硬硬的石頭，魔物七彩地龍，非常喜歡此項物品 種類: 認養寵物之物品 "},
-  "red_burning_stone": {"id":"red_burning_stone","imgId":14573,"name":"燒紅的石頭","type":"material","icon":"📦","weight":1,"sell":1,"desc":"觸摸時感覺到溫氣的紅色石頭，魔物赤焰小惡魔，非常喜歡此項物品 種類: 認養寵物之物品 "},
-  "skull_of_vagabond": {"id":"skull_of_vagabond","imgId":14574,"name":"浪人的遺骨","type":"material","icon":"📦","weight":1,"sell":1,"desc":"應該猜測是某個人的遺骨，魔物邪骸浪人，非常喜歡此項物品 種類: 認養寵物之物品 "},
+  "knife_goblin_ring": {"id":"knife_goblin_ring","imgId":14569,"name":"刺刀哥布靈的戒指","type":"material","icon":"📦","weight":1,"sell":1,"desc":"擦的很亮而閃爍的戒指，魔物刺刀哥布靈，非常喜歡此項物品 種類: 認養寵物之物品 ","buyPrice":10000},
+  "flail_goblin_ring": {"id":"flail_goblin_ring","imgId":14570,"name":"鏈錘哥布靈的戒指","type":"material","icon":"📦","weight":1,"sell":1,"desc":"擦的很亮而閃爍的戒指，魔物鏈錘哥布靈，非常喜歡此項物品 種類: 認養寵物之物品 ","buyPrice":10000},
+  "hammer_goblin_ring": {"id":"hammer_goblin_ring","imgId":14571,"name":"榔頭哥布靈的戒指","type":"material","icon":"📦","weight":1,"sell":1,"desc":"擦的很亮而閃爍的戒指，魔物榔頭哥布靈，非常喜歡此項物品 種類: 認養寵物之物品 ","buyPrice":10000},
+  "holy_marble": {"id":"holy_marble","imgId":14572,"name":"火珠","type":"material","icon":"📦","weight":1,"sell":1,"desc":"有著紅色圓圓硬硬的石頭，魔物七彩地龍，非常喜歡此項物品 種類: 認養寵物之物品 ","buyPrice":10000},
+  "red_burning_stone": {"id":"red_burning_stone","imgId":14573,"name":"燒紅的石頭","type":"material","icon":"📦","weight":1,"sell":1,"desc":"觸摸時感覺到溫氣的紅色石頭，魔物赤焰小惡魔，非常喜歡此項物品 種類: 認養寵物之物品 ","buyPrice":10000},
+  "skull_of_vagabond": {"id":"skull_of_vagabond","imgId":14574,"name":"浪人的遺骨","type":"material","icon":"📦","weight":1,"sell":1,"desc":"應該猜測是某個人的遺骨，魔物邪骸浪人，非常喜歡此項物品 種類: 認養寵物之物品 ","buyPrice":10000},
   "wob_rune": {"id":"wob_rune","imgId":14582,"name":"盧恩王國蝴蝶翅膀","type":"material","icon":"📦","weight":1,"sell":1,"desc":"盧恩王國蝴蝶翅膀。使用它就能飛到\"普隆德拉\"，\"吉芬\"，\"斐揚\"，\"夢羅克\"，\"艾爾帕蘭\"，\"艾爾貝塔\"。 _ 重量: 1 "},
   "wob_schwaltz": {"id":"wob_schwaltz","imgId":14583,"name":"秀髮茲蝴蝶翅膀","type":"material","icon":"📦","weight":1,"sell":1,"desc":"秀髮茲蝴蝶翅膀。使用它就能飛到\"朱諾\"，\"里希塔樂鎮\"，\"艾音布羅克\"，\"毀葛\" _ 重量: 1 "},
   "wob_rachel": {"id":"wob_rachel","imgId":14584,"name":"拉赫蝴蝶翅膀","type":"material","icon":"📦","weight":1,"sell":1,"desc":"拉赫蝴蝶翅膀。使用它就能飛到\"菲音斯\"，\"拉赫\" _ 重量: 1 "},
@@ -7585,7 +7585,7 @@ const ITEMS = {
   "thin_noodle": {"id":"thin_noodle","imgId":25365,"name":"又長又細的麵條","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"又細又長的苗條。熟到一定程度時扔向牆壁會黏住。 _ (該道具將在活動結束時一概刪除。)  重量: 0 "},
   "noodle_festa_coupon": {"id":"noodle_festa_coupon","imgId":25366,"name":"小面慶典硬幣","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"小面活動專用的硬幣。 _ (該道具將在活動結束時一概刪除。) <NAVI>[獎品兌換]<INFO>lasagna,86,207,0,101,0</INFO></NAVI> 重量: 0 "},
   "promotion_fan": {"id":"promotion_fan","imgId":25367,"name":"宣傳扇子","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"上面印著小面慶典的宣傳文。非常耐用，扇風時會有淡淡的西瓜味非常涼快。 _ (該道具將在活動結束時一概刪除。)  重量: 0 "},
-  "mightysoul_essence": {"id":"mightysoul_essence","imgId":25375,"name":"強烈靈魂精髓","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"據說是從強大魔物靈魂中提煉出來的精髓。 但沒有人知道這個作品是由何方神聖製作的。 重量: 0 "},
+  "mightysoul_essence": {"id":"mightysoul_essence","imgId":25375,"name":"強烈靈魂精髓","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"據說是從強大魔物靈魂中提煉出來的精髓。 但沒有人知道這個作品是由何方神聖製作的。 重量: 0 ","buyPrice":50000},
   "pet_coin": {"id":"pet_coin","imgId":25376,"name":"寵物硬幣","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"可購買寵物相關商品的硬幣。  (該道具將在活動結束後一概刪除。) 重量: 0 "},
   "high_class_pet_food": {"id":"high_class_pet_food","imgId":25377,"name":"高級寵物飼料","type":"material","icon":"📦","weight":1,"sell":5000,"desc":"[就如給自己製作美食一樣精心製作而成，寵物諾布利斯俱樂部專為特殊顧客傾力製作的專用料理。] 印有製作者籤名盤子的BOSS寵物專用料理。 重量: 1 ","buyPrice":10000},
   "tw_jumping_coin17": {"id":"tw_jumping_coin17","imgId":25387,"name":"成長代幣","type":"consumable","icon":"📦","weight":1,"sell":1,"desc":"可參與成長快車計劃的憑證！經過成長職業專員認證後即可開啟快車計劃。 <NAVI>[成長職業專員]<INFO>prt_in,43,95,0,101,0</INFO></NAVI> <NAVI>[成長支援"},
@@ -18487,7 +18487,7 @@ const ITEMS = {
   "ru_blue_violin": {"id":"ru_blue_violin","imgId":1936,"name":"戰慄小提琴","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":3,"atk":180,"weaponWeight":-150,"weight":150,"sell":360,"buyPrice":720,"reqLevel":100,"vit":5,"dex":5,"desc":"具有破壞能力的藍色小提琴。 DEX+5，VIT+5 系列: 樂器 攻擊: 180 重量: 150 武器等級: 3 要求等級: 100 裝備: 宮廷樂師系列","slots":0,"weaponCat":"instrument"},
   "viollin_of_infinite": {"id":"viollin_of_infinite","imgId":1938,"name":"無限小提琴 [1]","type":"weapon","icon":"🏹","weaponType":"bow","weaponLv":4,"atk":150,"weaponWeight":-50,"weight":50,"sell":300,"buyPrice":600,"reqLevel":100,"desc":"擁有微妙力量的武器，感覺部分能力值似乎被封印了。 系列: 樂器 攻擊: 150 重量: 50 武器等級: 4 要求等級: 100 裝備: 宮廷樂師系列","slots":1,"weaponCat":"instrument"},
   "novice_guard": {"id":"novice_guard","imgId":2112,"name":"初學者鐵盾","type":"armor","icon":"🛡️","armorType":"shield","def":20,"weight":1,"sell":80,"buyPrice":160,"reqJob":["novice"],"hp":50,"sp":10,"desc":"不可交易。 為了初學冒險者，秘密決死組織在普隆德拉的蓆子同學會裡，所做成100%手工的初學者用 盾牌，材料一定是上好的材料 與初學者陰險披肩，初學者海灘鞋子，初學者鐵盾一起佩戴時 MaxHP+50，MaxSP+10。 不可精煉 系列: 盾牌 防禦: 20 重量: 1 要求等級: 沒有 裝備: 初學者專用","slots":0},
-  "item_2115": {"id":"item_2115","imgId":2115,"name":"瓦爾基里亞鋼盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":80,"weight":50,"sell":320,"buyPrice":640,"reqLevel":65,"desc":"布利格的附屬神，哥納在瓦爾基里時期戰鬥時所使用的盾牌，可以感覺到神的戰士瓦爾基里的鬥志。 水、 火、暗、不死屬性減少20%。 MDEF+5 和奧丁的祝福、菲力卡的頭箍一起裝備時 DEF+2，MDEF+5 另外頭具和盾牌的精煉數值不是在DEF上增加而是在MDEF上增加 系列: 盾牌 防禦: 80 重量: 50 要求等級: 65 裝備: 除初心者以外的所有職業","slots":1,"mdef":5,"condBonus":[{when:{withItems:["item_2353","fricca_circlet"]},bonus:{def:2}}]},
+  "item_2115": {"id":"item_2115","imgId":2115,"name":"瓦爾基里亞鋼盾 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":80,"weight":50,"sell":320,"buyPrice":640,"reqLevel":65,"desc":"布利格的附屬神，哥納在瓦爾基里時期戰鬥時所使用的盾牌，可以感覺到神的戰士瓦爾基里的鬥志。 水、 火、暗、不死屬性減少20%。 MDEF+5 和奧丁的祝福、菲力卡的頭箍一起裝備時 DEF+2，MDEF+5 另外頭具和盾牌的精煉數值不是在DEF上增加而是在MDEF上增加 系列: 盾牌 防禦: 80 重量: 50 要求等級: 65 裝備: 除初心者以外的所有職業","slots":1,"mdef":5,"condBonus":[{when:{withItems:["item_2353","fricca_circlet"]},bonus:{def:2,mdef:5}}],"bonus":{"eleReduce_water":20,"eleReduce_fire":20,"eleReduce_shadow":20,"raceDmgReduce_undead":20}},
   "improved_arm_guard": {"id":"improved_arm_guard","imgId":2119,"name":"改良型手臂防護具","type":"armor","icon":"🛡️","armorType":"shield","def":45,"weight":15,"sell":180,"buyPrice":360,"reqLevel":50,"desc":"忍者專用的手臂防禦具，因一位天才匠人的關係讓防禦力犧牲掉，而增加了魔法的抵抗 MDEF+5 系列: 盾牌 防禦: 45 重量: 15 要求等級: 50 裝備: 忍者專用","slots":0,"mdef":5},
   "strong_shield": {"id":"strong_shield","imgId":2125,"name":"堅固盾牌 [1]","type":"armor","icon":"🛡️","armorType":"shield","def":90,"weight":250,"sell":360,"buyPrice":720,"reqLevel":75,"reqJob":["swordsman","merchant","thief"],"desc":"非常大又重的盾牌，不管被什麼樣的攻擊都不會被擊退 有著堅強抵禦的能力， 當受到攻擊時，很難吸收撞擊力反而受到更大的傷害，所以說需要使用上的注意， 絕對不會有退移的現象發生，反而更受到20%的物理及魔法傷害 系列: 盾牌 防禦: 90 重量: 250 要求等級: 75 裝備: 轉生劍士/商人/盜賊系列專用","slots":1},
   "flame_thrower": {"id":"flame_thrower","imgId":2139,"name":"火焰噴射器","type":"armor","icon":"🛡️","armorType":"shield","def":60,"weight":200,"sell":240,"buyPrice":480,"reqLevel":99,"desc":"噴出火焰瞬間讓敵人著火。 系列: 盾牌 防禦: 60 重量: 200 要求等級:99 裝備: 機匠專用","slots":0},
@@ -19225,7 +19225,7 @@ const ITEMS = {
   "red_box": {"id":"red_box","imgId":12189,"name":"神秘紅色箱子","type":"material","icon":"📦","weight":20,"sell":25000,"desc":"神秘的紅色光箱子，打開的話感覺會出現好東西似的。_重量: 20","slots":0,"buyPrice":50000},
   "item_12343": {"id":"item_12343","imgId":12343,"name":"馬努克的意志","type":"material","icon":"📦","weight":5,"sell":1,"desc":"由馬努克中心製作，正式向礦工們推薦的營養食品受到馬努克原野地區魔物的物理，魔法傷害，於 10分鐘內減少10%。(豬籠草、蜈蚣、蜈蚣幼蟲、希斯利安、噠噠喬、硬石猛","slots":0},
   "item_12345": {"id":"item_12345","imgId":12345,"name":"毒黃蜂的蜜桶","type":"material","icon":"📦","weight":5,"sell":1,"desc":"用魯修拉的蜂蜜與藥草混合而成的果醬，受到輝煌領域原野地區魔物的物理，魔法傷害，於 10分鐘內減少10%。(捕蟲堇，毒黃蜂，飛馬，納加，三角獸)_重量: 5","slots":0},
-  "item_12370": {"id":"item_12370","imgId":12370,"name":"少女的純情","type":"material","icon":"📦","weight":1,"sell":1,"desc":"充滿少女情懷的信，是惡魔侍者的最愛。活動魔物、小兵魔物不能被認養。種類: 認養物品重量: 0","slots":0},
+  "item_12370": {"id":"item_12370","imgId":12370,"name":"少女的純情","type":"material","icon":"📦","weight":1,"sell":1,"desc":"充滿少女情懷的信，是惡魔侍者的最愛。活動魔物、小兵魔物不能被認養。種類: 認養物品重量: 0","slots":0,"buyPrice":200000},
   "item_12373": {"id":"item_12373","imgId":12373,"name":"少年的純情","type":"material","icon":"📦","weight":1,"sell":10,"desc":"寫滿少年愛慕的情書，應該需要很大的勇氣，是惡魔女僕的最愛。活動魔物、小兵魔物不能被認養。種類: 認養物品重量: 1","slots":0,"buyPrice":20},
   "item_2009_rice_cake_soup": {"id":"item_2009_rice_cake_soup","imgId":12378,"name":"章魚年糕湯","type":"consumable","icon":"🧪","weight":10,"sell":5,"buyPrice":10,"desc":"斐揚的新年傳統料理。完美重現了書生修爾媽媽的手藝。使用時，HP、SP恢復50%。活動結束後刪除重量: 10","slots":0,"healPct":50,"restoreSpPct":50},
   "valkyrie_a_scroll": {"id":"valkyrie_a_scroll","imgId":12381,"name":"古代語言捲軸","type":"material","icon":"📦","weight":1,"sell":5,"desc":"記載著古代未知語言的捲軸。_重量: 1","slots":0,"buyPrice":10},
@@ -19542,8 +19542,8 @@ const ITEMS = {
   "anemos_mask": {"id":"anemos_mask","imgId":18786,"name":"安妮摩斯面具","type":"armor","icon":"👑","armorType":"headgear","weight":20,"sell":20,"buyPrice":40,"desc":"據說是風之女神用過的黃金口罩。 風屬性魔法傷害增加4%。 系列: 頭盔 防禦: 0 位置: 頭中 重量: 20 需求等級: 10 裝備: 全部職業","slots":0},
   "rainbow_poring_hat": {"id":"rainbow_poring_hat","imgId":18790,"name":"彩虹波利帽","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":10,"sell":12,"buyPrice":24,"reqLevel":1,"desc":"無法交易。 七彩繽紛的波利帽，總是讓人愛不釋手。 受到人型系魔物的傷害減少5%， 對所有階級敵人的物理傷害+5%， MATK5%。 系列: 頭盔 防禦: 3 位置: 頭上 重量: 10 要求等級: 1 裝備: 全部職業","slots":0},
   "rwc_champ_crown_qf": {"id":"rwc_champ_crown_qf","imgId":18796,"name":"RWC勝利之冠 [1]","type":"armor","icon":"👑","armorType":"headgear","def":12,"weight":50,"sell":48,"buyPrice":96,"reqLevel":1,"desc":"無法交易。 RWC勝利之冠。 AllState+2。 詛咒免疫。 系列: 頭盔 防禦: 12 位置: 頭上 重量: 50 要求等級: 1 裝備: 全部職業","slots":1},
-  "deep_angel_hairband": {"id":"deep_angel_hairband","imgId":18797,"name":"深藍天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"agi":1,"luk":1,"desc":"搜集天使的羽毛所製成的髮圈。 AGI+1，LUK+1 MDEF+3 受到惡魔系魔物的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
-  "pink_angel_hairband": {"id":"pink_angel_hairband","imgId":18798,"name":"粉紅天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"agi":1,"luk":1,"desc":"搜集天使的羽毛所製成的髮圈。 AGI+1，LUK+1 MDEF+3 受到惡魔系魔物的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"mdef":3},
+  "deep_angel_hairband": {"id":"deep_angel_hairband","imgId":18797,"name":"深藍天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"agi":1,"luk":1,"desc":"搜集天使的羽毛所製成的髮圈。 AGI+1，LUK+1 MDEF+3 受到惡魔系魔物的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"mdef":3,"bonus":{"raceDmgReduce_demon":3}},
+  "pink_angel_hairband": {"id":"pink_angel_hairband","imgId":18798,"name":"粉紅天使髮圈","type":"armor","icon":"👑","armorType":"headgear","def":4,"weight":10,"sell":16,"buyPrice":32,"agi":1,"luk":1,"desc":"搜集天使的羽毛所製成的髮圈。 AGI+1，LUK+1 MDEF+3 受到惡魔系魔物的攻擊時，可減少3%的傷害。 系列: 頭盔 防禦: 4 位置: 頭上 重量: 10 裝備: 除初心者以外的所有職業","slots":0,"mdef":3,"bonus":{"raceDmgReduce_demon":3}},
   "rose_cascade": {"id":"rose_cascade","imgId":18803,"name":"玫瑰蕾絲帽","type":"armor","icon":"👑","armorType":"headgear","weight":50,"sell":20,"buyPrice":40,"reqLevel":10,"desc":"有蕾絲邊的狩獵專用帽。 施展技能時SP消耗減少5%。 純DEX為100以上時，SP消耗再減少5%， 純DEX為120以上時，SP消耗再減少5%， 與血染斗篷一起裝備時，SP消耗再減少5%。 系列: 頭盔 防禦: 0 位置: 頭上 重量: 50 要求等級: 10 裝備: 全部職業","slots":0},
   "eclipse_hat": {"id":"eclipse_hat","imgId":18805,"name":"藍瘋兔帽子","type":"armor","icon":"👑","armorType":"headgear","def":2,"weight":30,"sell":8,"buyPrice":16,"reqLevel":1,"luk":3,"desc":"根據藍瘋兔的外形所製作而成的帽子。 LUK+3，MDEF+5。 系列: 頭盔 防禦: 2 位置: 頭上 重量: 30 要求等級: 1 裝備: 所有職業","slots":0,"mdef":5},
   "yellow_yuzu_hat": {"id":"yellow_yuzu_hat","imgId":18807,"name":"白柚帽","type":"armor","icon":"👑","armorType":"headgear","def":3,"weight":40,"sell":12,"buyPrice":24,"reqLevel":1,"vit":2,"luk":3,"desc":"用柚子形狀作成的帽子，總是讓人想吃上一口的感覺。 LUK+3，VIT+2。 被植物系攻擊時減少10%傷害。 系列: 頭盔 防禦: 3 位置: 頭上 重量: 40 要求等級: 1 裝備: 除初心者以外的所有職業","slots":0},
@@ -20840,6 +20840,169 @@ const ITEMS = {
   "crafted_spear2h_fire": {"id":"crafted_spear2h_fire","imgId":1410,"name":"雙手長矛(火屬性)","type":"weapon","icon":"⚔️","weaponType":"spear","atk":230,"element":"fire","weaponLv":3,"weight":150,"sell":1,"buyPrice":0,"desc":"騎士專用的長矛。 系列: 矛 攻擊: 185 重量: 250 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":0,"weaponCat":"spear","reqJob":["swordsman"],"reqLevel":33},
   "crafted_spear2h_earth": {"id":"crafted_spear2h_earth","imgId":1410,"name":"雙手長矛(地屬性)","type":"weapon","icon":"⚔️","weaponType":"spear","atk":230,"element":"earth","weaponLv":3,"weight":150,"sell":1,"buyPrice":0,"desc":"騎士專用的長矛。 系列: 矛 攻擊: 185 重量: 250 武器等級: 3 要求等級: 33 裝備: 劍士系列專用","slots":0,"weaponCat":"spear","reqJob":["swordsman"],"reqLevel":33},
   "dragon_slayer_": {"id":"dragon_slayer_","imgId":1180,"name":"龍牙劍 [2]","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":150,"weaponWeight":-130,"weight":130,"sell":300,"buyPrice":600,"desc":"以龍的牙齒為主要材料製作而成的劍。可以輕易的刺穿龍身上尖硬的鱗片。 無視龍族魔物防禦力。 對龍族魔物增加15%的傷害。 系列: 雙手劍 攻擊: 150 重量: 130 武器等級: 4 要求等級: 48 裝備: 劍士系列專用","slots":2,"weaponCat":"tsword","reqLevel":48,"reqJob":["swordsman"],"bonus":{"defIgnoreRace_dragon":100,"raceDmg_dragon":15}},
+  "firm_nightmare_t_card": {"id":"firm_nightmare_t_card","imgId":0,"name":"Rigid Nightmare Terror卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Rigid Nightmare Terror卡片"},
+  "ill_deviace_card": {"id":"ill_deviace_card","imgId":0,"name":"Abysmal Deviace卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Abysmal Deviace卡片"},
+  "repairrobot_t_card": {"id":"repairrobot_t_card","imgId":0,"name":"修復機器人卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"修復機器人卡片"},
+  "dry_rafflesia_h_card": {"id":"dry_rafflesia_h_card","imgId":0,"name":"Senior Dried Rafflesia卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Senior Dried Rafflesia卡片"},
+  "ill_king_dramoh_card": {"id":"ill_king_dramoh_card","imgId":0,"name":"Abysmal King Dramoh卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Abysmal King Dramoh卡片"},
+  "dy_card": {"id":"dy_card","imgId":0,"name":"Dwigh卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Dwigh卡片"},
+  "firm_explosion_card": {"id":"firm_explosion_card","imgId":0,"name":"Rigid Explosion卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Rigid Explosion卡片"},
+  "lichterng_card": {"id":"lichterng_card","imgId":0,"name":"元素鬼火(褐)卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"元素鬼火(褐)卡片"},
+  "firm_deleter1_card": {"id":"firm_deleter1_card","imgId":0,"name":"Rigid Earth Deleter卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Rigid Earth Deleter卡片"},
+  "plasma_r_card": {"id":"plasma_r_card","imgId":0,"name":"Powerful Spell卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Powerful Spell卡片"},
+  "ep18_lava_toad_card": {"id":"ep18_lava_toad_card","imgId":0,"name":"Lava Toad卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Lava Toad卡片"},
+  "r48_85_bestia_card": {"id":"r48_85_bestia_card","imgId":0,"name":"R48-85-Bestia卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"R48-85-Bestia卡片"},
+  "gan_ceann_card": {"id":"gan_ceann_card","imgId":0,"name":"Gan Ceann卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Gan Ceann卡片"},
+  "lava_eater_card": {"id":"lava_eater_card","imgId":0,"name":"Lavaeter卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Lavaeter卡片"},
+  "as_bdy_knight_card": {"id":"as_bdy_knight_card","imgId":0,"name":"污染的白騎士卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"污染的白騎士卡片(又稱白騎士團卡片)。物理傷害+10%。"},
+  "pitaya_y_card": {"id":"pitaya_y_card","imgId":0,"name":"Pitaya卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Pitaya卡片"},
+  "papila_ruba_h_card": {"id":"papila_ruba_h_card","imgId":0,"name":"Senior Papila Ruba卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Senior Papila Ruba卡片"},
+  "fulgor_card": {"id":"fulgor_card","imgId":0,"name":"Fulgor卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Fulgor卡片"},
+  "amdarais_card": {"id":"amdarais_card","imgId":0,"name":"Amdarais卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Amdarais卡片"},
+  "plagarion_card": {"id":"plagarion_card","imgId":0,"name":"Plagarion卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Plagarion卡片"},
+  "r001_bestia_card": {"id":"r001_bestia_card","imgId":0,"name":"R001-Bestia卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"R001-Bestia卡片"},
+  "ancient_w_fighter_card": {"id":"ancient_w_fighter_card","imgId":0,"name":"Ancient Wootan Fighter卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ancient Wootan Fighter卡片"},
+  "ominousfreezer_card": {"id":"ominousfreezer_card","imgId":0,"name":"Ominous Freezer卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ominous Freezer卡片"},
+  "ill_ant_egg_card": {"id":"ill_ant_egg_card","imgId":0,"name":"Mushy Ant Egg卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Mushy Ant Egg卡片"},
+  "big_bell_card": {"id":"big_bell_card","imgId":0,"name":"Big Bell卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Big Bell卡片"},
+  "ill_deniro_card": {"id":"ill_deniro_card","imgId":0,"name":"Diligent Deniro卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Diligent Deniro卡片"},
+  "polluted_raydric_card": {"id":"polluted_raydric_card","imgId":0,"name":"Contaminated Raydric卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Contaminated Raydric卡片"},
+  "firm_deleter2_card": {"id":"firm_deleter2_card","imgId":0,"name":"Rigid Sky Deleter卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Rigid Sky Deleter卡片"},
+  "giant_caput_card": {"id":"giant_caput_card","imgId":0,"name":"Giant Caput卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Giant Caput卡片"},
+  "galensis_card": {"id":"galensis_card","imgId":0,"name":"Galensis卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Galensis卡片"},
+  "napeo_card": {"id":"napeo_card","imgId":0,"name":"Napeo卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Napeo卡片"},
+  "ominousheater_card": {"id":"ominousheater_card","imgId":0,"name":"Ominous Heater卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ominous Heater卡片"},
+  "ominouspermeter_card": {"id":"ominouspermeter_card","imgId":0,"name":"Ominous Permeter卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ominous Permeter卡片"},
+  "the_one_card": {"id":"the_one_card","imgId":0,"name":"The One卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"The One卡片"},
+  "neo_punk_card": {"id":"neo_punk_card","imgId":0,"name":"Neo-punk卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Neo-punk卡片"},
+  "ill_phen_card": {"id":"ill_phen_card","imgId":0,"name":"Abysmal Phen卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Abysmal Phen卡片"},
+  "neo_mineral_card": {"id":"neo_mineral_card","imgId":0,"name":"Green Mineral卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Green Mineral卡片"},
+  "ill_giearth_card": {"id":"ill_giearth_card","imgId":0,"name":"Intrepid Giearth卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Intrepid Giearth卡片"},
+  "polluted_spi_q_card": {"id":"polluted_spi_q_card","imgId":0,"name":"Corrupted Spider Queen卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Corrupted Spider Queen卡片"},
+  "despairgodmorocc_card": {"id":"despairgodmorocc_card","imgId":0,"name":"Morocc the Desparate god卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Morocc the Desparate god卡片"},
+  "pitman_worker_card": {"id":"pitman_worker_card","imgId":0,"name":"Hardworking Pitman卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Hardworking Pitman卡片"},
+  "ill_sword_fish_card": {"id":"ill_sword_fish_card","imgId":0,"name":"Abysmal Swordfish卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Abysmal Swordfish卡片"},
+  "plasma_r2_card": {"id":"plasma_r2_card","imgId":0,"name":"Sharp Spell卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Sharp Spell卡片"},
+  "porcellio_w_card": {"id":"porcellio_w_card","imgId":0,"name":"White Porcellio卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"White Porcellio卡片"},
+  "venedi_card": {"id":"venedi_card","imgId":0,"name":"Venedi卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Venedi卡片"},
+  "as_wind_ghost_card": {"id":"as_wind_ghost_card","imgId":0,"name":"Immortal Wind Ghost卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Immortal Wind Ghost卡片"},
+  "gigantes_card": {"id":"gigantes_card","imgId":0,"name":"Medium Ancient Gigantes卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Medium Ancient Gigantes卡片"},
+  "faceworm_q_card": {"id":"faceworm_q_card","imgId":0,"name":"Faceworm Queen卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Faceworm Queen卡片"},
+  "scr_mt_robots_card": {"id":"scr_mt_robots_card","imgId":0,"name":"廢鐵機器人卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"廢鐵機器人卡片"},
+  "litus_card": {"id":"litus_card","imgId":0,"name":"Litus卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Litus卡片"},
+  "ep18_demi_freyja_card": {"id":"ep18_demi_freyja_card","imgId":0,"name":"거짓된 신卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"거짓된 신卡片","unimplemented":["⚠ 本服現況：目前實作成「**受惡魔系傷害 +25%**」（減傷欄位被寫成負值），跟敘述相反。已回報待確認。"]},
+  "firm_blazzer_card": {"id":"firm_blazzer_card","imgId":0,"name":"Rigid Blazer卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Rigid Blazer卡片"},
+  "ominousturtleg_card": {"id":"ominousturtleg_card","imgId":0,"name":"Ominous Turtle General卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ominous Turtle General卡片"},
+  "prison_breaker_card": {"id":"prison_breaker_card","imgId":0,"name":"Prison Breaker卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Prison Breaker卡片"},
+  "high_sanare_card": {"id":"high_sanare_card","imgId":0,"name":"Heart Hunter Sanare卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Heart Hunter Sanare卡片"},
+  "sanare3_card": {"id":"sanare3_card","imgId":0,"name":"Spell Addicted Sanare卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Spell Addicted Sanare卡片"},
+  "ep18_volcaring_card": {"id":"ep18_volcaring_card","imgId":0,"name":"Volcaring卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Volcaring卡片"},
+  "death_witch_card": {"id":"death_witch_card","imgId":0,"name":"Death Witch卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Death Witch卡片"},
+  "greencenere_card": {"id":"greencenere_card","imgId":0,"name":"綠惡靈之霧卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"綠惡靈之霧卡片"},
+  "pitaya_g_card": {"id":"pitaya_g_card","imgId":0,"name":"Pitaya卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Pitaya卡片"},
+  "ill_andre_card": {"id":"ill_andre_card","imgId":0,"name":"Diligent Andre卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Diligent Andre卡片"},
+  "fragment_of_soul_card": {"id":"fragment_of_soul_card","imgId":0,"name":"Soul Fragment卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Soul Fragment卡片"},
+  "ep18_tumble_ring_card": {"id":"ep18_tumble_ring_card","imgId":0,"name":"Tumblering卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Tumblering卡片"},
+  "polluted_sting_card": {"id":"polluted_sting_card","imgId":0,"name":"Warped Sting卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Warped Sting卡片"},
+  "timeholder_card": {"id":"timeholder_card","imgId":0,"name":"Timeholder卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Timeholder卡片"},
+  "faithfulmanager_card": {"id":"faithfulmanager_card","imgId":0,"name":"頑靈惡童卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"頑靈惡童卡片"},
+  "beta_guards_ng_card": {"id":"beta_guards_ng_card","imgId":0,"name":"Broken Guard Beta卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Broken Guard Beta卡片"},
+  "arc_elder_card": {"id":"arc_elder_card","imgId":0,"name":"Arc Elder卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Arc Elder卡片"},
+  "poisonous_card": {"id":"poisonous_card","imgId":0,"name":"Poisonous卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Poisonous卡片"},
+  "verporte_h_card": {"id":"verporte_h_card","imgId":0,"name":"Verporte卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Verporte卡片"},
+  "colorful_t_bear_card": {"id":"colorful_t_bear_card","imgId":0,"name":"Red Teddy Bear卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Red Teddy Bear卡片"},
+  "dr815_card": {"id":"dr815_card","imgId":0,"name":"Machine Component卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Machine Component卡片"},
+  "vanilaqus_card": {"id":"vanilaqus_card","imgId":0,"name":"Vanilaqus卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Vanilaqus卡片"},
+  "ep18_ash_toad_card": {"id":"ep18_ash_toad_card","imgId":0,"name":"Ash Toad卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ash Toad卡片"},
+  "ill_abysmal_witch_card": {"id":"ill_abysmal_witch_card","imgId":0,"name":"Abysmal Witch卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Abysmal Witch卡片"},
+  "frozen_gargoyle_card": {"id":"frozen_gargoyle_card","imgId":0,"name":"Frozen Gargoyle卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Frozen Gargoyle卡片"},
+  "muspellskoll_card": {"id":"muspellskoll_card","imgId":0,"name":"Muspellskoll卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Muspellskoll卡片"},
+  "bakonawa_card": {"id":"bakonawa_card","imgId":0,"name":"Bakonawa卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Bakonawa卡片"},
+  "toxious_card": {"id":"toxious_card","imgId":0,"name":"Toxious卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Toxious卡片"},
+  "ill_andre_larva_card": {"id":"ill_andre_larva_card","imgId":0,"name":"Diligent Andre Larva卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Diligent Andre Larva卡片"},
+  "ill_strouf_card": {"id":"ill_strouf_card","imgId":0,"name":"Abysmal Strouf卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Abysmal Strouf卡片"},
+  "ep18_ashhopper_card": {"id":"ep18_ashhopper_card","imgId":0,"name":"Ashhopper卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ashhopper卡片"},
+  "mt_caput_card": {"id":"mt_caput_card","imgId":0,"name":"Twin Caput卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Twin Caput卡片"},
+  "dolorian_card": {"id":"dolorian_card","imgId":0,"name":"Dolorian卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Dolorian卡片"},
+  "o_cleaner_ng_card": {"id":"o_cleaner_ng_card","imgId":0,"name":"Broken Cleaning Robot Ω卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Broken Cleaning Robot Ω卡片"},
+  "ep18_firewind_kite_card": {"id":"ep18_firewind_kite_card","imgId":0,"name":"Firewind Kite卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Firewind Kite卡片"},
+  "ancient_megalith_card": {"id":"ancient_megalith_card","imgId":0,"name":"Ancient Megalith卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ancient Megalith卡片"},
+  "ep18_schulang_card": {"id":"ep18_schulang_card","imgId":0,"name":"변절자 슐랑卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"변절자 슐랑卡片","unimplemented":["⚠ 本服現況：目前實作成「**受天使系傷害 +25%**」（減傷欄位被寫成負值），跟敘述相反。已回報待確認。"]},
+  "ep18_spark_card": {"id":"ep18_spark_card","imgId":0,"name":"Spark卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Spark卡片"},
+  "xm_celine_kimi_card": {"id":"xm_celine_kimi_card","imgId":0,"name":"Celine Kimi卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Celine Kimi卡片"},
+  "regen_scientist_card": {"id":"regen_scientist_card","imgId":0,"name":"Regenschirm Scientist卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Regenschirm Scientist卡片"},
+  "ill_piere_card": {"id":"ill_piere_card","imgId":0,"name":"Diligent Piere卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Diligent Piere卡片"},
+  "pitaya_v_card": {"id":"pitaya_v_card","imgId":0,"name":"Pitaya卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Pitaya卡片"},
+  "plaga_card": {"id":"plaga_card","imgId":0,"name":"Plaga卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Plaga卡片"},
+  "abyss_man_card": {"id":"abyss_man_card","imgId":0,"name":"Abyssman卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Abyssman卡片"},
+  "brinaranea_card": {"id":"brinaranea_card","imgId":0,"name":"Brinaranea卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Brinaranea卡片"},
+  "fillia_card": {"id":"fillia_card","imgId":0,"name":"Fillia卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Fillia卡片"},
+  "evil_fanatics_card": {"id":"evil_fanatics_card","imgId":0,"name":"Evil Believer卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Evil Believer卡片"},
+  "ep18_rakehand_card": {"id":"ep18_rakehand_card","imgId":0,"name":"Rakehand卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Rakehand卡片"},
+  "firm_muspell_card": {"id":"firm_muspell_card","imgId":0,"name":"Rigid Muspellskoll卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Rigid Muspellskoll卡片"},
+  "papila_h_card": {"id":"papila_h_card","imgId":0,"name":"Senior Papila卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Senior Papila卡片"},
+  "amitera_card": {"id":"amitera_card","imgId":0,"name":"Amitera卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Amitera卡片"},
+  "ill_vitata_card": {"id":"ill_vitata_card","imgId":0,"name":"Diligent Vitata卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Diligent Vitata卡片"},
+  "brutal_murderer_card": {"id":"brutal_murderer_card","imgId":0,"name":"Brutal Murderer卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Brutal Murderer卡片"},
+  "aries_h_card": {"id":"aries_h_card","imgId":0,"name":"Senior Aries卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Senior Aries卡片"},
+  "deadre_card": {"id":"deadre_card","imgId":0,"name":"Deadre卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Deadre卡片"},
+  "livingdeath_card": {"id":"livingdeath_card","imgId":0,"name":"Fallen Orc Baby卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Fallen Orc Baby卡片"},
+  "ancient_trijoint_card": {"id":"ancient_trijoint_card","imgId":0,"name":"Ancient Tri Joint卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"Ancient Tri Joint卡片"},
+  "cd_in_mouth_k": {"id":"cd_in_mouth_k","imgId":420003,"name":"自動光碟","type":"armor","icon":"👑","armorType":"headgear","weight":20,"sell":20,"buyPrice":40,"reqLevel":10,"desc":"仿佛光碟裡的許多數據會通過嘴傳入大腦的感覺。 所有屬性魔法傷害+5%。 一般近距離物理攻擊時，有概率觸發聖靈召喚10Lv。 搭配老舊陽傘時，MATK+50，一般物理攻擊時，有概率觸發重力原野3Lv。 系列: 頭盔 防禦: 0 位置: 頭下 重量: 20 要求等級: 10 裝備: 所有職業 （本服實作：全屬性魔法傷害+5% **已補上生效**） （🧩本服有實作套裝：這件的搭配加成寫在裝備本身，共 1 段。以下每一項**各自對應一段加成，不必同時湊齊**：老舊陽傘 [3]。⚠ 這一類**不會**在裝備欄出現 🧩 標記，但湊齊了就會生效；實際加成以本服資料為準，不一定與敘述所列相同。）","slots":0,"matk":50,"condBonus":[{"when":{"withAnyItem":["old_parasol"]},"bonus":{"matk":50}}],"bonus":{"allEleDmg":5}},
+  "flame_e_r_armor": {"id":"flame_e_r_armor","imgId":5000,"name":"深淵鎧甲・Lv250","type":"armor","icon":"🛡️","armorType":"armor","def":380,"weight":100,"sell":10000,"slots":1,"critRate":-10,"atk":100,"reqLevel":250,"desc":"四轉裝備。防禦力 380、攻擊力+100、爆擊率-10(原版另有 35 項條件效果未實作)"},
+  "striped_holy_robe": {"id":"striped_holy_robe","imgId":5000,"name":"深淵鎧甲・Lv200","type":"armor","icon":"🛡️","armorType":"armor","def":220,"weight":100,"sell":8000,"slots":1,"reqLevel":200,"desc":"四轉裝備。防禦力 220(原版另有 21 項條件效果未實作)"},
+  "hs_kn_two_hand_sword": {"id":"hs_kn_two_hand_sword","imgId":5000,"name":"深淵雙手劍・Lv200","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":520,"weight":300,"sell":8000,"slots":0,"critRate":15,"reqLevel":200,"bonus":{"aspdPct":-7},"desc":"四轉裝備。攻擊力 520、爆擊率+15、攻擊速度-7%(原版另有 2 項條件效果未實作)"},
+  "slayer_furious": {"id":"slayer_furious","imgId":5000,"name":"深淵雙手劍・Lv205","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":554,"weight":350,"sell":8200,"slots":2,"reqLevel":205,"desc":"四轉裝備。攻擊力 554(原版另有 38 項條件效果未實作)"},
+  "dimen_dk_t_sword": {"id":"dimen_dk_t_sword","imgId":5000,"name":"深淵雙手劍・Lv250","type":"weapon","icon":"⚔️","weaponType":"tsword","weaponLv":4,"atk":860,"weight":350,"sell":10000,"slots":2,"critRate":5,"reqLevel":250,"desc":"四轉裝備。攻擊力 860、爆擊率+5(原版另有 26 項條件效果未實作)"},
+  "flame_staff_furious": {"id":"flame_staff_furious","imgId":5000,"name":"深淵法杖・Lv205","type":"weapon","icon":"⚔️","weaponType":"rod","weaponLv":4,"atk":0,"weight":200,"sell":8200,"slots":2,"reqLevel":205,"desc":"四轉裝備。魔法攻擊力 554(原版另有 45 項條件效果未實作)","matk":554},
+  "solid_staff": {"id":"solid_staff","imgId":5000,"name":"深淵法杖・Lv220","type":"weapon","icon":"⚔️","weaponType":"rod","weaponLv":4,"atk":0,"weight":220,"sell":8800,"slots":2,"reqLevel":220,"desc":"四轉裝備。魔法攻擊力 656(原版另有 20 項條件效果未實作)","matk":656},
+  "hs_asc_dagger2": {"id":"hs_asc_dagger2","imgId":5000,"name":"深淵短劍・Lv200","type":"weapon","icon":"⚔️","weaponType":"dagger","weaponLv":4,"atk":520,"weight":150,"sell":8000,"slots":0,"reqLevel":200,"desc":"四轉裝備。攻擊力 520"},
+  "time_gap_ss_dagger2": {"id":"time_gap_ss_dagger2","imgId":5000,"name":"深淵短劍・Lv250","type":"weapon","icon":"⚔️","weaponType":"dagger","weaponLv":4,"atk":860,"weight":100,"sell":10000,"slots":2,"reqLevel":250,"desc":"四轉裝備。攻擊力 860(原版另有 25 項條件效果未實作)"},
+  "demonsword_furious": {"id":"demonsword_furious","imgId":5000,"name":"深淵短劍・Lv205","type":"weapon","icon":"⚔️","weaponType":"dagger","weaponLv":4,"atk":554,"weight":140,"sell":8200,"slots":2,"reqLevel":205,"desc":"四轉裝備。攻擊力 554(原版另有 41 項條件效果未實作)"},
+  "wild_beast": {"id":"wild_beast","imgId":5000,"name":"深淵頭飾・Lv200","type":"armor","icon":"🛡️","armorType":"headgear","def":220,"weight":50,"sell":8000,"slots":1,"reqLevel":200,"desc":"四轉裝備。防禦力 220(原版另有 5 項條件效果未實作)"},
+  "two_tone_cap": {"id":"two_tone_cap","imgId":5000,"name":"深淵頭飾・Lv200","type":"armor","icon":"🛡️","armorType":"headgear","def":220,"weight":50,"sell":8000,"slots":1,"reqLevel":200,"bonus":{"atkPct":20},"desc":"四轉裝備。防禦力 220、攻擊力+20%(原版另有 10 項條件效果未實作)"},
+  "st_servival_cloak": {"id":"st_servival_cloak","imgId":5000,"name":"深淵肩披・Lv210","type":"armor","icon":"🛡️","armorType":"garment","def":252,"weight":55,"sell":8400,"slots":1,"vit":10,"reqLevel":210,"bonus":{"hpPct":5},"desc":"四轉裝備。防禦力 252、體力+10、HP+5%(原版另有 1 項條件效果未實作)"},
+  "barmund_death_hood": {"id":"barmund_death_hood","imgId":5000,"name":"深淵肩披・Lv210","type":"armor","icon":"🛡️","armorType":"garment","def":252,"weight":100,"sell":8400,"slots":1,"reqLevel":210,"desc":"四轉裝備。防禦力 252(原版另有 24 項條件效果未實作)"},
+  "snowflower_muffler": {"id":"snowflower_muffler","imgId":5000,"name":"深淵肩披・Lv210","type":"armor","icon":"🛡️","armorType":"garment","def":252,"weight":90,"sell":8400,"slots":1,"reqLevel":210,"bonus":{"hp":2000,"sp":1000},"desc":"四轉裝備。防禦力 252、最大HP+2000、最大SP+1000(原版另有 7 項條件效果未實作)"},
+  "circul_of_life_winter": {"id":"circul_of_life_winter","imgId":5000,"name":"深淵肩披・Lv250","type":"armor","icon":"🛡️","armorType":"garment","def":380,"weight":70,"sell":10000,"slots":1,"critRate":4,"atk":5,"reqLevel":250,"desc":"四轉裝備。防禦力 380、攻擊力+5、爆擊率+4(原版另有 36 項條件效果未實作)"},
+  "fatesin_boots_sh": {"id":"fatesin_boots_sh","imgId":5000,"name":"深淵鞋・Lv210","type":"armor","icon":"🛡️","armorType":"footgear","def":252,"weight":60,"sell":8400,"slots":1,"reqLevel":210,"bonus":{"hp":500,"sp":100},"desc":"四轉裝備。防禦力 252、最大HP+500、最大SP+100(原版另有 29 項條件效果未實作)"},
+  "furiousboots": {"id":"furiousboots","imgId":5000,"name":"深淵鞋・Lv220","type":"armor","icon":"🛡️","armorType":"footgear","def":284,"weight":150,"sell":8800,"slots":1,"reqLevel":220,"desc":"四轉裝備。防禦力 284(原版另有 38 項條件效果未實作)"},
+  "entwined_shoes": {"id":"entwined_shoes","imgId":5000,"name":"深淵鞋・Lv220","type":"armor","icon":"🛡️","armorType":"footgear","def":284,"weight":50,"sell":8800,"slots":1,"reqLevel":220,"bonus":{"mdef":40,"flee":35},"desc":"四轉裝備。防禦力 284、魔法防禦+40、迴避+35(原版另有 21 項條件效果未實作)"},
+  "elemental_jewel": {"id":"elemental_jewel","imgId":5000,"name":"深淵飾品・Lv200","type":"armor","icon":"🛡️","armorType":"accessory","def":220,"weight":10,"sell":8000,"slots":1,"reqLevel":200,"bonus":{"matkPct":10},"desc":"四轉裝備。防禦力 220、魔法攻擊+10%(原版另有 10 項條件效果未實作)"},
+  "drop_of_seven_colors": {"id":"drop_of_seven_colors","imgId":5000,"name":"深淵飾品・Lv200","type":"armor","icon":"🛡️","armorType":"accessory","def":220,"weight":10,"sell":8000,"slots":1,"reqLevel":200,"desc":"四轉裝備。防禦力 220(原版另有 12 項條件效果未實作)"},
+  "hero_token_sh": {"id":"hero_token_sh","imgId":5000,"name":"深淵飾品・Lv205","type":"armor","icon":"🛡️","armorType":"accessory","def":236,"weight":20,"sell":8200,"slots":1,"reqLevel":205,"bonus":{"matkPct":10,"atkPct":10},"desc":"四轉裝備。防禦力 236、魔法攻擊+10%、攻擊力+10%(原版另有 1 項條件效果未實作)"},
+  "whitesword_furious": {"id":"whitesword_furious","imgId":5000,"name":"深淵劍・Lv205","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":4,"atk":554,"weight":120,"sell":8200,"slots":2,"reqLevel":205,"desc":"四轉裝備。攻擊力 554(原版另有 38 項條件效果未實作)"},
+  "mocadas_g_sword": {"id":"mocadas_g_sword","imgId":5000,"name":"深淵劍・Lv250","type":"weapon","icon":"⚔️","weaponType":"sword","weaponLv":4,"atk":860,"weight":150,"sell":10000,"slots":2,"reqLevel":250,"bonus":{"matkPct":5},"desc":"四轉裝備。攻擊力 860、魔法攻擊+5%(原版另有 25 項條件效果未實作)"},
+  "overspear_furious": {"id":"overspear_furious","imgId":5000,"name":"深淵槍・Lv205","type":"weapon","icon":"⚔️","weaponType":"spear","weaponLv":4,"atk":554,"weight":350,"sell":8200,"slots":2,"reqLevel":205,"desc":"四轉裝備。攻擊力 554(原版另有 38 項條件效果未實作)"},
+  "time_gap_ske_book": {"id":"time_gap_ske_book","imgId":5000,"name":"深淵書・Lv250","type":"weapon","icon":"⚔️","weaponType":"book","weaponLv":4,"atk":0,"weight":180,"sell":10000,"slots":2,"reqLevel":250,"bonus":{"atkPct":3},"desc":"四轉裝備。魔法攻擊力 860、攻擊力+3%(原版另有 25 項條件效果未實作)","matk":860},
+  "time_gap_em_s_book": {"id":"time_gap_em_s_book","imgId":5000,"name":"深淵書・Lv250","type":"weapon","icon":"⚔️","weaponType":"book","weaponLv":4,"atk":0,"weight":180,"sell":10000,"slots":2,"matk":860,"reqLevel":250,"bonus":{"matkPct":3},"desc":"四轉裝備。魔法攻擊力 860、魔法攻擊+25、魔法攻擊+3%(原版另有 30 項條件效果未實作)"},
+  "dimen_iq_knuckle": {"id":"dimen_iq_knuckle","imgId":5000,"name":"深淵拳套・Lv250","type":"weapon","icon":"⚔️","weaponType":"knuckle","weaponLv":4,"atk":860,"weight":230,"sell":10000,"slots":2,"reqLevel":250,"bonus":{"hpPct":5},"desc":"四轉裝備。攻擊力 860、HP+5%(原版另有 26 項條件效果未實作)"},
+  "hs_ba_violin": {"id":"hs_ba_violin","imgId":5000,"name":"深淵樂器・Lv200","type":"weapon","icon":"⚔️","weaponType":"instrument","weaponLv":4,"atk":520,"weight":150,"sell":8000,"slots":0,"reqLevel":200,"desc":"四轉裝備。攻擊力 520(原版另有 6 項條件效果未實作)"},
+  "light_power_harp": {"id":"light_power_harp","imgId":5000,"name":"深淵樂器・Lv215","type":"weapon","icon":"⚔️","weaponType":"instrument","weaponLv":4,"atk":622,"weight":200,"sell":8600,"slots":2,"reqLevel":215,"bonus":{"atkPct":5},"desc":"四轉裝備。攻擊力 622、攻擊力+5%(原版另有 33 項條件效果未實作)"},
+  "metalvilolin_furious": {"id":"metalvilolin_furious","imgId":5000,"name":"深淵樂器・Lv205","type":"weapon","icon":"⚔️","weaponType":"instrument","weaponLv":4,"atk":554,"weight":120,"sell":8200,"slots":2,"reqLevel":205,"desc":"四轉裝備。攻擊力 554(原版另有 41 項條件效果未實作)"},
+  "time_gap_tr_vilolin": {"id":"time_gap_tr_vilolin","imgId":5000,"name":"深淵樂器・Lv250","type":"weapon","icon":"⚔️","weaponType":"instrument","weaponLv":4,"atk":860,"weight":180,"sell":10000,"slots":2,"matk":25,"reqLevel":250,"bonus":{"matkPct":3},"desc":"四轉裝備。攻擊力 860、魔法攻擊+25、魔法攻擊+3%(原版另有 25 項條件效果未實作)"},
+  "metalwhip_furious": {"id":"metalwhip_furious","imgId":5000,"name":"深淵鞭・Lv205","type":"weapon","icon":"⚔️","weaponType":"whip","weaponLv":4,"atk":554,"weight":120,"sell":8200,"slots":2,"reqLevel":205,"desc":"四轉裝備。攻擊力 554(原版另有 41 項條件效果未實作)"},
+  "dimen_tr_ribbon": {"id":"dimen_tr_ribbon","imgId":5000,"name":"深淵鞭・Lv250","type":"weapon","icon":"⚔️","weaponType":"whip","weaponLv":4,"atk":860,"weight":180,"sell":10000,"slots":2,"matk":25,"reqLevel":250,"bonus":{"matkPct":3},"desc":"四轉裝備。攻擊力 860、魔法攻擊+25、魔法攻擊+3%(原版另有 27 項條件效果未實作)"},
+  "punish_hall": {"id":"punish_hall","imgId":5000,"name":"深淵鈍器・Lv215","type":"weapon","icon":"⚔️","weaponType":"mace","weaponLv":4,"atk":622,"weight":150,"sell":8600,"slots":2,"reqLevel":215,"bonus":{"atkPct":5},"desc":"四轉裝備。攻擊力 622、攻擊力+5%(原版另有 33 項條件效果未實作)"},
+  "dimen_mt_mace": {"id":"dimen_mt_mace","imgId":5000,"name":"深淵鈍器・Lv250","type":"weapon","icon":"⚔️","weaponType":"mace","weaponLv":4,"atk":860,"weight":250,"sell":10000,"slots":2,"critRate":5,"reqLevel":250,"desc":"四轉裝備。攻擊力 860、爆擊率+5(原版另有 27 項條件效果未實作)"},
+  "dimen_shc_cakram": {"id":"dimen_shc_cakram","imgId":5000,"name":"深淵脈輪・Lv250","type":"weapon","icon":"⚔️","weaponType":"katar","weaponLv":4,"atk":860,"weight":220,"sell":10000,"slots":2,"critRate":5,"reqLevel":250,"desc":"四轉裝備。攻擊力 860、爆擊率+5(原版另有 26 項條件效果未實作)"},
+  "dimen_ss_humma": {"id":"dimen_ss_humma","imgId":5000,"name":"深淵手裏劍・Lv250","type":"weapon","icon":"⚔️","weaponType":"shuriken","weaponLv":4,"atk":860,"weight":320,"sell":10000,"slots":2,"critRate":5,"reqLevel":250,"desc":"四轉裝備。攻擊力 860、爆擊率+5(原版另有 27 項條件效果未實作)"},
+  "hs_bs_giant_axe": {"id":"hs_bs_giant_axe","imgId":5000,"name":"深淵雙手斧・Lv200","type":"weapon","icon":"⚔️","weaponType":"taxe","weaponLv":4,"atk":520,"weight":300,"sell":8000,"slots":0,"reqLevel":200,"bonus":{"critDmgPct":-7,"aspdPct":-7,"hit":50},"desc":"四轉裝備。攻擊力 520、爆擊傷害-7%、攻擊速度-7%、命中+50(原版另有 2 項條件效果未實作)"},
+  "wicked_axe": {"id":"wicked_axe","imgId":5000,"name":"深淵雙手斧・Lv220","type":"weapon","icon":"⚔️","weaponType":"taxe","weaponLv":4,"atk":656,"weight":320,"sell":8800,"slots":2,"reqLevel":220,"desc":"四轉裝備。攻擊力 656(原版另有 15 項條件效果未實作)"},
+  "hs_kn_lance": {"id":"hs_kn_lance","imgId":5000,"name":"深淵雙手槍・Lv200","type":"weapon","icon":"⚔️","weaponType":"tspear","weaponLv":4,"atk":520,"weight":300,"sell":8000,"slots":0,"reqLevel":200,"bonus":{"critDmgPct":-7,"hit":50},"desc":"四轉裝備。攻擊力 520、爆擊傷害-7%、命中+50(原版另有 2 項條件效果未實作)"},
+  "time_gap_dk_spear": {"id":"time_gap_dk_spear","imgId":5000,"name":"深淵雙手槍・Lv250","type":"weapon","icon":"⚔️","weaponType":"tspear","weaponLv":4,"atk":860,"weight":650,"sell":10000,"slots":2,"critRate":5,"reqLevel":250,"desc":"四轉裝備。攻擊力 860、爆擊率+5(原版另有 26 項條件效果未實作)"},
+  "hs_rg_bow": {"id":"hs_rg_bow","imgId":5000,"name":"深淵弓・Lv200","type":"weapon","icon":"⚔️","weaponType":"bow","weaponLv":4,"atk":520,"weight":300,"sell":8000,"slots":0,"critRate":-7,"reqLevel":200,"bonus":{"critDmgPct":-5},"desc":"四轉裝備。攻擊力 520、爆擊率-7、爆擊傷害-5%(原版另有 2 項條件效果未實作)"},
+  "f_ein_bhbow": {"id":"f_ein_bhbow","imgId":5000,"name":"深淵弓・Lv250","type":"weapon","icon":"⚔️","weaponType":"bow","weaponLv":4,"atk":860,"weight":170,"sell":10000,"slots":2,"reqLevel":250,"bonus":{"atkPct":15},"desc":"四轉裝備。攻擊力 860、攻擊力+15%(原版另有 37 項條件效果未實作)"},
+  "dark_angel_ray_bow": {"id":"dark_angel_ray_bow","imgId":5000,"name":"深淵弓・Lv215","type":"weapon","icon":"⚔️","weaponType":"bow","weaponLv":4,"atk":622,"weight":150,"sell":8600,"slots":2,"reqLevel":215,"bonus":{"atkPct":5},"desc":"四轉裝備。攻擊力 622、攻擊力+5%(原版另有 36 項條件效果未實作)"},
+  "ill_kraken_card": {"id":"ill_kraken_card","imgId":5000,"name":"Abysmal Kraken卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"卡片。插在裝備上生效。"},
+  "disguiser_card": {"id":"disguiser_card","imgId":5000,"name":"Disguiser卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"卡片。插在裝備上生效。"},
+  "grote_card": {"id":"grote_card","imgId":5000,"name":"Grote卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"卡片。插在裝備上生效。"},
+  "pierrotzoist_card": {"id":"pierrotzoist_card","imgId":5000,"name":"Pierrotzoist卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"卡片。插在裝備上生效。"},
+  "ep18_burning_fang_card": {"id":"ep18_burning_fang_card","imgId":5000,"name":"Burning Fang卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"卡片。插在裝備上生效。"},
+  "ep18_hot_molar_card": {"id":"ep18_hot_molar_card","imgId":5000,"name":"Hot Molar卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"卡片。插在裝備上生效。"},
+  "bluemoon_loli_ruri_card": {"id":"bluemoon_loli_ruri_card","imgId":5000,"name":"Blue Moon Loli Ruri卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"卡片。插在裝備上生效。"},
+  "corruptionroot_card": {"id":"corruptionroot_card","imgId":5000,"name":"Corrupted Soul卡片","type":"material","icon":"🃏","weight":1,"sell":100,"desc":"ATK +20。插在鎧甲上生效。"},
+
 };
 
 const MONSTERS = {
@@ -24011,6 +24174,131 @@ const CARDS = {
   b_shecil_card: {"id":"b_shecil_card","monsterId":"b_shecil","name":"闇●神射手 迪文卡片","icon":"⚔️","slot":"weapon","bonus":{"lifeStealChance":5,"lifeStealPct":20,"hpRegenPct":-100},"desc":"物理攻擊時有 5% 機率吸取傷害的 20% 為 HP，但 HP 自然回復 −100%。"},
   b_katrinn_card: {"id":"b_katrinn_card","monsterId":"b_katrinn","name":"闇●超魔導師 凱特莉娜卡片","icon":"👑","slot":"headgear","bonus":{"mdefIgnorePct":100,"spRegenPct":-100},"desc":"無視一般魔物的魔法防禦力，但 SP 自然回復 −100%。（官方另有變動詠唱 +100%，本作沒有詠唱）"},
   thanatos_card: {"id":"thanatos_card","monsterId":"thanatos","name":"魔劍士 達納托斯的記憶卡片","icon":"⚔️","slot":"weapon","bonus":{"defIgnorePct":100,"def":-30,"flee":-30,"spOnAttack":-1},"desc":"無視所有種族的物理防禦力，但 DEF−30、FLEE−30，且每次攻擊消耗 1 SP。"},
+  "fenrir_card_": {"id":"fenrir_card_","name":"弱化的潘利爾卡片","icon":"🃏","slot":"headgear","bonus":{"matk":25},"desc":"MATK+25。"},
+  "c_cursed_butler": {"id":"c_cursed_butler","name":"詛咒僕人卡片","icon":"🃏","slot":"accessory","bonus":{"hpRegenPct":30},"desc":"HP自然恢復力+30%。｜搭配腐屍卡片時，MaxHP+15%。","condBonus":[{"when":{"withCards":["orc_zombie_card"]},"bonus":{"hpPct":15}},{"when":{"withCards":["zombie_card"]},"bonus":{"hpPct":15},"setName":"詛咒僕人卡片＋腐屍卡片"}]},
+  "s_wolf_card_e": {"id":"s_wolf_card_e","name":"沃爾夫·雷根布爾格卡片","icon":"⚔️","slot":"weapon","bonus":{"raceDmg_insect":15},"desc":"對昆蟲型魔物的物理與魔法傷害+15%。｜與保羅·雷哈特卡片一起裝備時，ATK+5%、MATK+5%。（官方另有對中型敵人傷害+5%，本作沒有體型增傷這個機制）","condBonus":[{"when":{"withCards":["s_poe_card_e"]},"bonus":{"atkPct":5,"matkPct":5},"setName":"雷根布爾格套卡"}]},
+  "s_poe_card_e": {"id":"s_poe_card_e","name":"保羅·雷哈特卡片","icon":"⚔️","slot":"weapon","bonus":{"raceDmg_plant":15},"desc":"對植物型魔物的物理與魔法傷害+15%。"},
+  "lucky_riceball_c": {"id":"lucky_riceball_c","name":"肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":2,"matkPct":2,"hpPct":1},"desc":"ATK+2%、MATK+2%、MaxHP+1%。（官方另有技能後延遲−2%，本作技能瞬發）"},
+  "up_lucky_riceball_c": {"id":"up_lucky_riceball_c","name":"強化肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":10,"matkPct":10,"hpPct":8},"desc":"ATK+10%、MATK+10%、MaxHP+8%。（官方另有技能後延遲−5%，本作技能瞬發）"},
+  "md_airboat_card5": {"id":"md_airboat_card5","name":"融化波利卡片","icon":"🃏","slot":"headgear","bonus":{"hpPct":10},"desc":"MaxHP+10%。｜VIT 100 以上時，地與毒屬性攻擊的抗性+1%；VIT 130 以上時再+3%。","condBonus":[{"when":{"statMin":{"vit":100}},"bonus":{"eleReduce_earth":1,"eleReduce_poison":1}},{"when":{"statMin":{"vit":130}},"bonus":{"eleReduce_earth":3,"eleReduce_poison":3}}]},
+  "md_airboat_card6": {"id":"md_airboat_card6","name":"不明生物體卡片","icon":"🃏","slot":"accessory","bonus":{"eleDmg_poison":30,"eleDmg_shadow":30,"eleReduce_holy":-10},"desc":"毒屬性與暗屬性魔法傷害+30%，對聖屬性攻擊的抗性−10%。"},
+  "bakonawa_card": {"id":"bakonawa_card","monsterId":"bakonawa_1","name":"Bakonawa卡片","icon":"🛡️","slot":"armor","bonus":{"str":4},"desc":"STR +4(原版另有 1 項條件效果尚未實作)"},
+  "lichterng_card": {"id":"lichterng_card","monsterId":"lichtern_g","name":"元素鬼火(褐)卡片","icon":"👑","slot":"head","bonus":{"matk":10},"desc":"MATK +10(原版另有 1 項條件效果尚未實作)"},
+  "faithfulmanager_card": {"id":"faithfulmanager_card","monsterId":"faithful_manager","name":"頑靈惡童卡片","icon":"🛡️","slot":"armor","bonus":{"atk":5,"matk":5},"desc":"ATK +5、MATK +5(原版另有 11 項條件效果尚未實作)"},
+  "corruptionroot_card": {"id":"corruptionroot_card","monsterId":"mg_corruption_root","name":"Corrupted Soul卡片","icon":"🛡️","slot":"armor","bonus":{"atk":20},"desc":"ATK +20(原版另有 3 項條件效果尚未實作)"},
+  "amdarais_card": {"id":"amdarais_card","monsterId":"mg_amdarais","name":"Amdarais卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":15},"desc":"魔法傷害 +15%(原版另有 5 項條件效果尚未實作)"},
+  "faceworm_q_card": {"id":"faceworm_q_card","monsterId":"faceworm_queen","name":"Faceworm Queen卡片","icon":"👢","slot":"footgear","bonus":{"hpPct":-10,"critRate":15},"desc":"MaxHP -10%、CRI +15(原版另有 2 項條件效果尚未實作)"},
+  "dy_card": {"id":"dy_card","monsterId":"geffen_mage_12","name":"Dwigh卡片","icon":"💍","slot":"accessory","bonus":{"magicEleDmg_shadow":20,"magicEleDmg_none":20},"desc":"暗屬性魔法傷害 +20%、無屬性魔法傷害 +20%"},
+  "big_bell_card": {"id":"big_bell_card","monsterId":"big_bell","name":"Big Bell卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmg_formless":10,"raceDmg_demon":10},"desc":"對無形傷害 +10%、對惡魔傷害 +10%"},
+  "neo_punk_card": {"id":"neo_punk_card","monsterId":"neo_punk","name":"Neo-punk卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_formless":20,"raceDmgReduce_demon":20},"desc":"受無形傷害 +-20%、受惡魔傷害 +-20%"},
+  "arc_elder_card": {"id":"arc_elder_card","monsterId":"arc_elder","name":"Arc Elder卡片","icon":"🧣","slot":"garment","bonus":{"eleReduce_none":15},"desc":"無屬性減傷 +15%(原版另有 1 項條件效果尚未實作)"},
+  "evil_fanatics_card": {"id":"evil_fanatics_card","monsterId":"mm_evil_fanatics","name":"Evil Believer卡片","icon":"🛡️","slot":"armor","bonus":{"eleDmg_shadow":30,"eleDmg_undead":30,"eleDmg_holy":-30,"eleDmg_fire":-30},"desc":"對暗屬性傷害 +30%、對不死屬性傷害 +30%、對聖屬性傷害 -30%、對火屬性傷害 -30%(原版另有 4 項條件效果尚未實作)"},
+  "xm_celine_kimi_card": {"id":"xm_celine_kimi_card","monsterId":"xm_celine_kimi","name":"Celine Kimi卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":10},"desc":"魔法傷害 +10%(原版另有 1 項條件效果尚未實作)"},
+  "livingdeath_card": {"id":"livingdeath_card","monsterId":"ep14_3_death_a_mob1","name":"Fallen Orc Baby卡片","icon":"👑","slot":"head","bonus":{"hp":500,"sp":50,"raceDmgReduce_angel":-50},"desc":"MaxHP +500、MaxSP +50、受天使傷害 -50%"},
+  "timeholder_card": {"id":"timeholder_card","monsterId":"timeholder","name":"Timeholder卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":20},"desc":"魔法傷害 +20%(原版另有 1 項條件效果尚未實作)"},
+  "brinaranea_card": {"id":"brinaranea_card","monsterId":"mm_brinaranea","name":"Brinaranea卡片","icon":"🛡️","slot":"armor","bonus":{"magicEleDmg_water":15},"desc":"水屬性魔法傷害 +15%"},
+  "muspellskoll_card": {"id":"muspellskoll_card","monsterId":"mm_muspellskoll","name":"Muspellskoll卡片","icon":"🛡️","slot":"armor","bonus":{"eleReduce_fire":30},"desc":"火屬性減傷 +30%"},
+  "despairgodmorocc_card": {"id":"despairgodmorocc_card","monsterId":"mm_morocc_adt","name":"Morocc the Desparate god卡片","icon":"👢","slot":"footgear","bonus":{"atkPct":10,"hpPct":-50,"raceDmg_humanoid":60,"raceDmg_angel":30},"desc":"物理傷害 +10%、MaxHP -50%、對人形傷害 +60%、對天使傷害 +30%(原版另有 2 項條件效果尚未實作)"},
+  "gigantes_card": {"id":"gigantes_card","monsterId":"mm_m_gigan1","name":"Medium Ancient Gigantes卡片","icon":"💍","slot":"accessory","bonus":{"atk":20},"desc":"ATK +20(原版另有 4 項條件效果尚未實作)"},
+  "greencenere_card": {"id":"greencenere_card","monsterId":"cenere_g","name":"綠惡靈之霧卡片","icon":"👢","slot":"footgear","bonus":{"hpPct":2},"desc":"MaxHP +2%(原版另有 1 項條件效果尚未實作)"},
+  "repairrobot_t_card": {"id":"repairrobot_t_card","monsterId":"repair_robot_t","name":"修復機器人卡片","icon":"👑","slot":"head","bonus":{"hpRegenPct":25,"spRegenPct":25},"desc":"HP回復 +25%、SP回復 +25%(原版另有 3 項條件效果尚未實作)"},
+  "scr_mt_robots_card": {"id":"scr_mt_robots_card","monsterId":"scr_mt_robots","name":"廢鐵機器人卡片","icon":"🧣","slot":"garment","bonus":{"raceDmgReduce_formless":10},"desc":"受無形傷害 +-10%(原版另有 8 項條件效果尚未實作)"},
+  "dr815_card": {"id":"dr815_card","monsterId":"dr815","name":"Machine Component卡片","icon":"💍","slot":"accessory","bonus":{"hit":1},"desc":"HIT +1"},
+  "as_bdy_knight_card": {"id":"as_bdy_knight_card","monsterId":"as_bloody_knight","name":"污染的白騎士卡片","icon":"🛡️","slot":"armor","bonus":{"atkPct":10},"desc":"物理傷害 +10%(原版另有 1 項條件效果尚未實作)"},
+  "as_wind_ghost_card": {"id":"as_wind_ghost_card","monsterId":"as_wind_ghost","name":"Immortal Wind Ghost卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":10},"desc":"魔法傷害 +10%(原版另有 1 項條件效果尚未實作)"},
+  "ominouspermeter_card": {"id":"ominouspermeter_card","monsterId":"ill_permeter","name":"Ominous Permeter卡片","icon":"👑","slot":"head","bonus":{"int":1},"desc":"INT +1(原版另有 5 項條件效果尚未實作)"},
+  "ominousfreezer_card": {"id":"ominousfreezer_card","monsterId":"ill_freezer","name":"Ominous Freezer卡片","icon":"👢","slot":"footgear","bonus":{"hpPct":10,"str":2},"desc":"MaxHP +10%、STR +2(原版另有 10 項條件效果尚未實作)"},
+  "ominousheater_card": {"id":"ominousheater_card","monsterId":"ill_heater","name":"Ominous Heater卡片","icon":"💍","slot":"accessory","bonus":{"critRate":3,"critDmgPct":5},"desc":"CRI +3、爆擊傷害 +5%"},
+  "ominousturtleg_card": {"id":"ominousturtleg_card","monsterId":"ill_turtle_general","name":"Ominous Turtle General卡片","icon":"🛡️","slot":"armor","bonus":{"def":30,"mdef":5},"desc":"DEF +30、MDEF +5(原版另有 1 項條件效果尚未實作)"},
+  "colorful_t_bear_card": {"id":"colorful_t_bear_card","monsterId":"ill_teddy_bear_r","name":"Red Teddy Bear卡片","icon":"🛡️","slot":"armor","bonus":{"matk":5},"desc":"MATK +5(原版另有 1 項條件效果尚未實作)"},
+  "pitman_worker_card": {"id":"pitman_worker_card","monsterId":"ill_pitman","name":"Hardworking Pitman卡片","icon":"🛡️","slot":"armor","bonus":{"atkPct":5},"desc":"物理傷害 +5%(原版另有 5 項條件效果尚未實作)"},
+  "fragment_of_soul_card": {"id":"fragment_of_soul_card","monsterId":"ill_mineral","name":"Soul Fragment卡片","icon":"🛡️","slot":"armor","bonus":{"matk":5},"desc":"MATK +5(原版另有 1 項條件效果尚未實作)"},
+  "ancient_trijoint_card": {"id":"ancient_trijoint_card","monsterId":"ill_tri_joint","name":"Ancient Tri Joint卡片","icon":"🛡️","slot":"armor","bonus":{"atk":30,"hpPct":-1},"desc":"ATK +30、MaxHP -1%"},
+  "ancient_megalith_card": {"id":"ancient_megalith_card","monsterId":"ill_megalith","name":"Ancient Megalith卡片","icon":"🛡️","slot":"armor","bonus":{"matk":30,"spPct":-1},"desc":"MATK +30、MaxSP -1%"},
+  "ancient_w_fighter_card": {"id":"ancient_w_fighter_card","monsterId":"ill_wootan_fighter","name":"Ancient Wootan Fighter卡片","icon":"🛡️","slot":"armor","bonus":{"critRate":5,"critDmgPct":10},"desc":"CRI +5、爆擊傷害 +10%"},
+  "high_sanare_card": {"id":"high_sanare_card","monsterId":"ep17_1_sanare2","name":"Heart Hunter Sanare卡片","icon":"👑","slot":"head","bonus":{"matk":10},"desc":"MATK +10(原版另有 5 項條件效果尚未實作)"},
+  "plaga_card": {"id":"plaga_card","monsterId":"ep17_1_plaga1","name":"Plaga卡片","icon":"👑","slot":"head","bonus":{"matk":10},"desc":"MATK +10(原版另有 5 項條件效果尚未實作)"},
+  "mt_caput_card": {"id":"mt_caput_card","monsterId":"ep17_1_twin_caput2","name":"Twin Caput卡片","icon":"💍","slot":"accessory","bonus":{"raceDmg_formless":5},"desc":"對無形傷害 +5%"},
+  "polluted_raydric_card": {"id":"polluted_raydric_card","monsterId":"raydric_h","name":"Contaminated Raydric卡片","icon":"🛡️","slot":"armor","bonus":{"atkPct":5},"desc":"物理傷害 +5%"},
+  "frozen_gargoyle_card": {"id":"frozen_gargoyle_card","monsterId":"gargoyle_h","name":"Frozen Gargoyle卡片","icon":"🛡️","slot":"armor","bonus":{"def":20},"desc":"DEF +20(原版另有 3 項條件效果尚未實作)"},
+  "polluted_sting_card": {"id":"polluted_sting_card","monsterId":"sting_h","name":"Warped Sting卡片","icon":"🛡️","slot":"armor","bonus":{"def":100},"desc":"DEF +100"},
+  "prison_breaker_card": {"id":"prison_breaker_card","monsterId":"ragged_zombie_h","name":"Prison Breaker卡片","icon":"🧣","slot":"garment","bonus":{"eleReduce_wind":30,"eleReduce_poison":30,"eleReduce_shadow":30,"eleReduce_earth":30,"eleReduce_undead":30,"eleReduce_holy":-100,"eleReduce_ghost":-100,"eleReduce_fire":-100},"desc":"風屬性減傷 +30%、毒屬性減傷 +30%、暗屬性減傷 +30%、地屬性減傷 +30%、不死屬性減傷 +30%、聖屬性減傷 -100%、念屬性減傷 -100%、火屬性減傷 -100%"},
+  "firm_blazzer_card": {"id":"firm_blazzer_card","monsterId":"blazzer_h","name":"Rigid Blazer卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_demon":15,"eleReduce_none":15},"desc":"受惡魔傷害 +-15%、無屬性減傷 +15%"},
+  "firm_nightmare_t_card": {"id":"firm_nightmare_t_card","monsterId":"nightmare_terror_h","name":"Rigid Nightmare Terror卡片","icon":"👢","slot":"footgear","bonus":{"spPct":5},"desc":"MaxSP +5%"},
+  "firm_deleter2_card": {"id":"firm_deleter2_card","monsterId":"deleter1_h","name":"Rigid Sky Deleter卡片","icon":"👑","slot":"head","bonus":{"hpPct":5},"desc":"MaxHP +5%"},
+  "firm_deleter1_card": {"id":"firm_deleter1_card","monsterId":"deleter2_h","name":"Rigid Earth Deleter卡片","icon":"👑","slot":"head","bonus":{"spPct":2},"desc":"MaxSP +2%(原版另有 1 項條件效果尚未實作)"},
+  "firm_explosion_card": {"id":"firm_explosion_card","monsterId":"explosion_h","name":"Rigid Explosion卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_dragon":15,"eleReduce_fire":15},"desc":"受龍傷害 +-15%、火屬性減傷 +15%"},
+  "r48_85_bestia_card": {"id":"r48_85_bestia_card","monsterId":"ep17_1_r4885_bestia","name":"R48-85-Bestia卡片","icon":"🛡️","slot":"armor","bonus":{"eleDmg_poison":40},"desc":"對毒屬性傷害 +40%"},
+  "firm_muspell_card": {"id":"firm_muspell_card","monsterId":"muspellskoll_h","name":"Rigid Muspellskoll卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_dragon":30,"raceDmgReduce_demon":30,"raceDmgReduce_brute":30},"desc":"受龍傷害 +-30%、受惡魔傷害 +-30%、受動物傷害 +-30%(原版另有 1 項條件效果尚未實作)"},
+  "polluted_spi_q_card": {"id":"polluted_spi_q_card","monsterId":"brinaranea_h","name":"Corrupted Spider Queen卡片","icon":"🧣","slot":"garment","bonus":{"magicEleDmg_earth":100,"magicEleDmg_water":100},"desc":"地屬性魔法傷害 +100%、水屬性魔法傷害 +100%(原版另有 1 項條件效果尚未實作)"},
+  "regen_scientist_card": {"id":"regen_scientist_card","monsterId":"md_ed_m_science","name":"Regenschirm Scientist卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":5},"desc":"魔法傷害 +5%(原版另有 7 項條件效果尚未實作)"},
+  "poisonous_card": {"id":"poisonous_card","monsterId":"poisonous","name":"Poisonous卡片","icon":"🛡️","slot":"armor","bonus":{"eleDmg_poison":25},"desc":"對毒屬性傷害 +25%"},
+  "toxious_card": {"id":"toxious_card","monsterId":"toxious","name":"Toxious卡片","icon":"🛡️","slot":"armor","bonus":{"hpPct":10},"desc":"MaxHP +10%(原版另有 1 項條件效果尚未實作)"},
+  "neo_mineral_card": {"id":"neo_mineral_card","monsterId":"mineral_g","name":"Green Mineral卡片","icon":"🧣","slot":"garment","bonus":{"def":30},"desc":"DEF +30"},
+  "porcellio_w_card": {"id":"porcellio_w_card","monsterId":"porcellio_w","name":"White Porcellio卡片","icon":"👢","slot":"footgear","bonus":{"atk":20},"desc":"ATK +20"},
+  "abyss_man_card": {"id":"abyss_man_card","monsterId":"abyssman","name":"Abyssman卡片","icon":"👢","slot":"footgear","bonus":{"hpPct":10},"desc":"MaxHP +10%(原版另有 1 項條件效果尚未實作)"},
+  "dry_rafflesia_h_card": {"id":"dry_rafflesia_h_card","monsterId":"md_dry_rafflesia_h","name":"Senior Dried Rafflesia卡片","icon":"🧣","slot":"garment","bonus":{"eleReduce_holy":30,"flee":5},"desc":"聖屬性減傷 +30%、FLEE +5"},
+  "beta_guards_ng_card": {"id":"beta_guards_ng_card","monsterId":"ep17_2_beta_guards_ng","name":"Broken Guard Beta卡片","icon":"💍","slot":"accessory","bonus":{"vit":3,"hpPct":10},"desc":"VIT +3、MaxHP +10%(原版另有 2 項條件效果尚未實作)"},
+  "o_cleaner_ng_card": {"id":"o_cleaner_ng_card","monsterId":"ep17_2_omega_cleaner_ng","name":"Broken Cleaning Robot Ω卡片","icon":"💍","slot":"accessory","bonus":{"vit":1,"dex":2,"hpPct":10},"desc":"VIT +1、DEX +2、MaxHP +10%(原版另有 2 項條件效果尚未實作)"},
+  "pitaya_y_card": {"id":"pitaya_y_card","monsterId":"ep17_2_pitaya_y","name":"Pitaya卡片","icon":"🧣","slot":"garment","bonus":{"eleReduce_none":15,"magicEleDmg_holy":3},"desc":"無屬性減傷 +15%、聖屬性魔法傷害 +3%"},
+  "pitaya_v_card": {"id":"pitaya_v_card","monsterId":"ep17_2_pitaya_v","name":"Pitaya卡片","icon":"🧣","slot":"garment","bonus":{"eleReduce_none":15,"magicEleDmg_none":3},"desc":"無屬性減傷 +15%、無屬性魔法傷害 +3%"},
+  "pitaya_g_card": {"id":"pitaya_g_card","monsterId":"ep17_2_pitaya_g","name":"Pitaya卡片","icon":"💍","slot":"accessory","bonus":{"int":1,"luk":2,"hpPct":10},"desc":"INT +1、LUK +2、MaxHP +10%(原版另有 2 項條件效果尚未實作)"},
+  "verporte_h_card": {"id":"verporte_h_card","monsterId":"md_verporte_h","name":"Verporte卡片","icon":"👢","slot":"footgear","bonus":{"magicEleDmg_earth":10},"desc":"地屬性魔法傷害 +10%(原版另有 4 項條件效果尚未實作)"},
+  "papila_h_card": {"id":"papila_h_card","monsterId":"md_papila_h","name":"Senior Papila卡片","icon":"👢","slot":"footgear","bonus":{"luk":2,"hpPct":10,"spPct":10},"desc":"LUK +2、MaxHP +10%、MaxSP +10%(原版另有 1 項條件效果尚未實作)"},
+  "papila_ruba_h_card": {"id":"papila_ruba_h_card","monsterId":"md_papila_ruba_h","name":"Senior Papila Ruba卡片","icon":"🛡️","slot":"armor","bonus":{"critDmgPct":2},"desc":"爆擊傷害 +2%(原版另有 3 項條件效果尚未實作)"},
+  "aries_h_card": {"id":"aries_h_card","monsterId":"md_aries_h","name":"Senior Aries卡片","icon":"🧣","slot":"garment","bonus":{"matk":5},"desc":"MATK +5(原版另有 6 項條件效果尚未實作)"},
+  "sanare3_card": {"id":"sanare3_card","monsterId":"ep17_2_sanare3","name":"Spell Addicted Sanare卡片","icon":"💍","slot":"accessory","bonus":{"int":2,"dex":1,"hpPct":10},"desc":"INT +2、DEX +1、MaxHP +10%(原版另有 2 項條件效果尚未實作)"},
+  "plasma_r_card": {"id":"plasma_r_card","monsterId":"ep17_2_plasma_r","name":"Powerful Spell卡片","icon":"💍","slot":"accessory","bonus":{"str":2,"int":1,"hpPct":10},"desc":"STR +2、INT +1、MaxHP +10%(原版另有 2 項條件效果尚未實作)"},
+  "plasma_r2_card": {"id":"plasma_r2_card","monsterId":"ep17_2_plasma_r2","name":"Sharp Spell卡片","icon":"💍","slot":"accessory","bonus":{"agi":1,"dex":2,"hpPct":10},"desc":"AGI +1、DEX +2、MaxHP +10%(原版另有 2 項條件效果尚未實作)"},
+  "ill_deviace_card": {"id":"ill_deviace_card","monsterId":"ill_deviace","name":"Abysmal Deviace卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmg_fish":5,"eleDmg_water":5},"desc":"對魚貝傷害 +5%、對水屬性傷害 +5%(原版另有 7 項條件效果尚未實作)"},
+  "ill_sword_fish_card": {"id":"ill_sword_fish_card","monsterId":"ill_sword_fish","name":"Abysmal Swordfish卡片","icon":"👑","slot":"head","bonus":{"eleReduce_water":10},"desc":"水屬性減傷 +10%(原版另有 3 項條件效果尚未實作)"},
+  "ill_strouf_card": {"id":"ill_strouf_card","monsterId":"ill_strouf","name":"Abysmal Strouf卡片","icon":"🛡️","slot":"armor","bonus":{"hpPct":10,"spPct":5},"desc":"MaxHP +10%、MaxSP +5%(原版另有 4 項條件效果尚未實作)"},
+  "ill_phen_card": {"id":"ill_phen_card","monsterId":"ill_phen","name":"Abysmal Phen卡片","icon":"🧣","slot":"garment","bonus":{"eleReduce_none":15,"magicEleDmg_wind":3},"desc":"無屬性減傷 +15%、風屬性魔法傷害 +3%"},
+  "ill_king_dramoh_card": {"id":"ill_king_dramoh_card","monsterId":"ill_king_dramoh","name":"Abysmal King Dramoh卡片","icon":"👑","slot":"head","bonus":{"hpPct":-5},"desc":"MaxHP -5%(原版另有 1 項條件效果尚未實作)"},
+  "ill_abysmal_witch_card": {"id":"ill_abysmal_witch_card","monsterId":"ill_abysmal_witch","name":"Abysmal Witch卡片","icon":"🧣","slot":"garment","bonus":{"magicEleDmg_fire":100,"magicEleDmg_shadow":100},"desc":"火屬性魔法傷害 +100%、暗屬性魔法傷害 +100%(原版另有 1 項條件效果尚未實作)"},
+  "lava_eater_card": {"id":"lava_eater_card","monsterId":"chimera_lava","name":"Lavaeter卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_shadow":7},"desc":"MATK +15、暗屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "fulgor_card": {"id":"fulgor_card","monsterId":"chimera_fulgor","name":"Fulgor卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_earth":7},"desc":"MATK +15、地屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "napeo_card": {"id":"napeo_card","monsterId":"chimera_napeo","name":"Napeo卡片","icon":"🧣","slot":"garment","bonus":{"matk":5},"desc":"MATK +5(原版另有 3 項條件效果尚未實作)"},
+  "galensis_card": {"id":"galensis_card","monsterId":"chimera_galensis","name":"Galensis卡片","icon":"🧣","slot":"garment","bonus":{"critRate":2},"desc":"CRI +2(原版另有 3 項條件效果尚未實作)"},
+  "amitera_card": {"id":"amitera_card","monsterId":"chimera_amitera","name":"Amitera卡片","icon":"🛡️","slot":"armor","bonus":{"hpPct":10},"desc":"MaxHP +10%(原版另有 3 項條件效果尚未實作)"},
+  "litus_card": {"id":"litus_card","monsterId":"chimera_litus","name":"Litus卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_wind":7},"desc":"MATK +15、風屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "fillia_card": {"id":"fillia_card","monsterId":"chimera_fillia","name":"Fillia卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_fire":7},"desc":"MATK +15、火屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "vanilaqus_card": {"id":"vanilaqus_card","monsterId":"chimera_vanilaqus","name":"Vanilaqus卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_water":7},"desc":"MATK +15、水屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "the_one_card": {"id":"the_one_card","monsterId":"chimera_theone","name":"The One卡片","icon":"👢","slot":"footgear","bonus":{"matkPct":10},"desc":"魔法傷害 +10%(原版另有 3 項條件效果尚未實作)"},
+  "giant_caput_card": {"id":"giant_caput_card","monsterId":"giant_caput","name":"Giant Caput卡片","icon":"💍","slot":"accessory","bonus":{"raceDmg_formless":5},"desc":"對無形傷害 +5%(原版另有 3 項條件效果尚未實作)"},
+  "dolorian_card": {"id":"dolorian_card","monsterId":"dolorian","name":"Dolorian卡片","icon":"💍","slot":"accessory","bonus":{"raceDmg_demon":5},"desc":"對惡魔傷害 +5%(原版另有 3 項條件效果尚未實作)"},
+  "plagarion_card": {"id":"plagarion_card","monsterId":"plagarion","name":"Plagarion卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_none":7},"desc":"MATK +15、無屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "deadre_card": {"id":"deadre_card","monsterId":"deadre","name":"Deadre卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_holy":7},"desc":"MATK +15、聖屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "venedi_card": {"id":"venedi_card","monsterId":"venedi","name":"Venedi卡片","icon":"👑","slot":"head","bonus":{"matk":15,"magicEleDmg_poison":7},"desc":"MATK +15、毒屬性魔法傷害 +7%(原版另有 1 項條件效果尚未實作)"},
+  "r001_bestia_card": {"id":"r001_bestia_card","monsterId":"r001_bestia","name":"R001-Bestia卡片","icon":"👢","slot":"footgear","bonus":{"matkPct":10},"desc":"魔法傷害 +10%(原版另有 3 項條件效果尚未實作)"},
+  "gan_ceann_card": {"id":"gan_ceann_card","monsterId":"gan_ceann","name":"Gan Ceann卡片","icon":"🛡️","slot":"armor","bonus":{"atk":15},"desc":"ATK +15(原版另有 4 項條件效果尚未實作)"},
+  "brutal_murderer_card": {"id":"brutal_murderer_card","monsterId":"brutal_murderer","name":"Brutal Murderer卡片","icon":"🛡️","slot":"armor","bonus":{"atk":15},"desc":"ATK +15(原版另有 4 項條件效果尚未實作)"},
+  "death_witch_card": {"id":"death_witch_card","monsterId":"death_witch","name":"Death Witch卡片","icon":"👢","slot":"footgear","bonus":{"matkPct":10},"desc":"魔法傷害 +10%(原版另有 3 項條件效果尚未實作)"},
+  "ep18_ash_toad_card": {"id":"ep18_ash_toad_card","monsterId":"ep18_ash_toad","name":"Ash Toad卡片","icon":"💍","slot":"accessory","bonus":{"magicEleDmg_earth":35},"desc":"地屬性魔法傷害 +35%(原版另有 1 項條件效果尚未實作)"},
+  "ep18_rakehand_card": {"id":"ep18_rakehand_card","monsterId":"ep18_rakehand","name":"Rakehand卡片","icon":"🛡️","slot":"armor","bonus":{"eleReduce_shadow":10,"def":50},"desc":"暗屬性減傷 +10%、DEF +50"},
+  "ep18_spark_card": {"id":"ep18_spark_card","monsterId":"ep18_spark","name":"Spark卡片","icon":"🧣","slot":"garment","bonus":{"atk":5,"eleDmg_fire":10},"desc":"ATK +5、對火屬性傷害 +10%(原版另有 2 項條件效果尚未實作)"},
+  "ep18_volcaring_card": {"id":"ep18_volcaring_card","monsterId":"ep18_volcaring","name":"Volcaring卡片","icon":"👢","slot":"footgear","bonus":{"magicEleDmg_earth":5,"magicEleDmg_fire":5},"desc":"地屬性魔法傷害 +5%、火屬性魔法傷害 +5%(原版另有 1 項條件效果尚未實作)"},
+  "ep18_lava_toad_card": {"id":"ep18_lava_toad_card","monsterId":"ep18_lava_toad","name":"Lava Toad卡片","icon":"💍","slot":"accessory","bonus":{"magicEleDmg_fire":35},"desc":"火屬性魔法傷害 +35%(原版另有 1 項條件效果尚未實作)"},
+  "ep18_ashhopper_card": {"id":"ep18_ashhopper_card","monsterId":"ep18_ashhopper","name":"Ashhopper卡片","icon":"💍","slot":"accessory","bonus":{"magicEleDmg_none":35},"desc":"無屬性魔法傷害 +35%(原版另有 1 項條件效果尚未實作)"},
+  "ep18_tumble_ring_card": {"id":"ep18_tumble_ring_card","monsterId":"ep18_tumble_ring","name":"Tumblering卡片","icon":"👢","slot":"footgear","bonus":{"magicEleDmg_none":5,"magicEleDmg_shadow":5},"desc":"無屬性魔法傷害 +5%、暗屬性魔法傷害 +5%(原版另有 1 項條件效果尚未實作)"},
+  "ep18_firewind_kite_card": {"id":"ep18_firewind_kite_card","monsterId":"ep18_firewind_kite","name":"Firewind Kite卡片","icon":"💍","slot":"accessory","bonus":{"magicEleDmg_wind":35},"desc":"風屬性魔法傷害 +35%(原版另有 1 項條件效果尚未實作)"},
+  "ep18_schulang_card": {"id":"ep18_schulang_card","monsterId":"ep18_md_schulang","name":"변절자 슐랑卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_angel":-25},"desc":"受天使傷害 -25%(原版另有 1 項條件效果尚未實作)","unimplemented":["⚠ 本服現況：目前實作成「**受天使系傷害 +25%**」（減傷欄位被寫成負值），跟敘述相反。已回報待確認。"]},
+  "ep18_demi_freyja_card": {"id":"ep18_demi_freyja_card","monsterId":"ep18_md_demi_freyja","name":"거짓된 신卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_demon":-25},"desc":"受惡魔傷害 -25%(原版另有 1 項條件效果尚未實作)","unimplemented":["⚠ 本服現況：目前實作成「**受惡魔系傷害 +25%**」（減傷欄位被寫成負值），跟敘述相反。已回報待確認。"]},
+  "ill_andre_card": {"id":"ill_andre_card","monsterId":"ill_andre","name":"Diligent Andre卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_insect":20},"desc":"受昆蟲傷害 +-20%(原版另有 1 項條件效果尚未實作)"},
+  "ill_andre_larva_card": {"id":"ill_andre_larva_card","monsterId":"ill_andre_larva","name":"Diligent Andre Larva卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmg_insect":20},"desc":"對昆蟲傷害 +20%(原版另有 1 項條件效果尚未實作)"},
+  "ill_deniro_card": {"id":"ill_deniro_card","monsterId":"ill_deniro","name":"Diligent Deniro卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_insect":20},"desc":"受昆蟲傷害 +-20%(原版另有 1 項條件效果尚未實作)"},
+  "ill_piere_card": {"id":"ill_piere_card","monsterId":"ill_piere","name":"Diligent Piere卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmg_plant":5},"desc":"對植物傷害 +5%(原版另有 1 項條件效果尚未實作)"},
+  "ill_ant_egg_card": {"id":"ill_ant_egg_card","monsterId":"ill_ant_egg","name":"Mushy Ant Egg卡片","icon":"🛡️","slot":"armor","bonus":{"spPct":10},"desc":"MaxSP +10%(原版另有 1 項條件效果尚未實作)"},
+  "ill_giearth_card": {"id":"ill_giearth_card","monsterId":"ill_giearth","name":"Intrepid Giearth卡片","icon":"👑","slot":"head","bonus":{"raceDmg_insect":4},"desc":"對昆蟲傷害 +4%(原版另有 2 項條件效果尚未實作)"},
+  "ill_vitata_card": {"id":"ill_vitata_card","monsterId":"ill_vitata","name":"Diligent Vitata卡片","icon":"👑","slot":"head","bonus":{"magicEleDmg_poison":5},"desc":"毒屬性魔法傷害 +5%(原版另有 4 項條件效果尚未實作)"},
+  "ill_kraken_card": {"id":"ill_kraken_card","monsterId":"ill_kraken","name":"Abysmal Kraken卡片","icon":"🃏","slot":"weapon","bonus":{"rangedDmgPct":25},"desc":"遠距離傷害 +25%(原版另有「必中率+5%」,本服引擎無此機制)"},
+  "disguiser_card": {"id":"disguiser_card","monsterId":"disguiser","name":"Disguiser卡片","icon":"🃏","slot":"headgear","bonus":{},"condBonus":[{"when":{"refineMin":9},"bonus":{"rangedDmgPct":1}},{"when":{"refineMin":11},"bonus":{"rangedDmgPct":2}}],"desc":"精煉+9 遠距離傷害+1%,+11 再+2%(原版另有隨精煉遞減的詠唱時間,本服無詠唱機制)"},
+  "grote_card": {"id":"grote_card","monsterId":"grote","name":"Grote卡片","icon":"🃏","slot":"headgear","bonus":{},"condBonus":[{"when":{"refineMin":9},"bonus":{"mdef":8}}],"desc":"精煉+9 魔法防禦 +8(原版另有「對小型魔法減傷」,本服引擎無此機制)"},
+  "pierrotzoist_card": {"id":"pierrotzoist_card","monsterId":"pierrotzoist","name":"Pierrotzoist卡片","icon":"🃏","slot":"headgear","bonus":{},"condBonus":[{"when":{"refineMin":9},"bonus":{"magicEleDmg_ghost":1}},{"when":{"refineMin":11},"bonus":{"magicEleDmg_ghost":2}}],"desc":"精煉+9 念屬性魔法傷害+1%,+11 再+2%"},
+  "ep18_burning_fang_card": {"id":"ep18_burning_fang_card","monsterId":"ep18_burning_fang","name":"Burning Fang卡片","icon":"🃏","slot":"footgear","bonus":{"meleeDmgPct":20,"allEleDmgReducePct":-15},"desc":"近距離傷害 +20%,但全屬性抗性 -15%(受到的傷害增加,官方原本就是這個取捨)"},
+  "ep18_hot_molar_card": {"id":"ep18_hot_molar_card","monsterId":"ep18_hot_molar","name":"Hot Molar卡片","icon":"🃏","slot":"weapon","bonus":{},"condBonus":[{"when":{"weaponReq":"katar"},"bonus":{"meleeDmgPct":10}}],"desc":"裝備拳刺時近距離傷害 +10%(原版另有隨精煉遞增的部分,本服未實作)"},
+  "bluemoon_loli_ruri_card": {"id":"bluemoon_loli_ruri_card","monsterId":"bluemoon_loli_ruri","name":"Blue Moon Loli Ruri卡片","icon":"🃏","slot":"headgear","bonus":{},"condBonus":[{"when":{"refineMin":9},"bonus":{"healPower":3}},{"when":{"refineMin":11},"bonus":{"healPower":5}}],"desc":"精煉+9 治療量+3%,+11 再+5%(原版另有隨精煉遞減的詠唱時間,本服無詠唱機制)"},
+
 };
 
 const MONSTER_CARD_DROPS = {
@@ -24444,7 +24732,71 @@ const MONSTER_CARD_DROPS = {
   toucan: { card: 'toucan_card', chance: 0.0005 },
   jaguar: { card: 'jaguar_card', chance: 0.0005 },
   headless_mule: { card: 'headless_mule_card', chance: 0.0005 },
-  boitata: { card: 'boitata_card', chance: 0.0005 }
+  boitata: { card: 'boitata_card', chance: 0.0005 },
+  "baphomet": {"card":"baphomet_real_card","chance":0.0005},
+  "anolian": {"card":"anolian_card","chance":0.0005},
+  "horn": {"card":"horn_card","chance":0.0005},
+  "poison_spore": {"card":"poison_spore_card","chance":0.0005},
+  "gajomart": {"card":"gajomart_card","chance":0.0005},
+  "loli_ruri": {"card":"loli_ruri_card","chance":0.0005},
+  "civil_servant": {"card":"civil_servant_card","chance":0.0005},
+  "bloody_murderer": {"card":"bloody_murderer_card","chance":0.0005},
+  "skel_prisoner": {"card":"skel_prisoner_card","chance":0.0005},
+  "wild_ginseng": {"card":"wild_ginseng_card","chance":0.0005},
+  "wicked_nymph": {"card":"wicked_nymph_card","chance":0.0005},
+  "evil_cloud_hermit": {"card":"evil_cloud_hermit_card","chance":0.0005},
+  "giant_spider": {"card":"giant_spider_card","chance":0.0005},
+  "giant_honet": {"card":"giant_honet_card","chance":0.0005},
+  "dancing_dragon": {"card":"dancing_dragon_card","chance":0.0005},
+  "zombie_master": {"card":"zombie_master_card","chance":0.0005},
+  "deleter_": {"card":"deleter_card","chance":0.0005},
+  "tengu": {"card":"tengu_card","chance":0.0005},
+  "caterpillar": {"card":"caterpillar_card","chance":0.0005},
+  "cremy_fear": {"card":"cremy_fear_card","chance":0.0005},
+  "tamruan": {"card":"tamruan_card","chance":0.0005},
+  "hyegun": {"card":"hyegun_card","chance":0.0005},
+  "phendark": {"card":"phendark_card","chance":0.0005},
+  "aliza": {"card":"aliza_card","chance":0.0005},
+  "aliot": {"card":"aliot_card","chance":0.0005},
+  "aqua_elemental": {"card":"aqua_elemental_card","chance":0.0005},
+  "draco": {"card":"draco_card","chance":0.0005},
+  "sedora": {"card":"sedora_card","chance":0.0005},
+  "sropho": {"card":"sropho_card","chance":0.0005},
+  "pot_dofle": {"card":"pot_dofle_card","chance":0.0005},
+  "queen_scaraba": {"card":"q_scaraba_card","chance":0.0005},
+  "b_seyren": {"card":"b_seyren_card","chance":0.0005},
+  "b_eremes": {"card":"b_eremes_card","chance":0.0005},
+  "b_harword": {"card":"b_harword_card","chance":0.0005},
+  "b_magaleta": {"card":"b_magaleta_card","chance":0.0005},
+  "b_shecil": {"card":"b_shecil_card","chance":0.0005},
+  "b_katrinn": {"card":"b_katrinn_card","chance":0.0005},
+  "thanatos": {"card":"thanatos_card","chance":0.0005},
+  "ill_strouf": {"card":"ill_strouf_card","chance":0.0001},
+  "ill_king_dramoh": {"card":"ill_king_dramoh_card","chance":0.0001},
+  "chimera_lava": {"card":"lava_eater_card","chance":0.0001},
+  "chimera_fulgor": {"card":"fulgor_card","chance":0.0001},
+  "chimera_napeo": {"card":"napeo_card","chance":0.0001},
+  "chimera_galensis": {"card":"galensis_card","chance":0.0001},
+  "chimera_amitera": {"card":"amitera_card","chance":0.0001},
+  "chimera_litus": {"card":"litus_card","chance":0.0001},
+  "chimera_fillia": {"card":"fillia_card","chance":0.0001},
+  "chimera_vanilaqus": {"card":"vanilaqus_card","chance":0.0001},
+  "chimera_theone": {"card":"the_one_card","chance":0.0001},
+  "giant_caput": {"card":"giant_caput_card","chance":0.0001},
+  "dolorian": {"card":"dolorian_card","chance":0.0001},
+  "plagarion": {"card":"plagarion_card","chance":0.0001},
+  "deadre": {"card":"deadre_card","chance":0.0001},
+  "venedi": {"card":"venedi_card","chance":0.0001},
+  "death_witch": {"card":"death_witch_card","chance":0.0001},
+  "ep18_lava_toad": {"card":"ep18_lava_toad_card","chance":0.0001},
+  "ill_kraken": {"card":"ill_kraken_card","chance":0.0001},
+  "disguiser": {"card":"disguiser_card","chance":0.0001},
+  "grote": {"card":"grote_card","chance":0.0001},
+  "pierrotzoist": {"card":"pierrotzoist_card","chance":0.0001},
+  "ep18_burning_fang": {"card":"ep18_burning_fang_card","chance":0.0001},
+  "ep18_hot_molar": {"card":"ep18_hot_molar_card","chance":0.0001},
+  "bluemoon_loli_ruri": {"card":"bluemoon_loli_ruri_card","chance":0.0001},
+
 };
 
 
@@ -26634,6 +26986,56 @@ const MAPS = [
     id: 'test_arena', imgId: 5437, name: '測試場',
     monsters: [{ id: 'test_poring', weight: 100 }],
     bg: 'map-novice'
+  },
+  {
+    id: 'abyss_gate', imgId: 5000, name: '深淵之門',
+    monsters: [{ id: 'ep14_3_death_a_mob1', weight: 20 }, { id: 'cenere_g', weight: 20 }, { id: 'repair_robot_t', weight: 20 }, { id: 'scr_mt_robots', weight: 20 }, { id: 'nightmare', weight: 20 }, { id: 'mg_corruption_root', weight: 1 }],
+    bg: 'map-dungeon'
+  },
+  {
+    id: 'ruin_corridor', imgId: 5000, name: '崩壞迴廊',
+    monsters: [{ id: 'big_bell', weight: 20 }, { id: 'md_jakk_160', weight: 20 }, { id: 'md_ghoul_160', weight: 20 }, { id: 'md_drainliar_160', weight: 20 }, { id: 'ill_tri_joint', weight: 20 }, { id: 'e_b_harword', weight: 1 }],
+    bg: 'map-dungeon'
+  },
+  {
+    id: 'rift_hollow', imgId: 5000, name: '時空裂隙',
+    monsters: [{ id: 'ep17_1_twin_caput2', weight: 20 }, { id: 'blazzer_h', weight: 20 }, { id: 'nightmare_terror_h', weight: 20 }, { id: 'deleter1_h', weight: 20 }, { id: 'deleter2_h', weight: 20 }, { id: 'timeholder', weight: 1 }],
+    bg: 'map-dungeon'
+  },
+  {
+    id: 'chaos_hall', imgId: 5000, name: '混沌之間',
+    monsters: [{ id: 'gargoyle_h', weight: 20 }, { id: 'poisonous', weight: 20 }, { id: 'toxious', weight: 20 }, { id: 'porcellio_w', weight: 20 }, { id: 'ep17_2_beta_guards_ng', weight: 20 }, { id: 'md_redpepper_h', weight: 1 }],
+    bg: 'map-dungeon'
+  },
+  {
+    id: 'oblivion_altar', imgId: 5000, name: '湮滅祭壇',
+    monsters: [{ id: 'mineral_g', weight: 20 }, { id: 'abyssman', weight: 20 }, { id: 'ill_sword_fish', weight: 20 }, { id: 'ill_phen', weight: 20 }, { id: 'md_dry_rafflesia_h', weight: 20 }, { id: 'dark_lord_h', weight: 1 }],
+    bg: 'map-dungeon'
+  },
+  {
+    id: 'void_frontier', minLevel: 174, imgId: 5000, name: '虛空邊境',
+    monsters: [{ id: 'ep18_lava_toad', weight: 20 }, { id: 'ill_strouf', weight: 20 }, { id: 'ill_king_dramoh', weight: 20 }, { id: 'ep18_hot_molar', weight: 20 }, { id: 'ill_kraken', weight: 1 }],
+    bg: 'map-field'
+  },
+  {
+    id: 'star_grave', minLevel: 184, imgId: 5000, name: '星辰墓場',
+    monsters: [{ id: 'giant_caput', weight: 20 }, { id: 'dolorian', weight: 20 }, { id: 'plagarion', weight: 20 }, { id: 'deadre', weight: 20 }, { id: 'venedi', weight: 20 }, { id: 'ep18_burning_fang', weight: 1 }],
+    bg: 'map-dungeon'
+  },
+  {
+    id: 'endless_night', minLevel: 198, imgId: 5000, name: '永夜迴廊',
+    monsters: [{ id: 'chimera_amitera', weight: 20 }, { id: 'chimera_litus', weight: 20 }, { id: 'chimera_fillia', weight: 20 }],
+    bg: 'map-dungeon'
+  },
+  {
+    id: 'final_temple', minLevel: 202, imgId: 5000, name: '終焉神殿',
+    monsters: [{ id: 'chimera_vanilaqus', weight: 20 }, { id: 'grote', weight: 20 }, { id: 'bluemoon_loli_ruri', weight: 20 }, { id: 'pierrotzoist', weight: 20 }, { id: 'death_witch', weight: 1 }],
+    bg: 'map-city'
+  },
+  {
+    id: 'genesis_abyss', minLevel: 216, imgId: 5000, name: '創世之淵',
+    monsters: [{ id: 'chimera_lava', weight: 20 }, { id: 'chimera_fulgor', weight: 20 }, { id: 'chimera_napeo', weight: 20 }, { id: 'chimera_galensis', weight: 20 }, { id: 'disguiser', weight: 20 }, { id: 'chimera_theone', weight: 1 }],
+    bg: 'map-dungeon'
   }
 ];
 
@@ -26647,6 +27049,8 @@ const KINGDOMS = [
   { id: 'k_new_world', name: '異世界', icon: '🌀', regions: ['r_new_world'] },
   { id: 'k_foreign', name: '海外地區', icon: '🌍', regions: ['r_foreign'] },
   { id: 'k_thor', name: '托爾火山', icon: '🌋', regions: ['r_thor'] },
+  { id: 'k_abyss', name: '深淵位面', icon: '🕳️',
+    regions: ['r_abyss_low', 'r_abyss_high'] }
 ];
 
 const REGIONS = [
@@ -26736,10 +27140,61 @@ const REGIONS = [
   {
     id: 'r_thor', name: '托爾火山', subtitle: '灼熱的火山地帶', icon: '🌋',
     maps: ['thor_v01', 'thor_v02', 'thor_v03', 'oz_dun01', 'oz_dun02', 'odin_past', 'abyss_01', 'abyss_02', 'abyss_03', 'abyss_04', 'mag_dun01', 'mag_dun02', 'mag_dun03', 'bif_fild01', 'dic_fild02']
-  }
+  },
+  { id: 'r_abyss_low', name: '深淵前線', subtitle: '四轉之路的起點,Lv150 之後的世界', icon: '🌀',
+    maps: ['abyss_gate', 'ruin_corridor', 'rift_hollow', 'chaos_hall', 'oblivion_altar'] },
+  { id: 'r_abyss_high', name: '終焉之地', subtitle: 'Lv200 之後的盡頭,四轉者的試煉場', icon: '🌑',
+    maps: ['void_frontier', 'star_grave', 'endless_night', 'final_temple', 'genesis_abyss'] }
 ];
 
 
+
+/* 地區選單第一格固定安全區。沒有城鎮的地區補營地圖（空怪、map-city 同普隆德拉）。 */
+const REGION_SAFE_MAP_SPEC = {
+  r_nifflheim: { id: 'niflheim_camp', name: '尼芙菲姆營地' },
+  r_glast_heim: { id: 'glast_camp', name: '古城營地' },
+  r_mjolnir: { id: 'mjolnir_camp', name: '妙勒尼營地' },
+  r_turtle_island: { id: 'tur_camp', name: '烏龜島營地' },
+  r_thor: { id: 'thor_camp', name: '托爾火山營地' },
+  r_abyss_low: { id: 'abyss_camp', name: '深淵前哨' },
+  r_abyss_high: { id: 'void_camp', name: '虛空前哨' },
+};
+(function installRegionSafeMaps() {
+  Object.keys(REGION_SAFE_MAP_SPEC).forEach(regionId => {
+    const spec = REGION_SAFE_MAP_SPEC[regionId];
+    if (!MAPS.some(m => m.id === spec.id)) {
+      MAPS.push({ id: spec.id, imgId: 5002, name: spec.name, monsters: [], bg: 'map-city' });
+    }
+    const region = REGIONS.find(r => r.id === regionId);
+    if (!region) return;
+    if (region.maps[0] !== spec.id) {
+      region.maps = [spec.id, ...region.maps.filter(id => id !== spec.id)];
+    }
+  });
+  REGIONS.forEach(region => {
+    const safeId = region.maps.find(id => {
+      const m = MAPS.find(x => x.id === id);
+      return m && m.monsters.length === 0;
+    });
+    if (safeId && region.maps[0] !== safeId) {
+      region.maps = [safeId, ...region.maps.filter(id => id !== safeId)];
+    }
+  });
+})();
+
+function regionMapIds(region) {
+  if (!region || !region.maps) return [];
+  const safeId = region.maps.find(id => {
+    const m = MAPS.find(x => x.id === id);
+    return m && m.monsters.length === 0;
+  });
+  const head = safeId || region.maps[0];
+  return [head, ...region.maps.filter(id => id !== head)];
+}
+function regionDefaultMapId(region) {
+  const ids = regionMapIds(region);
+  return ids[0] || (region && region.maps[0]);
+}
 
 function regionOf(mapId) { return REGIONS.find(r => r.maps.includes(mapId)); }
 
@@ -27352,7 +27807,11 @@ function expToNextJobLevel(level, tier) {
 
 function monsterImgSrc(defId) {
   const def = MONSTERS[defId];
-  return resolveImgPath(`monsters/${def.imgId}.png`);
+  let imgId = def && def.imgId;
+  if (imgId != null && typeof MON_IMG_FALLBACK !== 'undefined' && MON_IMG_FALLBACK[imgId]) {
+    imgId = MON_IMG_FALLBACK[imgId];
+  }
+  return resolveImgPath(`monsters/${imgId}.png`);
 }
 
 
@@ -27457,6 +27916,10 @@ function aspdCategoryOf(itemId) {
      一般武器：STR + (STR/10)² + DEX/5 + LUK/5
      弓／樂器／鞭：DEX + (DEX/10)² + STR/5 + LUK/5
    （攻速公式也是同一組武器走另一條分支，見 engine.js 的 ASPD_BOW_LIKE） */
+/* ==== MON_IMG_FALLBACK BEGIN (tools/gen_mon_img_fallback.js 產生，請勿手改) ==== */
+const MON_IMG_FALLBACK = {"1137":1136,"1183":1011,"1184":1007,"1220":1106,"1221":1166,"1229":1007,"1230":1008,"1231":1018,"1232":1047,"1234":1057,"1237":1095,"1238":1160,"1239":1105,"1240":1049,"1241":1049,"1324":1354,"1325":1354,"1326":1354,"1327":1354,"1328":1354,"1329":1354,"1330":1354,"1331":1354,"1332":1354,"1333":1354,"1334":1354,"1335":1354,"1336":1354,"1337":1354,"1338":1354,"1339":1354,"1340":1354,"1341":1354,"1342":1354,"1343":1354,"1344":1354,"1345":1354,"1346":1354,"1347":1354,"1348":1354,"1349":1354,"1350":1354,"1351":1354,"1352":1354,"1353":1354,"1355":1354,"1356":1354,"1357":1354,"1359":1354,"1360":1354,"1361":1354,"1362":1354,"1363":1354,"1364":1315,"1393":1041,"1394":1015,"1419":1005,"1420":1016,"1421":1029,"1422":1035,"1423":1036,"1424":1037,"1425":1044,"1426":1045,"1428":1077,"1429":1099,"1430":1100,"1431":1101,"1432":1106,"1433":1109,"1434":1111,"1435":1117,"1436":1130,"1437":1131,"1438":1132,"1439":1213,"1440":1215,"1441":1216,"1442":1243,"1443":1248,"1444":1250,"1445":1254,"1446":1257,"1447":1259,"1448":1260,"1449":1262,"1450":1263,"1451":1264,"1452":1273,"1453":1276,"1454":1279,"1455":1282,"1456":1283,"1457":1139,"1458":1140,"1459":1143,"1460":1146,"1461":1149,"1462":1152,"1464":1154,"1465":1155,"1466":1156,"1467":1163,"1468":1164,"1469":1169,"1470":1178,"1471":1180,"1472":1188,"1473":1189,"1474":1191,"1475":1192,"1476":1193,"1477":1194,"1478":1195,"1479":1196,"1480":1197,"1481":1199,"1482":1200,"1484":1202,"1486":1204,"1488":1206,"1489":1207,"1490":1208,"1491":1110,"1521":1275,"1522":1297,"1523":1403,"1524":1415,"1525":1102,"1526":1408,"1527":1270,"1528":1269,"1529":1418,"1530":1389,"1531":1412,"1532":1383,"1533":1317,"1534":1122,"1535":1123,"1536":1124,"1537":1125,"1538":1126,"1539":1299,"1540":1040,"1541":1277,"1542":1492,"1543":1406,"1544":1400,"1545":1133,"1546":1134,"1547":1135,"1548":1296,"1549":1366,"1550":1410,"1551":1144,"1552":1404,"1553":1151,"1554":1379,"1555":1500,"1556":1402,"1557":1392,"1558":1165,"1559":1001,"1560":1401,"1561":1056,"1562":1028,"1563":1405,"1564":1416,"1565":1413,"1566":1291,"1567":1305,"1568":1096,"1569":1268,"1570":1209,"1571":1108,"1572":1113,"1573":1377,"1574":1033,"1575":1118,"1576":1120,"1577":1258,"1578":1129,"1579":1068,"1580":1374,"1589":1020,"1590":1368,"1591":1063,"1592":1313,"1593":1297,"1594":1319,"1595":1242,"1596":1584,"1597":1253,"1598":1367,"1599":1186,"1600":1318,"1601":1314,"1603":1060,"1604":1303,"1605":1302,"1606":1515,"1607":1245,"1609":1514,"1610":1026,"1611":1188,"1612":1512,"1624":1617,"1625":1619,"1626":1198,"1631":1519,"1683":1664,"1684":1668,"1691":1587,"1709":1704,"1710":1705,"1711":1706,"1712":1707,"1723":1638,"1724":1664,"1725":1002,"1726":1063,"1727":1167,"1728":1107,"1729":1101,"1730":1109,"1739":1735,"1740":1736,"1741":1246,"1742":1267,"1743":1249,"1744":1261,"1745":1738,"1746":1737,"1747":1025,"1748":1030,"1749":1148,"1756":1720,"1757":1713,"1758":1714,"1759":1716,"1760":1717,"1761":1752,"1762":1753,"1763":1754,"1764":1755,"1766":1096,"1767":1582,"1786":1769,"1787":1770,"1788":1777,"1790":1162,"1791":1783,"1793":1274,"1794":1782,"1834":1831,"1835":1833,"1873":1874,"1891":1765,"1906":1905,"1910":1909,"1922":1918,"1923":1918,"1924":1918,"1925":1918,"1926":1130,"1927":1185,"1928":1109,"1938":1354,"1939":1354,"1940":1354,"1941":1354,"1942":1354,"1943":1354,"1944":1354,"1945":1354,"1946":1354,"1947":1930,"1951":1395,"1952":1395,"1953":1395,"1954":1395,"1997":1986,"1998":1989,"2005":1697,"2006":1696,"2007":1694,"2027":2023,"2044":2043,"2045":2043,"2046":2043,"2058":1191,"2059":1506,"2080":2079,"2082":2070,"2140":2138,"2141":2138,"2142":2138,"2143":2138,"2144":2085,"2145":2086,"2170":2085,"2171":2086,"2172":2086,"2173":2084,"2219":2194,"2284":1136,"2285":1136,"2286":1136,"2287":1282,"2318":2317,"2321":2320,"2322":2320,"2327":2317,"2331":2191,"2332":2319,"2343":2337,"2402":1031,"2428":2415,"2429":2416,"2430":2417,"2431":2418,"2432":2419,"2433":2420,"2434":2421,"2435":2422,"2436":2423,"2437":2424,"2438":2425,"2439":2426,"2440":2427,"2567":2552,"2568":2553,"2914":2551,"2922":2921,"2961":2959,"3109":3108,"3195":3194,"3449":3448,"3518":3510,"3522":3514,"3524":3516,"3659":3658,"3669":1382,"3744":3737,"3745":3737,"3746":3737,"3896":3799,"20264":20255,"20265":20256,"20266":20257,"20267":20258,"20268":20259,"20278":20272,"20279":20275,"20280":20276,"20355":20356,"20361":20349,"20363":20364,"20365":20348,"20382":20348,"20626":20622,"20654":20649,"20655":20649,"20656":20649,"20657":20649,"20658":20649,"20660":20649,"20661":20649,"20662":20649,"20663":20649,"20664":20649,"20676":20674,"20700":20631};
+/* ==== MON_IMG_FALLBACK END ==== */
+
 const DEX_ATK_CATEGORIES = ['bow', 'instrument', 'whip'];
 function isDexAtkWeapon(itemId) {
   return DEX_ATK_CATEGORIES.includes(aspdCategoryOf(itemId));
@@ -27645,6 +28108,25 @@ const EQUIP_SETS = {
     items: ['broken_chip_1', 'broken_chip_2'],
     bonus: { str: 8, int: 8 },
   },
+
+  /* 哥夫內／摩菲斯／茉莉雅娜。效果原本寫在頭上，沒穿齊也會生效。
+     頭上那份常駐數字已拿掉，改成四件到齊才加。 */
+  goibne_set: {
+    name: '哥夫內套裝',
+    items: ['item_5128', 'item_2354', 'item_2520', 'item_2419'],
+    bonus: { vit: 5, hpPct: 15, spPct: 5, def: 5, mdef: 15, eleReduce_water: 10, eleReduce_wind: 10, eleReduce_earth: 10, eleReduce_fire: 10 },
+  },
+  morpheus_set: {
+    name: '摩菲斯套裝',
+    items: ['item_5126', 'item_2518', 'item_2648', 'item_2649'],
+    bonus: { int: 5, mdef: 11, spPct: 20 },
+  },
+  mjolnir_set: {
+    name: '茉莉雅娜套裝',
+    items: ['item_5127', 'item_2519', 'item_2650', 'item_2651'],
+    bonus: { str: 2, luk: 9, critRate: 13, atk: 18, perfectDodge: 13 },
+  },
+
   tatenasi_set: {
     name: '泰納西套裝',
     items: ['tatenasi_armor_', 'tatenasi_helmet'],
@@ -27678,12 +28160,15 @@ const WEAPON_REQ_CATEGORIES = {
   barefist: ['bare', 'knuckle'],
   // #72 鍊金術士的熟練度官方寫「斧頭或單手劍」——跟商人系的 axemace（斧或鈍器）不是同一組
   axesword: ['axe1', 'axe2', 'sword1'],
+  bow_instrument_whip: ['bow', 'instrument', 'whip'],
+  book_mace: ['book', 'mace'],
 };
 const WEAPON_REQ_NAMES = {
   sword: '單手劍或短劍', sword2: '雙手劍', dagger: '短劍', katar: '拳刃',
   mace: '鈍器', axe: '斧頭', axemace: '斧頭或鈍器',   spear: '矛類武器', spear_sword2: '矛類或雙手劍', bow: '弓', rod: '法杖',
   instrument: '樂器', whip: '鞭子', knuckle: '拳套', book: '書本',
   barefist: '空手或拳套', axesword: '斧頭或單手劍',
+  bow_instrument_whip: '弓、樂器或鞭子', book_mace: '書本或鈍器',
 };
 function weaponReqName(req) { return WEAPON_REQ_NAMES[req] || req; }
 // 目前手上的武器符不符合這個限定；沒寫限定的技能一律通過
@@ -27782,4 +28267,4239 @@ function jobCanUseWeapon(jobId, itemId) {
   if (!tbl) return true;               // 沒資料的職業不擋，避免誤傷
   return tbl.weapons[cat] !== undefined;
 }
+
+/* ==== EMU-IMPORT BEGIN(tools/import_emulator_combos.py 生成) ==== */
+/* ==== 樹枝召喚池:匯入自 99Max mob_branch / mob_boss(權重照官方) ==== */
+const BRANCH_MONSTERS = [["scorpion",214285],["poring",1000000],["hornet",357142],["farmiliar",357142],["fabre",428571],["pupa",71428],["condor",357142],["wilow",357142],["chonchon",357142],["roda_frog",357142],["wolf",357142],["spore",357142],["zombie",357142],["archer_skeleton",214285],["creamy",357142],["pecopeco",357142],["mandragora",357142],["ork_warrior",214285],["worm_tail",357142],["snake",357142],["munak",214285],["soldier_skeleton",214285],["isis",71428],["poporing",357142],["verit",214285],["elder_wilow",214285],["thara_frog",214285],["hunter_fly",71428],["ghoul",214285],["side_winder",71428],["golem",214285],["mummy",214285],["steel_chonchon",357142],["obeaune",214285],["marc",214285],["pecopeco_egg",71428],["thief_bug_egg",71428],["picky",357142],["picky_",357142],["thief_bug",357142],["rocker",357142],["thief_bug_",357142],["muka",357142],["smokie",357142],["yoyo",357142],["metaller",214285],["bigfoot",214285],["poring_",357142],["lunatic",357142],["megalodon",214285],["strouf",214285],["vadon",357142],["cornutus",214285],["hydra",357142],["sword_fish",214285],["kukre",357142],["pirate_skel",214285],["kaho",71428],["crab",214285],["shellfish",357142],["skeleton",357142],["poison_spore",357142],["red_plant",71428],["blue_plant",71428],["green_plant",71428],["yellow_plant",71428],["white_plant",71428],["shining_plant",71428],["black_mushroom",71428],["red_mushroom",71428],["vocal",71428],["toad",71428],["mastering",71428],["dragon_fly",71428],["vagabond_wolf",71428],["eclipse",71428],["ambernite",357142],["andre",357142],["angeling",71428],["ant_egg",71428],["anubis",71428],["argiope",71428],["argos",214285],["baphomet_",71428],["caramel",214285],["coco",357142],["deniro",357142],["desert_wolf_b",71428],["deviace",71428],["deviruchi",71428],["dokebi",214285],["drainliar",214285],["drops",357142],["dustiness",214285],["eggyra",214285],["flora",214285],["frilldora",214285],["ghostring",71428],["giearth",214285],["goblin_1",214285],["goblin_2",214285],["goblin_3",214285],["goblin_4",214285],["goblin_5",214285],["hode",214285],["horn",357142],["horong",214285],["jakk",214285],["joker",71428],["khalitzburg",71428],["kobold_1",214285],["kobold_2",214285],["magnolia",214285],["mantis",214285],["marduk",214285],["marina",214285],["marine_sphere",214285],["marse",214285],["martin",357142],["matyr",214285],["medusa",71428],["minorous",71428],["myst",214285],["orc_skeleton",214285],["orc_zombie",214285],["petit_",71428],["phen",214285],["piere",357142],["plankton",357142],["raydric",71428],["requiem",214285],["sand_man",214285],["savage",214285],["savage_babe",357142],["skel_worker",214285],["sohee",214285],["stainer",357142],["tarou",357142],["vitata",214285],["zenorc",214285],["zerom",214285],["whisper",71428],["nine_tail",71428],["thief_mushroom",71428],["whisper_",71428],["whisper_boss",71428],["bon_gun",214285],["orc_archer",71428],["mimic",71428],["wraith",71428],["alarm",71428],["arclouse",71428],["rideword",71428],["skel_prisoner",71428],["zombie_prisoner",71428],["punk",71428],["zherlthsh",71428],["rybio",71428],["phendark",71428],["anolian",71428],["sting",71428],["wander_man",71428],["cramp",71428],["brilight",71428],["iron_fist",71428],["high_orc",71428],["choco",71428],["penomena",71428],["marin",357142],["sasquatch",214285],["gobline_xmas",71428],["cookie_xmas",214285],["cruiser",214285],["mystcase",214285],["chepet",71428],["raggler",214285],["neraid",214285],["pest",214285],["goblin_archer",214285],["dark_frame",71428],["wild_rose",214285],["mutant_dragon",71428],["wind_ghost",71428],["merman",71428],["cookie",214285],["aster",357142],["carat",71428],["bloody_knight",71428],["clock",71428],["c_tower_manager",71428],["alligator",71428],["orc_lady",214285],["megalith",71428],["alice",71428],["raydric_archer",71428],["greatest_general",214285],["stalactic_golem",71428],["tri_joint",214285],["steam_goblin",214285],["sageworm",71428],["kobold_archer",214285],["chimera",71428],["maya_puple",71428],["wraith_dead",71428],["mini_demon",71428],["cremy_fear",71428],["killer_mantis",71428],["ancient_mummy",71428],["zombie_master",71428],["goblin_leader",71428],["caterpillar",71428],["am_mut",71428],["dark_illusion",71428],["giant_honet",71428],["giant_spider",71428],["ancient_worm",71428],["leib_olmai",71428],["cat_o_nine_tail",71428],["panzer_goblin",71428],["gajomart",71428],["gullinbursti",71428],["mobster",71428],["permeter",71428],["assulter",71428],["solider",71428],["fur_seal",71428],["heater",71428],["freezer",71428],["dragon_tail",71428],["spring_rabbit",71428],["see_otter",71428],["apocalips",71428],["lava_golem",71428],["blazzer",71428],["geographer",71428],["grand_peco",71428],["succubus",71428],["fake_angel",71428],["goat",71428],["incubus",71428],["the_paper",71428],["harpy",71428],["elder",71428],["demon_pungus",71428],["nightmare_terror",71428],["driller",71428],["grizzly",71428],["diabolic",71428],["explosion",71428],["deleter",71428],["deleter_",71428],["gig",71428],["galapago",71428],["rotar_zairo",214285],["karakasa",214285],["shinobi",71428],["poison_toad",71428],["antique_firelock",71428],["kapha",71428],["rice_cake_boy",214285],["live_peach_tree",71428],["evil_cloud_hermit",71428],["baby_leopard",214285],["zipper_bear",214285],["dryad",71428],["kind_of_beetle",214285],["stone_shooter",71428],["wooden_golem",71428],["wootan_shooter",214285],["wootan_fighter",71428],["parasite",214285],["gibbet",71428],["dullahan",71428],["loli_ruri",71428],["disguise",71428],["bloody_murderer",71428],["quve",214285],["lude",214285],["hylozoist",71428],["hyegun",71428],["civil_servant",71428],["dancing_dragon",71428],["garm_baby",71428],["increase_soil",71428],["li_me_mang_ryang",71428],["chung_e",71428],["boiled_rice",71428],["deviling",71428],["tamruan",71428],["leaf_cat",71428],["kraben",71428],["mineral",71428],["obsidian",71428],["pitman",71428],["waste_stove",71428],["ungoliant",71428],["noxious",71428],["venomous",71428],["teddy_bear",71428],["anopheles",71428],["hill_wind",71428],["chung_e_",71428],["gremlin",71428],["beholder",71428],["seyren",71428],["eremes",71428],["harword",71428],["magaleta",71428],["shecil",71428],["katrinn",71428],["ygnizem",71428],["whikebain",71428],["armaia",71428],["erend",71428],["kavac",71428],["rawrel",71428],["poton_canon",71428],["poton_canon_1",71428],["poton_canon_2",71428],["poton_canon_3",71428],["archdam",71428],["dimik",71428],["dimik_1",71428],["dimik_2",71428],["dimik_3",71428],["dimik_4",71428],["venatu",71428],["venatu_1",71428],["venatu_2",71428],["venatu_3",71428],["venatu_4",71428],["hill_wind_1",71428],["gemini",71428],["removal",71428],["orc_baby",71428],["green_iguana",71428],["breeze",71428],["plasma_y",71428],["plasma_r",71428],["plasma_g",71428],["plasma_p",71428],["ancient_mimic",71428],["solace",71428],["tha_odium",71428],["tha_despero",71428],["tha_maero",71428],["tha_dolor",71428],["acidus",71428],["ferus",71428],["novus",71428],["ferus_",71428],["novus_",71428],["hydro",71428],["dragon_egg",71428],["aliza",71428],["constant",71428],["skogul",71428],["frus",71428],["skeggiold",71428],["skeggiold_",71428],["agav",71428],["echio",71428],["vanberk",71428],["isilla",71428],["hodremlin",71428],["seeker",71428],["snowier",71428],["siroma",71428],["ice_titan",71428],["gazeti",71428],["muscipular",71428],["drosera",71428],["roween",71428],["galion",71428],["stapo",142857],["iceicle",71428],["aunoe",142857],["fanat",142857],["sword_guardian",71428],["bow_guardian",71428],["salamander",71428],["kasa",71428],["magmaring",214285],["imp",71428],["knocker",71428],["byorgue",71428],["zombie_slaughter",71428],["ragged_zombie",71428],["hell_poodle",71428],["banshee",71428],["flame_skull",71428],["necromancer",71428],["beelzebub_fly",71428],["wood_goblin",71428],["les",71428],["vavayaga",71428],["uzhas",71428],["mavka",71428],["morocc_1",71428],["morocc_2",71428],["morocc_3",71428],["morocc_4",71428],["banshee_master",71428],["beholder_master",71428],["cobalt_mineral",71428],["heavy_metaling",71428],["hell_apocalips",71428],["zakudam",71428],["tatacho",71428],["centipede",71428],["nepenthes",71428],["hillsrion",71428],["hardrock_mommoth",71428],["tendrilrion",71428],["cornus",71428],["luciola_vespa",71428],["pinguicula",71428],["centipede_larva",71428],["draco",71428],["pinguicula_d",71428],["aqua_elemental",71428],["rata",71428],["duneyrr",71428],["ancient_tree",71428],["rhyncho",71428],["phylla",71428],["dark_shadow",71428],["bradium_golem",71428],["iara",71428],["piranha",71428],["jaguar",71428],["toucan",71428],["curupira",71428],["botaring",142857]];
+const BRANCH_BOSSES = [["osiris",500000],["baphomet",500000],["doppelganger",500000],["mistress",500000],["golden_bug",500000],["ork_hero",500000],["angeling",500000],["drake",500000],["eddga",500000],["ghostring",500000],["maya",500000],["moonlight",500000],["pharaoh",500000],["phreeoni",500000],["orc_lord",500000],["knight_of_windstorm",500000],["garm",500000],["dark_lord",500000],["turtle_general",500000],["archangeling",500000],["dracula",500000],["dark_snake_lord",500000],["incantation_samurai",500000],["amon_ra",500000],["deviling",500000],["tao_gunka",500000],["rsx_0806",500000],["bacsojin_",500000],["b_ygnizem",500000],["apocalips_h",500000],["lady_tanee",500000],["detale",500000],["kiel_",500000],["randgris",500000],["gloomundernight",500000],["ktullanux",500000],["atroce",1000000],["ifrit",500000],["fallingbishop",500000],["beelzebub",500000],["gopinich",500000],["s_nydhog",500000],["boitata",500000]];
+
+/* ==== 匯入自 99Max 模擬器 item_combo_db(tools/import_emulator_combos.py 生成,勿手改) ==== */
+Object.assign(EQUIP_SETS, {
+  "ec_1166_2527": {name:"龍牙劍＋龍之呼吸",items:["dragon_slayer","dragon_breath"],bonus:{"raceDmg_dragon":5}},
+  "ec_1180_2527": {name:"龍牙劍＋龍之呼吸",items:["dragon_slayer_","dragon_breath"],bonus:{"raceDmg_dragon":5}},
+  "ec_1420_2133": {name:"長角之矛＋錦標賽之盾",items:["long_horn","tournament_shield"],bonus:{"allTargetDmgPct":4,"def":2}},
+  "ec_1421_2133": {name:"強襲戰矛＋錦標賽之盾",items:["battle_hook","tournament_shield"],bonus:{"allTargetDmgPct":4,"def":2}},
+  "ec_1422_2133": {name:"狩獵之矛＋錦標賽之盾",items:["hunting_spear","tournament_shield"],bonus:{"allTargetDmgPct":4,"def":2}},
+  "ec_1433_2153": {name:"帝國長矛＋皇家之盾",items:["imperial_spear","imperial_guard"],bonus:{"skillDmg_grandcross":10}},
+  "ec_1472_2677": {name:"靈魂之杖＋精靈戒指",items:["staff_of_soul","spiritual_ring"],bonus:{"matkPct":6,"dex":2}},
+  "ec_1472_2711": {name:"靈魂之杖＋Spiritual Ring",items:["staff_of_soul","spiritual_ring_c"],bonus:{"matkPct":6,"dex":2}},
+  "ec_1473_2677": {name:"大巫師之杖＋精靈戒指",items:["wizardy_staff","spiritual_ring"],bonus:{"matkPct":6,"dex":2}},
+  "ec_1473_2711": {name:"大巫師之杖＋Spiritual Ring",items:["wizardy_staff","spiritual_ring_c"],bonus:{"matkPct":6,"dex":2}},
+  "ec_1572_2716_2717": {name:"魔法策略＋圖書管理員的手套＋懷錶",items:["principles_of_magic","librarian_glove",["pocket_watch_","pocket_watch"]],bonus:{"int":5,"hp":700,"aspdPct":5}},
+  "ec_1573_2334": {name:"遠古魔法＋魔法外套",items:["ancient_magic","mage_coat"],bonus:{"mdef":8,"spPct":10,"int":4}},
+  "ec_1573_2372": {name:"遠古魔法＋魔法外套",items:["ancient_magic","mage_coat_"],bonus:{"mdef":8,"spPct":10,"int":4}},
+  "ec_1573_2716_2717": {name:"遠古魔法＋圖書管理員的手套＋懷錶",items:["ancient_magic","librarian_glove",["pocket_watch_","pocket_watch"]],bonus:{"int":5,"hp":700,"aspdPct":5}},
+  "ec_1718_1774": {name:"獵人之弓＋狩獵箭矢",items:["hunter_bow","hunting_arrow"],bonus:{"rangedDmgPct":50}},
+  "ec_1726_1774": {name:"獵人之弓＋狩獵箭矢",items:["hunter_bow_","hunting_arrow"],bonus:{"rangedDmgPct":50}},
+  "ec_1730_1752": {name:"燃燒之弓＋火箭矢",items:["burning_bow","fire_arrow"],bonus:{"rangedDmgPct":25}},
+  "ec_1730_19019": {name:"燃燒之弓＋精靈王冠",items:["burning_bow","elemental_crown"],bonus:{"rangedDmgPct":45}},
+  "ec_1731_1754": {name:"冰凍之弓＋水靈箭矢",items:["frozen_bow","crystal_arrow"],bonus:{"rangedDmgPct":25}},
+  "ec_1731_19019": {name:"冰凍之弓＋精靈王冠",items:["frozen_bow","elemental_crown"],bonus:{"rangedDmgPct":45}},
+  "ec_1732_19019": {name:"大地之弓＋精靈王冠",items:["earth_bow","elemental_crown"],bonus:{"rangedDmgPct":45}},
+  "ec_1733_19019": {name:"疾風之弓＋精靈王冠",items:["gust_bow","elemental_crown"],bonus:{"rangedDmgPct":45}},
+  "ec_1734_1753": {name:"獸人弓箭手之弓＋鋼鐵箭矢",items:["orc_archer_bow","steel_arrow"],bonus:{"rangedDmgPct":50}},
+  "ec_1746_1773": {name:"小精靈弓＋精靈箭矢",items:["elven_bow","arrow_of_elf"],bonus:{"rangedDmgPct":50}},
+  "ec_1775_18114": {name:"城戰補充箭S＋戰神十字弓",items:["siege_arrow_s",["velum_cross_bow","velum_crossbow"]],bonus:{"rangedDmgPct":70}},
+  "ec_1776_18114": {name:"城戰補充箭A＋戰神十字弓",items:["siege_arrow_a",["velum_cross_bow","velum_crossbow"]],bonus:{"rangedDmgPct":40}},
+  "ec_1944_15180_28442": {name:"嬉皮摩登吉他＋嬉皮摩登外袍＋嬉皮羽毛手鐲",items:["hippie_guitar","hippie_cloth","hippie_feather"],bonus:{"atk":30,"aspdPct":1,"critDmgPct":20}},
+  "ec_1990_2989": {name:"傳奇舞娘玫瑰麥克風＋傳奇舞娘玫瑰手環",items:["floral_mic_of_igu","floral_bracelet_of_igu"],bonus:{"skillDmg_cg_arrowvulcan":200}},
+  "ec_2001_2677": {name:"聖十字之杖＋精靈戒指",items:["divine_cross","spiritual_ring"],bonus:{"matkPct":10,"dex":2,"raceDmgReduce_demon":10,"raceDmgReduce_undead":10}},
+  "ec_2001_2711": {name:"聖十字之杖＋Spiritual Ring",items:["divine_cross","spiritual_ring_c"],bonus:{"matkPct":10,"dex":2,"raceDmgReduce_demon":10,"raceDmgReduce_undead":10}},
+  "ec_2007_2467_2859_15025": {name:"黃金領主之杖＋黃金領主之靴＋鈦合金靈球＋黃金領主外袍",items:["golden_rod_staff","golden_rod_shoes","golden_rod_orb","golden_rod_robe"],bonus:{"magicEleDmg_wind":40,"magicEleDmg_earth":-30,"eleReduce_earth":-50}},
+  "ec_2008_2468_2860_15026": {name:"流水之杖＋流水之靴＋水精靈靈球＋流水外袍",items:["aqua_staff","aqua_shoes","aqua_orb","aqua_robe"],bonus:{"magicEleDmg_water":40,"magicEleDmg_wind":-30,"eleReduce_wind":-50}},
+  "ec_2009_2469_2861_15027": {name:"赤紅之杖＋赤紅之靴＋赤火焰靈球＋赤紅外袍",items:["crimson_staff","crimson_shoes","crimson_orb","crimson_robe"],bonus:{"magicEleDmg_fire":40,"magicEleDmg_water":-30,"eleReduce_water":-50}},
+  "ec_2010_2470_2862_15028": {name:"森林之杖＋森林之靴＋叢林王靈球＋森林外袍",items:["forest_staff","forest_shoes","forest_orb","forest_robe"],bonus:{"magicEleDmg_earth":40,"magicEleDmg_fire":-30,"eleReduce_fire":-50}},
+  "ec_2011_2467_2859_15025": {name:"黃金領主之杖 II＋黃金領主之靴＋鈦合金靈球＋黃金領主外袍",items:["golden_rod_staff2","golden_rod_shoes","golden_rod_orb","golden_rod_robe"],bonus:{"magicEleDmg_wind":60,"magicEleDmg_earth":-60,"eleReduce_earth":-50}},
+  "ec_2012_2468_2860_15026": {name:"流水之杖 II＋流水之靴＋水精靈靈球＋流水外袍",items:["aqua_staff2","aqua_shoes","aqua_orb","aqua_robe"],bonus:{"magicEleDmg_water":60,"magicEleDmg_wind":-60,"eleReduce_wind":-50}},
+  "ec_2013_2469_2861_15027": {name:"赤紅之杖 II＋赤紅之靴＋赤火焰靈球＋赤紅外袍",items:["crimson_staff2","crimson_shoes","crimson_orb","crimson_robe"],bonus:{"magicEleDmg_fire":60,"magicEleDmg_water":-60,"eleReduce_water":-50}},
+  "ec_2014_2470_2862_15028": {name:"森林之杖 II＋森林之靴＋叢林王靈球＋森林外袍",items:["forest_staff2","forest_shoes","forest_orb","forest_robe"],bonus:{"magicEleDmg_earth":60,"magicEleDmg_fire":-60,"eleReduce_fire":-50}},
+  "ec_2109_2239_2717": {name:"謊言記錄本＋單眼眼鏡＋懷錶",items:["memorize_book","one_eyed_glass",["pocket_watch_","pocket_watch"]],bonus:{"hpRegenPct":15,"spRegenPct":15,"matkPct":7}},
+  "ec_2121_2239_2717": {name:"謊言記錄本＋單眼眼鏡＋懷錶",items:["memorize_book_","one_eyed_glass",["pocket_watch_","pocket_watch"]],bonus:{"hpRegenPct":15,"spRegenPct":15,"matkPct":7}},
+  "ec_2171_15053": {name:"狐紋護手＋特攻忍裝",items:["fox_armguard","special_ninja_suit"],bonus:{"agi":2}},
+  "ec_2171_15056": {name:"狐紋護手＋特攻忍裝",items:["fox_armguard","special_ninja_suit_"],bonus:{"agi":2}},
+  "ec_2172_15054": {name:"狼紋護手＋忍者鱗甲",items:["wolf_armguard","ninja_scale_armor"],bonus:{"allTargetDmgPct":10,"str":2}},
+  "ec_2173_15055": {name:"月紋護手＋霧中暗影",items:["crescent_armguard","tenebris_latitantes"],bonus:{"flee":10,"perfectDodge":10}},
+  "ec_2269_5781": {name:"花葉＋桃花髮飾[1]",items:["centimental_flower","persika"],bonus:{"int":1,"sp":30}},
+  "ec_2270_5781": {name:"草葉＋桃花髮飾[1]",items:["centimental_leaf","persika"],bonus:{"luk":1,"flee":2}},
+  "ec_2281_18527": {name:"舞會面具＋Gloomy Pumpkin Hat",items:["phantom_of_opera","gloomy_pumpkin_hat"],bonus:{"flee":10}},
+  "ec_2286_18539": {name:"妖精長耳朵飾＋骷髏黑帽",items:["elven_ears","skull_cap"],bonus:{"spCostPct":-3}},
+  "ec_2312_2656": {name:"鐵製盔甲＋過度的改變",items:["padded_armor","hyper_changer"],bonus:{"def":5,"hp":150}},
+  "ec_2313_2656": {name:"鐵製盔甲＋過度的改變",items:["padded_armor_","hyper_changer"],bonus:{"def":5,"hp":150}},
+  "ec_2337_2654": {name:"忍服 血櫻＋火忍西怒畢的腰帶",items:["ninja_suit","item_2654"],bonus:{"spCostPct":-20,"hp":300}},
+  "ec_2339_2522": {name:"三角褲＋襯衫",items:["g_strings","undershirt"],bonus:{"agi":5,"flee":10}},
+  "ec_2339_2523": {name:"三角褲＋襯衫",items:["g_strings","undershirt_"],bonus:{"agi":5,"flee":10}},
+  "ec_2353_2417_2516": {name:"奧丁的祝福＋傅裡哥長靴＋獵鷹披肩",items:["item_2353","fricco_shoes","falcon_robe"],bonus:{"agi":3,"hpPct":5,"spPct":5}},
+  "ec_2353_2418_2517": {name:"奧丁的祝福＋迪塔樂長靴＋貝利的斗篷",items:["item_2353","item_2418","item_2517"],bonus:{"vit":5,"hpRegenPct":10,"spRegenPct":10}},
+  "ec_2354_2419_2520_5128": {name:"哥夫內的盔甲＋哥夫內軍靴＋哥夫內肩飾＋哥夫內的頭具",items:["item_2354","item_2419","item_2520","item_5128"],bonus:{"vit":5,"hpPct":15,"spPct":5,"def":5,"mdef":15,"eleReduce_water":10,"eleReduce_earth":10,"eleReduce_fire":10,"eleReduce_wind":10}},
+  "ec_2357_2421_2524_5171": {name:"瓦爾基里的盔甲＋瓦爾基里的長靴＋瓦爾基里的披風＋瓦爾基裡頭盔",items:["valkyrie_armor","valkyrie_shoes","valkyrie_manteau","valkyrie_helm"],bonus:{"allStat":1}},
+  "ec_2358_5153": {name:"天使的禮服＋天使波利髮夾",items:["dress_of_angel","angeling_hairpin"],bonus:{"luk":6,"flee":5,"int":2}},
+  "ec_2359_2654": {name:"忍服血櫻＋火忍西怒畢的腰帶",items:["ninja_suit_","item_2654"],bonus:{"spCostPct":-20,"hp":300}},
+  "ec_2371_2522": {name:"三角褲＋襯衫",items:["g_strings_","undershirt"],bonus:{"agi":5,"flee":10}},
+  "ec_2371_2523": {name:"三角褲＋襯衫",items:["g_strings_","undershirt_"],bonus:{"agi":5,"flee":10}},
+  "ec_2374_2729": {name:"恐懼長袍＋恐懼指環",items:["diabolus_robe","diabolus_ring"],bonus:{"allTargetDmgPct":3,"matkPct":3}},
+  "ec_2375_2729": {name:"恐懼戰甲＋恐懼指環",items:["diabolus_armor","diabolus_ring"],bonus:{"allTargetDmgPct":3,"matkPct":3}},
+  "ec_2387_2440_2744": {name:"奔跑盔甲＋奔跑長靴＋奔跑指環",items:["sprint_mail","sprint_shoes","sprint_ring"],bonus:{"hpPct":7,"spPct":7}},
+  "ec_2390_2749": {name:"改良型緊身便衣＋亞麻手套",items:["improved_tights","linen_glove"],bonus:{"perfectDodge":5}},
+  "ec_2399_2553": {name:"龍之襯衣＋暴躁龍斗篷",items:["dragon_vest","dragon_manteau"],bonus:{"agi":5,"flee":15}},
+  "ec_2425_2529": {name:"黑皮靴＋奔跑者徽章",items:["black_leather_boots","rider_insignia"],bonus:{"flee":10}},
+  "ec_2425_2530": {name:"黑皮靴＋奔跑者徽章",items:["black_leather_boots","rider_insignia_"],bonus:{"flee":10}},
+  "ec_24255_24266_24279_24298_24311_28392": {name:"影子弓箭手墜子＋影子弓箭手耳環＋影子獵人戰靴＋影子獵人鎧甲＋影子遊俠手套＋影子遊俠神盾",items:["s_archer_pendant","s_archer_earring","s_hunter_shoes","s_hunter_armor","s_ranger_weapon","s_ranger_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24255_24267_24280_24299_24312_28392": {name:"影子弓箭手墜子＋影子弓箭手耳環＋影子詩人戰靴＋影子詩人鎧甲＋影子宮廷樂師手套＋影子宮廷樂師神盾",items:["s_archer_pendant","s_archer_earring","s_bard_shoes","s_bard_armor","s_minstrel_weapon","s_minstrel_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24255_24268_24281_24300_24313_28392": {name:"影子弓箭手墜子＋影子弓箭手耳環＋影子舞娘戰靴＋影子舞娘鎧甲＋影子漫遊舞者手套＋影子漫遊舞者神盾",items:["s_archer_pendant","s_archer_earring","s_dancer_shoes","s_dancer_armor","s_wanderer_weapon","s_wanderer_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24264_24277": {name:"影子巫師戰靴＋影子巫師鎧甲",items:["s_wizard_shoes","s_wizard_armor"],bonus:{"skillDmg_stormgust":20}},
+  "ec_24282_24318": {name:"影子超級初學者手套＋影子超級初學者神盾",items:[["s_supernovice_weapon","s_super_novice_weapon"],"s_supernovice_shield"],bonus:{"hpPct":2,"spPct":2,"allStat":3,"spCostPct":-10}},
+  "ec_24283_24319": {name:"影子神槍手手套＋影子神槍手神盾",items:["s_gunslinger_weapon","s_gunslinger_shield"],bonus:{"hpPct":2,"spPct":2,"allStat":3,"spCostPct":-10}},
+  "ec_24284_24315": {name:"影子跆拳手套＋影子跆拳神盾",items:["s_taekwon_weapon","s_taekwon_shield"],bonus:{"hpPct":2,"spPct":2,"allStat":3,"spCostPct":-10}},
+  "ec_24285_24314": {name:"影子忍者手套＋影子忍者神盾",items:["s_ninja_weapon","s_ninja_shield"],bonus:{"hpPct":2,"spPct":2,"allStat":3,"spCostPct":-10}},
+  "ec_24286_24317": {name:"影子喵族魔力手套＋影子喵族魔力盾牌",items:[["s_dorammagical_weapon","s_doram_magical_weapon"],["s_dorammagical_shield","s_doram_magical_shield"]],bonus:{"hpPct":2,"spPct":2,"allStat":3,"spCostPct":-10}},
+  "ec_24287_24316": {name:"影子喵族天然手套＋影子喵族天然盾牌",items:["s_doramphysical_weapon","s_doramphysical_shield"],bonus:{"hpPct":2,"spPct":2,"allStat":3,"spCostPct":-10}},
+  "ec_24246_24250_24256_24269_24288_24301": {name:"影子符文騎士手套＋影子符文騎士神盾＋影子劍士耳環＋影子劍士墜子＋影子騎士戰靴＋影子騎士鎧甲",items:["s_runeknight_weapon","s_runeknight_shield","s_swordman_earring","s_swordman_pendant","s_knight_shoes","s_knight_armor"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24246_24250_24257_24270_24289_24302": {name:"影子皇家衛士手套＋影子皇家衛士神盾＋影子劍士耳環＋影子劍士墜子＋影子十字軍戰靴＋影子十字軍鎧甲",items:["s_royalguard_weapon","s_royalguard_shield","s_swordman_earring","s_swordman_pendant","s_crusader_shoes","s_crusader_armor"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24291_24304": {name:"影子基因學者手套＋影子基因學者神盾",items:["s_genetic_weapon","s_genetic_shield"],bonus:{"hpPct":2}},
+  "ec_24295_24308": {name:"影子逐影手套＋影子逐影神盾",items:["s_shadowchaser_weapon","s_shadowchaser_shield"],bonus:{"allTargetDmgPct":2,"matkPct":2,"rangedDmgPct":2}},
+  "ec_2433_2537": {name:"恐懼戰靴＋恐懼斗篷",items:["diabolus_boots","diabolus_manteau"],bonus:{"hpPct":6}},
+  "ec_2434_2529": {name:"黑皮靴＋奔跑者徽章",items:["black_leather_boots_","rider_insignia"],bonus:{"flee":10}},
+  "ec_2434_2530": {name:"黑皮靴＋奔跑者徽章",items:["black_leather_boots_","rider_insignia_"],bonus:{"flee":10}},
+  "ec_24283_24319_24402_24405": {name:"影子反叛者鎧甲＋影子反叛者戰靴＋影子神槍手手套＋影子神槍手神盾",items:["s_rebellion_armor","s_rebellion_shoes","s_gunslinger_weapon","s_gunslinger_shield"],bonus:{"allStat":7,"hpPct":3,"spPct":3}},
+  "ec_24403_24406": {name:"影子影狼鎧甲＋影子影狼戰靴",items:["s_kagerou_armor","s_kagerou_shoes"],bonus:{"rangedDmgPct":5}},
+  "ec_24285_24314_24403_24406": {name:"影子影狼鎧甲＋影子影狼戰靴＋影子忍者手套＋影子忍者神盾",items:["s_kagerou_armor","s_kagerou_shoes","s_ninja_weapon","s_ninja_shield"],bonus:{"allStat":7,"hpPct":3,"spPct":3}},
+  "ec_24404_24407": {name:"影子朧鎧甲＋影子朧戰靴",items:["s_oboro_armor","s_oboro_shoes"],bonus:{"magicEleDmg_fire":5,"magicEleDmg_water":5,"magicEleDmg_wind":5}},
+  "ec_24285_24314_24404_24407": {name:"影子朧鎧甲＋影子朧戰靴＋影子忍者手套＋影子忍者神盾",items:["s_oboro_armor","s_oboro_shoes","s_ninja_weapon","s_ninja_shield"],bonus:{"allStat":7,"hpPct":3,"spPct":3}},
+  "ec_24287_24316_24408_24409": {name:"影子喵族天然鎧甲＋影子喵族天然戰靴＋影子喵族天然手套＋影子喵族天然盾牌",items:["s_doramphysical_armor",["s_doramphysical_shoes","s_doram_physical_shoes"],"s_doramphysical_weapon","s_doramphysical_shield"],bonus:{"allStat":7,"hpPct":3,"spPct":3}},
+  "ec_2441_2546": {name:"沙灘涼鞋＋沙灘披風",items:["beach_sandal","beach_manteau"],bonus:{"flee":5}},
+  "ec_24286_24317_24410_24411": {name:"影子喵族魔力鎧甲＋影子喵族魔力戰靴＋影子喵族魔力手套＋影子喵族魔力盾牌",items:["s_dorammagical_armor",["s_dorammagical_shoes","s_doram_magical_shoes"],["s_dorammagical_weapon","s_doram_magical_weapon"],["s_dorammagical_shield","s_doram_magical_shield"]],bonus:{"allStat":7,"hpPct":3,"spPct":3}},
+  "ec_24284_24315_24412_24413": {name:"影子星帝鎧甲＋影子星帝戰靴＋影子跆拳手套＋影子跆拳神盾",items:["s_star_emperor_armor","s_star_emperor_shoes","s_taekwon_weapon","s_taekwon_shield"],bonus:{"allStat":7,"hpPct":3,"spPct":3}},
+  "ec_24284_24315_24414_24415": {name:"影子獵靈士鎧甲＋影子獵靈士戰靴＋影子跆拳手套＋影子跆拳神盾",items:["s_soul_reaper_armor","s_soul_reaper_shoes","s_taekwon_weapon","s_taekwon_shield"],bonus:{"allStat":7,"hpPct":3,"spPct":3}},
+  "ec_2477_2577_2886_15038": {name:"薩巴斯的鞋子＋薩巴斯的披肩＋薩巴斯的指環＋薩巴斯的外袍",items:["sabah_shoes","sabah_hood","sabah_ring","sabah_cloth"],bonus:{"flee":10,"critRate":15,"critDmgPct":40,"spCostPct":10}},
+  "ec_2480_2581_2891_15043": {name:"黑翼之靴＋黑翼斗篷＋黑翼胸針＋黑翼之衣",items:["black_wing_boots","black_wing_manteau","black_wing_brooch","black_wing_suits"],bonus:{"hpPct":15,"perfectDodge":20,"rangedDmgPct":-30,"aspdPct":-7}},
+  "ec_2483_2586_15046": {name:"城戰重靴＋城戰斗篷＋城戰鋼鐵盔甲",items:["siege_greave","siege_manteau","siege_plate"],bonus:{"vit":5,"raceDmgReduce_humanoid":15}},
+  "ec_2484_2586_15047": {name:"城戰戰士長靴＋城戰斗篷＋城戰戰袍",items:["siege_boots","siege_manteau","siege_suits"],bonus:{"dex":5,"raceDmgReduce_humanoid":15}},
+  "ec_2485_2587_15048": {name:"城戰長靴＋城戰披肩＋城戰外袍",items:["siege_shoes","siege_muffler","siege_robe"],bonus:{"int":5,"mdef":10,"raceDmgReduce_humanoid":15}},
+  "ec_2518_2648_2649_5126": {name:"摩菲斯披肩＋摩菲斯戒指＋摩菲斯臂環＋摩菲斯的頭巾",items:["item_2518","item_2648","item_2649","item_5126"],bonus:{"int":5,"mdef":11,"spPct":20}},
+  "ec_2519_2650_2651_5127": {name:"茉莉雅娜斗篷＋茉莉雅娜腰帶＋茉莉雅娜墜子＋茉莉雅娜的頭盔",items:["item_2519","item_2650","item_2651","item_5127"],bonus:{"str":2,"luk":9,"critRate":13,"atk":18,"perfectDodge":13}},
+  "ec_2527_13001": {name:"龍之呼吸＋天龍短劍",items:["dragon_breath","dragon_killer"],bonus:{"raceDmg_dragon":5}},
+  "ec_2527_13030": {name:"龍之呼吸＋天龍短劍",items:["dragon_breath","dragon_killer_"],bonus:{"raceDmg_dragon":5}},
+  "ec_2607_2677": {name:"髮夾＋精靈戒指",items:["clip","spiritual_ring"],bonus:{"skillDmg_heal":50,"spRegenPct":9}},
+  "ec_2607_2711": {name:"髮夾＋Spiritual Ring",items:["clip","spiritual_ring_c"],bonus:{"skillDmg_heal":50,"spRegenPct":9}},
+  "ec_2608_2677": {name:"幸運珠鏈＋精靈戒指",items:["rosary","spiritual_ring"],bonus:{"skillDmg_heal":50,"spRegenPct":9}},
+  "ec_2608_2711": {name:"幸運珠鏈＋Spiritual Ring",items:["rosary","spiritual_ring_c"],bonus:{"skillDmg_heal":50,"spRegenPct":9}},
+  "ec_2626_2677": {name:"幸運珠鏈＋精靈戒指",items:["rosary_","spiritual_ring"],bonus:{"skillDmg_heal":50,"spRegenPct":9}},
+  "ec_2626_2711": {name:"幸運珠鏈＋Spiritual Ring",items:["rosary_","spiritual_ring_c"],bonus:{"skillDmg_heal":50,"spRegenPct":9}},
+  "ec_2659_18937": {name:"晚禱鐘核心 01＋愛的記憶",items:["vesper_core01","memories_of_lovers"],bonus:{"int":8,"spPct":5}},
+  "ec_2660_18937": {name:"晚禱鐘核心 02＋愛的記憶",items:["vesper_core02","memories_of_lovers"],bonus:{"str":7,"atk":20}},
+  "ec_2661_18937": {name:"晚禱鐘核心 03＋愛的記憶",items:["vesper_core03","memories_of_lovers"],bonus:{"agi":7,"flee":15}},
+  "ec_2662_18937": {name:"晚禱鐘核心 04＋愛的記憶",items:["vesper_core04","memories_of_lovers"],bonus:{"dex":7,"hit":10}},
+  "ec_2720_2772": {name:"劍士勳章＋華麗的勇士金戒",items:["medal_swordman","krieger_ring1"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2720_2773": {name:"劍士勳章＋精良的勇士金戒",items:["medal_swordman","krieger_ring2"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2720_2774": {name:"劍士勳章＋勇士金戒",items:["medal_swordman","krieger_ring3"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2721_2772": {name:"盜賊勳章＋華麗的勇士金戒",items:["medal_thief","krieger_ring1"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2721_2773": {name:"盜賊勳章＋精良的勇士金戒",items:["medal_thief","krieger_ring2"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2721_2774": {name:"盜賊勳章＋勇士金戒",items:["medal_thief","krieger_ring3"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2722_2772": {name:"服事勳章＋華麗的勇士金戒",items:["medal_acolyte","krieger_ring1"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2722_2773": {name:"服事勳章＋精良的勇士金戒",items:["medal_acolyte","krieger_ring2"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2722_2774": {name:"服事勳章＋勇士金戒",items:["medal_acolyte","krieger_ring3"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2723_2772": {name:"法師勳章＋華麗的勇士金戒",items:["medal_mage","krieger_ring1"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2723_2773": {name:"法師勳章＋精良的勇士金戒",items:["medal_mage","krieger_ring2"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2723_2774": {name:"法師勳章＋勇士金戒",items:["medal_mage","krieger_ring3"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2724_2772": {name:"弓箭手勳章＋華麗的勇士金戒",items:["medal_archer","krieger_ring1"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2724_2773": {name:"弓箭手勳章＋精良的勇士金戒",items:["medal_archer","krieger_ring2"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2724_2774": {name:"弓箭手勳章＋勇士金戒",items:["medal_archer","krieger_ring3"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2725_2772": {name:"商人勳章＋華麗的勇士金戒",items:["medal_merchant","krieger_ring1"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2725_2773": {name:"商人勳章＋精良的勇士金戒",items:["medal_merchant","krieger_ring2"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2725_2774": {name:"商人勳章＋勇士金戒",items:["medal_merchant","krieger_ring3"],bonus:{"allTargetDmgPct":5,"matkPct":3}},
+  "ec_2751_2888": {name:"魔法學院胸章＋學生書包",items:["academy_badge","school_bag"],bonus:{"aspdPct":3}},
+  "ec_2779_2780_5482": {name:"黑暗騎士皮帶＋黑暗騎士手套A＋黑暗騎士面具",items:["dark_knight_belt","dark_knight_glove","dark_knight_mask"],bonus:{"matkPct":10,"int":5,"raceDmgReduce_angel":10}},
+  "ec_2913_5104": {name:"大盜手銬＋黑色眼罩",items:["thief_handcuff","dark_blindfold"],bonus:{"atk":10}},
+  "ec_2950_15067_20709_22012": {name:"符文指環＋符文外套＋魔法斗篷＋魔法靴子",items:["rune_ring","rune_suit","mana_manteau","mana_boots"],bonus:{"expRace_formless":30,"expRace_undead":30,"expRace_brute":30,"expRace_plant":30,"expRace_insect":30,"expRace_fish":30,"expRace_demon":30,"expRace_humanoid":30,"expRace_angel":30,"expRace_dragon":30}},
+  "ec_2963_15074": {name:"身體強化戒指＋吉芬魔法袍",items:["body_power_up_ring","geffen_mage_robe"],bonus:{"raceDmgReduce_humanoid":5}},
+  "ec_2964_15073": {name:"魔力增幅戒指＋反魔法袍",items:["ring_of_spell_explosion","anti_magic_suit"],bonus:{"raceDmgReduce_humanoid":5}},
+  "ec_2964_20943": {name:"魔力增幅戒指＋吉芬魔法披肩",items:["ring_of_spell_explosion","geffen_magic_muffler"],bonus:{"spCostPct":-5}},
+  "ec_2966_2968": {name:"RWC紀念戒指＋RWC紀念墜子",items:["rwc_2012_ring","rwc_2012_pendant"],bonus:{"allTargetDmgPct":4,"matkPct":4}},
+  "ec_2966_2969": {name:"RWC紀念戒指＋RWC紀念墜子",items:["rwc_2012_ring","rwc_2012_pendant_"],bonus:{"allTargetDmgPct":4,"matkPct":4}},
+  "ec_2967_2968": {name:"RWC紀念戒指＋RWC紀念墜子",items:["rwc_2012_ring_","rwc_2012_pendant"],bonus:{"allTargetDmgPct":4,"matkPct":4}},
+  "ec_2967_2969": {name:"RWC紀念戒指＋RWC紀念墜子",items:["rwc_2012_ring_","rwc_2012_pendant_"],bonus:{"allTargetDmgPct":4,"matkPct":4}},
+  "ec_2980_32237": {name:"邪靈手套＋基米的胸針",items:["evilspirit_gloves","celine_brooch_k"],bonus:{"atk":50,"matk":50,"aspdPct":1}},
+  "ec_2997_2999": {name:"RWC Gold Brooch＋RWC Silver Brooch",items:["rwc_gold_brooch","rwc_silver_brooch"],bonus:{"allTargetDmgPct":10,"matkPct":10}},
+  "ec_5040_5442": {name:"紅暈＋領帶",items:["blush","necktie"],bonus:{"aspdPct":3}},
+  "ec_5041_18538": {name:"愛心髮夾＋Spirit Whispers",items:["heart_hair_pin","devil_whisper"],bonus:{"raceDmgReduce_angel":9}},
+  "ec_5048_18538": {name:"上弦月髮夾＋Spirit Whispers",items:["first_moon_hair_pin","devil_whisper"],bonus:{"raceDmgReduce_demon":9}},
+  "ec_5068_5653": {name:"惡魔翅膀耳飾＋Darkness Helm",items:["item_5068","darkness_helm_j"],bonus:{"str":1,"allTargetDmgPct":5}},
+  "ec_5073_5574": {name:"矯正姿勢之帽＋被咬過的鉛筆",items:["cap_of_concentration","pencil_in_mouth"],bonus:{"dex":2,"def":2}},
+  "ec_5074_5653": {name:"天使翅膀耳飾＋Darkness Helm",items:["item_5074","darkness_helm_j"],bonus:{"str":1,"aspdPct":2}},
+  "ec_5086_18527": {name:"鐘怪假面＋Gloomy Pumpkin Hat",items:["alarm_mask","gloomy_pumpkin_hat"],bonus:{"itemHeal_pumpkin_pie":200}},
+  "ec_5176_18527": {name:"傳統面具＋Gloomy Pumpkin Hat",items:["hahoe_mask","gloomy_pumpkin_hat"],bonus:{"aspdPct":5}},
+  "ec_5358_5653": {name:"大嘴鳥的翅膀耳飾＋Darkness Helm",items:["pecopeco_wing_ears","darkness_helm_j"],bonus:{"agi":1,"flee":3}},
+  "ec_5401_5653": {name:"黑色邊框眼鏡＋Darkness Helm",items:["black_glasses","darkness_helm_j"],bonus:{"int":1,"matkPct":2}},
+  "ec_13215_28224": {name:"鐵甲彈＋火焰四射霰彈槍",items:["ap_ammo","dust_fire"],bonus:{"rangedDmgPct":30}},
+  "ec_13332_15178_20821": {name:"風魔飛鏢之百花瓣＋黃金忍者外套＋黃金圍巾",items:["huuma_hundred_petal","golden_ninja_suit","golden_scarf"],bonus:{"rangedDmgPct":15}},
+  "ec_15110_22043": {name:"肌力補充裝置＋敏捷補充裝置",items:["supplement_part_str","supplement_part_agi"],bonus:{"atk":30}},
+  "ec_15116_20743_22046": {name:"飛空艇盔甲＋飛空艇斗篷＋飛空艇靴子",items:["airship_armor","airship_cape","airship_boots"],bonus:{"hpPct":25,"spPct":25}},
+  "ec_15126_20788_22083": {name:"喵族專屬外套＋喵族專屬斗篷＋喵族專屬靴子",items:["doram_only_suit","doram_only_cape","doram_only_shoes"],bonus:{"hp":2000}},
+  "ec_15126_20788_22083_28382_28416": {name:"喵族專屬外套＋喵族專屬斗篷＋喵族專屬靴子＋幸運符草項鍊＋低級楓葉符",items:["doram_only_suit","doram_only_cape","doram_only_shoes","charm_g_necklace",["lowleafcharm","low_leaf_charm"]],bonus:{"hpPct":10,"spPct":10}},
+  "ec_15126_20788_22083_28380_28419": {name:"喵族專屬外套＋喵族專屬斗篷＋喵族專屬靴子＋青澀草項鍊＋低級兔子符",items:["doram_only_suit","doram_only_cape","doram_only_shoes","fresh_g_necklace",["lowrabbitcharm","low_rabbit_charm"]],bonus:{"hpPct":20,"spPct":3}},
+  "ec_15128_20773": {name:"艾克塞利翁外套＋艾克塞利翁推進翼",items:["excelion_suit","excelion_wing"],bonus:{"perfectDodge":6}},
+  "ec_15129_20789_22084": {name:"喵族高級外套＋喵族高級斗篷＋喵族高級靴子",items:["doram_high_suit","doram_high_cape","doram_high_shoes"],bonus:{"hp":3000}},
+  "ec_15129_20789_22084_28382_28417": {name:"喵族高級外套＋喵族高級斗篷＋喵族高級靴子＋幸運符草項鍊＋中級楓葉符",items:["doram_high_suit","doram_high_cape","doram_high_shoes","charm_g_necklace",["middleleafcharm","middle_leaf_charm"]],bonus:{"hpPct":15,"spPct":15}},
+  "ec_15129_20789_22084_28380_28420": {name:"喵族高級外套＋喵族高級斗篷＋喵族高級靴子＋青澀草項鍊＋中級兔子符",items:["doram_high_suit","doram_high_cape","doram_high_shoes","fresh_g_necklace",["middlerabbitcharm","middle_rabbit_charm"]],bonus:{"hpPct":25,"spPct":6}},
+  "ec_15138_19026_20756_22059": {name:"埃吉爾鎧甲＋埃吉爾頭盔＋埃吉爾斗篷＋埃吉爾戰靴",items:["egir_armor_k","egir_helm_k","egir_manteau_k","egir_shoes_k"],bonus:{"hp":1000,"sp":100,"expRace_fish":20,"eleReduce_water":50,"raceDmg_fish":50}},
+  "ec_2554_15145": {name:"Evil Dragon Armor＋代理者甲殼碎片",items:["evildragon_armor","piece_of_angent_skin"],bonus:{"spStealChance":-1,"spStealPct":1}},
+  "ec_15156_20790_22085": {name:"喵族優雅外套＋喵族優雅斗篷＋喵族優雅靴子",items:["doram_ele_suit","doram_ele_cape","doram_ele_shoes"],bonus:{"hp":4000}},
+  "ec_15156_20790_22085_28382_28418": {name:"喵族優雅外套＋喵族優雅斗篷＋喵族優雅靴子＋幸運符草項鍊＋高級楓葉符",items:["doram_ele_suit","doram_ele_cape","doram_ele_shoes","charm_g_necklace",["higherleafcharm","higher_leaf_charm"]],bonus:{"hpPct":20,"spPct":20}},
+  "ec_15156_20790_22085_28380_28421": {name:"喵族優雅外套＋喵族優雅斗篷＋喵族優雅靴子＋青澀草項鍊＋高級兔子符",items:["doram_ele_suit","doram_ele_cape","doram_ele_shoes","fresh_g_necklace",["higherrabbitcharm","higher_rabbit_charm"]],bonus:{"hpPct":30,"spPct":9}},
+  "ec_15179_20822_28116": {name:"礦工背心＋礦工背包＋礦工十字鎬",items:["mine_worker_vest","mine_worker_backpack","mine_worker_pickax"],bonus:{"allTargetDmgPct":5,"aspdPct":10,"critDmgPct":10}},
+  "ec_15180_26200_28442": {name:"嬉皮摩登外袍＋嬉皮七彩皮鞭＋嬉皮羽毛手鐲",items:["hippie_cloth","hippie_rope","hippie_feather"],bonus:{"atk":30,"aspdPct":1,"critDmgPct":20}},
+  "ec_15181_28443_28444": {name:"Awaken Eden Group Uniform I＋Awakened Eden Group Ring of Strength I＋Awakened Eden Group Necklace of Strength I",items:["para_team_armor100","para_team_ring100a","para_team_necklace100a"],bonus:{"atk":20,"eleReduce_water":2,"eleReduce_earth":2,"eleReduce_fire":2,"eleReduce_wind":2,"eleReduce_poison":2,"eleReduce_holy":2,"eleReduce_shadow":2,"eleReduce_ghost":2,"eleReduce_undead":2}},
+  "ec_15182_28445_28446": {name:"Awakened Eden Group Uniform II＋Awakened Eden Group Ring of Strength II＋Awakened Eden Group Necklace of Strength II",items:["para_team_armor115","para_team_ring115a","para_team_necklace115a"],bonus:{"atk":40,"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4}},
+  "ec_15183_28447_28448": {name:"Awaken Eden Group Uniform III＋Awakened Eden Group Ring of Strength III＋Awakened Eden Group Necklace of Strength III",items:["para_team_armor130","para_team_ring130a","para_team_necklace130a"],bonus:{"atk":40,"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15184_28449_28450": {name:"Awakened Eden Group Uniform IV＋Awakened Eden Group Ring of Strength IV＋Awakened Eden Group Necklace of Strength IV",items:["para_team_armor145","para_team_ring145a","para_team_necklace145a"],bonus:{"atk":50,"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15185_28451_28452": {name:"Awakened Eden Group Uniform V＋Awakened Eden Group Ring of Strength V＋Awakened Eden Group Necklace of Strength V",items:["para_team_armor160","para_team_ring160a","para_team_necklace160a"],bonus:{"atk":50,"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15181_28453_28454": {name:"Awaken Eden Group Uniform I＋Awakened Eden Group Ring of Magic I＋Awakened Eden Group Necklace of Magic I",items:["para_team_armor100","para_team_ring100b","para_team_necklace100b"],bonus:{"matk":20,"eleReduce_water":2,"eleReduce_earth":2,"eleReduce_fire":2,"eleReduce_wind":2,"eleReduce_poison":2,"eleReduce_holy":2,"eleReduce_shadow":2,"eleReduce_ghost":2,"eleReduce_undead":2}},
+  "ec_15182_28455_28456": {name:"Awakened Eden Group Uniform II＋Awakened Eden Group Ring of Magic II＋Awakened Eden Group Necklace of Magic II",items:["para_team_armor115","para_team_ring115b","para_team_necklace115b"],bonus:{"matk":40,"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4}},
+  "ec_15183_28457_28458": {name:"Awaken Eden Group Uniform III＋Awakened Eden Group Ring of Magic III＋Awakened Eden Group Necklace of Magic III",items:["para_team_armor130","para_team_ring130b","para_team_necklace130b"],bonus:{"matk":40,"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15184_28459_28460": {name:"Awakened Eden Group Uniform IV＋Awakened Eden Group Ring of Magic IV＋Awakened Eden Group Necklace of Magic IV",items:["para_team_armor145","para_team_ring145b","para_team_necklace145b"],bonus:{"matk":50,"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15185_28461_28462": {name:"Awakened Eden Group Uniform V＋Awakened Eden Group Ring of Magic V＋Awakened Eden Group Necklace of Magic V",items:["para_team_armor160","para_team_ring160b","para_team_necklace160b"],bonus:{"matk":50,"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15181_28463_28464": {name:"Awaken Eden Group Uniform I＋Awakened Eden Group Ring of Agility I＋Awakened Eden Group Necklace of Agility I",items:["para_team_armor100","para_team_ring100c","para_team_necklace100c"],bonus:{"atk":20,"eleReduce_water":2,"eleReduce_earth":2,"eleReduce_fire":2,"eleReduce_wind":2,"eleReduce_poison":2,"eleReduce_holy":2,"eleReduce_shadow":2,"eleReduce_ghost":2,"eleReduce_undead":2}},
+  "ec_15182_28465_28466": {name:"Awakened Eden Group Uniform II＋Awakened Eden Group Ring of Agility II＋Awakened Eden Group Necklace of Agility II",items:["para_team_armor115","para_team_ring115c","para_team_necklace115c"],bonus:{"atk":40,"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4}},
+  "ec_15183_28467_28468": {name:"Awaken Eden Group Uniform III＋Awakened Eden Group Ring of Agility III＋Awakened Eden Group Necklace of Agility III",items:["para_team_armor130","para_team_ring130c","para_team_necklace130c"],bonus:{"atk":40,"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15184_28469_28470": {name:"Awakened Eden Group Uniform IV＋Awakened Eden Group Ring of Agility IV＋Awakened Eden Group Necklace of Agility IV",items:["para_team_armor145","para_team_ring145c","para_team_necklace145c"],bonus:{"atk":50,"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15185_28471_28472": {name:"Awakened Eden Group Uniform V＋Awakened Eden Group Ring of Agility V＋Awakened Eden Group Necklace of Agility V",items:["para_team_armor160","para_team_ring160c","para_team_necklace160c"],bonus:{"atk":50,"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_15376_22196": {name:"幻象機甲A型＋幻象戰靴A型",items:["illusion_armor_a","illusion_leg_a"],bonus:{"allTargetDmgPct":5}},
+  "ec_15376_22197": {name:"幻象機甲A型＋幻象戰靴B型",items:["illusion_armor_a","illusion_leg_b"],bonus:{"spPct":5}},
+  "ec_15376_20933": {name:"幻象機甲A型＋幻象推進翼A型",items:["illusion_armor_a","illusion_engine_a"],bonus:{"atk":50}},
+  "ec_15377_20933": {name:"幻象機甲B型＋幻象推進翼A型",items:["illusion_armor_b","illusion_engine_a"],bonus:{"aspdPct":10}},
+  "ec_15377_20934": {name:"幻象機甲B型＋幻象推進翼B型",items:["illusion_armor_b","illusion_engine_b"],bonus:{"matk":50}},
+  "ec_15377_22196": {name:"幻象機甲B型＋幻象戰靴A型",items:["illusion_armor_b","illusion_leg_a"],bonus:{"aspdPct":5}},
+  "ec_15377_22197": {name:"幻象機甲B型＋幻象戰靴B型",items:["illusion_armor_b","illusion_leg_b"],bonus:{"matkPct":5}},
+  "ec_1760_18117": {name:"皇家神弓＋光芒箭矢",items:["royal_bow","flash_arrow"],bonus:{"rangedDmgPct":50}},
+  "ec_1761_18117": {name:"皇家神弓＋詛咒箭矢",items:["royal_bow","curse_arrow"],bonus:{"rangedDmgPct":50}},
+  "ec_1768_18117": {name:"皇家神弓＋睡眠箭矢",items:["royal_bow","sleep_arrow"],bonus:{"rangedDmgPct":50}},
+  "ec_1769_18117": {name:"皇家神弓＋寧靜箭矢",items:["royal_bow","silence_arrow"],bonus:{"rangedDmgPct":50}},
+  "ec_18507_18539": {name:"妖精長耳朵飾＋骷髏黑帽",items:["elven_ears_","skull_cap"],bonus:{"spCostPct":-3}},
+  "ec_18559_18560": {name:"파브니르 스킨＋파브니르의 마스크",items:["fafnir_skin","fafnir_mask"],bonus:{"critDmgPct":5}},
+  "ec_18937_28302": {name:"愛的記憶＋晚禱鐘核心01",items:["memories_of_lovers","vesper_core01_"],bonus:{"int":8,"spPct":5}},
+  "ec_18937_28303": {name:"愛的記憶＋晚禱鐘核心02",items:["memories_of_lovers","vesper_core02_"],bonus:{"str":7,"atk":20}},
+  "ec_18937_28304": {name:"愛的記憶＋晚禱鐘核心03",items:["memories_of_lovers","vesper_core03_"],bonus:{"agi":7,"flee":15}},
+  "ec_18937_28305": {name:"愛的記憶＋晚禱鐘核心04",items:["memories_of_lovers","vesper_core04_"],bonus:{"dex":7,"hit":10}},
+  "ec_18985_28321": {name:"馴鷹師魔笛＋馴鷹師利爪",items:["falconer_flute","falconer_claw"],bonus:{"skillDmg_blitzbeat":100}},
+  "ec_18985_28321_28322": {name:"馴鷹師魔笛＋馴鷹師利爪＋馴鷹師手套",items:["falconer_flute","falconer_claw","falconer_glove"],bonus:{"skillDmg_blitzbeat":200}},
+  "ec_18985_28322": {name:"馴鷹師魔笛＋馴鷹師手套",items:["falconer_flute","falconer_glove"],bonus:{"skillDmg_sn_falconassault":50}},
+  "ec_5548_19114": {name:"Sting Silk Ribbon＋深紅玫瑰",items:["sting_silk_ribbon","scarlet_rose"],bonus:{"sizeDmgReduce_small":5,"sizeDmgReduce_medium":5,"sizeDmgReduce_large":5}},
+  "ec_19204_29352": {name:"競速頭盔(超級初學者)＋競速(超級初學者)1Lv",items:["racing_c_super","racing_e_super1"],bonus:{"hp":500,"atk":10}},
+  "ec_20135_20136": {name:"Costume: 12th Anniversary Crown＋Costume: 12th Anniversary ElvenEars",items:["c12th_crown","c12th_elvenears"],bonus:{"allStat":12}},
+  "ec_20717_22000": {name:"巨神蛇的皮＋力量時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_str_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22001": {name:"巨神蛇的皮＋智力時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_int_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22002": {name:"巨神蛇的皮＋敏捷時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_agi_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22003": {name:"巨神蛇的皮＋體力時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_vit_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22004": {name:"巨神蛇的皮＋靈巧時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_dex_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22005": {name:"巨神蛇的皮＋幸運時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_luk_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22006": {name:"巨神蛇的皮＋力量時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_str_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22007": {name:"巨神蛇的皮＋體力時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_vit_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22008": {name:"巨神蛇的皮＋靈巧時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_dex_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22009": {name:"巨神蛇的皮＋智力時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_int_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22010": {name:"巨神蛇的皮＋敏捷時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_agi_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22011": {name:"巨神蛇的皮＋幸運時空之靴",items:[["faceworm_skin","face_worm_skin"],"temporal_luk_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22000": {name:"巨神蛇的皮＋力量時空之靴",items:["faceworm_skin_","temporal_str_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22001": {name:"巨神蛇的皮＋智力時空之靴",items:["faceworm_skin_","temporal_int_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22002": {name:"巨神蛇的皮＋敏捷時空之靴",items:["faceworm_skin_","temporal_agi_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22003": {name:"巨神蛇的皮＋體力時空之靴",items:["faceworm_skin_","temporal_vit_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22004": {name:"巨神蛇的皮＋靈巧時空之靴",items:["faceworm_skin_","temporal_dex_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22005": {name:"巨神蛇的皮＋幸運時空之靴",items:["faceworm_skin_","temporal_luk_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22006": {name:"巨神蛇的皮＋力量時空之靴",items:["faceworm_skin_","temporal_str_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22007": {name:"巨神蛇的皮＋體力時空之靴",items:["faceworm_skin_","temporal_vit_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22008": {name:"巨神蛇的皮＋靈巧時空之靴",items:["faceworm_skin_","temporal_dex_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22009": {name:"巨神蛇的皮＋智力時空之靴",items:["faceworm_skin_","temporal_int_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22010": {name:"巨神蛇的皮＋敏捷時空之靴",items:["faceworm_skin_","temporal_agi_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22011": {name:"巨神蛇的皮＋幸運時空之靴",items:["faceworm_skin_","temporal_luk_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22107": {name:"巨神蛇的皮＋變異力量戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_str_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22108": {name:"巨神蛇的皮＋變異智慧戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_int_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22109": {name:"巨神蛇的皮＋變異敏捷戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_agi_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22110": {name:"巨神蛇的皮＋變異體力戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_vit_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22111": {name:"巨神蛇的皮＋變異靈巧戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_dex_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22112": {name:"巨神蛇的皮＋變異幸運戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_luk_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22113": {name:"巨神蛇的皮＋變異力量戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_str_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22114": {name:"巨神蛇的皮＋變異智慧戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_int_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22115": {name:"巨神蛇的皮＋變異敏捷戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_agi_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22116": {name:"巨神蛇的皮＋變異體力戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_vit_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22117": {name:"巨神蛇的皮＋變異靈巧戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_dex_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20717_22118": {name:"巨神蛇的皮＋變異幸運戰靴",items:[["faceworm_skin","face_worm_skin"],"modify_luk_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22107": {name:"巨神蛇的皮＋變異力量戰靴",items:["faceworm_skin_","modify_str_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22108": {name:"巨神蛇的皮＋變異智慧戰靴",items:["faceworm_skin_","modify_int_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22109": {name:"巨神蛇的皮＋變異敏捷戰靴",items:["faceworm_skin_","modify_agi_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22110": {name:"巨神蛇的皮＋變異體力戰靴",items:["faceworm_skin_","modify_vit_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22111": {name:"巨神蛇的皮＋變異靈巧戰靴",items:["faceworm_skin_","modify_dex_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22112": {name:"巨神蛇的皮＋變異幸運戰靴",items:["faceworm_skin_","modify_luk_boots"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22113": {name:"巨神蛇的皮＋變異力量戰靴",items:["faceworm_skin_","modify_str_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22114": {name:"巨神蛇的皮＋變異智慧戰靴",items:["faceworm_skin_","modify_int_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22115": {name:"巨神蛇的皮＋變異敏捷戰靴",items:["faceworm_skin_","modify_agi_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22116": {name:"巨神蛇的皮＋變異體力戰靴",items:["faceworm_skin_","modify_vit_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22117": {name:"巨神蛇的皮＋變異靈巧戰靴",items:["faceworm_skin_","modify_dex_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_20718_22118": {name:"巨神蛇的皮＋變異幸運戰靴",items:["faceworm_skin_","modify_luk_boots_"],bonus:{"hpPct":15,"spPct":5}},
+  "ec_5397_20819": {name:"氧氣瓶＋潛水面具",items:["oxygen_bomb_k","scuba_mask"],bonus:{"aspdPct":1}},
+  "ec_20846_22000": {name:"Temporal Manteau＋力量時空之靴",items:["temporal_manteau","temporal_str_boots"],bonus:{"hpPct":15,"mdef":10,"atk":30,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22001": {name:"Temporal Manteau＋智力時空之靴",items:["temporal_manteau","temporal_int_boots"],bonus:{"hpPct":15,"mdef":10,"matk":30,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22002": {name:"Temporal Manteau＋敏捷時空之靴",items:["temporal_manteau","temporal_agi_boots"],bonus:{"hpPct":15,"mdef":10,"aspdPct":5,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22003": {name:"Temporal Manteau＋體力時空之靴",items:["temporal_manteau","temporal_vit_boots"],bonus:{"hpPct":15,"mdef":10,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22004": {name:"Temporal Manteau＋靈巧時空之靴",items:["temporal_manteau","temporal_dex_boots"],bonus:{"hpPct":15,"mdef":10,"rangedDmgPct":5,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22005": {name:"Temporal Manteau＋幸運時空之靴",items:["temporal_manteau","temporal_luk_boots"],bonus:{"hpPct":15,"mdef":10,"critDmgPct":5,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22006": {name:"Temporal Manteau＋力量時空之靴",items:["temporal_manteau","temporal_str_boots_"],bonus:{"hpPct":15,"mdef":10,"atk":30,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22007": {name:"Temporal Manteau＋體力時空之靴",items:["temporal_manteau","temporal_vit_boots_"],bonus:{"hpPct":15,"mdef":10,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22008": {name:"Temporal Manteau＋靈巧時空之靴",items:["temporal_manteau","temporal_dex_boots_"],bonus:{"hpPct":15,"mdef":10,"rangedDmgPct":5,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22009": {name:"Temporal Manteau＋智力時空之靴",items:["temporal_manteau","temporal_int_boots_"],bonus:{"hpPct":15,"mdef":10,"matk":30,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22010": {name:"Temporal Manteau＋敏捷時空之靴",items:["temporal_manteau","temporal_agi_boots_"],bonus:{"hpPct":15,"mdef":10,"aspdPct":5,"raceDmgReduce_humanoid":5}},
+  "ec_20846_22011": {name:"Temporal Manteau＋幸運時空之靴",items:["temporal_manteau","temporal_luk_boots_"],bonus:{"hpPct":15,"mdef":10,"critDmgPct":5,"raceDmgReduce_humanoid":5}},
+  "ec_20933_22196": {name:"幻象推進翼A型＋幻象戰靴A型",items:["illusion_engine_a","illusion_leg_a"],bonus:{"critDmgPct":10}},
+  "ec_20934_22196": {name:"幻象推進翼B型＋幻象戰靴A型",items:["illusion_engine_b","illusion_leg_a"],bonus:{"rangedDmgPct":10}},
+  "ec_20934_22197": {name:"幻象推進翼B型＋幻象戰靴B型",items:["illusion_engine_b","illusion_leg_b"],bonus:{"magicEleDmg_none":10,"magicEleDmg_water":10,"magicEleDmg_earth":10,"magicEleDmg_fire":10,"magicEleDmg_wind":10,"magicEleDmg_poison":10,"magicEleDmg_holy":10,"magicEleDmg_shadow":10,"magicEleDmg_ghost":10,"magicEleDmg_undead":10}},
+  "ec_20935_22199": {name:"熔巖獸皮斗篷＋熔巖獸皮長靴",items:["lava_leather_manteau","lava_leather_boots"],bonus:{"hit":5}},
+  "ec_20936_22200": {name:"熔巖獸皮披肩＋熔巖獸皮短靴",items:["lava_leather_muffler","lava_leather_shoes"],bonus:{"critDmgPct":5}},
+  "ec_1752_20969": {name:"Rainbow Muffler＋火箭矢",items:["rainbow_muffler_jp","fire_arrow"],bonus:{"eleReduce_fire":75}},
+  "ec_1754_20969": {name:"Rainbow Muffler＋水靈箭矢",items:["rainbow_muffler_jp","crystal_arrow"],bonus:{"eleReduce_water":75}},
+  "ec_1755_20969": {name:"Rainbow Muffler＋風靈箭矢",items:["rainbow_muffler_jp","arrow_of_wind"],bonus:{"eleReduce_wind":75}},
+  "ec_1756_20969": {name:"Rainbow Muffler＋地靈箭矢",items:["rainbow_muffler_jp","stone_arrow"],bonus:{"eleReduce_earth":75}},
+  "ec_22122_28443_28444": {name:"Awakened Eden Group Boots I＋Awakened Eden Group Ring of Strength I＋Awakened Eden Group Necklace of Strength I",items:["para_team_boots100","para_team_ring100a","para_team_necklace100a"],bonus:{"aspdPct":4,"hit":4}},
+  "ec_22123_28445_28446": {name:"Awakened Eden Group Boots II＋Awakened Eden Group Ring of Strength II＋Awakened Eden Group Necklace of Strength II",items:["para_team_boots115","para_team_ring115a","para_team_necklace115a"],bonus:{"aspdPct":8,"hit":8}},
+  "ec_22124_28447_28448": {name:"Awakened Eden Group Boots III＋Awakened Eden Group Ring of Strength III＋Awakened Eden Group Necklace of Strength III",items:["para_team_boots130","para_team_ring130a","para_team_necklace130a"],bonus:{"aspdPct":8,"hit":8,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22125_28449_28450": {name:"Awakened Eden Group Boots IV＋Awakened Eden Group Ring of Strength IV＋Awakened Eden Group Necklace of Strength IV",items:["para_team_boots145","para_team_ring145a","para_team_necklace145a"],bonus:{"aspdPct":10,"hit":10,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22126_28451_28452": {name:"Awakened Eden Group Boots V＋Awakened Eden Group Ring of Strength V＋Awakened Eden Group Necklace of Strength V",items:["para_team_boots160","para_team_ring160a","para_team_necklace160a"],bonus:{"aspdPct":10,"hit":10,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22124_28457_28458": {name:"Awakened Eden Group Boots III＋Awakened Eden Group Ring of Magic III＋Awakened Eden Group Necklace of Magic III",items:["para_team_boots130","para_team_ring130b","para_team_necklace130b"],bonus:{"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22125_28459_28460": {name:"Awakened Eden Group Boots IV＋Awakened Eden Group Ring of Magic IV＋Awakened Eden Group Necklace of Magic IV",items:["para_team_boots145","para_team_ring145b","para_team_necklace145b"],bonus:{"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22126_28461_28462": {name:"Awakened Eden Group Boots V＋Awakened Eden Group Ring of Magic V＋Awakened Eden Group Necklace of Magic V",items:["para_team_boots160","para_team_ring160b","para_team_necklace160b"],bonus:{"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22122_28463_28464": {name:"Awakened Eden Group Boots I＋Awakened Eden Group Ring of Agility I＋Awakened Eden Group Necklace of Agility I",items:["para_team_boots100","para_team_ring100c","para_team_necklace100c"],bonus:{"aspdPct":4,"hit":4}},
+  "ec_22123_28465_28466": {name:"Awakened Eden Group Boots II＋Awakened Eden Group Ring of Agility II＋Awakened Eden Group Necklace of Agility II",items:["para_team_boots115","para_team_ring115c","para_team_necklace115c"],bonus:{"aspdPct":8,"hit":8}},
+  "ec_22124_28467_28468": {name:"Awakened Eden Group Boots III＋Awakened Eden Group Ring of Agility III＋Awakened Eden Group Necklace of Agility III",items:["para_team_boots130","para_team_ring130c","para_team_necklace130c"],bonus:{"aspdPct":8,"hit":8,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22125_28469_28470": {name:"Awakened Eden Group Boots IV＋Awakened Eden Group Ring of Agility IV＋Awakened Eden Group Necklace of Agility IV",items:["para_team_boots145","para_team_ring145c","para_team_necklace145c"],bonus:{"aspdPct":10,"hit":10,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_22126_28471_28472": {name:"Awakened Eden Group Boots V＋Awakened Eden Group Ring of Agility V＋Awakened Eden Group Necklace of Agility V",items:["para_team_boots160","para_team_ring160c","para_team_necklace160c"],bonus:{"aspdPct":10,"hit":10,"expRace_formless":2,"expRace_undead":2,"expRace_brute":2,"expRace_plant":2,"expRace_insect":2,"expRace_fish":2,"expRace_demon":2,"expRace_humanoid":2,"expRace_angel":2,"expRace_dragon":2}},
+  "ec_4876_22138": {name:"Devil Worshipper Shoes＋暴走魔法",items:["demonist_shoes","runaway_magic"],bonus:{"magicEleDmg_fire":-50,"magicEleDmg_none":-50,"magicEleDmg_shadow":-50}},
+  "ec_24012_24013_24014_24015_24016_24017": {name:"影子激發手套＋影子激發盔甲＋影子激發戰靴＋影子激發神盾＋影子激發耳環＋影子激發墜子",items:["s_promotion_weapon","s_promotion_armor","s_promotion_shoes","s_promotion_shield","s_promotion_earring","s_promotion_pendant"],bonus:{"allStat":3}},
+  "ec_24034_24040": {name:"影子幸運手套＋影子幸運鎧甲",items:["s_lucky_weapon","s_lucky_armor"],bonus:{"luk":1}},
+  "ec_24035_24041": {name:"影子力量耳環＋影子力量墜子",items:["s_power_earring","s_power_pendant"],bonus:{"str":1}},
+  "ec_24036_24042": {name:"影子智力墜子＋影子智力耳環",items:["s_int_pendant","s_int_earring"],bonus:{"int":1}},
+  "ec_24037_24043": {name:"影子靈巧鎧甲＋影子靈巧手套",items:["s_dexterous_armor","s_dexterous_weapon"],bonus:{"dex":1}},
+  "ec_24038_24044": {name:"影子體質戰靴＋影子體質神盾",items:["s_vital_shoes","s_vital_shield"],bonus:{"vit":1}},
+  "ec_24039_24045": {name:"影子敏捷神盾＋影子敏捷戰靴",items:["s_athletic_shield","s_athletic_shoes"],bonus:{"agi":1}},
+  "ec_24052_24062": {name:"影子骷髏神盾＋影子噬血戰靴",items:["s_cranial_shield","s_bloody_shoes"],bonus:{"expRace_humanoid":3}},
+  "ec_24054_24065": {name:"影子殘爆神盾＋影子喧囂戰靴",items:["s_brutal_shield","s_clamorous_shoes"],bonus:{"expRace_brute":3}},
+  "ec_24055_24066": {name:"影子巨屍神盾＋影子弒魂戰靴",items:["s_gargantua_shield","s_insecticide_shoes"],bonus:{"expRace_insect":3}},
+  "ec_24056_24067": {name:"影子巨浪神盾＋影子崩裂戰靴",items:["s_homers_shield","s_fisher_shoes"],bonus:{"expRace_fish":3}},
+  "ec_24057_24071": {name:"影子龍騎士神盾＋影子龍騎士戰靴",items:["s_dragoon_shield","s_dragoon_shoes"],bonus:{"expRace_dragon":3}},
+  "ec_24058_24068": {name:"影子撒旦神盾＋影子熾天使戰靴",items:["s_satanic_shield","s_seraphim_shoes"],bonus:{"expRace_angel":3}},
+  "ec_24059_24069": {name:"影子現形神盾＋影子透視戰靴",items:["s_flameguard_shield","s_beholder_shoes"],bonus:{"expRace_formless":3}},
+  "ec_24060_24070": {name:"影子安魂神盾＋影子聖潔戰靴",items:["s_requiem_shield","s_divine_shoes"],bonus:{"expRace_undead":3}},
+  "ec_24061_24064": {name:"影子武裝神盾＋影子生化戰靴",items:["s_cadi_shield","s_chemical_shoes"],bonus:{"expRace_plant":3}},
+  "ec_24072_24075": {name:"影子大型鎧甲＋影子大型手套",items:["s_big_armor","s_big_weapon"],bonus:{"hpPct":1,"spPct":1}},
+  "ec_24073_24076": {name:"影子中型鎧甲＋影子中型手套",items:["s_medium_armor","s_medium_weapon"],bonus:{"hpPct":1,"spPct":1}},
+  "ec_24074_24077": {name:"影子小型鎧甲＋影子小型手套",items:["s_small_armor","s_small_weapon"],bonus:{"hpPct":1,"spPct":1}},
+  "ec_24247_24251_24259_24272_24291_24304": {name:"影子商人墜子＋影子商人耳環＋影子鍊金術師戰靴＋影子鍊金術師鎧甲＋影子基因學者手套＋影子基因學者神盾",items:["s_merchant_pendant","s_merchant_earring","s_alchemist_shoes","s_alchemist_armor","s_genetic_weapon","s_genetic_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24247_24251_24258_24271_24290_24303": {name:"影子商人墜子＋影子商人耳環＋影子鐵匠鎧甲＋影子鐵匠戰靴＋影子機匠神盾＋影子機匠手套",items:["s_merchant_pendant","s_merchant_earring","s_blacksmith_armor","s_blacksmith_shoes","s_mechanic_shield","s_mechanic_weapon"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24248_24252_24260_24273_24292_24305": {name:"影子服事墜子＋影子服事耳環＋影子牧師戰靴＋影子牧師鎧甲＋影子大主教手套＋影子大主教神盾",items:["s_acolyte_pendant","s_acolyte_earring","s_priest_shoes","s_priest_armor","s_archbishop_weapon","s_archbishop_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24248_24252_24261_24274_24293_24306": {name:"影子服事墜子＋影子服事耳環＋影子武僧戰靴＋影子武僧鎧甲＋影子修羅手套＋影子修羅神盾",items:["s_acolyte_pendant","s_acolyte_earring","s_monk_shoes","s_monk_armor","s_sura_weapon","s_sura_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24253_24262_24275_24294_24307_28391": {name:"影子盜賊墜子＋影子盜賊耳環＋影子刺客戰靴＋影子刺客鎧甲＋影子十字切割者手套＋影子十字切割者神盾",items:["s_thief_pendant","s_thief_earring","s_assassin_shoes","s_assassin_armor","s_guillotine_weapon","s_guillotine_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24253_24263_24276_24295_24308_28391": {name:"影子盜賊墜子＋影子盜賊耳環＋影子流氓戰靴＋影子流氓鎧甲＋影子逐影手套＋影子逐影神盾",items:["s_thief_pendant","s_thief_earring","s_rogue_shoes","s_rogue_armor","s_shadowchaser_weapon","s_shadowchaser_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24249_24254_24264_24277_24296_24309": {name:"影子魔法師墜子＋影子魔法師耳環＋影子巫師戰靴＋影子巫師鎧甲＋影子大法師手套＋影子大法師神盾",items:["s_magician_pendant","s_magician_earring","s_wizard_shoes","s_wizard_armor","s_warlock_weapon","s_warlock_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24249_24254_24265_24278_24297_24310": {name:"影子魔法師墜子＋影子魔法師耳環＋影子賢者戰靴＋影子賢者鎧甲＋影子元素使手套＋影子元素使盾牌",items:["s_magician_pendant","s_magician_earring","s_sage_shoes","s_sage_armor","s_sorcerer_weapon","s_sorcerer_shield"],bonus:{"allStat":10,"hpPct":5,"spPct":5}},
+  "ec_24341_24342": {name:"影子種族戰靴＋影子種族神盾",items:[["s_allrace_shoes","s_all_race_shoes"],"s_allrace_shield"],bonus:{"expRace_formless":3,"expRace_undead":3,"expRace_brute":3,"expRace_plant":3,"expRace_insect":3,"expRace_fish":3,"expRace_demon":3,"expRace_humanoid":3,"expRace_angel":3,"expRace_dragon":3}},
+  "ec_24416_24417_24418_24419_24420_24421": {name:"影子時間超越手套＋影子時間超越鎧甲＋影子時間超越盾牌＋影子時間超越戰靴＋影子時間超越耳環＋影子時間超越墜子",items:["s_timeoverload_weapon","s_timeoverload_armor","s_timeoverload_shield","s_timeoverload_shoes","s_timeoverload_earing","s_timeoverload_pandent"],bonus:{"aspdPct":2,"defIgnorePct":70,"mdefIgnorePct":70}},
+  "ec_24425_24426": {name:"影子全然體型手套＋影子全然體型鎧甲",items:[["s_perfectsize_weapon","s_perfect_size_weapon"],"s_perfectsize_armor"],bonus:{"hpPct":2,"spPct":2}},
+  "ec_25015_25141_25171": {name:"經驗值石(頭上)＋經驗值石(頭中)＋經驗值石(頭下)",items:["expstone_top","expstone_middle","expstone_bottom"],bonus:{"expRace_formless":3,"expRace_undead":3,"expRace_brute":3,"expRace_plant":3,"expRace_insect":3,"expRace_fish":3,"expRace_demon":3,"expRace_humanoid":3,"expRace_angel":3,"expRace_dragon":3}},
+  "ec_25303_25304_25305": {name:"暴擊石(披肩)＋暴擊石(頭上)＋暴擊石(頭下)",items:["critical_stone_robe","critical_stone_top","critical_stone_bottom"],bonus:{"critRate":10}},
+  "ec_25304_25305": {name:"暴擊石(頭上)＋暴擊石(頭下)",items:["critical_stone_top","critical_stone_bottom"],bonus:{"critDmgPct":6}},
+  "ec_29027_29145_29159": {name:"經驗值+2%＋經驗值+2%＋經驗值+2%",items:["exp2","exp2middle","exp2top"],bonus:{"expRace_formless":3,"expRace_undead":3,"expRace_brute":3,"expRace_plant":3,"expRace_insect":3,"expRace_fish":3,"expRace_demon":3,"expRace_humanoid":3,"expRace_angel":3,"expRace_dragon":3}},
+  "ec_29047_29359_29360": {name:"致命＋致命(頭上)＋致命(頭下)",items:["fatal0","fatal_top","fatal_bottom"],bonus:{"critDmgPct":6}},
+  "ec_29047_29359_29360_29361": {name:"致命＋致命(頭上)＋致命(頭下)＋致命(披肩)",items:["fatal0","fatal_top","fatal_bottom","fatal_robe"],bonus:{"critRate":10}},
+  "ec_4817_28433": {name:"Luminous Blue Stone＋尖銳Lv2",items:["luminous_blue_stone","sharp2"],bonus:{"critDmgPct":10}},
+  "ec_4818_28433": {name:"Luminous Blue Stone＋尖銳Lv1",items:["luminous_blue_stone","sharp1"],bonus:{"critDmgPct":10}},
+  "ec_4810_28434": {name:"拳王手套＋鬥志Lv2",items:["boxer_glove","fighting_spirit2"],bonus:{"sp":100,"allTargetDmgPct":5}},
+  "ec_4811_28434": {name:"拳王手套＋鬥志Lv1",items:["boxer_glove","fighting_spirit1"],bonus:{"sp":100,"allTargetDmgPct":5}},
+  "ec_4814_28437": {name:"大神官手套＋魔力Lv2",items:[["archpriest_glove","arch_priest_glove"],"spell2"],bonus:{"allTargetDmgPct":5}},
+  "ec_4815_28437": {name:"大神官手套＋魔力Lv1",items:[["archpriest_glove","arch_priest_glove"],"spell1"],bonus:{"allTargetDmgPct":5}},
+  "ec_4832_28438": {name:"苗娃佩瑞絲粉末墜飾＋名弓Lv1",items:["fairy_leaf_powder","expert_archer1"],bonus:{"rangedDmgPct":5}},
+  "ec_4833_28438": {name:"苗娃佩瑞絲粉末墜飾＋名弓Lv2",items:["fairy_leaf_powder","expert_archer2"],bonus:{"rangedDmgPct":5}},
+  "ec_4807_28501": {name:"Kirin Horn＋ASPD+1",items:["horn_of_kirin","atk_speed1"],bonus:{"aspdPct":1,"raceDmgReduce_humanoid":1,"raceDmgReduce_brute":1,"raceDmgReduce_fish":1,"raceDmgReduce_demon":1,"raceDmgReduce_undead":1}},
+  "ec_4842_28501": {name:"Kirin Horn＋ASPD+2",items:["horn_of_kirin","atk_speed2"],bonus:{"aspdPct":1,"raceDmgReduce_humanoid":1,"raceDmgReduce_brute":1,"raceDmgReduce_fish":1,"raceDmgReduce_demon":1,"raceDmgReduce_undead":1}},
+  "ec_2884_28506": {name:"Storm Stone＋珀斯符文印記",items:["stormstone","peuz_seal"],bonus:{"allTargetDmgPct":5,"spPct":5,"aspdPct":5,"raceDmgReduce_humanoid":4}},
+  "ec_29427_29612": {name:"修羅石II(披肩)＋武術宗師石II(頭中)",items:["sura_robe2","sura_middle2"],bonus:{"hpPct":10}},
+  "ec_29466_29467": {name:"基因學者石(披肩)＋創造者石(頭下)",items:["genetic_robe","genetic_bottom"],bonus:{"rangedDmgPct":5}},
+  "ec_29478_29480": {name:"逐影石(披肩)＋神行太保石(頭中)",items:["shadowchaser_robe","shadowchaser_middle"],bonus:{"rangedDmgPct":10}},
+  "ec_29481_29484": {name:"機匠石(披肩)＋神工匠石(頭上)",items:["mechanic_robe","mechanic_top"],bonus:{"spStealChance":2,"spStealPct":1}},
+  "ec_29517_29520": {name:"皇家衛士石(披肩)＋聖殿十字軍石(頭上)",items:["royalguard_robe","paladin_top"],bonus:{"spStealChance":2,"spStealPct":1}},
+  "ec_29521_29524": {name:"十字切割者石(披肩)＋十字刺客石(頭上)",items:["guillotinecross_robe","assassincross_top"],bonus:{"spStealChance":2,"spStealPct":1}},
+  "ec_29618_29619": {name:"逐影石II(披肩)＋神行太保石II(頭下)",items:["shadowchaser_robe2","shadowchaser_bottom2"],bonus:{"spStealChance":1,"spStealPct":1}},
+  "ec_29657_29658": {name:"星帝石(披肩)＋拳聖石(頭下)",items:["staremperor_robe","gladiator_bottom"],bonus:{"spStealChance":1,"spStealPct":1}},
+  "ec_29660_29662": {name:"影狼石(披肩)＋忍者石(頭中)",items:["kagerou_robe","ninja_middle"],bonus:{"spStealChance":1,"spStealPct":1}},
+  "ec_22238_600009": {name:"神話英雄戰靴＋神話斬魔劍",items:["great_hero_boots","up_oriental_sword"],bonus:{"str":10,"allTargetDmgPct":7}},
+  "ec_21058_22238": {name:"神話英雄戰靴＋神話龍紋巨劍",items:["great_hero_boots","up_dragonic_slayer"],bonus:{"vit":10,"rangedDmgPct":5}},
+  "ec_22238_610009": {name:"神話英雄戰靴＋神話刀鋒卡塔拳刃",items:["great_hero_boots","up_blade_katar"],bonus:{"str":10,"allTargetDmgPct":7}},
+  "ec_22238_500013": {name:"神話英雄戰靴＋神話紅蓮劍",items:["great_hero_boots","up_sword_of_bluefire"],bonus:{"dex":10,"rangedDmgPct":5}},
+  "ec_22238_700013": {name:"神話英雄戰靴＋神話納西斯弓",items:["great_hero_boots","up_narcis_bow"],bonus:{"dex":10,"rangedDmgPct":5}},
+  "ec_22238_570009": {name:"神話英雄戰靴＋神話貝殼壺笛",items:["great_hero_boots","up_trumpet_shell_k"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_580009": {name:"神話英雄戰靴＋神話倒鉤尖銳鞭",items:["great_hero_boots","up_barb_wire_k"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_620004": {name:"神話英雄戰靴＋神話復仇者戰斧",items:["great_hero_boots","up_avenger"],bonus:{"str":10,"allTargetDmgPct":7}},
+  "ec_22238_510019": {name:"神話英雄戰靴＋神話魔導劍",items:["great_hero_boots","up_magic_sword"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_510020": {name:"神話英雄戰靴＋神話棘刺劍",items:["great_hero_boots","up_fatalist"],bonus:{"str":10,"allTargetDmgPct":7}},
+  "ec_22238_590011": {name:"神話英雄戰靴＋神話流星前鋒錘",items:["great_hero_boots","up_meteor_striker"],bonus:{"str":10,"rangedDmgPct":5}},
+  "ec_22238_700018": {name:"神話英雄戰靴＋神話王室名弓",items:["great_hero_boots","up_royal_bow_k"],bonus:{"dex":10,"allTargetDmgPct":7}},
+  "ec_22238_700019": {name:"神話英雄戰靴＋神話火龍穿心神弓",items:["great_hero_boots","up_scalet_dragon_l_bow"],bonus:{"dex":10,"allTargetDmgPct":7}},
+  "ec_22238_550012": {name:"神話英雄戰靴＋神話英雄魔杖",items:["great_hero_boots","up_shadow_staff_k"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_550013": {name:"神話英雄戰靴＋神話寒氣晶鑽之杖",items:["great_hero_boots","up_freezing_rod"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_560008": {name:"神話英雄戰靴＋神話英雄拳套",items:["great_hero_boots","up_iron_nail_k"],bonus:{"str":10,"allTargetDmgPct":7}},
+  "ec_22238_560009": {name:"神話英雄戰靴＋神話雷虎拳套",items:["great_hero_boots","up_ray_knuckle"],bonus:{"vit":10,"allTargetDmgPct":7}},
+  "ec_22238_530006": {name:"神話英雄戰靴＋神話水精靈保庇長矛",items:["great_hero_boots","up_undine_spear_k"],bonus:{"str":10,"allTargetDmgPct":7}},
+  "ec_22238_500017": {name:"神話英雄戰靴＋神話聖光劍",items:["great_hero_boots","up_light_blade"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_640011": {name:"神話英雄戰靴＋神話鋼鐵魔杖",items:["great_hero_boots","up_iron_staff"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_640012": {name:"神話英雄戰靴＋神話水晶之淚魔杖",items:["great_hero_boots","up_blue_crystal_staff"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_540011": {name:"神話英雄戰靴＋神話驅魔錄",items:["great_hero_boots","up_demon_hunting_bible"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_590012": {name:"神話英雄戰靴＋神話聖殿審判錘",items:["great_hero_boots","up_saint_hall"],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_550014": {name:"神話英雄戰靴＋神話喵喵狐尾草",items:["great_hero_boots","up_meawfoxtail"],bonus:{"luk":10,"allTargetDmgPct":7,"matkPct":7}},
+  "ec_22238_28763_510022": {name:"神話英雄戰靴＋神話霧露劍＋銳風劍",items:["great_hero_boots","up_fog_dew_sword","sharp_wind_sword"],bonus:{"dex":10,"allTargetDmgPct":7}},
+  "ec_22238_650004": {name:"神話英雄戰靴＋神話風魔飛鏢之清明",items:["great_hero_boots","up_humma_clear"],bonus:{"str":10,"rangedDmgPct":5}},
+  "ec_22238_540010": {name:"神話英雄戰靴＋神話日月神錄",items:["great_hero_boots","up_oneskyonesun"],bonus:{"str":10,"allTargetDmgPct":7}},
+  "ec_22238_550015": {name:"神話英雄戰靴＋神話量子靈魂石",items:["great_hero_boots",["up_soulweight","up_soul_weight"]],bonus:{"int":10,"matkPct":7}},
+  "ec_22238_800002": {name:"神話英雄戰靴＋神話紅玫瑰左輪手槍",items:["great_hero_boots","up_crimson_rose"],bonus:{"dex":10,"allTargetDmgPct":7}},
+  "ec_22238_810001": {name:"神話英雄戰靴＋神話槍王靈魂來復槍",items:["great_hero_boots","up_master_soul_rifle"],bonus:{"int":10,"eleDmg_ghost":5}},
+  "ec_22238_840001": {name:"神話英雄戰靴＋神話黃金榴彈發射器",items:["great_hero_boots","up_golden_l_launcher"],bonus:{"dex":10,"rangedDmgPct":5}},
+  "ec_22238_830002": {name:"神話英雄戰靴＋神話地獄黑光格林機槍",items:["great_hero_boots","up_the_black_gatling"],bonus:{"dex":10,"rangedDmgPct":5}},
+  "ec_22238_820001": {name:"神話英雄戰靴＋神話魔鬼交易霰彈槍",items:["great_hero_boots","up_demon_s_shot"],bonus:{"dex":10,"rangedDmgPct":5}},
+  "ec_32248_32250": {name:"庇佑墜子R＋庇佑肩飾R",items:["ein_safety_pendr","ein_safety_epaulr"],bonus:{"aspdPct":15,"hpPct":10}},
+  "ec_32248_32251": {name:"庇佑墜子R＋庇佑肩飾B",items:["ein_safety_pendr","ein_safety_epaull"],bonus:{"hpPct":10}},
+  "ec_32249_32250": {name:"庇佑墜子B＋庇佑肩飾R",items:["ein_safety_pendl","ein_safety_epaulr"],bonus:{"aspdPct":15,"hpPct":10}},
+  "ec_32249_32251": {name:"庇佑墜子B＋庇佑肩飾B",items:["ein_safety_pendl","ein_safety_epaull"],bonus:{"hpPct":10}},
+  "ec_15397_310076": {name:"STR胸針＋力量長袍",items:["cassock_str",["cassocka_str","cassock_a_str"]],bonus:{"allTargetDmgPct":17}},
+  "ec_15399_310078": {name:"VIT胸針＋體力長袍",items:["cassock_vit",["cassocka_vit","cassock_a_vit"]],bonus:{"hpPct":5}},
+  "ec_15401_310080": {name:"INT胸針＋智慧長袍",items:["cassock_int",["cassocka_int","cassock_a_int"]],bonus:{"magicEleDmg_none":12,"magicEleDmg_water":12,"magicEleDmg_earth":12,"magicEleDmg_fire":12,"magicEleDmg_wind":12,"magicEleDmg_poison":12,"magicEleDmg_holy":12,"magicEleDmg_shadow":12,"magicEleDmg_ghost":12,"magicEleDmg_undead":12}},
+  "ec_15402_310081": {name:"LUK胸針＋幸運長袍",items:["cassock_luk",["cassocka_luk","cassock_a_luk"]],bonus:{"sizeDmg_small":12,"sizeDmg_medium":12,"sizeDmg_large":12,"critRate":10}},
+  "ec_310004_310007": {name:"機匠石II(披肩)＋神工匠石II(頭上)",items:["mechanic_robe2","mechanic_top2"],bonus:{"rangedDmgPct":10}},
+  "ec_310010_310011": {name:"大主教石II(披肩)＋神官石II(頭下)",items:["archbishop_robe2","highpriest_bottom2"],bonus:{"magicEleDmg_holy":10}},
+  "ec_310180_310183": {name:"大法師石II(披肩)＋超魔導師石II(頭下)",items:["warlock_robe2","warlock_bottom2"],bonus:{"magicEleDmg_none":5}},
+  "ec_310184_310186": {name:"皇家衛士石II(披肩)＋聖殿十字軍石II(頭中)",items:["royalguard_robe2","paladin_middle2"],bonus:{"magicEleDmg_holy":5}},
+  "ec_310188_310189": {name:"十字切割者石II(披肩)＋十字刺客石II(頭下)",items:["guillotinecross_robe2","assassincross_bottom2"],bonus:{"allTargetDmgPct":5,"critDmgPct":15}},
+  "ec_450127_480020": {name:"全自動機甲A型＋全自動推進翼A型",items:["auto_armor_a","auto_engine_a"],bonus:{"atk":50}},
+  "ec_450128_480020": {name:"全自動機甲B型＋全自動推進翼A型",items:["auto_armor_b","auto_engine_a"],bonus:{"aspdPct":10}},
+  "ec_450128_480021": {name:"全自動機甲B型＋全自動推進翼B型",items:["auto_armor_b","auto_engine_b"],bonus:{"matk":50}},
+  "ec_450127_470022": {name:"全自動戰靴A型＋全自動機甲A型",items:["auto_leg_a","auto_armor_a"],bonus:{"allTargetDmgPct":7}},
+  "ec_450128_470022": {name:"全自動戰靴A型＋全自動機甲B型",items:["auto_leg_a","auto_armor_b"],bonus:{"aspdPct":7}},
+  "ec_450127_470023": {name:"全自動戰靴B型＋全自動機甲A型",items:["auto_leg_b","auto_armor_a"],bonus:{"spPct":7}},
+  "ec_450128_470023": {name:"全自動戰靴B型＋全自動機甲B型",items:["auto_leg_b","auto_armor_b"],bonus:{"matkPct":7}},
+  "ec_470022_480020": {name:"全自動推進翼A型＋全自動戰靴A型",items:["auto_engine_a","auto_leg_a"],bonus:{"critDmgPct":15}},
+  "ec_470022_480021": {name:"全自動推進翼B型＋全自動戰靴A型",items:["auto_engine_b","auto_leg_a"],bonus:{"rangedDmgPct":7}},
+  "ec_470023_480021": {name:"全自動推進翼B型＋全自動戰靴B型",items:["auto_engine_b","auto_leg_b"],bonus:{"magicEleDmg_none":15,"magicEleDmg_water":15,"magicEleDmg_earth":15,"magicEleDmg_fire":15,"magicEleDmg_wind":15,"magicEleDmg_poison":15,"magicEleDmg_holy":15,"magicEleDmg_shadow":15,"magicEleDmg_ghost":15,"magicEleDmg_undead":15}},
+  "ec_4877_29587": {name:"AGI黃寶石＋光速瞬移",items:["gh_md_agi","speed_of_light"],bonus:{"critDmgPct":30}},
+  "ec_4879_29589": {name:"DEX寶石＋犀利鷹眼",items:["gh_md_dex","hawkeye"],bonus:{"allTargetDmgPct":10}},
+  "ec_4876_29590": {name:"INT寶石＋暴走魔法",items:["gh_md_int","runaway_magic"],bonus:{"magicEleDmg_none":15,"magicEleDmg_water":15,"magicEleDmg_earth":15,"magicEleDmg_fire":15,"magicEleDmg_wind":15,"magicEleDmg_poison":15,"magicEleDmg_holy":15,"magicEleDmg_shadow":15,"magicEleDmg_ghost":15,"magicEleDmg_undead":15}},
+  "ec_4880_29592": {name:"LUK寶石＋幸運之日",items:["gh_md_luk","lucky_day"],bonus:{"aspdPct":2}},
+  "ec_310325_310326_310330": {name:"廣域石(頭上)＋廣域石(頭下)＋廣域石(頭中)",items:["range_top","range_bottom","range_middle"],bonus:{"rangedDmgPct":6}},
+  "ec_24584_24585_24586_24587_24588_24590": {name:"影子仙境皇家衛士手套＋影子仙境鎧甲＋影子仙境神盾＋影子仙境戰靴＋影子仙境耳環＋影子仙境墜子",items:["s_lg_b_weapon","s_booster_armor","s_booster_shield","s_booster_shoes","s_booster_earing","s_booster_pandent"],bonus:{"magicEleDmg_holy":10,"defIgnorePct":70,"mdefIgnorePct":70,"rangedDmgPct":15,"aspdPct":2}},
+  "ec_24584_24585_24586_24587_24588_24595": {name:"影子仙境大法師手套＋影子仙境鎧甲＋影子仙境神盾＋影子仙境戰靴＋影子仙境耳環＋影子仙境墜子",items:["s_wl_b_weapon","s_booster_armor","s_booster_shield","s_booster_shoes","s_booster_earing","s_booster_pandent"],bonus:{"magicEleDmg_none":10,"magicEleDmg_water":10,"magicEleDmg_earth":10,"magicEleDmg_fire":10,"magicEleDmg_wind":10,"magicEleDmg_poison":10,"magicEleDmg_holy":10,"magicEleDmg_shadow":10,"magicEleDmg_ghost":10,"magicEleDmg_undead":10,"defIgnorePct":70,"mdefIgnorePct":70}},
+  "ec_24584_24585_24586_24587_24588_24600": {name:"影子仙境宮廷樂師&漫遊舞者手套＋影子仙境鎧甲＋影子仙境神盾＋影子仙境戰靴＋影子仙境耳環＋影子仙境墜子",items:["s_wm_b_weapon","s_booster_armor","s_booster_shield","s_booster_shoes","s_booster_earing","s_booster_pandent"],bonus:{"magicEleDmg_none":10,"magicEleDmg_water":10,"magicEleDmg_earth":10,"magicEleDmg_fire":10,"magicEleDmg_wind":10,"magicEleDmg_poison":10,"magicEleDmg_holy":10,"magicEleDmg_shadow":10,"magicEleDmg_ghost":10,"magicEleDmg_undead":10,"defIgnorePct":70,"mdefIgnorePct":70,"rangedDmgPct":15}},
+  "ec_15210_19275": {name:"[租賃]衝浪泳衣＋[租賃]潛水口罩",items:[["rental_supperswimsuit","rental_supper_swimsuit"],"rental_scuba_mask"],bonus:{"perfectDodge":15}},
+  "ec_19218_28511": {name:"時間的守護者眼鏡＋時間的守護者戒指",items:["time_keeper_glasses","time_keeper_ring"],bonus:{"itemHeal_novice_potion":20}},
+  "ec_19275_20855": {name:"[租賃]氧氣瓶＋[租賃]潛水口罩",items:["rental_oxygen_bomb","rental_scuba_mask"],bonus:{"aspdPct":2}},
+  "ec_19245_20940": {name:"暗紫之翼＋緋紅助推器",items:["violet_halo","crimson_booster"],bonus:{"rangedDmgPct":14}},
+  "ec_15181_28473_28474": {name:"Awakened Eden Group Ring of Recovery I＋Awaken Eden Group Uniform I＋Awakened Eden Group Necklace of Recovery I",items:["para_team_ring100d","para_team_armor100","para_team_necklace100d"],bonus:{"eleReduce_water":2,"eleReduce_earth":2,"eleReduce_fire":2,"eleReduce_wind":2,"eleReduce_poison":2,"eleReduce_holy":2,"eleReduce_shadow":2,"eleReduce_ghost":2,"eleReduce_undead":2,"matk":20}},
+  "ec_15182_28475_28476": {name:"Awakened Eden Group Ring of Recovery II＋Awakened Eden Group Uniform II＋Awakened Eden Group Necklace of Recovery II",items:["para_team_ring115d","para_team_armor115","para_team_necklace115d"],bonus:{"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4,"matk":40}},
+  "ec_15183_28477_28478": {name:"Awakened Eden Group Ring of Recovery III＋Awaken Eden Group Uniform III＋Awakened Eden Group Necklace of Recovery III",items:["para_team_ring130d","para_team_armor130","para_team_necklace130d"],bonus:{"eleReduce_water":4,"eleReduce_earth":4,"eleReduce_fire":4,"eleReduce_wind":4,"eleReduce_poison":4,"eleReduce_holy":4,"eleReduce_shadow":4,"eleReduce_ghost":4,"eleReduce_undead":4,"matk":40}},
+  "ec_15184_28479_28480": {name:"Awakened Eden Group Ring of Recovery IV＋Awakened Eden Group Uniform IV＋Awakened Eden Group Necklace of Recovery IV",items:["para_team_ring145d","para_team_armor145","para_team_necklace145d"],bonus:{"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"matk":50}},
+  "ec_15185_28481_28482": {name:"Awakened Eden Group Ring of Recovery V＋Awakened Eden Group Uniform V＋Awakened Eden Group Necklace of Recovery V",items:["para_team_ring160d","para_team_armor160","para_team_necklace160d"],bonus:{"eleReduce_water":5,"eleReduce_earth":5,"eleReduce_fire":5,"eleReduce_wind":5,"eleReduce_poison":5,"eleReduce_holy":5,"eleReduce_shadow":5,"eleReduce_ghost":5,"eleReduce_undead":5,"matk":50}},
+  "ec_400097_450164_470070_480083": {name:"埃吉爾尼安頭盔＋埃吉爾尼安鎧甲＋埃吉爾尼安戰靴＋埃吉爾尼安斗篷",items:["egirnion_helm","egirnion_armor","egirnion_shoes","egirnion_manteau"],bonus:{"matkPct":5,"allTargetDmgPct":5,"expRace_fish":20,"expRace_humanoid":20,"eleReduce_wind":25,"eleReduce_water":25,"raceDmg_fish":50,"raceDmg_humanoid":50}},
+  "ec_450147_470054": {name:"일루시온 레그 A타입(귀속)＋일루시온 아머 A타입(귀속)",items:["e_illusion_leg_a","e_illusion_armor_a"],bonus:{"allTargetDmgPct":5}},
+  "ec_450148_470054": {name:"일루시온 레그 A타입(귀속)＋일루시온 아머 B타입(귀속)",items:["e_illusion_leg_a","e_illusion_armor_b"],bonus:{"aspdPct":5}},
+  "ec_450147_470055": {name:"일루시온 레그 B타입(귀속)＋일루시온 아머 A타입(귀속)",items:["e_illusion_leg_b","e_illusion_armor_a"],bonus:{"spPct":5}},
+  "ec_450148_470055": {name:"일루시온 레그 B타입(귀속)＋일루시온 아머 B타입(귀속)",items:["e_illusion_leg_b","e_illusion_armor_b"],bonus:{"matkPct":5}},
+  "ec_15391_20946_22208_490044": {name:"撒旦紅寶石戒指＋赤龍鎧甲＋天龍披風＋天龍戰靴",items:["sin_ring_r",["dragona_red","dragon_a_red"],"drag_manteau","dragon_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_dragon":10,"raceDmg_angel":20,"raceDmg_dragon":20}},
+  "ec_490044_490045": {name:"撒旦紅寶石項鍊＋撒旦紅寶石戒指",items:["sin_necklace_r","sin_ring_r"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_dragon":10,"raceDmg_angel":15,"raceDmg_dragon":15}},
+  "ec_15392_20946_22208_490046": {name:"撒旦綠寶石戒指＋綠龍鎧甲＋天龍披風＋天龍戰靴",items:["sin_ring_e",["dragona_green","dragon_a_green"],"drag_manteau","dragon_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_dragon":10,"raceDmg_angel":20,"raceDmg_dragon":20}},
+  "ec_490046_490047": {name:"撒旦綠寶石項鍊＋撒旦綠寶石戒指",items:["sin_necklace_e","sin_ring_e"],bonus:{"raceDmg_angel":15,"raceDmg_dragon":15}},
+  "ec_15393_20946_22208_490048": {name:"撒旦黃寶石戒指＋金龍鎧甲＋天龍披風＋天龍戰靴",items:["sin_ring_t",["dragona_gold","dragon_a_gold"],"drag_manteau","dragon_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_dragon":10,"raceDmg_angel":20,"raceDmg_dragon":20}},
+  "ec_490048_490049": {name:"撒旦黃寶石項鍊＋撒旦黃寶石戒指",items:["sin_necklace_t","sin_ring_t"],bonus:{"raceDmg_angel":15,"raceDmg_dragon":15}},
+  "ec_15394_20946_22208_490050": {name:"撒旦紫寶石戒指＋紫龍鎧甲＋天龍披風＋天龍戰靴",items:["sin_ring_a",["dragona_purple","dragon_a_purple"],"drag_manteau","dragon_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_dragon":10,"raceDmg_angel":20,"raceDmg_dragon":20}},
+  "ec_490050_490051": {name:"撒旦紫寶石項鍊＋撒旦紫寶石戒指",items:["sin_necklace_a","sin_ring_a"],bonus:{"raceDmg_angel":15,"raceDmg_dragon":15}},
+  "ec_15395_20946_22208_490052": {name:"撒旦藍寶石戒指＋藍龍鎧甲＋天龍披風＋天龍戰靴",items:["sin_ring_s",["dragona_blue","dragon_a_blue"],"drag_manteau","dragon_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_dragon":10,"raceDmg_angel":20,"raceDmg_dragon":20}},
+  "ec_490052_490053": {name:"撒旦藍寶石項鍊＋撒旦藍寶石戒指",items:["sin_necklace_s","sin_ring_s"],bonus:{"raceDmg_angel":15,"raceDmg_dragon":15}},
+  "ec_15396_20946_22208_490054": {name:"撒旦白寶石戒指＋銀龍鎧甲＋天龍披風＋天龍戰靴",items:["sin_ring_o",["dragona_silver","dragon_a_silver"],"drag_manteau","dragon_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_dragon":10,"raceDmg_angel":20,"raceDmg_dragon":20}},
+  "ec_490054_490055": {name:"撒旦白寶石項鍊＋撒旦白寶石戒指",items:["sin_necklace_o","sin_ring_o"],bonus:{"raceDmg_angel":15,"raceDmg_dragon":15}},
+  "ec_15397_20947_22209_490056": {name:"聖光紅寶石戒指＋力量長袍＋主教斗篷＋主教長靴",items:["shine_ring_r",["cassocka_str","cassock_a_str"],"cassock_manteau","cassock_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_demon":10,"raceDmg_angel":20,"raceDmg_demon":20}},
+  "ec_490056_490057": {name:"聖光紅寶石項鍊＋聖光紅寶石戒指",items:["shine_necklace_r","shine_ring_r"],bonus:{"raceDmg_angel":15,"raceDmg_demon":15}},
+  "ec_15400_20947_22209_490058": {name:"聖光紫寶石戒指＋靈巧長袍＋主教斗篷＋主教長靴",items:["shine_ring_a",["cassocka_dex","cassock_a_dex"],"cassock_manteau","cassock_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_demon":10,"raceDmg_angel":20,"raceDmg_demon":20}},
+  "ec_490058_490059": {name:"聖光紫寶石項鍊＋聖光紫寶石戒指",items:["shine_necklace_a","shine_ring_a"],bonus:{"raceDmg_angel":15,"raceDmg_demon":15}},
+  "ec_15399_20947_22209_490060": {name:"聖光綠寶石戒指＋體力長袍＋主教斗篷＋主教長靴",items:["shine_ring_e",["cassocka_vit","cassock_a_vit"],"cassock_manteau","cassock_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_demon":10,"raceDmg_angel":20,"raceDmg_demon":20}},
+  "ec_490060_490061": {name:"聖光綠寶石項鍊＋聖光綠寶石戒指",items:["shine_necklace_e","shine_ring_e"],bonus:{"raceDmg_angel":15,"raceDmg_demon":15}},
+  "ec_15398_20947_22209_490062": {name:"聖光鋯石戒指＋敏捷長袍＋主教斗篷＋主教長靴",items:["shine_ring_z",["cassocka_agi","cassock_a_agi"],"cassock_manteau","cassock_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_demon":10,"raceDmg_angel":20,"raceDmg_demon":20}},
+  "ec_490062_490063": {name:"聖光鋯石項鍊＋聖光鋯石戒指",items:["shine_necklace_z","shine_ring_z"],bonus:{"raceDmg_angel":15,"raceDmg_demon":15}},
+  "ec_15401_20947_22209_490064": {name:"聖光藍寶石戒指＋智慧長袍＋主教斗篷＋主教長靴",items:["shine_ring_s",["cassocka_int","cassock_a_int"],"cassock_manteau","cassock_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_demon":10,"raceDmg_angel":20,"raceDmg_demon":20}},
+  "ec_490064_490065": {name:"聖光藍寶石項鍊＋聖光藍寶石戒指",items:["shine_necklace_s","shine_ring_s"],bonus:{"raceDmg_angel":15,"raceDmg_demon":15}},
+  "ec_15402_20947_22209_490066": {name:"聖光天藍寶石戒指＋幸運長袍＋主教斗篷＋主教長靴",items:["shine_ring_aq",["cassocka_luk","cassock_a_luk"],"cassock_manteau","cassock_boots"],bonus:{"raceDmgReduce_angel":10,"raceDmgReduce_demon":10,"raceDmg_angel":20,"raceDmg_demon":20}},
+  "ec_490066_490067": {name:"聖光天藍寶石項鍊＋聖光天藍寶石戒指",items:["shine_necklace_aq","shine_ring_aq"],bonus:{"raceDmg_angel":15,"raceDmg_demon":15}},
+  "ec_15138_19026_20756_22059_490090": {name:"埃吉爾戒指＋埃吉爾鎧甲＋埃吉爾頭盔＋埃吉爾斗篷＋埃吉爾戰靴",items:["egir_ring_k","egir_armor_k","egir_helm_k","egir_manteau_k","egir_shoes_k"],bonus:{"magicEleDmg_none":2,"magicEleDmg_water":2,"magicEleDmg_earth":2,"magicEleDmg_fire":2,"magicEleDmg_wind":2,"magicEleDmg_poison":2,"magicEleDmg_holy":2,"magicEleDmg_shadow":2,"magicEleDmg_ghost":2,"magicEleDmg_undead":2}},
+  "ec_400097_450164_470070_480083_490092": {name:"埃吉爾尼安戒指＋埃吉爾尼安頭盔＋埃吉爾尼安鎧甲＋埃吉爾尼安戰靴＋埃吉爾尼安斗篷",items:["egirnion_ring","egirnion_helm","egirnion_armor","egirnion_shoes","egirnion_manteau"],bonus:{"magicEleDmg_none":5,"magicEleDmg_water":5,"magicEleDmg_earth":5,"magicEleDmg_fire":5,"magicEleDmg_wind":5,"magicEleDmg_poison":5,"magicEleDmg_holy":5,"magicEleDmg_shadow":5,"magicEleDmg_ghost":5,"magicEleDmg_undead":5}},
+  "ec_2191_2782": {name:"Solomon's Key＋智慧之王戒指",items:["solomon_key","ring_of_wise_king"],bonus:{"spCostPct":-5}},
+});
+/* ==== EMU-IMPORT END ==== */
+
+/* ==== HUNT-IMPORT BEGIN(tools/import_hunt_quests.py 生成) ==== */
+/* ==== 討伐佈告欄任務:匯入自 99Max quest_db.yml 討伐型(tools/import_hunt_quests.py 生成,勿手改)
+     目標怪全部經過「可獵」過濾(出現在地圖配怪表或 MVP 輪替表)。 ==== */
+const HUNT_QUESTS = [
+  {id:4276,n:"肅清 波利 ×10",lv:1,t:[["poring",10]]},
+  {id:5094,n:"肅清 波利 ×1000",lv:1,t:[["poring",1000]]},
+  {id:7122,n:"肅清 波利 ×1",lv:1,t:[["poring",1]]},
+  {id:7719,n:"肅清 紅草 ×3",lv:1,t:[["red_plant",3]]},
+  {id:4275,n:"肅清 土波利 ×10",lv:2,t:[["drops",10]]},
+  {id:5095,n:"肅清 瘋兔 ×1000",lv:3,t:[["lunatic",1000]]},
+  {id:7124,n:"肅清 瘋兔 ×5",lv:3,t:[["lunatic",5]]},
+  {id:11340,n:"肅清 瘋兔 ×10",lv:3,t:[["lunatic",10]]},
+  {id:11344,n:"肅清 蟲蛹 ×5",lv:4,t:[["pupa",5]]},
+  {id:60110,n:"肅清 蟲蛹 ×50",lv:4,t:[["pupa",50]]},
+  {id:60111,n:"肅清 蟲蛹 ×100",lv:4,t:[["pupa",100]]},
+  {id:60112,n:"肅清 蟲蛹 ×150",lv:4,t:[["pupa",150]]},
+  {id:5096,n:"肅清 綠棉蟲 ×1000",lv:6,t:[["fabre",1000]]},
+  {id:11341,n:"肅清 綠棉蟲 ×10",lv:6,t:[["fabre",10]]},
+  {id:60107,n:"肅清 綠棉蟲 ×50",lv:6,t:[["fabre",50]]},
+  {id:60108,n:"肅清 綠棉蟲 ×100",lv:6,t:[["fabre",100]]},
+  {id:60109,n:"肅清 綠棉蟲 ×150",lv:6,t:[["fabre",150]]},
+  {id:7127,n:"肅清 樹精 ×5",lv:8,t:[["wilow",5]]},
+  {id:5097,n:"肅清 小雞 ×1000",lv:9,t:[["picky",1000]]},
+  {id:7123,n:"肅清 小雞 ×2",lv:9,t:[["picky",2]]},
+  {id:5149,n:"肅清 蜂兵 ×10",lv:11,t:[["hornet",10]]},
+  {id:7129,n:"肅清 禿鷹 ×10",lv:12,t:[["condor",10]]},
+  {id:11115,n:"肅清 禿鷹 ×20",lv:12,t:[["condor",20]]},
+  {id:5150,n:"肅清 羅達蛙 ×10",lv:13,t:[["roda_frog",10]]},
+  {id:5151,n:"肅清 小野豬 ×10",lv:14,t:[["savage_babe",10]]},
+  {id:7130,n:"肅清 沙漠幼狼 ×10",lv:14,t:[["desert_wolf_b",10]]},
+  {id:4277,n:"肅清 蝗蟲 ×10",lv:15,t:[["rocker",10]]},
+  {id:7131,n:"肅清 蠍子 ×5",lv:16,t:[["scorpion",5]]},
+  {id:4278,n:"肅清 森靈 ×10",lv:17,t:[["worm_tail",10]]},
+  {id:11117,n:"肅清 森靈 ×20",lv:17,t:[["worm_tail",20]]},
+  {id:11118,n:"肅清 魔菇 ×30",lv:18,t:[["spore",30]]},
+  {id:11119,n:"肅清 盜蟲卵 ×20",lv:20,t:[["thief_bug_egg",20]]},
+  {id:7134,n:"肅清 盜蟲 ×10",lv:21,t:[["thief_bug",10]]},
+  {id:7135,n:"肅清 白鼠 ×10",lv:22,t:[["tarou",10]]},
+  {id:11120,n:"肅清 摩卡 ×20",lv:23,t:[["muka",20]]},
+  {id:60122,n:"肅清 克瑞米 ×50",lv:23,t:[["creamy",50]]},
+  {id:60123,n:"肅清 克瑞米 ×100",lv:23,t:[["creamy",100]]},
+  {id:60124,n:"肅清 克瑞米 ×150",lv:23,t:[["creamy",150]]},
+  {id:7136,n:"肅清 吸血蝙蝠 ×5",lv:24,t:[["farmiliar",5]]},
+  {id:11121,n:"肅清 吸血蝙蝠 ×20",lv:24,t:[["farmiliar",20]]},
+  {id:5078,n:"肅清 大嘴鳥 ×50",lv:25,t:[["pecopeco",50]]},
+  {id:11122,n:"肅清 大嘴鳥 ×30",lv:25,t:[["pecopeco",30]]},
+  {id:60102,n:"肅清 大嘴鳥 ×100",lv:25,t:[["pecopeco",100]]},
+  {id:60103,n:"肅清 大嘴鳥 ×150",lv:25,t:[["pecopeco",150]]},
+  {id:60116,n:"肅清 刺蝟蟲 ×50",lv:25,t:[["caramel",50]]},
+  {id:60117,n:"肅清 刺蝟蟲 ×100",lv:25,t:[["caramel",100]]},
+  {id:60118,n:"肅清 刺蝟蟲 ×150",lv:25,t:[["caramel",150]]},
+  {id:8266,n:"肅清 毒魔菇 ×10",lv:26,t:[["poison_spore",10]]},
+  {id:11123,n:"肅清 毒魔菇 ×30",lv:26,t:[["poison_spore",30]]},
+  {id:7139,n:"肅清 邪骸戰士 ×15",lv:27,t:[["skeleton",15]]},
+  {id:60146,n:"肅清 邪骸戰士 ×50",lv:27,t:[["skeleton",50]]},
+  {id:60147,n:"肅清 邪骸戰士 ×100",lv:27,t:[["skeleton",100]]},
+  {id:60148,n:"肅清 邪骸戰士 ×150",lv:27,t:[["skeleton",150]]},
+  {id:8267,n:"肅清 狸貓 ×10",lv:29,t:[["smokie",10]]},
+  {id:7140,n:"肅清 波波利 ×10",lv:30,t:[["poporing",10]]},
+  {id:7143,n:"肅清 工蟻 ×15",lv:32,t:[["piere",15]]},
+  {id:7144,n:"肅清 白蟻 ×15",lv:33,t:[["andre",15]]},
+  {id:8268,n:"肅清 長老樹精 ×10",lv:34,t:[["elder_wilow",10]]},
+  {id:7145,n:"肅清 黑蟻 ×10",lv:35,t:[["vitata",10]]},
+  {id:8269,n:"肅清 松鼠 ×10",lv:38,t:[["coco",10]]},
+  {id:60113,n:"肅清 松鼠 ×50",lv:38,t:[["coco",50]]},
+  {id:60114,n:"肅清 松鼠 ×100",lv:38,t:[["coco",100]]},
+  {id:60115,n:"肅清 松鼠 ×150",lv:38,t:[["coco",150]]},
+  {id:8270,n:"肅清 達拉蛙 ×10",lv:40,t:[["thara_frog",10]]},
+  {id:12072,n:"肅清 達拉蛙 ×20",lv:40,t:[["thara_frog",20]]},
+  {id:12073,n:"肅清 玩具士兵 ×15",lv:41,t:[["cruiser",15]]},
+  {id:12074,n:"肅清 庫克雷 ×30",lv:42,t:[["kukre",30]]},
+  {id:7148,n:"肅清 獸人嬰兒 ×10",lv:43,t:[["orc_baby",10]]},
+  {id:12075,n:"肅清 獸人嬰兒 ×15",lv:43,t:[["orc_baby",15]]},
+  {id:7149,n:"肅清 獸人戰士 ×10",lv:44,t:[["ork_warrior",10]]},
+  {id:12076,n:"肅清 獸人戰士 ×20",lv:44,t:[["ork_warrior",20]]},
+  {id:7150,n:"肅清 獸人女戰士 ×10",lv:45,t:[["orc_lady",10]]},
+  {id:12077,n:"肅清 螃蟹 ×15",lv:45,t:[["vadon",15]]},
+  {id:12078,n:"肅清 邪骸食人魚 ×30",lv:46,t:[["megalodon",30]]},
+  {id:5075,n:"肅清 烏賊 ×50",lv:47,t:[["marse",50]]},
+  {id:12079,n:"肅清 烏賊 ×15",lv:47,t:[["marse",15]]},
+  {id:12080,n:"肅清 卡那多斯 ×20",lv:48,t:[["cornutus",20]]},
+  {id:12081,n:"肅清 麥斯特 ×15",lv:49,t:[["myst",15]]},
+  {id:12082,n:"肅清 貝殼魔靈 ×30",lv:50,t:[["shellfish",30]]},
+  {id:7153,n:"肅清 獸人腐屍 ×20",lv:51,t:[["orc_zombie",20]]},
+  {id:12083,n:"肅清 氣泡蟲 ×15",lv:51,t:[["marine_sphere",15]]},
+  {id:5074,n:"肅清 劍魚 ×30",lv:52,t:[["phen",30]]},
+  {id:12084,n:"肅清 劍魚 ×20",lv:52,t:[["phen",20]]},
+  {id:7154,n:"肅清 邪骸獸人 ×20",lv:53,t:[["orc_skeleton",20]]},
+  {id:12085,n:"肅清 邪骸獸人 ×15",lv:53,t:[["orc_skeleton",15]]},
+  {id:12086,n:"肅清 茲諾克 ×30",lv:54,t:[["zenorc",30]]},
+  {id:3250,n:"肅清 木乃伊 ×30",lv:55,t:[["mummy",30]]},
+  {id:12087,n:"肅清 木乃伊 ×15",lv:55,t:[["mummy",15]]},
+  {id:3251,n:"肅清 鱷魚人 ×30",lv:57,t:[["alligator",30]]},
+  {id:60119,n:"肅清 鱷魚人 ×50",lv:57,t:[["alligator",50]]},
+  {id:60120,n:"肅清 鱷魚人 ×100",lv:57,t:[["alligator",100]]},
+  {id:60121,n:"肅清 鱷魚人 ×150",lv:57,t:[["alligator",150]]},
+  {id:60134,n:"肅清 傘蜥 ×50",lv:57,t:[["frilldora",50]]},
+  {id:60135,n:"肅清 傘蜥 ×100",lv:57,t:[["frilldora",100]]},
+  {id:60136,n:"肅清 傘蜥 ×150",lv:57,t:[["frilldora",150]]},
+  {id:3261,n:"肅清 殭屍 ×30",lv:58,t:[["munak",30]]},
+  {id:60149,n:"肅清 殭屍 ×50",lv:58,t:[["munak",50]]},
+  {id:60150,n:"肅清 殭屍 ×100",lv:58,t:[["munak",100]]},
+  {id:60151,n:"肅清 殭屍 ×150",lv:58,t:[["munak",150]]},
+  {id:3255,n:"肅清 野豬 ×30",lv:59,t:[["savage",30]]},
+  {id:3252,n:"肅清 人魚士兵 ×30",lv:60,t:[["merman",30]]},
+  {id:7157,n:"肅清 人魚士兵 ×15",lv:60,t:[["merman",15]]},
+  {id:7158,n:"肅清 海神 ×10",lv:61,t:[["strouf",10]]},
+  {id:60140,n:"肅清 巨石怪 ×50",lv:61,t:[["golem",50]]},
+  {id:60141,n:"肅清 巨石怪 ×100",lv:61,t:[["golem",100]]},
+  {id:60142,n:"肅清 巨石怪 ×150",lv:61,t:[["golem",150]]},
+  {id:3260,n:"肅清 赤蒼蠅 ×30",lv:63,t:[["hunter_fly",30]]},
+  {id:60104,n:"肅清 蚯蚓 ×50",lv:63,t:[["hode",50]]},
+  {id:60105,n:"肅清 蚯蚓 ×100",lv:63,t:[["hode",100]]},
+  {id:60106,n:"肅清 蚯蚓 ×150",lv:63,t:[["hode",150]]},
+  {id:3257,n:"肅清 鬼女 ×30",lv:64,t:[["sohee",30]]},
+  {id:60143,n:"肅清 群葉貓 ×50",lv:64,t:[["leaf_cat",50]]},
+  {id:60144,n:"肅清 群葉貓 ×100",lv:64,t:[["leaf_cat",100]]},
+  {id:60145,n:"肅清 群葉貓 ×150",lv:64,t:[["leaf_cat",150]]},
+  {id:60152,n:"肅清 鬼女 ×50",lv:64,t:[["sohee",50]]},
+  {id:60153,n:"肅清 鬼女 ×100",lv:64,t:[["sohee",100]]},
+  {id:60154,n:"肅清 鬼女 ×150",lv:64,t:[["sohee",150]]},
+  {id:60179,n:"肅清 螳螂 ×50",lv:65,t:[["mantis",50]]},
+  {id:60180,n:"肅清 螳螂 ×100",lv:65,t:[["mantis",100]]},
+  {id:60181,n:"肅清 螳螂 ×150",lv:65,t:[["mantis",150]]},
+  {id:7215,n:"肅清 鐘乳巨石怪 ×3",lv:68,t:[["stalactic_golem",3]]},
+  {id:7216,n:"肅清 鐘乳巨石怪 ×10",lv:68,t:[["stalactic_golem",10]]},
+  {id:60128,n:"肅清 土人 ×50",lv:68,t:[["dokebi",50]]},
+  {id:60129,n:"肅清 土人 ×100",lv:68,t:[["dokebi",100]]},
+  {id:60130,n:"肅清 土人 ×150",lv:68,t:[["dokebi",150]]},
+  {id:60131,n:"肅清 森林妖姬 ×50",lv:68,t:[["dryad",50]]},
+  {id:60132,n:"肅清 森林妖姬 ×100",lv:68,t:[["dryad",100]]},
+  {id:60133,n:"肅清 森林妖姬 ×150",lv:68,t:[["dryad",150]]},
+  {id:1100,n:"肅清 傑洛米 ×20",lv:70,t:[["zerom",20]]},
+  {id:5001,n:"肅清 黑蛇 ×50",lv:70,t:[["side_winder",50]]},
+  {id:7055,n:"肅清 狂暴野貓 ×1",lv:70,t:[["wild_rose",1]]},
+  {id:1101,n:"肅清 諾可伊 ×20",lv:71,t:[["requiem",20]]},
+  {id:5162,n:"肅清 諾可伊 ×100",lv:71,t:[["requiem",100]]},
+  {id:10107,n:"肅清 諾可伊 ×10",lv:71,t:[["requiem",10]]},
+  {id:5056,n:"肅清 塔嚕安 ×15",lv:73,t:[["tamruan",15]]},
+  {id:10108,n:"肅清 馬爾杜克 ×10",lv:73,t:[["marduk",10]]},
+  {id:10120,n:"肅清 飛行魔書 ×15",lv:74,t:[["rideword",15]]},
+  {id:5004,n:"肅清 艾吉歐蜈蚣 ×50",lv:75,t:[["argiope",50]]},
+  {id:10114,n:"肅清 七彩大嘴鳥 ×20",lv:75,t:[["grand_peco",20]]},
+  {id:10110,n:"肅清 鏡妖 ×10",lv:76,t:[["dark_frame",10]]},
+  {id:7220,n:"肅清 惡靈 ×20",lv:77,t:[["wraith",20]]},
+  {id:10112,n:"肅清 惡靈 ×10",lv:77,t:[["wraith",10]]},
+  {id:10116,n:"肅清 魔羌 ×20",lv:80,t:[["goat",20]]},
+  {id:60137,n:"肅清 魔羌 ×50",lv:80,t:[["goat",50]]},
+  {id:60138,n:"肅清 魔羌 ×100",lv:80,t:[["goat",100]]},
+  {id:60139,n:"肅清 魔羌 ×150",lv:80,t:[["goat",150]]},
+  {id:1103,n:"肅清 獸人戰士長 ×30",lv:81,t:[["high_orc",30]]},
+  {id:5168,n:"肅清 古鐘魔 ×100",lv:81,t:[["clock",100]]},
+  {id:10118,n:"肅清 古鐘魔 ×15",lv:81,t:[["clock",15]]},
+  {id:5077,n:"肅清 藍鼠 ×10",lv:82,t:[["cramp",10]]},
+  {id:10113,n:"肅清 幽靈弓箭手 ×10",lv:82,t:[["raydric_archer",10]]},
+  {id:10119,n:"肅清 朽魔 ×15",lv:82,t:[["punk",15]]},
+  {id:60182,n:"肅清 舞獅 ×50",lv:82,t:[["dancing_dragon",50]]},
+  {id:60183,n:"肅清 舞獅 ×100",lv:82,t:[["dancing_dragon",100]]},
+  {id:60184,n:"肅清 舞獅 ×150",lv:82,t:[["dancing_dragon",150]]},
+  {id:10117,n:"肅清 鳥人哈比 ×20",lv:83,t:[["harpy",20]]},
+  {id:10123,n:"肅清 米糕 ×15",lv:83,t:[["increase_soil",15]]},
+  {id:2221,n:"肅清 黃諾博斯 ×50",lv:84,t:[["novus_",50]]},
+  {id:4180,n:"肅清 黃諾博斯 ×30",lv:84,t:[["novus_",30]]},
+  {id:10121,n:"肅清 樹林女巫 ×15",lv:85,t:[["uzhas",15]]},
+  {id:4167,n:"肅清 刺尾蜻蜓 ×30",lv:86,t:[["dragon_tail",30]]},
+  {id:4177,n:"肅清 草精 ×30",lv:86,t:[["rafflesia",30]]},
+  {id:4172,n:"肅清 芭芭亞卡 ×30",lv:87,t:[["vavayaga",30]]},
+  {id:4173,n:"肅清 妖君 ×30",lv:87,t:[["hyegun",30]]},
+  {id:4178,n:"肅清 毒液魔 ×30",lv:87,t:[["venomous",30]]},
+  {id:7225,n:"肅清 廢氣魔 ×30",lv:87,t:[["noxious",30]]},
+  {id:16026,n:"討伐 廢氣魔 等 2 種魔物",lv:87,t:[["noxious",20],["venomous",20]]},
+  {id:1107,n:"肅清 武士火槍兵 ×40",lv:88,t:[["antique_firelock",40]]},
+  {id:4168,n:"肅清 彈簧兔 ×30",lv:88,t:[["spring_rabbit",30]]},
+  {id:4171,n:"肅清 鐘怪 ×30",lv:88,t:[["alarm",30]]},
+  {id:4174,n:"肅清 武士火槍兵 ×30",lv:88,t:[["antique_firelock",30]]},
+  {id:5164,n:"肅清 彈簧兔 ×100",lv:88,t:[["spring_rabbit",100]]},
+  {id:60155,n:"肅清 武士火槍兵 ×50",lv:88,t:[["antique_firelock",50]]},
+  {id:60156,n:"肅清 武士火槍兵 ×100",lv:88,t:[["antique_firelock",100]]},
+  {id:60157,n:"肅清 武士火槍兵 ×150",lv:88,t:[["antique_firelock",150]]},
+  {id:1105,n:"肅清 狐仙 ×50",lv:89,t:[["civil_servant",50]]},
+  {id:4169,n:"肅清 單眼蟲 ×30",lv:89,t:[["pest",30]]},
+  {id:4175,n:"肅清 拉鏈熊 ×30",lv:90,t:[["zipper_bear",30]]},
+  {id:4179,n:"肅清 礦工魔 ×30",lv:90,t:[["pitman",30]]},
+  {id:1154,n:"肅清 紅海星 ×20",lv:91,t:[["red_eruma",20]]},
+  {id:7227,n:"肅清 玩偶熊 ×5",lv:91,t:[["teddy_bear",5]]},
+  {id:11145,n:"肅清 玩偶熊 ×33",lv:91,t:[["teddy_bear",33]]},
+  {id:60125,n:"肅清 天邪鬼 ×50",lv:91,t:[["demon_pungus",50]]},
+  {id:60126,n:"肅清 天邪鬼 ×100",lv:91,t:[["demon_pungus",100]]},
+  {id:60127,n:"肅清 天邪鬼 ×150",lv:91,t:[["demon_pungus",150]]},
+  {id:4181,n:"肅清 巖石龜 ×30",lv:92,t:[["solider",30]]},
+  {id:5173,n:"肅清 巖石龜 ×100",lv:92,t:[["solider",100]]},
+  {id:14603,n:"肅清 廢鐵暖爐 ×10",lv:92,t:[["waste_stove",10]]},
+  {id:4192,n:"肅清 小惡魔 ×30",lv:93,t:[["deviruchi",30]]},
+  {id:9118,n:"肅清 小惡魔 ×50",lv:93,t:[["deviruchi",50]]},
+  {id:4182,n:"肅清 水靈龜 ×30",lv:94,t:[["freezer",30]]},
+  {id:4187,n:"肅清 石頭波利 ×30",lv:95,t:[["stapo",30]]},
+  {id:4188,n:"肅清 鼬 ×30",lv:95,t:[["roween",30]]},
+  {id:4190,n:"肅清 火忍西怒畢 ×30",lv:95,t:[["shinobi",30]]},
+  {id:5172,n:"肅清 石頭波利 ×100",lv:95,t:[["stapo",100]]},
+  {id:4193,n:"肅清 礦石魔 ×30",lv:96,t:[["mineral",30]]},
+  {id:1106,n:"肅清 紙妖 ×20",lv:97,t:[["the_paper",20]]},
+  {id:14605,n:"討伐 黑曜石 等 2 種魔物",lv:97,t:[["obsidian",5],["mineral",5]]},
+  {id:4183,n:"肅清 火焰龜 ×30",lv:98,t:[["heater",30]]},
+  {id:4185,n:"肅清 瑞比歐 ×30",lv:98,t:[["rybio",30]]},
+  {id:4186,n:"肅清 暗黑祭司 ×30",lv:98,t:[["dark_priest",30]]},
+  {id:4189,n:"肅清 小雪怪 ×30",lv:98,t:[["siroma",30]]},
+  {id:4194,n:"肅清 卡浩 ×30",lv:98,t:[["kaho",30]]},
+  {id:4195,n:"肅清 奈利蟲 ×30",lv:98,t:[["neraid",30]]},
+  {id:5170,n:"肅清 小雪怪 ×100",lv:98,t:[["siroma",100]]},
+  {id:5171,n:"肅清 暗黑祭司 ×100",lv:98,t:[["dark_priest",100]]},
+  {id:60167,n:"肅清 小雪怪 ×50",lv:98,t:[["siroma",50]]},
+  {id:60169,n:"肅清 小雪怪 ×150",lv:98,t:[["siroma",150]]},
+  {id:3211,n:"肅清 萬聖魔 ×10",lv:100,t:[["quve",10]]},
+  {id:12099,n:"肅清 飛龍蛋 ×10",lv:101,t:[["draco_egg",10]]},
+  {id:3212,n:"肅清 兔斯拉 ×10",lv:102,t:[["hylozoist",10]]},
+  {id:5176,n:"肅清 米杜沙 ×100",lv:102,t:[["medusa",100]]},
+  {id:13042,n:"肅清 米杜沙 ×30",lv:102,t:[["medusa",30]]},
+  {id:3210,n:"肅清 假面鬼 ×10",lv:103,t:[["disguise",10]]},
+  {id:4196,n:"肅清 假面鬼 ×30",lv:103,t:[["disguise",30]]},
+  {id:13003,n:"肅清 卡拉特小丑 ×30",lv:103,t:[["carat",30]]},
+  {id:13019,n:"肅清 雪怪 ×30",lv:103,t:[["snowier",30]]},
+  {id:60173,n:"肅清 假面鬼 ×50",lv:103,t:[["disguise",50]]},
+  {id:60174,n:"肅清 假面鬼 ×100",lv:103,t:[["disguise",100]]},
+  {id:60175,n:"肅清 假面鬼 ×150",lv:103,t:[["disguise",150]]},
+  {id:13009,n:"肅清 史汀 ×30",lv:104,t:[["sting",30]]},
+  {id:2150,n:"肅清 捕蟲堇 ×30",lv:105,t:[["pinguicula",30]]},
+  {id:5177,n:"肅清 捕蟲堇 ×100",lv:105,t:[["pinguicula",100]]},
+  {id:7236,n:"肅清 捕蟲堇 ×5",lv:105,t:[["pinguicula",5]]},
+  {id:12106,n:"肅清 捕蟲堇 ×15",lv:105,t:[["pinguicula",15]]},
+  {id:13025,n:"肅清 七彩飛龍 ×30",lv:105,t:[["deleter",30]]},
+  {id:13044,n:"肅清 安畢斯 ×20",lv:105,t:[["anubis",20]]},
+  {id:1102,n:"肅清 卷甲蟲 ×40",lv:107,t:[["arclouse",40]]},
+  {id:9121,n:"肅清 七彩夢魘 ×50",lv:107,t:[["nightmare_terror",50]]},
+  {id:13005,n:"肅清 卷甲蟲 ×22",lv:107,t:[["arclouse",22]]},
+  {id:13023,n:"肅清 七彩夢魘 ×30",lv:107,t:[["nightmare_terror",30]]},
+  {id:3209,n:"肅清 無顱武士 ×10",lv:108,t:[["dullahan",10]]},
+  {id:5076,n:"肅清 犬妖弓箭手 ×30",lv:108,t:[["kobold_archer",30]]},
+  {id:7054,n:"肅清 犬妖弓箭手 ×1000",lv:108,t:[["kobold_archer",1000]]},
+  {id:9120,n:"肅清 無顱武士 ×50",lv:108,t:[["dullahan",50]]},
+  {id:12100,n:"肅清 毒黃蜂 ×12",lv:109,t:[["luciola_vespa",12]]},
+  {id:13007,n:"肅清 虎蜥人 ×30",lv:109,t:[["anolian",30]]},
+  {id:13015,n:"肅清 毒黃蜂 ×30",lv:109,t:[["luciola_vespa",30]]},
+  {id:13040,n:"肅清 銀月魔女 ×30",lv:109,t:[["loli_ruri",30]]},
+  {id:60176,n:"肅清 銀月魔女 ×50",lv:109,t:[["loli_ruri",50]]},
+  {id:60177,n:"肅清 銀月魔女 ×100",lv:109,t:[["loli_ruri",100]]},
+  {id:60178,n:"肅清 銀月魔女 ×150",lv:109,t:[["loli_ruri",150]]},
+  {id:13021,n:"肅清 寒冰巨人 ×30",lv:110,t:[["ice_titan",30]]},
+  {id:60170,n:"肅清 寒冰巨人 ×50",lv:110,t:[["ice_titan",50]]},
+  {id:60171,n:"肅清 寒冰巨人 ×100",lv:110,t:[["ice_titan",100]]},
+  {id:60172,n:"肅清 寒冰巨人 ×150",lv:110,t:[["ice_titan",150]]},
+  {id:5182,n:"肅清 狂暴邪 ×100",lv:112,t:[["ancient_mimic",100]]},
+  {id:13073,n:"肅清 狂暴邪 ×30",lv:112,t:[["ancient_mimic",30]]},
+  {id:12107,n:"肅清 黑暗捕蟲堇 ×10",lv:113,t:[["pinguicula_d",10]]},
+  {id:13081,n:"肅清 黑暗捕蟲堇 ×30",lv:113,t:[["pinguicula_d",30]]},
+  {id:13097,n:"討伐 綠凡娜圖 等 3 種魔物",lv:113,t:[["venatu_2",30],["venatu_3",30],["venatu_4",30]]},
+  {id:5181,n:"肅清 狂暴木乃伊 ×100",lv:114,t:[["ancient_mummy",100]]},
+  {id:7235,n:"肅清 豬籠草 ×1",lv:114,t:[["nepenthes",1]]},
+  {id:12101,n:"肅清 飛龍 ×5",lv:114,t:[["draco",5]]},
+  {id:12108,n:"肅清 豬籠草 ×12",lv:114,t:[["nepenthes",12]]},
+  {id:13075,n:"肅清 死亡魔書 ×30",lv:114,t:[["deathword",30]]},
+  {id:13083,n:"肅清 豬籠草 ×30",lv:114,t:[["nepenthes",30]]},
+  {id:13093,n:"肅清 狂暴木乃伊 ×30",lv:114,t:[["ancient_mummy",30]]},
+  {id:5179,n:"肅清 幽靈劍士 ×100",lv:115,t:[["raydric",100]]},
+  {id:13067,n:"肅清 幽靈劍士 ×30",lv:115,t:[["raydric",30]]},
+  {id:7539,n:"討伐 女妖首領 等 2 種魔物",lv:118,t:[["banshee_master",50],["beholder_master",30]]},
+  {id:12109,n:"肅清 變異蜈蚣幼蟲 ×14",lv:118,t:[["centipede_larva",14]]},
+  {id:13069,n:"肅清 卡利斯格 ×30",lv:118,t:[["khalitzburg",30]]},
+  {id:13087,n:"肅清 變異蜈蚣幼蟲 ×20",lv:118,t:[["centipede_larva",20]]},
+  {id:60164,n:"肅清 阿克坦 ×50",lv:119,t:[["archdam",50]]},
+  {id:60165,n:"肅清 阿克坦 ×100",lv:119,t:[["archdam",100]]},
+  {id:60166,n:"肅清 阿克坦 ×150",lv:119,t:[["archdam",150]]},
+  {id:2151,n:"肅清 飛馬 ×10",lv:120,t:[["cornus",10]]},
+  {id:7534,n:"討伐 狂暴野豬 等 2 種魔物",lv:120,t:[["gullinbursti",50],["leib_olmai",50]]},
+  {id:7540,n:"討伐 阿烏奴艾 等 2 種魔物",lv:120,t:[["aunoe",50],["fanat",20]]},
+  {id:12103,n:"肅清 飛馬 ×1",lv:120,t:[["cornus",1]]},
+  {id:13071,n:"肅清 邪骸浪人 ×30",lv:120,t:[["wander_man",30]]},
+  {id:13089,n:"肅清 飛馬 ×30",lv:120,t:[["cornus",30]]},
+  {id:7525,n:"討伐 狂暴綠綿蟲 等 2 種魔物",lv:121,t:[["caterpillar",50],["cremy_fear",50]]},
+  {id:7528,n:"討伐 狂暴蜈蚣 等 2 種魔物",lv:121,t:[["ancient_worm",50],["giant_honet",50]]},
+  {id:7531,n:"討伐 腐屍首領 等 2 種魔物",lv:121,t:[["zombie_master",50],["wraith_dead",50]]},
+  {id:7537,n:"討伐 地獄機械戰士 等 2 種魔物",lv:121,t:[["hell_apocalips",50],["zakudam",50]]},
+  {id:9119,n:"肅清 狂暴惡靈 ×50",lv:121,t:[["wraith_dead",50]]},
+  {id:12110,n:"肅清 水元素 ×7",lv:121,t:[["aqua_elemental",7]]},
+  {id:13119,n:"肅清 代行刑者 ×30",lv:121,t:[["retribution",30]]},
+  {id:60188,n:"肅清 阿修羅機械戰士 ×50",lv:121,t:[["apocalips",50]]},
+  {id:60189,n:"肅清 阿修羅機械戰士 ×100",lv:121,t:[["apocalips",100]]},
+  {id:60190,n:"肅清 阿修羅機械戰士 ×150",lv:121,t:[["apocalips",150]]},
+  {id:13129,n:"肅清 邪惡妖精 ×30",lv:122,t:[["hodremlin",30]]},
+  {id:13121,n:"肅清 慰勞者 ×30",lv:123,t:[["solace",30]]},
+  {id:13133,n:"肅清 變異殭屍 ×30",lv:123,t:[["ragged_zombie",30]]},
+  {id:13127,n:"討伐 凡貝爾克 等 2 種魔物",lv:124,t:[["vanberk",20],["isilla",20]]},
+  {id:13135,n:"肅清 殭屍屠戮者 ×30",lv:124,t:[["zombie_slaughter",30]]},
+  {id:12104,n:"肅清 變異蜈蚣 ×15",lv:125,t:[["centipede",15]]},
+  {id:13123,n:"肅清 安息者 ×30",lv:125,t:[["shelter",30]]},
+  {id:13046,n:"肅清 三角獸 ×1",lv:126,t:[["tendrilrion",1]]},
+  {id:13139,n:"討伐 紅貝勒斯 等 2 種魔物",lv:126,t:[["ferus",30],["ferus_",30]]},
+  {id:60303,n:"肅清 紅貝勒斯 ×100",lv:126,t:[["ferus",100]]},
+  {id:60304,n:"肅清 紅貝勒斯 ×200",lv:126,t:[["ferus",200]]},
+  {id:60305,n:"肅清 綠貝勒斯 ×100",lv:126,t:[["ferus_",100]]},
+  {id:60306,n:"肅清 綠貝勒斯 ×200",lv:126,t:[["ferus_",200]]},
+  {id:13125,n:"肅清 監視者 ×30",lv:127,t:[["observation",30]]},
+  {id:2157,n:"肅清 噠噠喬 ×10",lv:128,t:[["tatacho",10]]},
+  {id:13131,n:"討伐 阿加波 等 2 種魔物",lv:128,t:[["agav",20],["echio",20]]},
+  {id:13137,n:"肅清 女妖 ×30",lv:130,t:[["banshee",30]]},
+  {id:13141,n:"討伐 俄希托斯 等 2 種魔物",lv:130,t:[["acidus",30],["acidus_",30]]},
+  {id:60307,n:"肅清 俄希托斯 ×100",lv:130,t:[["acidus",100]]},
+  {id:60308,n:"肅清 俄希托斯 ×200",lv:130,t:[["acidus",200]]},
+  {id:60309,n:"肅清 灰俄希托斯 ×100",lv:130,t:[["acidus_",100]]},
+  {id:60310,n:"肅清 灰俄希托斯 ×200",lv:130,t:[["acidus_",200]]},
+  {id:7074,n:"肅清 拉塔 ×1",lv:131,t:[["rata",1]]},
+  {id:13147,n:"肅清 闇●盜賊 ×30",lv:132,t:[["whikebain",30]]},
+  {id:13155,n:"肅清 夢羅克分身 ×30",lv:132,t:[["morocc_1",30]]},
+  {id:13157,n:"肅清 夢羅克分身 ×30",lv:132,t:[["morocc_2",30]]},
+  {id:12105,n:"肅清 石錘巨人 ×10",lv:133,t:[["bradium_golem",10]]},
+  {id:13151,n:"肅清 闇●服事 ×30",lv:133,t:[["erend",30]]},
+  {id:13153,n:"肅清 闇●魔法師 ×30",lv:133,t:[["rawrel",30]]},
+  {id:60185,n:"肅清 亡靈巫師 ×20",lv:133,t:[["necromancer",20]]},
+  {id:60186,n:"肅清 亡靈巫師 ×40",lv:133,t:[["necromancer",40]]},
+  {id:60187,n:"肅清 亡靈巫師 ×60",lv:133,t:[["necromancer",60]]},
+  {id:13145,n:"肅清 闇●商人 ×30",lv:134,t:[["armaia",30]]},
+  {id:13159,n:"肅清 夢羅克分身 ×30",lv:134,t:[["morocc_4",30]]},
+  {id:7075,n:"肅清 杜內爾 ×1",lv:135,t:[["duneyrr",1]]},
+  {id:13149,n:"肅清 闇●弓箭手 ×30",lv:135,t:[["kavac",30]]},
+  {id:13143,n:"肅清 闇●劍士 ×30",lv:136,t:[["ygnizem",30]]},
+  {id:12229,n:"肅清 異形毛毛怪 ×7",lv:140,t:[["miming",7]]},
+  {id:12228,n:"肅清 玩偶魔妖 ×6",lv:142,t:[["little_fatum",6]]},
+  {id:12225,n:"肅清 食人蜘蛛 ×3",lv:145,t:[["pom_spider",3]]},
+];
+/* ==== HUNT-IMPORT END ==== */
+
+/* ==== ATT-IMPORT BEGIN(tools/import_attendance.py 生成) ==== */
+/* ==== 每日簽到獎勵:匯入自 99Max attendance.yml(tools/import_attendance.py 生成)
+     缺席的 4 天(官方道具不在本作)以同檔次鄰日獎勵補。第 20 天後循環。 ==== */
+const ATTENDANCE_REWARDS = [["comp_battle_bubble",1],["e_token_of_siegfried",1],["comp_insurance",5],["comp_insurance",5],["white_slim_potion_box_",1],["yggdrasil_seed_box_",1],["comp_megaphone",3],["e_small_life_potion",5],["comp_m_defscroll",5],["mysterious_egg",1],["battle_manual100",2],["comp_small_mana_potion",3],["comp_regenerate_potion",5],["comp_bubble_gum",5],["comp_regenerate_potion",5],["e_med_life_potion",5],["e_med_life_potion",5],["e_med_life_potion",5],["guarantee_armor_7up",1],["mysterious_egg",1]];
+/* ==== ATT-IMPORT END ==== */
+
+/* ==== CARDSET-IMPORT BEGIN(tools/import_cardset_combos.py 生成) ==== */
+/* ==== 卡片套裝:匯入自 99Max item_combo 含卡片的那批(tools/import_cardset_combos.py 生成)
+     走引擎既有的 CARDS condBonus + setName(cardset)機制,不新增機制。 ==== */
+(function () {
+  const add = (cid, e) => { const c = CARDS[cid]; if (c) (c.condBonus = c.condBonus || []).push(e); };
+  add("succubus_card", {when:{"withItems":["brooch_greed"]},bonus:{"vit":-3,"hpRegenPct":-20,"hp":1000},setName:"貪慾胸針＋惡魔女僕卡片"});
+  add("incubus_card", {when:{"withItems":["brooch_greed"]},bonus:{"int":-3,"spRegenPct":-20,"sp":150},setName:"貪慾胸針＋惡魔侍者卡片"});
+  add("gajomart_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_plant":-10,"expRace_plant":5},setName:"野豬皮手套＋狂暴鬼火卡片"});
+  add("gullinbursti_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_fish":-10,"expRace_fish":5},setName:"野豬皮手套＋狂暴野豬卡片"});
+  add("mini_demon_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_brute":-10,"expRace_brute":5},setName:"野豬皮手套＋狂暴小惡魔卡片"});
+  add("skeleton_general_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_insect":-10,"expRace_insect":5},setName:"野豬皮手套＋邪骸戰士長卡片"});
+  add("cookie_xmas_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_angel":-10,"expRace_angel":5},setName:"野豬皮手套＋XMAS甜餅人卡片"});
+  add("am_mut_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_humanoid":-10,"expRace_humanoid":5},setName:"野豬皮手套＋狂暴小土人卡片"});
+  add("ancient_worm_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_demon":-10,"expRace_demon":5},setName:"野豬皮手套＋狂暴蜈蚣卡片"});
+  add("explosion_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_dragon":-10,"expRace_dragon":5},setName:"野豬皮手套＋爆炎蝙蝠卡片"});
+  add("zombie_prisoner_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_undead":-10,"expRace_undead":5},setName:"野豬皮手套＋腐屍戰俘卡片"});
+  add("poring_card", {when:{"withCards":["mastering_card"]},bonus:{"flee":18},setName:"波利卡片＋波利之王卡片"});
+  add("lunatic_card", {when:{"withCards":["eclipse_card"]},bonus:{"flee":18},setName:"瘋兔卡片＋藍瘋兔卡片"});
+  add("chonchon_card", {when:{"withCards":["dragon_fly_card"]},bonus:{"flee":18},setName:"蒼蠅卡片＋龍蠅卡片"});
+  add("roda_frog_card", {when:{"withCards":["toad_card"]},bonus:{"flee":18},setName:"羅達蛙卡片＋蛙王卡片"});
+  add("wolf_card", {when:{"withCards":["vagabond_wolf_card"]},bonus:{"flee":18},setName:"狼卡片＋流浪之狼卡片"});
+  add("munak_card", {when:{"withCards":["bon_gun_card","hyegun_card"]},bonus:{"allStat":1},setName:"殭屍卡片＋妖道卡片＋妖君卡片"});
+  add("crab_card", {when:{"withItems":["king_prawn_hat"]},bonus:{"eleDmg_water":10},setName:"卡拉蟹卡片＋大蝦帽子"});
+  add("aster_card", {when:{"withItems":["king_prawn_hat"]},bonus:{"eleDmg_water":10},setName:"海星卡片＋大蝦帽子"});
+  add("shellfish_card", {when:{"withItems":["king_prawn_hat"]},bonus:{"eleDmg_water":10},setName:"貝殼魔靈卡片＋大蝦帽子"});
+  add("mobster_card", {when:{"withItems":["shiver_katar"]},bonus:{"critDmgPct":5},setName:"戰慄拳刃＋流氓卡片"});
+  add("sedora_card", {when:{"withItems":["shiver_katar"]},bonus:{"critDmgPct":5},setName:"戰慄拳刃＋塞杜拉卡片"});
+  add("crab_card", {when:{"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":8},setName:"章魚料理廚刀＋卡拉蟹卡片"});
+  add("crab_card", {when:{"withCards":["aster_card","shellfish_card"],"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":16},setName:"章魚料理廚刀＋卡拉蟹卡片＋海星卡片＋貝殼魔靈卡片"});
+  add("aster_card", {when:{"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":8},setName:"章魚料理廚刀＋海星卡片"});
+  add("shellfish_card", {when:{"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":8},setName:"章魚料理廚刀＋貝殼魔靈卡片"});
+  add("sting_card", {when:{"withItems":["sting_silk_ribbon"]},bonus:{"sizeDmgReduce_small":10,"sizeDmgReduce_medium":10,"sizeDmgReduce_large":10},setName:"Sting Silk Ribbon＋史汀卡片"});
+  add("mastering_card", {when:{"withItems":["phoenix_muffler"]},bonus:{"flee":20,"hpPct":10,"mdef":10},setName:"Phoenix Muffler＋波利之王卡片"});
+  add("snake_card", {when:{"withItems":["snake_encyclopedia"]},bonus:{"aspdPct":5},setName:"蛇類百科全集＋青蛇卡片"});
+  add("side_winder_card", {when:{"withItems":["snake_encyclopedia"]},bonus:{"aspdPct":5},setName:"蛇類百科全集＋黑蛇卡片"});
+  add("snake_card", {when:{"withCards":["side_winder_card"],"withItems":["snake_encyclopedia"]},bonus:{"aspdPct":1},setName:"蛇類百科全集＋青蛇卡片＋黑蛇卡片"});
+  add("c_cursed_butler", {when:{"withCards":["zombie_card"]},bonus:{"hpPct":15},setName:"詛咒僕人卡片＋腐屍卡片"});
+})();
+/* ==== CARDSET-IMPORT END ==== */
+
+/* ==== TITLE-IMPORT BEGIN(tools/import_titles.py 生成) ==== */
+/* ==== 稱號:匯入自 99Max title_bonus.yml(tools/import_titles.py 生成)
+     解鎖=成就點數門檻(上游綁腳本成就拿不到,改點數階梯)。 ==== */
+const TITLES = [
+  {id:"t1000",name:"小牛試刀",need:2,bonus:{"luk":1,"hp":50}},
+  {id:"t1001",name:"熱血能人",need:5,bonus:{"aspdPct":2}},
+  {id:"t1002",name:"初來乍到",need:8,bonus:{"critRate":10}},
+  {id:"t1003",name:"骨灰大師",need:11,bonus:{"allStat":1}},
+  {id:"t1004",name:"團體主席",need:14,bonus:{"allStat":1}},
+  {id:"t1005",name:"新手冒險家",need:17,bonus:{"allStat":1}},
+  {id:"t1006",name:"資深冒險家",need:20,bonus:{"allStat":1}},
+  {id:"t1007",name:"大師冒險家",need:23,bonus:{"allStat":1}},
+  {id:"t1008",name:"龍戰士",need:26,bonus:{"allStat":1}},
+  {id:"t1009",name:"瘋狂者",need:29,bonus:{"allStat":1}},
+  {id:"t1010",name:"銅牆鐵壁",need:32,bonus:{"allStat":1}},
+  {id:"t1011",name:"光芒四射",need:35,bonus:{"allStat":1}},
+  {id:"t1012",name:"速戰速決",need:38,bonus:{"allStat":1}},
+  {id:"t1013",name:"神的眷顧",need:41,bonus:{"allStat":1}},
+  {id:"t1014",name:"愛憎分明",need:44,bonus:{"allStat":1}},
+  {id:"t1015",name:"色情狂",need:47,bonus:{"allStat":1}},
+  {id:"t1016",name:"過渡人",need:50,bonus:{"allStat":1}},
+  {id:"t1017",name:"嗜殺獵者",need:53,bonus:{"allStat":1}},
+  {id:"t1018",name:"助人為樂",need:56,bonus:{"allStat":1}},
+  {id:"t1019",name:"狼吞虎嚥",need:59,bonus:{"allStat":1}},
+  {id:"t1020",name:"賭徒世家",need:62,bonus:{"allStat":1}},
+  {id:"t1021",name:"戰爭狂",need:65,bonus:{"allStat":1}},
+  {id:"t1022",name:"已婚人士",need:68,bonus:{"allStat":1}},
+  {id:"t1023",name:"經久耐用",need:71,bonus:{"allStat":1}},
+  {id:"t1024",name:"權力之爭",need:74,bonus:{"allStat":1}},
+  {id:"t1025",name:"刻苦鑽研",need:77,bonus:{"allStat":1}},
+  {id:"t1026",name:"負荊請罪",need:80,bonus:{"allStat":1}},
+  {id:"t1027",name:"動物使者",need:83,bonus:{"allStat":1}},
+  {id:"t1028",name:"魔鬼化身",need:86,bonus:{"allStat":1}},
+  {id:"t1029",name:"怪物女孩",need:89,bonus:{"allStat":1}},
+  {id:"t1030",name:"怪物男孩",need:92,bonus:{"allStat":1}},
+  {id:"t1031",name:"消聲匿跡",need:95,bonus:{"allStat":1}},
+  {id:"t1032",name:"蓓蕾萌芽",need:98,bonus:{"allStat":1}},
+  {id:"t1033",name:"金玉滿堂",need:101,bonus:{"allStat":1}},
+  {id:"t1034",name:"榮譽嘉賓",need:104,bonus:{"allStat":1}},
+  {id:"t1035",name:"獸人殺手",need:107,bonus:{"allStat":1}},
+  {id:"t1036",name:"獸人英雄",need:110,bonus:{"allStat":1}},
+  {id:"t1037",name:"海龜殺手",need:113,bonus:{"allStat":1}},
+  {id:"t1038",name:"樹精殺手",need:116,bonus:{"allStat":1}},
+  {id:"t1039",name:"時間殺手",need:119,bonus:{"allStat":1}},
+  {id:"t1040",name:"雷德裡克殺手",need:122,bonus:{"allStat":1}},
+  {id:"t1041",name:"死亡殺手",need:125,bonus:{"allStat":1}},
+  {id:"t1042",name:"亡靈殺手",need:128,bonus:{"allStat":1}},
+  {id:"t1043",name:"斯特勞夫殺手",need:131,bonus:{"allStat":1}},
+  {id:"t1044",name:"暗夜殺手",need:134,bonus:{"allStat":1}},
+];
+const TITLES_BY_ID = {};
+TITLES.forEach(t => { TITLES_BY_ID[t.id] = t; });
+/* ==== TITLE-IMPORT END ==== */
+
+/* ==== PETS-IMPORT BEGIN(tools/import_pets.py 生成) ==== */
+/* ==== 寵物:匯入自 99Max pet_db.yml(tools/import_pets.py 生成)
+     cap 為官方捕捉率(/10000);cordial/loyal 為親密度階段加成。 ==== */
+const PETS = [
+  {id:"poring",name:"波利",tame:"unripe_apple",food:"apple_juice",cap:2000,cordial:{"luk":2,"critRate":1},loyal:{"luk":3,"critRate":1},evo:{"to":"mastering","items":[["leaf_of_yggdrasil",10],["unripe_apple",3]]}},
+  {id:"drops",name:"土波利",tame:"orange_juice",food:"yellow_herb",cap:1500,cordial:{"hit":3,"atk":3},loyal:{"hit":5,"atk":5},evo:{"to":"dr_eggring","items":[["piece_of_egg_shell",20],["old_frying_pan",10],["apple_juice",3],["eggring_card",1]]}},
+  {id:"poporing",name:"波波利",tame:"bitter_herb",food:"green_herb",cap:1000,cordial:{},loyal:{"luk":3,"eleReduce_poison":15},evo:null},
+  {id:"lunatic",name:"瘋兔",tame:"rainbow_carrot",food:"carrot_juice",cap:1500,cordial:{"critRate":2,"atk":2},loyal:{"critRate":3,"atk":3},evo:null},
+  {id:"picky",name:"小雞",tame:"earthworm_the_dude",food:"red_herb",cap:2000,cordial:{},loyal:{"str":2,"atk":8},evo:null},
+  {id:"chonchon",name:"蒼蠅",tame:"rotten_fish",food:"pet_food",cap:1500,cordial:{},loyal:{"agi":2,"flee":3},evo:null},
+  {id:"steel_chonchon",name:"綠蒼蠅",tame:"lusty_iron",food:"iron_ore",cap:1000,cordial:{},loyal:{"flee":9},evo:null},
+  {id:"hunter_fly",name:"赤蒼蠅",tame:"monster_juice",food:"red_gemstone",cap:500,cordial:{},loyal:{"perfectDodge":2,"hit":1},evo:null},
+  {id:"savage_babe",name:"小野豬",tame:"sweet_milk",food:"pet_food",cap:1500,cordial:{"vit":1,"hp":50},loyal:{"vit":2,"hp":75},evo:{"to":"savage","items":[["pet_food",10],["sweet_milk",3],["meat",100],["feather",50]]}},
+  {id:"desert_wolf_b",name:"沙漠幼狼",tame:"well_dried_bone",food:"pet_food",cap:1000,cordial:{},loyal:{"int":2,"sp":75},evo:null},
+  {id:"rocker",name:"蝗蟲",tame:"singing_flower",food:"pet_food",cap:1500,cordial:{"hpRegenPct":5,"hp":25},loyal:{"hpRegenPct":6,"hp":38},evo:{"to":"metaller","items":[["singing_plant",3],["item_940",777],["yellow_herb",200],["metaller_card",1]]}},
+  {id:"spore",name:"魔菇",tame:"dew_laden_moss",food:"pet_food",cap:1500,cordial:{},loyal:{"hit":8},evo:null},
+  {id:"poison_spore",name:"毒魔菇",tame:"deadly_noxious_herb",food:"pet_food",cap:1000,cordial:{},loyal:{"str":2,"int":2},evo:null},
+  {id:"pecopeco",name:"大嘴鳥",tame:"fatty_chubby_earthworm",food:"pet_food",cap:1000,cordial:{"hp":150},loyal:{"hp":200},evo:{"to":"grand_peco","items":[["pet_food",10],["fatty_chubby_earthworm",3],["peco_wing_feather",300],["pecopeco_card",1],["fruit_of_mastela",10]]}},
+  {id:"smokie",name:"狸貓",tame:"baked_yam",food:"pet_food",cap:1000,cordial:{},loyal:{"agi":2,"perfectDodge":1},evo:null},
+  {id:"yoyo",name:"溜溜猴",tame:"tropical_banana",food:"banana_juice",cap:1000,cordial:{"critRate":3},loyal:{"critRate":5},evo:{"to":"choco","items":[["tropical_banana",3],["monkey_doll",2],["cacao",300],["yoyo_card",1]]}},
+  {id:"ork_warrior",name:"獸人戰士",tame:"horror_of_tribe",food:"pet_food",cap:500,cordial:{"atk":10},loyal:{"atk":15},evo:{"to":"high_orc","items":[["horror_of_tribe",3],["orcish_sword",1],["orcish_voucher",500],["cigar",1],["orc_warrior_card",1]]}},
+  {id:"munak",name:"殭屍",tame:"no_recipient",food:"pet_food",cap:500,cordial:{},loyal:{"int":2,"def":2},evo:null},
+  {id:"dokebi",name:"土人",tame:"old_broom",food:"pet_food",cap:500,cordial:{"matkPct":1},loyal:{"matkPct":2},evo:{"to":"am_mut","items":[["old_broom",3],["violet_dyestuffs",3],["dokkaebi_horn",300],["gold",3]]}},
+  {id:"sohee",name:"鬼女",tame:"silver_knife_of_chaste",food:"pet_food",cap:500,cordial:{},loyal:{"str":2,"dex":2},evo:null},
+  {id:"isis",name:"蛇女伊絲",tame:"armlet_of_obedience",food:"pet_food",cap:500,cordial:{"atkPct":1},loyal:{"atkPct":2},evo:null},
+  {id:"deviruchi",name:"小惡魔",tame:"contracts_in_shadow",food:"shoot",cap:500,cordial:{"matkPct":1,"atkPct":1},loyal:{"hpPct":1,"spPct":1,"matkPct":1,"atkPct":1},evo:{"to":"diabolic2","items":[["contracts_in_shadow",3],["petite_diablofs_wing",250],["sacred_marks",30],["deviruchi_card",1]]}},
+  {id:"baphomet_",name:"小巴風特",tame:"book_of_devil",food:"honey",cap:200,cordial:{},loyal:{"def":2,"mdef":2,"ailResist_stun":2.0},evo:null},
+  {id:"bon_gun",name:"妖道",tame:"heart_of_her",food:"pet_food",cap:500,cordial:{"vit":1,"ailResist_stun":1.0},loyal:{"vit":2,"ailResist_stun":2.0},evo:{"to":"hyegun","items":[["hyegun_hat",1],["munak_doll",100],["old_portrait",50],["hyegun_card",1]]}},
+  {id:"zherlthsh",name:"艾斯恩魔女",tame:"prohibition_red_candle",food:"immortal_heart",cap:300,cordial:{},loyal:{"raceDmg_humanoid":3},evo:null},
+  {id:"alice",name:"愛麗絲女僕",tame:"sway_apron",food:"white_potion",cap:800,cordial:{"mdef":1,"raceDmgReduce_humanoid":1},loyal:{"mdef":2,"raceDmgReduce_humanoid":2},evo:{"to":"aliza","items":[["item_7047",500],["green_herb",200],["ether_elunium",30],["alice_card",1]]}},
+  {id:"gobline_xmas",name:"聖誕哥布靈",tame:"sweet_candy_striper",food:"scell",cap:2000,cordial:{},loyal:{"hp":45,"eleReduce_water":2},evo:null},
+  {id:"chung_e",name:"小青",tame:"tantanmen",food:"bun_",cap:2000,cordial:{},loyal:{"def":2,"raceDmgReduce_humanoid":2},evo:null},
+  {id:"goblin_1",name:"刺刀哥布靈",tame:"knife_goblin_ring",food:"green_apple",cap:800,cordial:{},loyal:{},evo:null},
+  {id:"goblin_2",name:"鏈錘哥布靈",tame:"flail_goblin_ring",food:"green_apple",cap:800,cordial:{},loyal:{},evo:null},
+  {id:"goblin_4",name:"榔頭哥布靈",tame:"hammer_goblin_ring",food:"green_apple",cap:800,cordial:{},loyal:{},evo:null},
+  {id:"deleter_",name:"七彩地龍",tame:"holy_marble",food:"whole_barbecue",cap:800,cordial:{},loyal:{},evo:null},
+  {id:"diabolic",name:"赤焰小惡魔",tame:"red_burning_stone",food:"meat_veg_skewer",cap:800,cordial:{},loyal:{},evo:null},
+  {id:"wander_man",name:"邪骸浪人",tame:"skull_of_vagabond",food:"spirit_liquor",cap:800,cordial:{"agi":3},loyal:{"agi":4},evo:null},
+  {id:"golem",name:"巨石怪",tame:"magical_lithography",food:"mystic_stone",cap:500,cordial:{},loyal:{"hp":150},evo:null},
+  {id:"medusa",name:"米杜沙",tame:"splendid_mirror",food:"apple_pudding",cap:200,cordial:{},loyal:{"vit":2,"ailResist_stone":8.0},evo:null},
+  {id:"whisper",name:"白幽靈",tame:"fit_pipe",food:"damp_darkness",cap:500,cordial:{},loyal:{"flee":10},evo:null},
+  {id:"goblin_leader",name:"哥布靈首領",tame:"staff_of_leader",food:"big_cell",cap:50,cordial:{},loyal:{"raceDmg_humanoid":5},evo:null},
+  {id:"succubus",name:"惡魔女僕",tame:"item_12373",food:"vital_flower_",cap:200,cordial:{},loyal:{"hpPct":1},evo:null},
+  {id:"incubus",name:"惡魔侍者",tame:"item_12370",food:"vital_flower",cap:50,cordial:{},loyal:{"spPct":5},evo:null},
+  {id:"nightmare_terror",name:"七彩夢魘",tame:"hell_contract",food:"fresh_plant",cap:200,cordial:{"ailResist_sleep":100.0},loyal:{"ailResist_sleep":100.0,"int":1},evo:null},
+  {id:"shinobi",name:"火忍西怒畢",tame:"kuloren",food:"grilled_rice_cake",cap:500,cordial:{},loyal:{"agi":3},evo:null},
+  {id:"stone_shooter",name:"石炮火樹",tame:"oilpalm_coconut",food:"plant_neutrient",cap:500,cordial:{},loyal:{"eleReduce_fire":5},evo:null},
+  {id:"dullahan",name:"無顱武士",tame:"luxury_whisky_bottle",food:"sunset_on_the_rock",cap:200,cordial:{"critDmgPct":5},loyal:{"critDmgPct":8},evo:null},
+  {id:"loli_ruri",name:"銀月魔女",tame:"very_red_juice",food:"pumpkin_pie_",cap:200,cordial:{},loyal:{"hpPct":5},evo:null},
+  {id:"civil_servant",name:"狐仙",tame:"fan_of_wind",food:"flavored_alcohol",cap:500,cordial:{},loyal:{"sp":15},evo:null},
+  {id:"leaf_cat",name:"群葉貓",tame:"very_soft_plant",food:"fish_with_blue_back",cap:200,cordial:{},loyal:{"raceDmgReduce_brute":5},evo:null},
+  {id:"bacsojin_",name:"白素貞",tame:"shiny_wing_gown",food:"traditional_cookie",cap:2000,cordial:{},loyal:{},evo:null},
+  {id:"imp",name:"熔巖魔",tame:"flaming_ice",food:"flame_gemstone",cap:200,cordial:{},loyal:{"eleReduce_fire":3,"eleDmg_fire":2},evo:null},
+  {id:"tikbalang",name:"邪魔馬",tame:"tikbalang_belt",food:"item_528",cap:1000,cordial:{},loyal:{"mdef":5},evo:null},
+  {id:"marin",name:"冰波利",tame:"juicy_fruit",food:"fruit_sundae",cap:2000,cordial:{},loyal:{},evo:null},
+  {id:"little_poring",name:"寶貝波利",tame:"unripe_apple2",food:"apple_juice",cap:5000,cordial:{},loyal:{"hpRegenPct":75},evo:null},
+  {id:"nine_tail",name:"九尾狐",tame:"sap_jelly",food:"suspicious_bottle",cap:2000,cordial:{"critRate":2,"hit":2},loyal:{"critRate":3,"hit":2},evo:{"to":"cat_o_nine_tail","items":[["sap_jelly",3],["fox_tail",999],["punisher",1],["nine_tail_card",1]]}},
+  {id:"gremlin",name:"小妖精",tame:"airship_part",food:"cheap_lubricant",cap:2000,cordial:{"dex":1,"hit":1},loyal:{"hit":1},evo:{"to":"hodremlin","items":[["airship_part",3],["damp_darkness",50],["will_of_darkness",200],["hodremlin_card",1]]}},
+  {id:"mummy",name:"木乃伊",tame:"elixir_bandage",food:"mementos",cap:2000,cordial:{"hit":4},loyal:{"hit":5},evo:{"to":"ancient_mummy","items":[["elixir_bandage",3],["rune_of_darkness",200],["gold",30],["ancient_mummy_card",1]]}},
+  {id:"teddy_bear",name:"玩偶熊",tame:"little_dall_needle",food:"wad_of_cotton",cap:2000,cordial:{"sp":100},loyal:{"sp":150},evo:{"to":"xm_teddy_bear","items":[["little_dall_needle",3],["cursed_seal",300],["cardinal_jewel_",50],["teddy_bear_card",1]]}},
+  {id:"mastering",name:"波利之王",tame:null,food:"pet_food",cap:0,cordial:{"luk":3,"critRate":2},loyal:{"luk":3,"critRate":3},evo:{"to":"angeling","items":[["yellow_potion",20],["spirit_chain",1],["white_herb",50],["jellopy",200]]}},
+  {id:"metaller",name:"重金屬蝗蟲",tame:null,food:"pet_food",cap:0,cordial:{"hpRegenPct":15,"hp":55,"raceDmg_plant":3},loyal:{"hpRegenPct":20,"hp":70,"raceDmg_plant":6},evo:null},
+  {id:"angeling",name:"天使波利",tame:null,food:"pet_food",cap:0,cordial:{"hpPct":2},loyal:{"hpPct":2},evo:null},
+  {id:"moonlight",name:"月夜貓",tame:null,food:"high_class_pet_food",cap:0,cordial:{"critRate":5,"hit":5,"hpRegenPct":1000,"spRegenPct":1000},loyal:{"critRate":6,"hit":6,"hpRegenPct":1000,"spRegenPct":1000},evo:null},
+  {id:"savage",name:"野豬",tame:null,food:"pet_food",cap:0,cordial:{"hp":100,"vit":2},loyal:{"hp":200,"vit":2},evo:null},
+  {id:"high_orc",name:"獸人戰士長",tame:null,food:"pet_food",cap:0,cordial:{"atk":20},loyal:{"atk":25},evo:null},
+  {id:"choco",name:"巧克猴",tame:null,food:"pet_food",cap:0,cordial:{"critRate":7,"rangedDmgPct":2},loyal:{"critRate":9,"rangedDmgPct":3},evo:null},
+  {id:"ancient_mummy",name:"狂暴木乃伊",tame:null,food:"pet_food",cap:0,cordial:{"hit":6},loyal:{"hit":6},evo:null},
+  {id:"am_mut",name:"狂暴小土人",tame:null,food:"pet_food",cap:0,cordial:{"matkPct":3},loyal:{"matkPct":4},evo:null},
+  {id:"cat_o_nine_tail",name:"狂暴月夜貓",tame:null,food:"pet_food",cap:0,cordial:{"critRate":4,"hit":4,"hpRegenPct":1000},loyal:{"critRate":5,"hit":5,"hpRegenPct":1000},evo:{"to":"moonlight","items":[["mightysoul_essence",30],["nine_tail_card",10],["sohee_card",10],["munak_card",10]]}},
+  {id:"grand_peco",name:"七彩大嘴鳥",tame:null,food:"pet_food",cap:0,cordial:{"hp":300},loyal:{"hp":400},evo:null},
+  {id:"hyegun",name:"妖君",tame:null,food:"pet_food",cap:0,cordial:{"vit":3,"ailResist_stun":3.0},loyal:{"vit":4,"ailResist_stun":4.0},evo:null},
+  {id:"hodremlin",name:"邪惡妖精",tame:null,food:"pet_food",cap:0,cordial:{"dex":2,"hit":2,"critDmgPct":7},loyal:{"dex":2,"hit":2,"critDmgPct":9},evo:null},
+  {id:"xm_teddy_bear",name:"Abandoned Teddy Bear",tame:null,food:"pet_food",cap:0,cordial:{"sp":150,"spRegenPct":1000},loyal:{"sp":150,"spRegenPct":1000},evo:null},
+  {id:"dr_eggring",name:"Eggring",tame:null,food:"pet_food",cap:0,cordial:{"hit":7,"atk":7},loyal:{"hit":9,"atk":9},evo:null},
+  {id:"diabolic2",name:"디아볼릭",tame:null,food:"pet_food",cap:0,cordial:{"atkPct":2,"matkPct":2,"hpPct":1,"spPct":1},loyal:{"atkPct":2,"matkPct":2,"hpPct":2,"spPct":2},evo:null},
+  {id:"aliza",name:"愛麗哲",tame:null,food:"pet_food",cap:0,cordial:{"mdef":6},loyal:{"mdef":7},evo:null},
+];
+const PETS_BY_ID = {};
+const TAME_TO_PET = {};
+PETS.forEach(p => { PETS_BY_ID[p.id] = p; if (p.tame) TAME_TO_PET[p.tame] = p.id; });
+/* ==== PETS-IMPORT END ==== */
+
+/* ==== FORGE-IMPORT BEGIN(tools/import_produce.py 生成) ==== */
+/* ==== 官方打造配方:匯入自 99Max produce_db(tools/import_produce.py 生成)
+     cat: dagger/sword/axe/mace/knuckle/spear=武器打造(對應鍛造技能)、
+     pharmacy=配藥(pharmacyLv 門檻)、cook=料理(無需求)。 ==== */
+const FORGE_RECIPES = [
+  {out:"sword",cat:"sword",lv:1,mats:[["iron",2]]},
+  {out:"falchion",cat:"sword",lv:1,mats:[["iron",30]]},
+  {out:"blade",cat:"sword",lv:1,mats:[["iron",45],["tooth_of_bat",25]]},
+  {out:"lapier",cat:"sword",lv:2,mats:[["steel",20]]},
+  {out:"scimiter",cat:"sword",lv:2,mats:[["steel",35]]},
+  {out:"ring_pommel_saber",cat:"sword",lv:2,mats:[["steel",40],["claw_of_wolves",50]]},
+  {out:"saber",cat:"sword",lv:3,mats:[["steel",5],["ether_oridecon",8],["white_jewel",1]]},
+  {out:"haedonggum",cat:"sword",lv:3,mats:[["ether_oridecon",8],["steel",10],["golden_jewel",1]]},
+  {out:"tsurugi",cat:"sword",lv:3,mats:[["ether_oridecon",8],["steel",15],["dark_red_jewel",1]]},
+  {out:"knife",cat:"dagger",lv:1,mats:[["iron",1],["jellopy",10]]},
+  {out:"cutter",cat:"dagger",lv:1,mats:[["iron",25]]},
+  {out:"main_gauche",cat:"dagger",lv:1,mats:[["iron",50]]},
+  {out:"dirk",cat:"dagger",lv:2,mats:[["steel",17]]},
+  {out:"dagger",cat:"dagger",lv:2,mats:[["steel",30]]},
+  {out:"stiletto",cat:"dagger",lv:2,mats:[["steel",40]]},
+  {out:"gladius",cat:"dagger",lv:3,mats:[["ether_oridecon",4],["steel",40],["blue_jewel",1]]},
+  {out:"damascus",cat:"dagger",lv:3,mats:[["ether_oridecon",4],["steel",60],["bluish_green_jewel",1]]},
+  {out:"katana",cat:"sword",lv:1,mats:[["iron",35],["horrendous_mouth",15]]},
+  {out:"slayer",cat:"sword",lv:2,mats:[["steel",25],["decayed_nail",20]]},
+  {out:"bastard_sword",cat:"sword",lv:2,mats:[["steel",45]]},
+  {out:"two_hand_sword",cat:"sword",lv:3,mats:[["ether_oridecon",12],["steel",10]]},
+  {out:"broad_sword",cat:"sword",lv:3,mats:[["ether_oridecon",12],["steel",20]]},
+  {out:"claymore",cat:"sword",lv:3,mats:[["ether_oridecon",16],["steel",20],["crystal_jewel__",1]]},
+  {out:"axe",cat:"axe",lv:1,mats:[["iron",10]]},
+  {out:"battle_axe",cat:"axe",lv:1,mats:[["iron",110]]},
+  {out:"hammer",cat:"axe",lv:2,mats:[["steel",30]]},
+  {out:"buster",cat:"axe",lv:3,mats:[["ether_oridecon",4],["steel",20],["orcish_cuspid",30]]},
+  {out:"two_handed_axe",cat:"axe",lv:3,mats:[["ether_oridecon",8],["steel",10],["violet_jewel",1]]},
+  {out:"club",cat:"mace",lv:1,mats:[["iron",3]]},
+  {out:"mace",cat:"mace",lv:1,mats:[["iron",30]]},
+  {out:"smasher",cat:"mace",lv:2,mats:[["steel",20]]},
+  {out:"flail",cat:"mace",lv:2,mats:[["steel",33]]},
+  {out:"chain",cat:"mace",lv:2,mats:[["steel",45]]},
+  {out:"morning_star",cat:"mace",lv:3,mats:[["steel",85],["crystal_jewel",1]]},
+  {out:"sword_mace",cat:"mace",lv:3,mats:[["steel",100],["sharp_scale",20]]},
+  {out:"stunner",cat:"mace",lv:3,mats:[["steel",120],["voucher_of_orcish_hero",1]]},
+  {out:"waghnakh",cat:"knuckle",lv:1,mats:[["iron",160],["scarlet_jewel",1]]},
+  {out:"knuckle_duster",cat:"knuckle",lv:2,mats:[["steel",50]]},
+  {out:"hora",cat:"knuckle",lv:2,mats:[["steel",65]]},
+  {out:"fist",cat:"knuckle",lv:3,mats:[["ether_oridecon",4],["cardinal_jewel",10]]},
+  {out:"claw",cat:"knuckle",lv:3,mats:[["ether_oridecon",8],["golden_jewel",10]]},
+  {out:"finger",cat:"knuckle",lv:3,mats:[["ether_oridecon",4],["white_jewel",10]]},
+  {out:"javelin",cat:"spear",lv:1,mats:[["iron",3]]},
+  {out:"spear",cat:"spear",lv:1,mats:[["iron",35]]},
+  {out:"pike",cat:"spear",lv:1,mats:[["iron",70]]},
+  {out:"guisarme",cat:"spear",lv:2,mats:[["steel",25]]},
+  {out:"glaive",cat:"spear",lv:2,mats:[["steel",40]]},
+  {out:"partizan",cat:"spear",lv:2,mats:[["steel",55]]},
+  {out:"trident",cat:"spear",lv:3,mats:[["ether_oridecon",8],["steel",10],["skyblue_jewel",5]]},
+  {out:"halberd",cat:"spear",lv:3,mats:[["ether_oridecon",12],["steel",10]]},
+  {out:"lance",cat:"spear",lv:3,mats:[["ether_oridecon",12],["cardinal_jewel",3],["evil_horn",2]]},
+  {out:"str_dish01",cat:"cook",lv:0,mats:[["cookbook01",0],["item_940",5],["old_frying_pan",1],["cooking_oil",1]]},
+  {out:"int_dish01",cat:"cook",lv:0,mats:[["cookbook01",0],["grape",3],["red_potion",2]]},
+  {out:"vit_dish01",cat:"cook",lv:0,mats:[["cookbook01",0],["nipper",10],["green_herb",10],["yellow_potion",1]]},
+  {out:"agi_dish01",cat:"cook",lv:0,mats:[["cookbook01",0],["grain",1],["spawn",10],["chinese_ink",1]]},
+  {out:"dex_dish01",cat:"cook",lv:0,mats:[["cookbook01",0],["honey",1],["grape",2],["red_potion",1]]},
+  {out:"luk_dish01",cat:"cook",lv:0,mats:[["cookbook01",0],["yoyo_tail",5],["old_frying_pan",1],["cooking_oil",1]]},
+  {out:"str_dish02",cat:"cook",lv:0,mats:[["cookbook02",0],["sticky_webfoot",20],["green_herb",10],["yellow_herb",10],["plain_sauce",1]]},
+  {out:"vit_dish02",cat:"cook",lv:0,mats:[["cookbook02",0],["flesh_of_clam",10],["gill",5],["fin",5],["delicious_fish",1]]},
+  {out:"int_dish02",cat:"cook",lv:0,mats:[["cookbook02",0],["blue_herb",5],["red_herb",10],["yellow_herb",10]]},
+  {out:"agi_dish02",cat:"cook",lv:0,mats:[["cookbook02",0],["grain",1],["plain_sauce",1],["pumpkin_head",5],["carrot",3]]},
+  {out:"dex_dish02",cat:"cook",lv:0,mats:[["cookbook02",0],["cacao",10],["piece_of_cake",1],["milk",1],["white_platter",1]]},
+  {out:"luk_dish02",cat:"cook",lv:0,mats:[["cookbook02",0],["apple_juice",3],["carrot_juice",2],["grape_juice",1],["orange_juice",2]]},
+  {out:"dex_dish03",cat:"cook",lv:0,mats:[["cookbook03",0],["apple",5],["banana",5],["orange",5],["strawberry",5],["yellow_spice",1]]},
+  {out:"int_dish03",cat:"cook",lv:0,mats:[["cookbook03",0],["honey",2],["white_herb",10],["yellow_spice",1]]},
+  {out:"str_dish03",cat:"cook",lv:0,mats:[["cookbook03",0],["meat",4],["old_frying_pan",1],["green_herb",10],["chilli",5],["hot_sauce",1]]},
+  {out:"vit_dish03",cat:"cook",lv:0,mats:[["cookbook03",0],["flesh_of_clam",20],["conch",10],["honey",1],["sweet_sauce",1]]},
+  {out:"agi_dish03",cat:"cook",lv:0,mats:[["cookbook03",0],["tentacle",10],["cheese",10],["nice_sweet_potato",5],["sweet_sauce",1]]},
+  {out:"luk_dish03",cat:"cook",lv:0,mats:[["cookbook03",0],["sweet_potato",10],["nice_sweet_potato",10],["baked_yam",1],["sweet_sauce",1]]},
+  {out:"int_dish04",cat:"cook",lv:0,mats:[["cookbook04",0],["strawberry",10],["lemon",4],["orange",10],["alchol",2],["grape",5]]},
+  {out:"vit_dish04",cat:"cook",lv:0,mats:[["cookbook04",0],["tentacle",30],["white_herb",10],["soft_leaf",10],["old_frying_pan",1],["chinese_ink",20]]},
+  {out:"str_dish04",cat:"cook",lv:0,mats:[["cookbook04",0],["meat",5],["red_herb",3],["yellow_herb",2],["green_herb",3],["sweet_sauce",1],["lemon",1]]},
+  {out:"dex_dish04",cat:"cook",lv:0,mats:[["cookbook04",0],["bread",5],["milk",15],["cheese",10],["yellow_herb",10],["meat",1],["sweet_sauce",1]]},
+  {out:"agi_dish04",cat:"cook",lv:0,mats:[["cookbook04",0],["grain",3],["hot_sauce",1],["ice_piece",10],["carrot",10],["pumpkin_head",10]]},
+  {out:"luk_dish04",cat:"cook",lv:0,mats:[["cookbook04",0],["lip_of_ancient_fish",10],["raccoon_leaf",10],["white_herb",10],["delicious_fish",5],["sweet_sauce",2]]},
+  {out:"int_dish05",cat:"cook",lv:0,mats:[["cookbook05",0],["fruit_of_mastela",4],["blue_potion",1],["alchol",2],["lemon",2],["yellow_spice",1]]},
+  {out:"str_dish05",cat:"cook",lv:0,mats:[["cookbook05",0],["sweet_potato",10],["honey",2],["cooking_oil",1],["carrot",3],["grain",1]]},
+  {out:"dex_dish05",cat:"cook",lv:0,mats:[["cookbook05",0],["leaflet_of_hinal",2],["leaflet_of_aloe",3],["sharp_leaf",10],["great_leaf",6],["sweet_sauce",1],["yellow_spice",1]]},
+  {out:"agi_dish05",cat:"cook",lv:0,mats:[["cookbook05",0],["wing_of_red_bat",20],["pumpkin_head",20],["pot",1],["leaflet_of_hinal",10],["red_herb",10]]},
+  {out:"vit_dish05",cat:"cook",lv:0,mats:[["cookbook05",0],["bun",20],["yellow_herb",10],["hot_sauce",1],["red_spice",1],["green_herb",20]]},
+  {out:"luk_dish05",cat:"cook",lv:0,mats:[["cookbook05",0],["item_904",20],["short_leg",10],["great_leaf",10],["old_frying_pan",2],["cooking_oil",1]]},
+  {out:"str_dish06",cat:"cook",lv:0,mats:[["cookbook06",0],["meat",10],["honey",2],["yellow_herb",1],["fruit_of_mastela",1],["shining_scales",20]]},
+  {out:"int_dish06",cat:"cook",lv:0,mats:[["cookbook06",0],["mushroom",3],["grape_juice",3],["mushroom_spore",20],["alchol",1],["red_spice",1]]},
+  {out:"dex_dish06",cat:"cook",lv:0,mats:[["cookbook06",0],["hard_peach",20],["piece_of_cake",10],["cheese",10],["milk",10],["orange_juice",5],["sweet_sauce",1]]},
+  {out:"agi_dish06",cat:"cook",lv:0,mats:[["cookbook06",0],["chilli",20],["prawn",20],["sweet_sauce",1],["lemon",20]]},
+  {out:"vit_dish06",cat:"cook",lv:0,mats:[["cookbook06",0],["browny_root",20],["root_of_maneater",10],["mushroom_spore",20],["mushroom",1],["honey",2]]},
+  {out:"luk_dish06",cat:"cook",lv:0,mats:[["cookbook06",0],["reptile_tongue",5],["item_1015",5],["clover",10],["starsand_of_witch",10],["aloe",1]]},
+  {out:"str_dish07",cat:"cook",lv:0,mats:[["cookbook07",0],["meat",10],["live_coal",1],["coal",2],["hot_sauce",1],["wooden_block",15],["white_herb",10]]},
+  {out:"int_dish07",cat:"cook",lv:0,mats:[["cookbook07",0],["royal_jelly",4],["honey",2],["white_herb",5],["leaflet_of_hinal",10],["yellow_spice",1]]},
+  {out:"dex_dish07",cat:"cook",lv:0,mats:[["cookbook07",0],["bread",10],["fruit_of_mastela",5],["sweet_sauce",1],["ment",5],["amulet",5],["unripe_apple",2]]},
+  {out:"agi_dish07",cat:"cook",lv:0,mats:[["cookbook07",0],["anolian_skin",10],["pumpkin_head",10],["carrot",10],["leaflet_of_aloe",10],["yellow_herb",10],["yellow_spice",1]]},
+  {out:"vit_dish07",cat:"cook",lv:0,mats:[["cookbook07",0],["fish_tail",10],["leaflet_of_aloe",5],["item_1028",10],["delicious_fish",2],["pet_food",10],["sweet_sauce",1]]},
+  {out:"luk_dish07",cat:"cook",lv:0,mats:[["cookbook07",0],["scales_shell",10],["gill",5],["soft_leaf",10],["meat",5],["mushroom",10],["flesh_of_clam",10]]},
+  {out:"str_dish08",cat:"cook",lv:0,mats:[["cookbook08",0],["item_948",20],["carrot",10],["pumpkin_head",10],["leaflet_of_aloe",2],["leaflet_of_hinal",1],["plain_sauce",1]]},
+  {out:"int_dish08",cat:"cook",lv:0,mats:[["cookbook08",0],["prickly_fruit",4],["leaflet_of_hinal",10],["leaf_of_yggdrasil",3],["leaflet_of_aloe",10],["royal_jelly",6],["yellow_spice",1]]},
+  {out:"dex_dish08",cat:"cook",lv:0,mats:[["cookbook08",0],["bread",10],["royal_jelly",2],["meat",5],["strawberry",10],["hot_sauce",1],["cheese",10],["sweet_sauce",1]]},
+  {out:"agi_dish08",cat:"cook",lv:0,mats:[["cookbook08",0],["aloebera",1],["hot_sauce",1],["meat",10],["leaflet_of_hinal",10],["pumpkin_head",10],["carrot",10]]},
+  {out:"vit_dish08",cat:"cook",lv:0,mats:[["cookbook08",0],["leaf_clothes",20],["meat",20],["rainbow_carrot",5],["pumpkin_head",10],["plain_sauce",1],["grain",2]]},
+  {out:"luk_dish08",cat:"cook",lv:0,mats:[["cookbook08",0],["strawberry",10],["grain",5],["leaf_clothes",10],["yellow_spice",1],["red_spice",2],["plain_sauce",1]]},
+  {out:"str_dish09",cat:"cook",lv:0,mats:[["cookbook09",0],["tendon",40],["pot",1],["cheese",10],["hot_sauce",1],["coal",2],["green_herb",30],["chinese_ink",10]]},
+  {out:"int_dish09",cat:"cook",lv:0,mats:[["cookbook09",0],["leaf_of_yggdrasil",10],["orange",10],["alchol",5],["royal_jelly",4],["blue_potion",2],["yellow_spice",1],["leaflet_of_aloe",10]]},
+  {out:"dex_dish09",cat:"cook",lv:0,mats:[["cookbook09",0],["unripe_apple",5],["orange",10],["strawberry",10],["red_spice",1],["tropical_banana",1],["grape_juice",5],["alchol",2]]},
+  {out:"agi_dish09",cat:"cook",lv:0,mats:[["cookbook09",0],["meat",10],["royal_jelly",5],["shoot",20],["plain_sauce",4],["yellow_herb",5],["white_herb",10],["red_herb",5]]},
+  {out:"vit_dish09",cat:"cook",lv:0,mats:[["cookbook09",0],["item_7123",10],["dragon_train",20],["leaf_of_yggdrasil",3],["royal_jelly",6],["hot_sauce",1],["red_spice",1],["fatty_chubby_earthworm",1]]},
+  {out:"luk_dish09",cat:"cook",lv:0,mats:[["cookbook09",0],["animal_blood",1],["anodyne",2],["aloebera",2],["alchol",2],["royal_jelly",6],["red_spice",1],["apple_juice",10]]},
+  {out:"str_dish10",cat:"cook",lv:0,mats:[["cookbook10",0],["item_1015",20],["pot",1],["alchol",1],["aloebera",2],["hot_sauce",1],["royal_jelly",5],["leaf_of_yggdrasil",10],["blue_potion",2]]},
+  {out:"int_dish10",cat:"cook",lv:0,mats:[["cookbook10",0],["root_of_maneater",10],["singing_plant",1],["leaflet_of_aloe",5],["royal_jelly",5],["lemon",5],["prickly_fruit",5],["yggdrasilberry",1],["blue_herb",10]]},
+  {out:"dex_dish10",cat:"cook",lv:0,mats:[["cookbook10",0],["yggdrasilberry",1],["ice_piece",10],["spawns",10],["royal_jelly",4],["center_potion",3],["alchol",5],["prickly_fruit",2],["illusion_flower",1]]},
+  {out:"agi_dish10",cat:"cook",lv:0,mats:[["cookbook10",0],["item_904",20],["item_7125",20],["aloebera",2],["leaf_of_yggdrasil",3],["bitter_herb",3],["royal_jelly",10],["hot_sauce",1],["pot",1]]},
+  {out:"vit_dish10",cat:"cook",lv:0,mats:[["cookbook10",0],["immortal_heart",20],["mementos",10],["seed_of_yggdrasil",1],["anodyne",2],["heart_of_mermaid",10],["hot_sauce",2],["amulet",10],["bitter_herb",2]]},
+  {out:"luk_dish10",cat:"cook",lv:0,mats:[["cookbook10",0],["fox_tail",10],["four_leaf_clover",2],["root_of_maneater",10],["sharp_leaf",10],["leaf_of_yggdrasil",4],["plain_sauce",1],["yellow_spice",1],["izidor",2]]},
+  {out:"red_potion",cat:"pharmacy",lv:1,mats:[["normal_potion_book",0],["red_herb",1],["empty_potion",1]]},
+  {out:"yellow_potion",cat:"pharmacy",lv:1,mats:[["normal_potion_book",0],["yellow_herb",1],["empty_potion",1]]},
+  {out:"white_potion",cat:"pharmacy",lv:1,mats:[["normal_potion_book",0],["white_herb",1],["empty_potion",1]]},
+  {out:"blue_potion",cat:"pharmacy",lv:1,mats:[["normal_potion_book",0],["blue_herb",1],["scell",1],["empty_potion",1]]},
+  {out:"red_slim_potion",cat:"pharmacy",lv:1,mats:[["slim_potion_create_book",0],["red_potion",1],["empty_cylinder",1],["cactus_needle",1]]},
+  {out:"yellow_slim_potion",cat:"pharmacy",lv:1,mats:[["slim_potion_create_book",0],["yellow_potion",1],["empty_cylinder",1],["moustache_of_mole",1]]},
+  {out:"white_slim_potion",cat:"pharmacy",lv:1,mats:[["slim_potion_create_book",0],["white_potion",1],["empty_cylinder",1],["starsand_of_witch",1]]},
+  {out:"fire_bottle",cat:"pharmacy",lv:1,mats:[["firebottle_create_book",0],["alchol",1],["transparent_cloth",1],["empty_bottle",1]]},
+  {out:"acid_bottle",cat:"pharmacy",lv:1,mats:[["acid_create_book",0],["empty_bottle",1],["immortal_heart",1]]},
+  {out:"meneater_plant_bottle",cat:"pharmacy",lv:1,mats:[["plant_create_book",0],["empty_bottle",1],["blossom_of_maneater",2]]},
+  {out:"mini_bottle",cat:"pharmacy",lv:1,mats:[["mine_create_book",0],["empty_bottle",1],["tendon",1],["detonator",1]]},
+  {out:"coating_bottle",cat:"pharmacy",lv:1,mats:[["coating_create_book",0],["alchol",1],["heart_of_mermaid",1],["tooth_of",1],["empty_bottle",1]]},
+  {out:"resist_fire",cat:"pharmacy",lv:1,mats:[["elemental_potion_book",0],["lizard_scruff",2],["red_gemstone",1],["empty_potion",1]]},
+  {out:"resist_water",cat:"pharmacy",lv:1,mats:[["elemental_potion_book",0],["heart_of_mermaid",3],["blue_gemstone",1],["empty_potion",1]]},
+  {out:"resist_earth",cat:"pharmacy",lv:1,mats:[["elemental_potion_book",0],["large_jellopy",2],["yellow_gemstone",1],["empty_potion",1]]},
+  {out:"resist_wind",cat:"pharmacy",lv:1,mats:[["elemental_potion_book",0],["moth_dust",3],["blue_gemstone",1],["empty_potion",1]]},
+  {out:"anodyne",cat:"pharmacy",lv:1,mats:[["normal_potion_book",0],["ment",1],["alchol",1],["empty_bottle",1]]},
+  {out:"aloebera",cat:"pharmacy",lv:1,mats:[["normal_potion_book",0],["aloe",1],["honey",1],["empty_bottle",1]]},
+  {out:"alchol",cat:"pharmacy",lv:1,mats:[["alcol_create_book",0],["empty_bottle",1],["poison_spore",5],["stem",5],["empty_cylinder",1]]},
+  {out:"germination_breed",cat:"pharmacy",lv:1,mats:[["normal_potion_book",0],["seed_of_life",1],["yggdrasilberry_dew",1],["life_force_pot",1]]},
+  {out:"novice_potion",cat:"cook",lv:0,mats:[["novice_combi_book",0],["red_herb",2],["apple",1]]},
+  {out:"n_magnifier",cat:"cook",lv:0,mats:[["novice_combi_book",0],["tree_of_archer_1",3],["jellopy",1]]},
+  {out:"n_fly_wing",cat:"cook",lv:0,mats:[["novice_combi_book",0],["fluff",2],["feather",2],["jellopy",2]]},
+  {out:"n_cutter",cat:"cook",lv:0,mats:[["novice_combi_book",0],["shell",10],["worm_peelings",10],["refine_stone",1]]},
+  {out:"unripe_apple2",cat:"cook",lv:0,mats:[["novice_combi_book",0],["apple",1],["green_herb",1]]},
+  {out:"four_leaf_clover",cat:"cook",lv:0,mats:[["novice_combi_book",0],["clover",200],["sticky_mucus",200]]},
+  {out:"banana_juice",cat:"cook",lv:0,mats:[["novice_combi_book",0],["banana",1],["milk",1]]},
+  {out:"apple_juice",cat:"cook",lv:0,mats:[["novice_combi_book",0],["apple",1],["milk",1]]},
+  {out:"carrot_juice",cat:"cook",lv:0,mats:[["novice_combi_book",0],["carrot",1],["milk",1]]},
+  {out:"grape_juice",cat:"cook",lv:0,mats:[["novice_combi_book",0],["grape",1],["milk",1]]},
+  {out:"unripe_apple",cat:"cook",lv:0,mats:[["novice_combi_book",0],["sticky_mucus",10],["green_herb",20],["apple",10]]},
+];
+/* ==== FORGE-IMPORT END ==== */
+
+
+/* ==== DMGTYPE-BACKFILL BEGIN(tools/dmgfill.js 生成,勿手改) ==== */
+/* 傷害類型回填。官方說明寫著「遠距離物理傷害+N%」「全屬性魔法傷害+N%」
+   「對全體型敵人的物理傷害+N%」這類段落，但從來沒有轉成程式讀得到的 key。
+
+   對照關係是**查過引擎**才寫的，不是照字面猜：
+     magicEleDmg_<ele>  「自己這一發的屬性」的魔法傷害  ← 「聖屬性魔法傷害」
+     eleDmg_<ele>       對「該屬性怪」的傷害            ← 意思不同，不用這個
+     allEleDmg          全屬性魔法傷害
+     allTargetDmgPct    對全體型／全階級／全種族／全屬性敵人（物理與魔法同一桶）
+
+   排除：卡片（效果來自 CARDS[]，道具紀錄上的 bonus 不會被讀）、
+   非裝備型別（穿不上就永遠不生效）、以及本來就有同一個 key 的句子。
+   帶條件的句子（套裝、[D/C/B階級]）一律不在裡面。 */
+const DMGTYPE_BACKFILL = {"lava_leather_hode":{"refine":{"11":{"magicEleDmg_fire":5}},"note":" （本服實作：精煉+11：火屬性魔法傷害+5% **已補上生效**）"},"lava_leather_sandle":{"flat":{"magicEleDmg_fire":3},"note":" （本服實作：火屬性魔法傷害+3% **已補上生效**）"},"monokage":{"refine":{"7":{"rangedDmgPct":2},"9":{"rangedDmgPct":3}},"note":" （本服實作：精煉+7：遠距離物理傷害+2%；精煉+9：遠距離物理傷害+3% **已補上生效**）"},"fourth_bh_bow":{"per":{"4":{"rangedDmgPct":2}},"note":" （本服實作：精煉每+4：遠距離物理傷害+2% **已補上生效**）"},"staff_of_miracle":{"flat":{"magicEleDmg_ghost":5},"note":" （本服實作：念屬性魔法傷害+5% **已補上生效**）"},"gravitation_staff":{"flat":{"magicEleDmg_none":5},"note":" （本服實作：無屬性魔法傷害+5% **已補上生效**）"},"adorare_staff":{"flat":{"magicEleDmg_holy":5},"note":" （本服實作：聖屬性魔法傷害+5% **已補上生效**）"},"ein_bhstaff":{"refine":{"9":{"magicEleDmg_fire":15}},"note":" （本服實作：精煉+9：火屬性魔法傷害+15% **已補上生效**）"},"calf_deathadder":{"refine":{"12":{"rangedDmgPct":5}},"note":" （本服實作：精煉+12：遠距離物理傷害+5% **已補上生效**）"},"supplement_part_str_":{"per":{"4":{"allTargetDmgPct":1}},"note":" （本服實作：精煉每+4：對全體型/全階級敵人傷害+1% **已補上生效**）"},"s_circlet_of_time_rk":{"per":{"4":{"rangedDmgPct":5}},"note":" （本服實作：精煉每+4：遠距離物理傷害+5% **已補上生效**）"},"s_circlet_of_time_lg":{"per":{"4":{"rangedDmgPct":5}},"note":" （本服實作：精煉每+4：遠距離物理傷害+5% **已補上生效**）"},"s_circlet_of_time_nc":{"per":{"4":{"rangedDmgPct":5}},"note":" （本服實作：精煉每+4：遠距離物理傷害+5% **已補上生效**）"},"s_circlet_of_time_gn":{"per":{"4":{"allTargetDmgPct":2}},"note":" （本服實作：精煉每+4：對全體型/全階級敵人傷害+2% **已補上生效**）"},"s_circlet_of_time_ab":{"per":{"4":{"magicEleDmg_holy":7}},"note":" （本服實作：精煉每+4：聖屬性魔法傷害+7% **已補上生效**）"},"s_circlet_of_time_sr":{"per":{"4":{"rangedDmgPct":5}},"note":" （本服實作：精煉每+4：遠距離物理傷害+5% **已補上生效**）"},"s_circlet_of_time_wm":{"per":{"4":{"magicEleDmg_none":7}},"note":" （本服實作：精煉每+4：無屬性魔法傷害+7% **已補上生效**）"},"s_circlet_of_time_sj":{"per":{"4":{"allTargetDmgPct":2}},"note":" （本服實作：精煉每+4：對全體型/全階級敵人傷害+2% **已補上生效**）"},"s_circlet_of_time_sp":{"per":{"4":{"magicEleDmg_shadow":7}},"note":" （本服實作：精煉每+4：暗屬性魔法傷害+7% **已補上生效**）"},"s_circlet_of_time_rl":{"per":{"4":{"rangedDmgPct":5}},"note":" （本服實作：精煉每+4：遠距離物理傷害+5% **已補上生效**）"},"s_circlet_of_time_kg":{"per":{"4":{"allTargetDmgPct":2}},"note":" （本服實作：精煉每+4：對全體型/全階級敵人傷害+2% **已補上生效**）"},"ponitendtia":{"flat":{"magicEleDmg_holy":5},"note":" （本服實作：聖屬性魔法傷害+5% **已補上生效**）"},"scarlet_ribbon":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"reaper_cross":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"g_knight_battleaxe":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"calf_kingcobra":{"refine":{"12":{"rangedDmgPct":5}},"note":" （本服實作：精煉+12：遠距離物理傷害+5% **已補上生效**）"},"calf_diamondback":{"refine":{"12":{"rangedDmgPct":5}},"note":" （本服實作：精煉+12：遠距離物理傷害+5% **已補上生效**）"},"calf_anaconda":{"refine":{"9":{"rangedDmgPct":5}},"note":" （本服實作：精煉+9：遠距離物理傷害+5% **已補上生效**）"},"hr_s55_os":{"refine":{"7":{"rangedDmgPct":7}},"note":" （本服實作：精煉+7：遠距離物理傷害+7% **已補上生效**）"},"undine_spear_k":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"harve":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"g_knight_spear":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"ignis_capk":{"refine":{"9":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：遠距離物理傷害+15% **已補上生效**）"},"bioweapon_helm_rk":{"refine":{"9":{"rangedDmgPct":15},"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：遠距離物理傷害+15%；精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bioweapon_helm_nc":{"refine":{"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bioweapon_helm_gn":{"refine":{"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bioweapon_helm_ra":{"refine":{"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bioweapon_helm_wm":{"refine":{"11":{"allEleDmg":10,"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：全屬性魔法傷害+10%、對全體型/全階級敵人傷害+10% **已補上生效**）"},"bioweapon_helm_ab":{"refine":{"11":{"allEleDmg":10,"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：全屬性魔法傷害+10%、對全體型/全階級敵人傷害+10% **已補上生效**）"},"bioweapon_helm_sr":{"refine":{"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"smoky_transformhat_lt":{"per":{"1":{"allEleDmg":1}},"note":" （本服實作：精煉每+1：全屬性魔法傷害+1% **已補上生效**）"},"2023seppay_04":{"refine":{"9":{"allTargetDmgPct":10},"11":{"rangedDmgPct":20}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+10%；精煉+11：遠距離物理傷害+20% **已補上生效**）"},"cd_in_mouthk":{"flat":{"allEleDmg":5},"note":" （本服實作：全屬性魔法傷害+5% **已補上生效**）"},"booster_scarf_b":{"flat":{"allEleDmg":5},"note":" （本服實作：全屬性魔法傷害+5% **已補上生效**）"},"ran_suits":{"per":{"3":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+3：遠距離物理傷害+1% **已補上生效**）"},"noblesse_genesis_armor":{"refine":{"7":{"magicEleDmg_holy":5},"9":{"magicEleDmg_holy":5}},"note":" （本服實作：精煉+7：聖屬性魔法傷害+5%；精煉+9：聖屬性魔法傷害+5% **已補上生效**）"},"noblesse_reverb_suit":{"refine":{"7":{"magicEleDmg_none":5},"9":{"magicEleDmg_none":5}},"note":" （本服實作：精煉+7：無屬性魔法傷害+5%；精煉+9：無屬性魔法傷害+5% **已補上生效**）"},"noblesse_adora_robe":{"refine":{"7":{"magicEleDmg_holy":5},"9":{"magicEleDmg_holy":5}},"note":" （本服實作：精煉+7：聖屬性魔法傷害+5%；精煉+9：聖屬性魔法傷害+5% **已補上生效**）"},"noblesse_tonado_armor":{"refine":{"9":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+5% **已補上生效**）"},"noblesse_kart_suit2":{"refine":{"9":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+5% **已補上生效**）"},"noblesse_fatal_suit":{"refine":{"9":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+5% **已補上生效**）"},"noblesse_stalker_suit":{"refine":{"9":{"magicEleDmg_fire":5}},"note":" （本服實作：精煉+9：火屬性魔法傷害+5% **已補上生效**）"},"noblesse_carrot_robe":{"refine":{"9":{"magicEleDmg_none":5}},"note":" （本服實作：精煉+9：無屬性魔法傷害+5% **已補上生效**）"},"noblesse_crimson_robe":{"refine":{"9":{"magicEleDmg_fire":5}},"note":" （本服實作：精煉+9：火屬性魔法傷害+5% **已補上生效**）"},"noblesse_frost_robe":{"refine":{"9":{"magicEleDmg_water":5}},"note":" （本服實作：精煉+9：水屬性魔法傷害+5% **已補上生效**）"},"noblesse_psychic_robe":{"refine":{"9":{"magicEleDmg_none":5}},"note":" （本服實作：精煉+9：無屬性魔法傷害+5% **已補上生效**）"},"noblesse_dust_robe":{"refine":{"9":{"magicEleDmg_water":5}},"note":" （本服實作：精煉+9：水屬性魔法傷害+5% **已補上生效**）"},"noblesse_moon_suit":{"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"noblesse_ninja_suit":{"refine":{"9":{"allEleDmg":5}},"note":" （本服實作：精煉+9：全屬性魔法傷害+5% **已補上生效**）"},"noblesse_swhoo_robe":{"refine":{"7":{"magicEleDmg_shadow":5},"9":{"magicEleDmg_shadow":5}},"note":" （本服實作：精煉+7：暗屬性魔法傷害+5%；精煉+9：暗屬性魔法傷害+5% **已補上生效**）"},"noblesse_explosion_robe":{"refine":{"7":{"magicEleDmg_shadow":5},"9":{"magicEleDmg_shadow":5}},"note":" （本服實作：精煉+7：暗屬性魔法傷害+5%；精煉+9：暗屬性魔法傷害+5% **已補上生效**）"},"noblesse_knuckle_suit":{"refine":{"9":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+5% **已補上生效**）"},"imperial_genesis_armor":{"refine":{"7":{"magicEleDmg_holy":7},"9":{"magicEleDmg_holy":7}},"note":" （本服實作：精煉+7：聖屬性魔法傷害+7%；精煉+9：聖屬性魔法傷害+7% **已補上生效**）"},"imperial_reverb_suit":{"refine":{"7":{"magicEleDmg_none":7},"9":{"magicEleDmg_none":7}},"note":" （本服實作：精煉+7：無屬性魔法傷害+7%；精煉+9：無屬性魔法傷害+7% **已補上生效**）"},"imperial_adora_robe":{"refine":{"7":{"magicEleDmg_holy":7},"9":{"magicEleDmg_holy":7}},"note":" （本服實作：精煉+7：聖屬性魔法傷害+7%；精煉+9：聖屬性魔法傷害+7% **已補上生效**）"},"imperial_knuckle_suit":{"refine":{"9":{"allTargetDmgPct":7}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+7% **已補上生效**）"},"imperial_tonado_armor":{"refine":{"9":{"allTargetDmgPct":7}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+7% **已補上生效**）"},"imperial_kart_suit2":{"refine":{"9":{"allTargetDmgPct":7}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+7% **已補上生效**）"},"imperial_fatal_suit":{"refine":{"9":{"allTargetDmgPct":7}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+7% **已補上生效**）"},"imperial_stalker_suit":{"refine":{"9":{"magicEleDmg_fire":7}},"note":" （本服實作：精煉+9：火屬性魔法傷害+7% **已補上生效**）"},"imperial_carrot_robe":{"refine":{"9":{"magicEleDmg_none":7}},"note":" （本服實作：精煉+9：無屬性魔法傷害+7% **已補上生效**）"},"imperial_crimson_robe":{"refine":{"9":{"magicEleDmg_fire":7}},"note":" （本服實作：精煉+9：火屬性魔法傷害+7% **已補上生效**）"},"imperial_frost_robe":{"refine":{"9":{"magicEleDmg_water":7}},"note":" （本服實作：精煉+9：水屬性魔法傷害+7% **已補上生效**）"},"imperial_psychic_robe":{"refine":{"9":{"magicEleDmg_none":7}},"note":" （本服實作：精煉+9：無屬性魔法傷害+7% **已補上生效**）"},"imperial_dust_robe":{"refine":{"9":{"magicEleDmg_water":7}},"note":" （本服實作：精煉+9：水屬性魔法傷害+7% **已補上生效**）"},"imperial_moon_suit":{"refine":{"7":{"allTargetDmgPct":7}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+7% **已補上生效**）"},"imperial_ninja_suit":{"refine":{"9":{"allEleDmg":7}},"note":" （本服實作：精煉+9：全屬性魔法傷害+7% **已補上生效**）"},"imperial_swhoo_robe":{"refine":{"7":{"magicEleDmg_shadow":7},"9":{"magicEleDmg_shadow":7}},"note":" （本服實作：精煉+7：暗屬性魔法傷害+7%；精煉+9：暗屬性魔法傷害+7% **已補上生效**）"},"imperial_explosion_robe":{"refine":{"7":{"magicEleDmg_shadow":7},"9":{"magicEleDmg_shadow":7}},"note":" （本服實作：精煉+7：暗屬性魔法傷害+7%；精煉+9：暗屬性魔法傷害+7% **已補上生效**）"},"grace_genesis_armor":{"refine":{"7":{"magicEleDmg_holy":10},"9":{"magicEleDmg_holy":10}},"note":" （本服實作：精煉+7：聖屬性魔法傷害+10%；精煉+9：聖屬性魔法傷害+10% **已補上生效**）"},"grace_reverb_suit":{"refine":{"7":{"magicEleDmg_none":10},"9":{"magicEleDmg_none":10}},"note":" （本服實作：精煉+7：無屬性魔法傷害+10%；精煉+9：無屬性魔法傷害+10% **已補上生效**）"},"grace_adora_robe":{"refine":{"7":{"magicEleDmg_holy":10},"9":{"magicEleDmg_holy":10}},"note":" （本服實作：精煉+7：聖屬性魔法傷害+10%；精煉+9：聖屬性魔法傷害+10% **已補上生效**）"},"grace_knuckle_suit":{"refine":{"9":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+10% **已補上生效**）"},"grace_tonado_armor":{"refine":{"9":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+10% **已補上生效**）"},"grace_kart_suit2":{"refine":{"9":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+10% **已補上生效**）"},"grace_fatal_suit":{"refine":{"9":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+10% **已補上生效**）"},"grace_stalker_suit":{"refine":{"9":{"magicEleDmg_fire":10}},"note":" （本服實作：精煉+9：火屬性魔法傷害+10% **已補上生效**）"},"grace_picky_robe":{"refine":{"9":{"rangedDmgPct":10}},"note":" （本服實作：精煉+9：遠距離物理傷害+10% **已補上生效**）"},"grace_carrot_robe":{"refine":{"9":{"magicEleDmg_none":10}},"note":" （本服實作：精煉+9：無屬性魔法傷害+10% **已補上生效**）"},"grace_crimson_robe":{"refine":{"9":{"magicEleDmg_fire":10}},"note":" （本服實作：精煉+9：火屬性魔法傷害+10% **已補上生效**）"},"grace_frost_robe":{"refine":{"9":{"magicEleDmg_water":10}},"note":" （本服實作：精煉+9：水屬性魔法傷害+10% **已補上生效**）"},"grace_psychic_robe":{"refine":{"9":{"magicEleDmg_none":10}},"note":" （本服實作：精煉+9：無屬性魔法傷害+10% **已補上生效**）"},"grace_dust_robe":{"refine":{"9":{"magicEleDmg_water":10}},"note":" （本服實作：精煉+9：水屬性魔法傷害+10% **已補上生效**）"},"grace_moon_suit":{"refine":{"7":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+10% **已補上生效**）"},"grace_ninja_suit":{"refine":{"9":{"allEleDmg":10}},"note":" （本服實作：精煉+9：全屬性魔法傷害+10% **已補上生效**）"},"grace_swhoo_robe":{"refine":{"7":{"magicEleDmg_shadow":10},"9":{"magicEleDmg_shadow":10}},"note":" （本服實作：精煉+7：暗屬性魔法傷害+10%；精煉+9：暗屬性魔法傷害+10% **已補上生效**）"},"grace_explosion_robe":{"refine":{"7":{"magicEleDmg_shadow":10},"9":{"magicEleDmg_shadow":10}},"note":" （本服實作：精煉+7：暗屬性魔法傷害+10%；精煉+9：暗屬性魔法傷害+10% **已補上生效**）"},"noblesse_attack_boots":{"refine":{"9":{"rangedDmgPct":5}},"note":" （本服實作：精煉+9：遠距離物理傷害+5% **已補上生效**）"},"noblesse_magic_boots":{"refine":{"9":{"allEleDmg":5}},"note":" （本服實作：精煉+9：全屬性魔法傷害+5% **已補上生效**）"},"imperial_attack_boots":{"refine":{"9":{"rangedDmgPct":7}},"note":" （本服實作：精煉+9：遠距離物理傷害+7% **已補上生效**）"},"imperial_magic_boots":{"refine":{"9":{"allEleDmg":7}},"note":" （本服實作：精煉+9：全屬性魔法傷害+7% **已補上生效**）"},"grace_magic_boots":{"refine":{"9":{"allEleDmg":10}},"note":" （本服實作：精煉+9：全屬性魔法傷害+10% **已補上生效**）"},"ran_manteau":{"refine":{"7":{"rangedDmgPct":5}},"note":" （本服實作：精煉+7：遠距離物理傷害+5% **已補上生效**）"},"noblesse_attack_manteau":{"refine":{"9":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+5% **已補上生效**）"},"noblesse_magic_manteau":{"refine":{"9":{"allEleDmg":5}},"note":" （本服實作：精煉+9：全屬性魔法傷害+5% **已補上生效**）"},"imperial_attack_manteau":{"refine":{"9":{"allTargetDmgPct":7}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+7% **已補上生效**）"},"imperial_magic_manteau":{"refine":{"9":{"allEleDmg":7}},"note":" （本服實作：精煉+9：全屬性魔法傷害+7% **已補上生效**）"},"grace_magic_manteau":{"refine":{"9":{"allEleDmg":10}},"note":" （本服實作：精煉+9：全屬性魔法傷害+10% **已補上生效**）"},"noblesse_magic_ring":{"flat":{"allEleDmg":5},"note":" （本服實作：全屬性魔法傷害+5% **已補上生效**）"},"imperial_magic_ring":{"flat":{"allEleDmg":7},"note":" （本服實作：全屬性魔法傷害+7% **已補上生效**）"},"grace_magic_ring":{"flat":{"allEleDmg":10},"note":" （本服實作：全屬性魔法傷害+10% **已補上生效**）"},"wm_job_pick":{"flat":{"allTargetDmgPct":5},"note":" （本服實作：對全體型/全階級敵人傷害+5% **已補上生效**）"},"pg_b_sword":{"refine":{"11":{"allTargetDmgPct":15,"magicEleDmg_holy":15}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+15%、聖屬性魔法傷害+15% **已補上生效**）"},"adulter_f_lapier":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_lapier":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"sword_of_bluefire_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"slate_sword_lt":{"per":{"3":{"meleeDmgPct":4}},"note":" （本服實作：精煉每+3：近距離物理傷害+4% **已補上生效**）"},"bc_b_spear":{"refine":{"11":{"allTargetDmgPct":15,"meleeDmgPct":15,"rangedDmgPct":15}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+15%、近距離物理傷害+15%、遠距離物理傷害+15% **已補上生效**）"},"up_undine_spear_k":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"fourth_1h_spear":{"per":{"4":{"rangedDmgPct":2}},"note":" （本服實作：精煉每+4：遠距離物理傷害+2% **已補上生效**）"},"poenitentia_hasta":{"refine":{"11":{"meleeDmgPct":10}},"note":" （本服實作：精煉+11：近距離物理傷害+10% **已補上生效**）"},"adulter_f_g_spear":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_g_spear":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"undine_spear_k_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"up_oneskyonesun":{"per":{"3":{"meleeDmgPct":4}},"refine":{"11":{"allTargetDmgPct":15}},"note":" （本服實作：精煉每+3：近距離物理傷害+4%；精煉+11：對全體型/全階級敵人傷害+15% **已補上生效**）"},"fourth_1h_book":{"per":{"4":{"allEleDmg":2}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+2% **已補上生效**）"},"poenitentia_liber":{"refine":{"11":{"magicEleDmg_holy":15}},"note":" （本服實作：精煉+11：聖屬性魔法傷害+15% **已補上生效**）"},"adulter_f_m_book":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"adulter_f_p_book":{"refine":{"12":{"magicEleDmg_poison":15}},"note":" （本服實作：精煉+12：毒屬性魔法傷害+15% **已補上生效**）"},"adulter_f_bible":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"adulter_f_moon_b":{"refine":{"9":{"allTargetDmgPct":15},"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：近距離物理傷害+15% **已補上生效**）"},"adulter_f_star_b":{"refine":{"9":{"allTargetDmgPct":15},"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_m_book":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_p_book":{"refine":{"12":{"magicEleDmg_poison":15}},"note":" （本服實作：精煉+12：毒屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_bible":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"oneskyonesun_lt":{"per":{"3":{"meleeDmgPct":4}},"note":" （本服實作：精煉每+3：近距離物理傷害+4% **已補上生效**）"},"freezing_rod":{"refine":{"11":{"magicEleDmg_water":7}},"note":" （本服實作：精煉+11：水屬性魔法傷害+7% **已補上生效**）"},"an_b_wand":{"refine":{"11":{"allTargetDmgPct":15,"magicEleDmg_holy":15}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+15%、聖屬性魔法傷害+15% **已補上生效**）"},"up_soulweight":{"per":{"3":{"allEleDmg":2}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+2% **已補上生效**）"},"adulter_f_wand":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_holy":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：聖屬性魔法傷害+15% **已補上生效**）"},"adulter_f_d_wand":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_shadow":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：暗屬性魔法傷害+15% **已補上生效**）"},"adulter_f_f_wand":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"adulter_f_f_model":{"refine":{"9":{"allTargetDmgPct":15},"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_wand":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_holy":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：聖屬性魔法傷害+15% **已補上生效**）"},"soulweight_lt":{"per":{"3":{"allEleDmg":3}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+3% **已補上生效**）"},"barb_wire_k":{"per":{"3":{"magicEleDmg_none":4}},"note":" （本服實作：精煉每+3：無屬性魔法傷害+4% **已補上生效**）"},"up_barb_wire_k":{"per":{"3":{"allEleDmg":4}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+4% **已補上生效**）"},"fourth_1h_whip":{"per":{"4":{"rangedDmgPct":2}},"note":" （本服實作：精煉每+4：遠距離物理傷害+2% **已補上生效**）"},"adulter_f_c_rope":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"adulter_f_ribbon":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_c_rope":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_ribbon":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"barb_wire_k_lt":{"per":{"3":{"allEleDmg":4}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+4% **已補上生效**）"},"dd_b_mace":{"refine":{"11":{"allTargetDmgPct":15,"magicEleDmg_holy":15}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+15%、聖屬性魔法傷害+15% **已補上生效**）"},"fourth_bh_katar":{"per":{"4":{"meleeDmgPct":2}},"note":" （本服實作：精煉每+4：近距離物理傷害+2% **已補上生效**）"},"adulter_f_cakram":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"adulter_f_katar":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_cakram":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_katar":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"adulter_f_lance":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"blue_crystal_staff":{"refine":{"9":{"magicEleDmg_water":7}},"note":" （本服實作：精煉+9：水屬性魔法傷害+7% **已補上生效**）"},"fourth_bh_staff":{"per":{"4":{"allEleDmg":2}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+2% **已補上生效**）"},"adulter_f_t_staff":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"adulter_f_rod":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_ghost":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：念屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_t_staff":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_rod":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_ghost":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：念屬性魔法傷害+15% **已補上生效**）"},"tb_b_bow":{"refine":{"11":{"allTargetDmgPct":15,"rangedDmgPct":15}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+15%、遠距離物理傷害+15% **已補上生效**）"},"adulter_f_revolver":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"crimson_rose_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"adulter_f_rifle":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"adulter_f_shotgun":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"demon_s_shot_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"up_the_black_gatling":{"refine":{"11":{"allTargetDmgPct":15}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+15% **已補上生效**）"},"adulter_f_gatling":{"refine":{"9":{"allTargetDmgPct":15},"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：遠距離物理傷害+15% **已補上生效**）"},"the_black_gatling_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"adulter_f_launcher":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"golden_l_launcher_lt":{"per":{"3":{"rangedDmgPct":4}},"refine":{"11":{"allTargetDmgPct":30}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4%；精煉+11：對全體型/全階級敵人傷害+30% **已補上生效**）"},"goldfish_hat_lt":{"refine":{"7":{"meleeDmgPct":10,"magicEleDmg_holy":10}},"note":" （本服實作：精煉+7：近距離物理傷害+10%、聖屬性魔法傷害+10% **已補上生效**）"},"1para_boots_a":{"flat":{"meleeDmgPct":3,"rangedDmgPct":3},"note":" （本服實作：近距離物理傷害+3%、遠距離物理傷害+3% **已補上生效**）"},"1para_boots_b":{"flat":{"allEleDmg":3},"note":" （本服實作：全屬性魔法傷害+3% **已補上生效**）"},"solid_manual":{"per":{"4":{"allEleDmg":4}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+4% **已補上生效**）"},"wicked_book":{"per":{"4":{"meleeDmgPct":4}},"note":" （本服實作：精煉每+4：近距離物理傷害+4% **已補上生效**）"},"poenitentia_radius":{"refine":{"7":{"meleeDmgPct":10}},"note":" （本服實作：精煉+7：近距離物理傷害+10% **已補上生效**）"},"vivatus_f_star_b":{"refine":{"9":{"allTargetDmgPct":15},"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_moon_b":{"refine":{"9":{"allTargetDmgPct":15},"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：近距離物理傷害+15% **已補上生效**）"},"ec_b_staff":{"refine":{"13":{"magicEleDmg_shadow":25}},"note":" （本服實作：精煉+13：暗屬性魔法傷害+25% **已補上生效**）"},"solid_wand":{"per":{"4":{"allEleDmg":4}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+4% **已補上生效**）"},"solid_rod":{"per":{"4":{"allEleDmg":4}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+4% **已補上生效**）"},"fourth_1h_rod":{"per":{"4":{"allEleDmg":3}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+3% **已補上生效**）"},"fourth_1h_wand":{"per":{"4":{"allEleDmg":3}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+3% **已補上生效**）"},"vivatus_f_d_wand":{"refine":{"9":{"allTargetDmgPct":15},"12":{"magicEleDmg_shadow":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：暗屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_f_wand":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_f_model":{"refine":{"9":{"allTargetDmgPct":15},"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：遠距離物理傷害+15% **已補上生效**）"},"wicked_katar":{"per":{"4":{"meleeDmgPct":3}},"note":" （本服實作：精煉每+4：近距離物理傷害+3% **已補上生效**）"},"precision_pistol":{"per":{"4":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+4：遠距離物理傷害+4% **已補上生效**）"},"fourth_revolver":{"per":{"4":{"rangedDmgPct":3}},"note":" （本服實作：精煉每+4：遠距離物理傷害+3% **已補上生效**）"},"poenitentia_foramen":{"refine":{"7":{"rangedDmgPct":10}},"note":" （本服實作：精煉+7：遠距離物理傷害+10% **已補上生效**）"},"vivatus_f_revolver":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"g_knight_axe":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"iron_nail_k":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"samambaia":{"flat":{"allTargetDmgPct":3},"note":" （本服實作：對全體型/全階級敵人傷害+3% **已補上生效**）"},"libra_diadem":{"flat":{"allTargetDmgPct":3},"note":" （本服實作：對全體型/全階級敵人傷害+3% **已補上生效**）"},"supplement_part_str":{"per":{"4":{"allTargetDmgPct":1}},"note":" （本服實作：精煉每+4：對全體型/全階級敵人傷害+1% **已補上生效**）"},"saphir_hall_os":{"refine":{"11":{"rangedDmgPct":15}},"note":" （本服實作：精煉+11：遠距離物理傷害+15% **已補上生效**）"},"ultio_spes_os":{"refine":{"11":{"magicEleDmg_holy":15}},"note":" （本服實作：精煉+11：聖屬性魔法傷害+15% **已補上生效**）"},"narcis_bow":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"virtual_bow_os":{"refine":{"7":{"rangedDmgPct":7}},"note":" （本服實作：精煉+7：遠距離物理傷害+7% **已補上生效**）"},"mh_p89_os":{"refine":{"7":{"rangedDmgPct":7}},"note":" （本服實作：精煉+7：遠距離物理傷害+7% **已補上生效**）"},"sharp_star_bow":{"refine":{"9":{"rangedDmgPct":7}},"note":" （本服實作：精煉+9：遠距離物理傷害+7% **已補上生效**）"},"golden_scarf":{"refine":{"7":{"rangedDmgPct":5},"9":{"rangedDmgPct":5}},"note":" （本服實作：精煉+7：遠距離物理傷害+5%；精煉+9：遠距離物理傷害+5% **已補上生效**）"},"geffen_magic_muffler":{"refine":{"7":{"allEleDmg":5}},"note":" （本服實作：精煉+7：全屬性魔法傷害+5% **已補上生效**）"},"vernan":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"illusion_leg_a":{"refine":{"7":{"rangedDmgPct":5}},"note":" （本服實作：精煉+7：遠距離物理傷害+5% **已補上生效**）"},"illusion_leg_b":{"refine":{"7":{"allEleDmg":5}},"note":" （本服實作：精煉+7：全屬性魔法傷害+5% **已補上生效**）"},"bs_item_m_s_49":{"flat":{"allTargetDmgPct":2},"note":" （本服實作：對全體型/全階級敵人傷害+2% **已補上生效**）"},"avenger":{"refine":{"11":{"allTargetDmgPct":15}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+15% **已補上生效**）"},"blasti_os":{"refine":{"9":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：遠距離物理傷害+15% **已補上生效**）"},"g_knight_battle_axe":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"ring_of_the_abyss_king":{"flat":{"allTargetDmgPct":8},"note":" （本服實作：對全體型/全階級敵人傷害+8% **已補上生效**）"},"magic_sword":{"refine":{"9":{"allEleDmg":10}},"note":" （本服實作：精煉+9：全屬性魔法傷害+10% **已補上生效**）"},"antique_cello":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"r_pillar":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"r_syringe":{"per":{"1":{"rangedDmgPct":1}},"note":" （本服實作：精煉每+1：遠距離物理傷害+1% **已補上生效**）"},"clock_casket_rd":{"refine":{"9":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：近距離物理傷害+15% **已補上生效**）"},"ignis_cap_k":{"refine":{"9":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：遠距離物理傷害+15% **已補上生效**）"},"large_sorcerer_crown":{"refine":{"9":{"allEleDmg":15}},"note":" （本服實作：精煉+9：全屬性魔法傷害+15% **已補上生效**）"},"scorpio_diadem_k":{"refine":{"9":{"allEleDmg":15}},"note":" （本服實作：精煉+9：全屬性魔法傷害+15% **已補上生效**）"},"bio_weapon_helm_rk":{"refine":{"9":{"rangedDmgPct":15},"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：遠距離物理傷害+15%；精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bio_weapon_helm_nc":{"refine":{"9":{"rangedDmgPct":15},"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：遠距離物理傷害+15%；精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bio_weapon_helm_gn":{"refine":{"9":{"rangedDmgPct":15},"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：遠距離物理傷害+15%；精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bio_weapon_helm_ra":{"refine":{"9":{"rangedDmgPct":15},"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：遠距離物理傷害+15%；精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"bio_weapon_helm_wm":{"refine":{"9":{"rangedDmgPct":15,"magicEleDmg_none":10},"11":{"allEleDmg":10,"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：遠距離物理傷害+15%、無屬性魔法傷害+10%；精煉+11：全屬性魔法傷害+10%、對全體型/全階級敵人傷害+10% **已補上生效**）"},"bio_weapon_helm_ab":{"refine":{"11":{"allEleDmg":10,"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：全屬性魔法傷害+10%、對全體型/全階級敵人傷害+10% **已補上生效**）"},"bio_weapon_helm_sr":{"refine":{"11":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+11：對全體型/全階級敵人傷害+10% **已補上生效**）"},"thanos_helm_1":{"refine":{"9":{"meleeDmgPct":10}},"note":" （本服實作：精煉+9：近距離物理傷害+10% **已補上生效**）"},"thanos_helm1_lt":{"refine":{"9":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：近距離物理傷害+15% **已補上生效**）"},"thanos_helm3_lt":{"refine":{"9":{"allEleDmg":15}},"note":" （本服實作：精煉+9：全屬性魔法傷害+15% **已補上生效**）"},"thanos_helm_3":{"refine":{"9":{"allEleDmg":10}},"note":" （本服實作：精煉+9：全屬性魔法傷害+10% **已補上生效**）"},"thanos_helm_4":{"refine":{"9":{"meleeDmgPct":10}},"note":" （本服實作：精煉+9：近距離物理傷害+10% **已補上生效**）"},"thanos_helm4_lt":{"refine":{"9":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：近距離物理傷害+15% **已補上生效**）"},"smoky_transform_hat_lt":{"per":{"1":{"allEleDmg":1}},"note":" （本服實作：精煉每+1：全屬性魔法傷害+1% **已補上生效**）"},"imp_hat_lt":{"refine":{"7":{"meleeDmgPct":10,"magicEleDmg_fire":10}},"note":" （本服實作：精煉+7：近距離物理傷害+10%、火屬性魔法傷害+10% **已補上生效**）"},"yggdrasil_faith":{"per":{"3":{"allEleDmg":7}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+7% **已補上生效**）"},"item_2023seppay_04":{"refine":{"9":{"allTargetDmgPct":10},"11":{"rangedDmgPct":20}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+10%；精煉+11：遠距離物理傷害+20% **已補上生效**）"},"cat_ff_hat2":{"refine":{"9":{"allEleDmg":20},"11":{"allTargetDmgPct":20}},"note":" （本服實作：精煉+9：全屬性魔法傷害+20%；精煉+11：對全體型/全階級敵人傷害+20% **已補上生效**）"},"cd_in_mouth_k":{"flat":{"allEleDmg":5},"note":" （本服實作：全屬性魔法傷害+5% **已補上生效**）"},"md_geffen_robe":{"refine":{"9":{"allEleDmg":10}},"note":" （本服實作：精煉+9：全屬性魔法傷害+10% **已補上生效**）"},"vague_star_robe":{"refine":{"11":{"allEleDmg":10}},"note":" （本服實作：精煉+11：全屬性魔法傷害+10% **已補上生效**）"},"vague_star_suit":{"refine":{"11":{"rangedDmgPct":10}},"note":" （本服實作：精煉+11：遠距離物理傷害+10% **已補上生效**）"},"vague_star_armor":{"refine":{"11":{"meleeDmgPct":10}},"note":" （本服實作：精煉+11：近距離物理傷害+10% **已補上生效**）"},"star_armor_of_pow":{"refine":{"11":{"meleeDmgPct":20}},"note":" （本服實作：精煉+11：近距離物理傷害+20% **已補上生效**）"},"star_suit_of_con":{"refine":{"11":{"rangedDmgPct":20}},"note":" （本服實作：精煉+11：遠距離物理傷害+20% **已補上生效**）"},"star_robe_of_spl":{"refine":{"11":{"allEleDmg":15}},"note":" （本服實作：精煉+11：全屬性魔法傷害+15% **已補上生效**）"},"celine_dress":{"refine":{"9":{"allEleDmg":10}},"note":" （本服實作：精煉+9：全屬性魔法傷害+10% **已補上生效**）"},"b_celine_d_lt_tw":{"refine":{"9":{"allTargetDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15% **已補上生效**）"},"md_geffen_shield":{"refine":{"12":{"allEleDmg":7}},"note":" （本服實作：精煉+12：全屬性魔法傷害+7% **已補上生效**）"},"mad_bunny_k_lt":{"refine":{"9":{"meleeDmgPct":7,"rangedDmgPct":7,"allEleDmg":7}},"note":" （本服實作：精煉+9：近距離物理傷害+7%、遠距離物理傷害+7%、全屬性魔法傷害+7% **已補上生效**）"},"auto_leg_a":{"refine":{"7":{"rangedDmgPct":7}},"note":" （本服實作：精煉+7：遠距離物理傷害+7% **已補上生效**）"},"auto_leg_b":{"refine":{"7":{"allEleDmg":7}},"note":" （本服實作：精煉+7：全屬性魔法傷害+7% **已補上生效**）"},"md_airboat_boots":{"refine":{"13":{"meleeDmgPct":7}},"note":" （本服實作：精煉+13：近距離物理傷害+7% **已補上生效**）"},"md_airboat_boots4":{"refine":{"13":{"allEleDmg":7}},"note":" （本服實作：精煉+13：全屬性魔法傷害+7% **已補上生效**）"},"md_airboat_boots5":{"refine":{"13":{"meleeDmgPct":4,"rangedDmgPct":4}},"note":" （本服實作：精煉+13：近距離物理傷害+4%、遠距離物理傷害+4% **已補上生效**）"},"md_geffen_hood":{"refine":{"9":{"meleeDmgPct":5},"11":{"meleeDmgPct":7}},"note":" （本服實作：精煉+9：近距離物理傷害+5%；精煉+11：近距離物理傷害+7% **已補上生效**）"},"md_geffen_hood2":{"refine":{"11":{"allEleDmg":7}},"note":" （本服實作：精煉+11：全屬性魔法傷害+7% **已補上生效**）"},"md_geffen_hood3":{"refine":{"9":{"rangedDmgPct":5},"11":{"rangedDmgPct":7}},"note":" （本服實作：精煉+9：遠距離物理傷害+5%；精煉+11：遠距離物理傷害+7% **已補上生效**）"},"changeable_magic_cape":{"per":{"3":{"allEleDmg":2}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+2% **已補上生效**）"},"cvt_critical_wing":{"per":{"3":{"allTargetDmgPct":3}},"refine":{"11":{"meleeDmgPct":10,"rangedDmgPct":10}},"note":" （本服實作：精煉每+3：對全體型/全階級敵人傷害+3%；精煉+11：近距離物理傷害+10%、遠距離物理傷害+10% **已補上生效**）"},"tele_wg_cape":{"refine":{"9":{"allTargetDmgPct":10}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+10% **已補上生效**）"},"old_cart_acc":{"flat":{"meleeDmgPct":5,"rangedDmgPct":5},"note":" （本服實作：近距離物理傷害+5%、遠距離物理傷害+5% **已補上生效**）"},"firm_faith_ring":{"flat":{"rangedDmgPct":6},"note":" （本服實作：遠距離物理傷害+6% **已補上生效**）"},"armor_drive_wheel":{"flat":{"rangedDmgPct":6},"note":" （本服實作：遠距離物理傷害+6% **已補上生效**）"},"light_blade":{"refine":{"11":{"magicEleDmg_holy":15}},"note":" （本服實作：精煉+11：聖屬性魔法傷害+15% **已補上生效**）"},"up_light_blade":{"refine":{"9":{"magicEleDmg_holy":15}},"note":" （本服實作：精煉+9：聖屬性魔法傷害+15% **已補上生效**）"},"poenitentia_gladius":{"refine":{"11":{"magicEleDmg_holy":10}},"note":" （本服實作：精煉+11：聖屬性魔法傷害+10% **已補上生效**）"},"poenitentia_ligula":{"refine":{"11":{"rangedDmgPct":10}},"note":" （本服實作：精煉+11：遠距離物理傷害+10% **已補上生效**）"},"up_magic_sword":{"refine":{"9":{"allEleDmg":15}},"note":" （本服實作：精煉+9：全屬性魔法傷害+15% **已補上生效**）"},"fourth_1h_dagger":{"per":{"4":{"allEleDmg":2}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+2% **已補上生效**）"},"adulter_f_dagger":{"refine":{"9":{"allTargetDmgPct":15},"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_dagger":{"refine":{"9":{"allTargetDmgPct":15},"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：近距離物理傷害+15% **已補上生效**）"},"magic_sword_lt":{"refine":{"9":{"allEleDmg":15,"allTargetDmgPct":15}},"note":" （本服實作：精煉+9：全屬性魔法傷害+15%、對全體型/全階級敵人傷害+15% **已補上生效**）"},"adulter_f_axe":{"refine":{"9":{"allTargetDmgPct":15},"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_axe":{"refine":{"9":{"allTargetDmgPct":15},"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15%；精煉+12：遠距離物理傷害+15% **已補上生效**）"},"up_soul_weight":{"per":{"3":{"allEleDmg":2}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+2% **已補上生效**）"},"soul_weight_lt":{"per":{"3":{"allEleDmg":3}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+3% **已補上生效**）"},"fourth_1h_knuckle":{"per":{"4":{"meleeDmgPct":2}},"note":" （本服實作：精煉每+4：近距離物理傷害+2% **已補上生效**）"},"adulter_f_knuckle":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"adulter_f_claw":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_knuckle":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_claw":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"iron_nail_k_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"trumpet_shell_k":{"per":{"3":{"magicEleDmg_none":4}},"note":" （本服實作：精煉每+3：無屬性魔法傷害+4% **已補上生效**）"},"up_trumpet_shell_k":{"per":{"3":{"allEleDmg":4}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+4% **已補上生效**）"},"fourth_bh_lute":{"per":{"4":{"rangedDmgPct":2}},"note":" （本服實作：精煉每+4：遠距離物理傷害+2% **已補上生效**）"},"adulter_f_violin":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"adulter_f_harp":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"vivatus_f_violin":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_harp":{"refine":{"12":{"magicEleDmg_none":15}},"note":" （本服實作：精煉+12：無屬性魔法傷害+15% **已補上生效**）"},"trumpet_shell_k_lt":{"per":{"3":{"allEleDmg":4}},"note":" （本服實作：精煉每+3：全屬性魔法傷害+4% **已補上生效**）"},"saint_hall":{"refine":{"11":{"magicEleDmg_holy":10}},"note":" （本服實作：精煉+11：聖屬性魔法傷害+10% **已補上生效**）"},"fourth_1h_mace":{"per":{"4":{"allEleDmg":2}},"note":" （本服實作：精煉每+4：全屬性魔法傷害+2% **已補上生效**）"},"poenitentia_pendulus":{"refine":{"11":{"meleeDmgPct":10}},"note":" （本服實作：精煉+11：近距離物理傷害+10% **已補上生效**）"},"adulter_f_mace":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"adulter_f_hall":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_mace":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_hall":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"fourth_bh_sword":{"per":{"4":{"meleeDmgPct":2}},"note":" （本服實作：精煉每+4：近距離物理傷害+2% **已補上生效**）"},"adulter_f_t_sword":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"vivatus_f_t_sword":{"refine":{"12":{"meleeDmgPct":15}},"note":" （本服實作：精煉+12：近距離物理傷害+15% **已補上生效**）"},"up_avenger":{"refine":{"9":{"allTargetDmgPct":15}},"note":" （本服實作：精煉+9：對全體型/全階級敵人傷害+15% **已補上生效**）"},"fourth_bh_axe":{"per":{"4":{"meleeDmgPct":2}},"note":" （本服實作：精煉每+4：近距離物理傷害+2% **已補上生效**）"},"avenger_lt":{"refine":{"9":{"meleeDmgPct":15,"rangedDmgPct":15,"allTargetDmgPct":20}},"note":" （本服實作：精煉+9：近距離物理傷害+15%、遠距離物理傷害+15%、對全體型/全階級敵人傷害+20% **已補上生效**）"},"poenitentia_tenon":{"refine":{"11":{"rangedDmgPct":15}},"note":" （本服實作：精煉+11：遠距離物理傷害+15% **已補上生效**）"},"poenitentia_nervus":{"refine":{"7":{"rangedDmgPct":10}},"note":" （本服實作：精煉+7：遠距離物理傷害+10% **已補上生效**）"},"poenetentia_attendo":{"refine":{"7":{"rangedDmgPct":10}},"note":" （本服實作：精煉+7：遠距離物理傷害+10% **已補上生效**）"},"poenetentia_vatia":{"refine":{"7":{"rangedDmgPct":10}},"note":" （本服實作：精煉+7：遠距離物理傷害+10% **已補上生效**）"},"adulter_f_c_bow":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"adulter_f_ballista":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"adulter_f_a_bow":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_c_bow":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_ballista":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"vivatus_f_a_bow":{"refine":{"12":{"rangedDmgPct":15}},"note":" （本服實作：精煉+12：遠距離物理傷害+15% **已補上生效**）"},"royal_bow_k_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"narcis_bow_lt":{"per":{"3":{"rangedDmgPct":4}},"note":" （本服實作：精煉每+3：遠距離物理傷害+4% **已補上生效**）"},"survive_circlet_k_lt":{"refine":{"9":{"allEleDmg":15}},"note":" （本服實作：精煉+9：全屬性魔法傷害+15% **已補上生效**）"},"gold_fish_hat_lt":{"refine":{"7":{"meleeDmgPct":10,"magicEleDmg_holy":10}},"note":" （本服實作：精煉+7：近距離物理傷害+10%、聖屬性魔法傷害+10% **已補上生效**）"},"viva_adul_hat_wl1":{"per":{"4":{"magicEleDmg_ghost":7}},"note":" （本服實作：精煉每+4：念屬性魔法傷害+7% **已補上生效**）"},"viva_adul_hat_sr1":{"per":{"4":{"meleeDmgPct":7}},"note":" （本服實作：精煉每+4：近距離物理傷害+7% **已補上生效**）"},"viva_adul_hat_ab2":{"per":{"4":{"meleeDmgPct":7,"rangedDmgPct":7}},"note":" （本服實作：精煉每+4：近距離物理傷害+7%、遠距離物理傷害+7% **已補上生效**）"},"viva_adul_hat_sc1":{"per":{"4":{"meleeDmgPct":7}},"note":" （本服實作：精煉每+4：近距離物理傷害+7% **已補上生效**）"},"viva_adul_hat_ra1":{"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"viva_adul_hat_lg2":{"per":{"4":{"meleeDmgPct":7}},"note":" （本服實作：精煉每+4：近距離物理傷害+7% **已補上生效**）"},"viva_adul_hat_gc1":{"per":{"4":{"meleeDmgPct":7}},"note":" （本服實作：精煉每+4：近距離物理傷害+7% **已補上生效**）"},"viva_adul_hat_gc2":{"per":{"4":{"meleeDmgPct":7}},"note":" （本服實作：精煉每+4：近距離物理傷害+7% **已補上生效**）"},"viva_adul_hat_rk1":{"per":{"4":{"meleeDmgPct":7}},"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉每+4：近距離物理傷害+7%；精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"viva_adul_hat_wm1":{"per":{"4":{"magicEleDmg_none":7}},"note":" （本服實作：精煉每+4：無屬性魔法傷害+7% **已補上生效**）"},"viva_adul_hat_wm2":{"per":{"4":{"rangedDmgPct":7}},"note":" （本服實作：精煉每+4：遠距離物理傷害+7% **已補上生效**）"},"viva_adul_hat_nc1":{"per":{"4":{"meleeDmgPct":7}},"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉每+4：近距離物理傷害+7%；精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"viva_adul_hat_nc2":{"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"viva_adul_hat_gn1":{"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"viva_adul_hat_gn2":{"per":{"4":{"meleeDmgPct":7}},"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉每+4：近距離物理傷害+7%；精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"viva_adul_hat_rl1":{"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"viva_adul_hat_rl2":{"refine":{"7":{"allTargetDmgPct":5}},"note":" （本服實作：精煉+7：對全體型/全階級敵人傷害+5% **已補上生效**）"},"item_1para_boots_a":{"flat":{"meleeDmgPct":3,"rangedDmgPct":3},"note":" （本服實作：近距離物理傷害+3%、遠距離物理傷害+3% **已補上生效**）"},"item_1para_boots_b":{"flat":{"allEleDmg":3},"note":" （本服實作：全屬性魔法傷害+3% **已補上生效**）"},"snowflower_boots":{"refine":{"7":{"meleeDmgPct":7,"rangedDmgPct":7}},"note":" （本服實作：精煉+7：近距離物理傷害+7%、遠距離物理傷害+7% **已補上生效**）"},"snowflower_shoes":{"refine":{"7":{"allEleDmg":7}},"note":" （本服實作：精煉+7：全屬性魔法傷害+7% **已補上生效**）"},"royal_h_boots_b":{"refine":{"7":{"allEleDmg":5}},"note":" （本服實作：精煉+7：全屬性魔法傷害+5% **已補上生效**）"},"astraea_cape_lt":{"refine":{"11":{"meleeDmgPct":10,"rangedDmgPct":10,"allEleDmg":10}},"note":" （本服實作：精煉+11：近距離物理傷害+10%、遠距離物理傷害+10%、全屬性魔法傷害+10% **已補上生效**）"},"solid_edge":{"per":{"4":{"meleeDmgPct":4}},"note":" （本服實作：精煉每+4：近距離物理傷害+4% **已補上生效**）"},"poenitentia_sol":{"refine":{"7":{"rangedDmgPct":7}},"note":" （本服實作：精煉+7：遠距離物理傷害+7% **已補上生效**）"},"mh_p89_ad":{"refine":{"7":{"rangedDmgPct":10}},"note":" （本服實作：精煉+7：遠距離物理傷害+10% **已補上生效**）"},"ac_b44_ad":{"flat":{"rangedDmgPct":7},"note":" （本服實作：遠距離物理傷害+7% **已補上生效**）"},"violent_d_s_armor":{"refine":{"9":{"allEleDmg":20}},"note":" （本服實作：精煉+9：全屬性魔法傷害+20% **已補上生效**）"}};
+(function applyDmgTypeBackfill() {
+  if (typeof ITEMS === 'undefined') return;
+  function add(t, s) { for (var k in s) t[k] = (t[k] || 0) + s[k]; }
+  for (var id in DMGTYPE_BACKFILL) {
+    var it = ITEMS[id]; if (!it) continue;
+    var p = DMGTYPE_BACKFILL[id];
+    if (p.flat) { it.bonus = it.bonus || {}; add(it.bonus, p.flat); }
+    if (p.per) for (var s in p.per) {
+      var f = s === '1' ? 'perRefine' : 'per' + s + 'Refine';
+      it[f] = it[f] || {}; add(it[f], p.per[s]);
+    }
+    if (p.refine) { it.condBonus = it.condBonus || [];
+      for (var r in p.refine) it.condBonus.push({ when: { refineMin: +r }, bonus: p.refine[r] }); }
+    if (p.note) it.desc = (it.desc || '') + p.note;
+  }
+})();
+/* ==== DMGTYPE-BACKFILL END ==== */
+
+/* ==== SKILL-BACKFILL BEGIN(tools/skillfill.js 生成,勿手改) ==== */
+/* 技能加成回填。
+   道具說明（官方原文）寫著「某某技能傷害+N%／冷卻-N秒」，但那些從來沒有被
+   轉成程式讀得到的 skillDmg_/skillCdFlat_ key——說明欄有、程式沒有。
+   全站掃出 989 條這種子句，其中只有 31 條接好了。
+
+   這一份是**能被嚴格文法完整解析**的那批（561 件、949 條）：
+   整句必須被文法吃完，殘留一個字就整句放棄，所以帶條件的句子
+   （「與XX一起裝備時」「精煉值總和為N以上時」「[D階級]」）全部不在裡面。
+
+   技能名對照用本服技能表的中文名，另加 4 組**確定性**別名（異體字／同字換序）：
+     手推車加農炮=手推車加農砲  虎炮=虎砲  爆炸孢子=孢子爆炸  火神炮=火神砲
+
+   合併方式是**相加**（跟 mergeBonus 一致），不覆蓋既有欄位；
+   而且產生時已經跳過「該道具本來就有同一個技能 key」的句子，不會重複計。 */
+const SKILL_BONUS_BACKFILL = {"ep172_1h_book2":{"note":" （本服實作：精煉+7：火箭術傷害+25%、雷擊術傷害+25%；精煉+11：火箭術傷害+30%、雷擊術傷害+30% **已補上生效**）","refine":{"7":{"skillDmg_firebolt":25,"skillDmg_lightningbolt":25},"11":{"skillDmg_firebolt":30,"skillDmg_lightningbolt":30}}},"peuz_plate":{"note":" （本服實作：音波斬傷害+100%、風刃傷害+100% **已補上生效**）","flat":{"skillDmg_rk_sonicwave":100,"skillDmg_rk_windcutter":100}},"ep172_1h_sword2":{"note":" （本服實作：龍捲手推車傷害+10%；精煉+7：龍捲手推車傷害+15%；精煉+11：龍捲手推車傷害+25% **已補上生效**）","flat":{"skillDmg_gn_carttornado":10},"refine":{"7":{"skillDmg_gn_carttornado":15},"11":{"skillDmg_gn_carttornado":25}}},"ep172_1h_dagger2":{"note":" （本服實作：致命威嚇傷害+10%；精煉+7：致命威嚇傷害+10%；精煉+11：致命威嚇傷害+15% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":10},"refine":{"7":{"skillDmg_sc_fatalmenace":10},"11":{"skillDmg_sc_fatalmenace":15}}},"ep172_1h_axe":{"note":" （本服實作：精煉+9：斧刃旋風冷卻-1秒；精煉+11：迴旋飛斧傷害+25% **已補上生效**）","refine":{"9":{"skillCdFlat_nc_axetornado":-1},"11":{"skillDmg_nc_axeboomerang":25}}},"ep172_bh_sword":{"note":" （本服實作：風刃傷害+10%；精煉+7：風刃傷害+10%；精煉+11：風刃傷害+15% **已補上生效**）","flat":{"skillDmg_rk_windcutter":10},"refine":{"7":{"skillDmg_rk_windcutter":10},"11":{"skillDmg_rk_windcutter":15}}},"ep172_bh_bow":{"note":" （本服實作：箭雨風暴傷害+10%；精煉+7：箭雨風暴傷害+10%；精煉+9：箭雨風暴冷卻-1秒；精煉+11：箭雨風暴傷害+15% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":10},"refine":{"7":{"skillDmg_ra_arrowstorm":10},"9":{"skillCdFlat_ra_arrowstorm":-1},"11":{"skillDmg_ra_arrowstorm":15}}},"ep172_bh_bow2":{"note":" （本服實作：三角射擊傷害+10%；精煉+7：三角射擊傷害+15%；精煉+11：三角射擊傷害+20% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":10},"refine":{"7":{"skillDmg_sc_triangleshot":15},"11":{"skillDmg_sc_triangleshot":20}}},"ep172_bh_bow3":{"note":" （本服實作：驟雨箭傷害+10%；精煉+7：驟雨箭傷害+15%；精煉+9：驟雨箭冷卻-2.5秒；精煉+11：驟雨箭傷害+20% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":10},"refine":{"7":{"skillDmg_wm_severerainstorm":15},"9":{"skillCdFlat_wm_severerainstorm":-2.5},"11":{"skillDmg_wm_severerainstorm":20}}},"guillotine_katar":{"note":" （本服實作：十字斬傷害+30% **已補上生效**）","flat":{"skillDmg_shc_crossslash":30}},"golden_rod_staff2":{"note":" （本服實作：雷鳴術傷害+30% **已補上生效**）","flat":{"skillDmg_jupitel":30}},"aqua_staff2":{"note":" （本服實作：冰箭術傷害+30%、冰凍術傷害+30% **已補上生效**）","flat":{"skillDmg_coldbolt":30,"skillDmg_frostdiver":30}},"crimson_staff2":{"note":" （本服實作：火箭術傷害+30%、火球術傷害+30% **已補上生效**）","flat":{"skillDmg_firebolt":30,"skillDmg_fireball":30}},"forest_staff2":{"note":" （本服實作：地震術傷害+30%、崩裂術傷害+30% **已補上生效**）","flat":{"skillDmg_earthspike":30,"skillDmg_heavensdrive":30}},"probation_staff":{"note":" （本服實作：大地脈動傷害+20% **已補上生效**）","flat":{"skillDmg_wl_earthstrain":20}},"iron_staff":{"note":" （本服實作：精煉每+3：大地脈動傷害+12%；精煉+11：大地脈動冷卻-1秒 **已補上生效**）","per":{"3":{"skillDmg_wl_earthstrain":12}},"refine":{"11":{"skillCdFlat_wl_earthstrain":-1}}},"staff_of_miracle":{"note":" （本服實作：精煉+9：聖靈召喚傷害+20%、念力連擊傷害+20%、靈魂爆炸傷害+20%；精煉+11：聖靈召喚傷害+30%、念力連擊傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_soulstrike":20,"skillDmg_hw_napalmvulcan":20,"skillDmg_wl_soulexpansion":20},"11":{"skillDmg_soulstrike":30,"skillDmg_hw_napalmvulcan":30}}},"gravitation_staff":{"note":" （本服實作：精煉+11：重力原野冷卻-2秒 **已補上生效**）","refine":{"11":{"skillCdFlat_hw_gravitation":-2}}},"adorare_staff":{"note":" （本服實作：精煉+9：聖光讚歌傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_ab_adoramus":30}}},"r_magician_staff":{"note":" （本服實作：精煉+9：連鎖閃電傷害+20%、大地脈動傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_wl_chainlightning":20,"skillDmg_wl_earthstrain":20}}},"highness_heal_3sec":{"note":" （本服實作：至高治癒冷卻-3秒 **已補上生效**）","flat":{"skillCdFlat_ab_highnessheal":-3}},"probation_crossbow":{"note":" （本服實作：箭雨風暴傷害+20% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":20}},"probation_bow":{"note":" （本服實作：驟雨箭傷害+20% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":20}},"old_camo_rabbithood":{"note":" （本服實作：精煉每+2：集束炸彈傷害+15% **已補上生效**） （本服實作：精煉每+1：遠距離物理傷害+1%；精煉每+2：狼突擊（本服名稱：戰狼突擊）傷害+10% **已補上生效**） （⚠本服說明：「遠距離物理傷害%」目前只作用在普通攻擊上，技能不吃）","per":{"1":{"rangedDmgPct":1},"2":{"skillDmg_ra_clusterbomb":15,"skillDmg_ra_wugstrike":10}}},"s_circlet_of_time_lg":{"note":" （本服實作：精煉每+3：驅逐尖擊傷害+15%、加農長矛傷害+15% **已補上生效**）","per":{"3":{"skillDmg_lg_banishingpoint":15,"skillDmg_lg_cannonspear":15}}},"s_circlet_of_time_nc":{"note":" （本服實作：精煉每+3：臂裝加農砲傷害+10%、推進拳傷害+10% **已補上生效**）","per":{"3":{"skillDmg_nc_armscannon":10,"skillDmg_nc_boostknuckle":10}}},"s_circlet_of_time_gn":{"note":" （本服實作：精煉每+3：孢子爆炸傷害+20%、龍捲手推車傷害+20% **已補上生效**）","per":{"3":{"skillDmg_gn_sporeexplosion":20,"skillDmg_gn_carttornado":20}}},"s_circlet_of_time_gc":{"note":" （本服實作：精煉每+3：迴旋刃傷害+20%、反擊斬傷害+20% **已補上生效**）","per":{"3":{"skillDmg_gc_rollingcutter":20,"skillDmg_gc_counterslash":20}}},"s_circlet_of_time_sc":{"note":" （本服實作：精煉每+3：致命威嚇傷害+30%、幻象炸彈傷害+30% **已補上生效**）","per":{"3":{"skillDmg_sc_fatalmenace":30,"skillDmg_sc_feintbomb":30}}},"s_circlet_of_time_ab":{"note":" （本服實作：精煉每+3：聖光讚歌傷害+20% **已補上生效**）","per":{"3":{"skillDmg_ab_adoramus":20}}},"s_circlet_of_time_sr":{"note":" （本服實作：精煉每+3：導氣彈傷害+20%、虎砲傷害+10% **已補上生效**）","per":{"3":{"skillDmg_sr_knucklearrow":20,"skillDmg_sr_tigercannon":10}}},"s_circlet_of_time_wl":{"note":" （本服實作：精煉每+3：連鎖閃電傷害+20%、傑克霜寒傷害+20% **已補上生效**）","per":{"3":{"skillDmg_wl_chainlightning":20,"skillDmg_wl_jackfrost":20}}},"s_circlet_of_time_so":{"note":" （本服實作：精煉每+3：精神波動傷害+20%、鑽石星塵傷害+20% **已補上生效**）","per":{"3":{"skillDmg_so_psychicwave":20,"skillDmg_so_diamonddust":20}}},"s_acolyte_pendant":{"note":" （本服實作：神聖之光傷害+50% **已補上生效**）","flat":{"skillDmg_holylight":50}},"s_ignition_pendant":{"note":" （本服實作：爆燃劍傷害+5% **已補上生效**）","flat":{"skillDmg_rk_ignitionbreak":5}},"s_ignition_earing":{"note":" （本服實作：爆燃劍冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_rk_ignitionbreak":-0.2}},"s_cluster_armor":{"note":" （本服實作：集束炸彈傷害+5% **已補上生效**）","flat":{"skillDmg_ra_clusterbomb":5}},"s_cluster_shield":{"note":" （本服實作：集束炸彈傷害+3% **已補上生效**）","flat":{"skillDmg_ra_clusterbomb":3}},"s_cluster_shoes":{"note":" （本服實作：集束炸彈傷害+5% **已補上生效**）","flat":{"skillDmg_ra_clusterbomb":5}},"s_aimed_pendant":{"note":" （本服實作：瞄準標記傷害+5% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":5}},"s_arrow_armor":{"note":" （本服實作：箭雨風暴傷害+5% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":5}},"s_shooting_pendant":{"note":" （本服實作：銳利射擊傷害+5% **已補上生效**）","flat":{"skillDmg_sn_sharpshooting":5}},"s_tornado_armor":{"note":" （本服實作：斧刃旋風傷害+5% **已補上生效**）","flat":{"skillDmg_nc_axetornado":5}},"s_boomerang_pendant":{"note":" （本服實作：迴旋飛斧傷害+5% **已補上生效**）","flat":{"skillDmg_nc_axeboomerang":5}},"s_boomerang_earing":{"note":" （本服實作：迴旋飛斧冷卻-0.1秒 **已補上生效**）","flat":{"skillCdFlat_nc_axeboomerang":-0.1}},"s_vulcan_armor":{"note":" （本服實作：火神砲傷害+5% **已補上生效**）","flat":{"skillDmg_nc_vulcanarm":5}},"s_arms_pendant":{"note":" （本服實作：臂裝加農砲傷害+5% **已補上生效**）","flat":{"skillDmg_nc_armscannon":5}},"s_skynetblow_pendant":{"note":" （本服實作：天羅地網傷害+5% **已補上生效**）","flat":{"skillDmg_sr_skynetblow":5}},"s_knucklearrow_armor":{"note":" （本服實作：導氣彈傷害+5% **已補上生效**）","flat":{"skillDmg_sr_knucklearrow":5}},"s_tigercannon_pendant":{"note":" （本服實作：虎砲傷害+5% **已補上生效**）","flat":{"skillDmg_sr_tigercannon":5}},"s_adoramus_pendant":{"note":" （本服實作：聖光讚歌傷害+5% **已補上生效**）","flat":{"skillDmg_ab_adoramus":5}},"s_judex_armor":{"note":" （本服實作：神聖裁決傷害+5% **已補上生效**）","flat":{"skillDmg_ab_judex":5}},"s_magnus_pendant":{"note":" （本服實作：十字驅魔攻擊傷害+5% **已補上生效**）","flat":{"skillDmg_asperio":5}},"s_arrowvulcan_pendant":{"note":" （本服實作：奧義箭亂舞傷害+5% **已補上生效**）","flat":{"skillDmg_cg_arrowvulcan":5}},"s_arrowvulcan_earing":{"note":" （本服實作：奧義箭亂舞冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_cg_arrowvulcan":-0.2}},"s_jack_armor":{"note":" （本服實作：傑克霜寒傷害+5% **已補上生效**）","flat":{"skillDmg_wl_jackfrost":5}},"s_jack_shoes":{"note":" （本服實作：傑克霜寒冷卻-1秒 **已補上生效**）","flat":{"skillCdFlat_wl_jackfrost":-1}},"s_strain_pendant":{"note":" （本服實作：大地脈動傷害+5% **已補上生效**）","flat":{"skillDmg_wl_earthstrain":5}},"s_strain_earing":{"note":" （本服實作：大地脈動冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_wl_earthstrain":-0.2}},"s_crimson_armor":{"note":" （本服實作：深紅岩漿傷害+5% **已補上生效**）","flat":{"skillDmg_wl_crimsonrock":5}},"s_chain_pendant":{"note":" （本服實作：連鎖閃電傷害+5% **已補上生效**）","flat":{"skillDmg_wl_chainlightning":5}},"s_triangle_armor":{"note":" （本服實作：三角射擊傷害+5% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":5}},"s_shadowspell_pendant":{"note":" （本服實作：隕石術傷害+5% **已補上生效**）","flat":{"skillDmg_meteorstorm":5}},"s_menace_armor":{"note":" （本服實作：致命威嚇傷害+5% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":5}},"s_paint_pendant":{"note":" （本服實作：幻象炸彈傷害+5% **已補上生效**）","flat":{"skillDmg_sc_feintbomb":5}},"s_paint_earing":{"note":" （本服實作：幻象炸彈冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_sc_feintbomb":-0.2}},"s_rolling_armor":{"note":" （本服實作：迴旋刃傷害+5% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":5}},"s_slash_armor":{"note":" （本服實作：反擊斬傷害+5% **已補上生效**）","flat":{"skillDmg_gc_counterslash":5}},"s_ripper_pendant":{"note":" （本服實作：十字撕裂者傷害+5% **已補上生效**）","flat":{"skillDmg_gc_crossripperslasher":5}},"s_dust_armor":{"note":" （本服實作：鑽石星塵傷害+5% **已補上生效**）","flat":{"skillDmg_so_diamonddust":5}},"s_grave_pendant":{"note":" （本服實作：大地之牙傷害+5% **已補上生效**）","flat":{"skillDmg_so_earthgrave":5}},"s_grave_earing":{"note":" （本服實作：大地之牙冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_so_earthgrave":-0.2}},"s_psychic_armor":{"note":" （本服實作：精神波動傷害+5% **已補上生效**）","flat":{"skillDmg_so_psychicwave":5}},"s_varetyr_pendant":{"note":" （本服實作：雷光戰矛傷害+5% **已補上生效**）","flat":{"skillDmg_so_varetyrspear":5}},"s_cart_tornado_armor":{"note":" （本服實作：龍捲手推車傷害+5% **已補上生效**）","flat":{"skillDmg_gn_carttornado":5}},"s_cannon_cart_pendant":{"note":" （本服實作：手推車加農砲傷害+5% **已補上生效**）","flat":{"skillDmg_gn_cartcannon":5}},"s_spore_bomb_armor":{"note":" （本服實作：孢子爆炸傷害+5% **已補上生效**）","flat":{"skillDmg_gn_sporeexplosion":5}},"s_spore_bomb_shoes":{"note":" （本服實作：孢子爆炸冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_gn_sporeexplosion":-0.2}},"s_crazy_pendant":{"note":" （本服實作：瘋狂野草傷害+5% **已補上生效**）","flat":{"skillDmg_gn_crazyweed":5}},"s_crazy_earing":{"note":" （本服實作：瘋狂野草冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_gn_crazyweed":-0.2}},"s_brand_armor":{"note":" （本服實作：騎士烙印傷害+5% **已補上生效**）","flat":{"skillDmg_lg_overbrand":5}},"s_brand_shoes":{"note":" （本服實作：騎士烙印傷害+5% **已補上生效**）","flat":{"skillDmg_lg_overbrand":5}},"s_chain_press_pendant":{"note":" （本服實作：盾牌重壓傷害+5% **已補上生效**）","flat":{"skillDmg_lg_shieldpress":5}},"s_chain_press_earing":{"note":" （本服實作：連續盾擊傷害+5% **已補上生效**）","flat":{"skillDmg_pa_shieldchain":5}},"s_banish_cannon_armor":{"note":" （本服實作：驅逐尖擊傷害+5% **已補上生效**）","flat":{"skillDmg_lg_banishingpoint":5}},"s_banish_cannon_shoes":{"note":" （本服實作：加農長矛冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_lg_cannonspear":-0.2}},"s_genesis_pendant":{"note":" （本服實作：創世之光傷害+5% **已補上生效**）","flat":{"skillDmg_lg_rayofgenesis":5}},"s_genesis_earing":{"note":" （本服實作：創世之光冷卻-0.2秒 **已補上生效**）","flat":{"skillCdFlat_lg_rayofgenesis":-0.2}},"s_super_magic_armor":{"note":" （本服實作：火箭術傷害+10%、冰箭術傷害+10%、雷擊術傷害+10%；精煉每+2：火箭術傷害+4%、冰箭術傷害+4%、雷擊術傷害+4% **已補上生效**）","flat":{"skillDmg_firebolt":10,"skillDmg_coldbolt":10,"skillDmg_lightningbolt":10},"per":{"2":{"skillDmg_firebolt":4,"skillDmg_coldbolt":4,"skillDmg_lightningbolt":4}}},"s_super_magic_shoes":{"note":" （本服實作：暴風雪傷害+10%、怒雷強擊傷害+10%、崩裂術傷害+10%、隕石術傷害+10%；精煉每+2：暴風雪傷害+4%、怒雷強擊傷害+4%、崩裂術傷害+4%、隕石術傷害+4% **已補上生效**）","flat":{"skillDmg_stormgust":10,"skillDmg_lordofvermillion":10,"skillDmg_heavensdrive":10,"skillDmg_meteorstorm":10},"per":{"2":{"skillDmg_stormgust":4,"skillDmg_lordofvermillion":4,"skillDmg_heavensdrive":4,"skillDmg_meteorstorm":4}}},"s_super_power_pendant":{"note":" （本服實作：背刺傷害+10%、潛擊傷害+10% **已補上生效**）","flat":{"skillDmg_rg_backstap":10,"skillDmg_rg_raid":10}},"s_super_power_earing":{"note":" （本服實作：迴旋盾擊傷害+10%、連續盾擊傷害+10% **已補上生效**）","flat":{"skillDmg_cr_shieldboomerang":10,"skillDmg_pa_shieldchain":10}},"surastone_bottom":{"note":" （本服實作：連環全身掌傷害+20% **已補上生效**）","flat":{"skillDmg_mo_chaincombo":20}},"rangerstone_bottom":{"note":" （本服實作：箭雨傷害+20% **已補上生效**）","flat":{"skillDmg_arrowshower":20}},"rangerstone_robe":{"note":" （本服實作：箭雨風暴傷害+10% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":10}},"sorcererstone_bottom":{"note":" （本服實作：火箭術傷害+20%、冰箭術傷害+20%、雷擊術傷害+20% **已補上生效**）","flat":{"skillDmg_firebolt":20,"skillDmg_coldbolt":20,"skillDmg_lightningbolt":20}},"sorcererstone_robe":{"note":" （本服實作：精神波動傷害+10% **已補上生效**）","flat":{"skillDmg_so_psychicwave":10}},"runeknightstone_middle":{"note":" （本服實作：螺旋擊刺傷害+15% **已補上生效**）","flat":{"skillDmg_lk_spiralpierce":15}},"geneticstone_robe":{"note":" （本服實作：手推車加農砲傷害+10% **已補上生效**）","flat":{"skillDmg_gn_cartcannon":10}},"geneticstone_bottom":{"note":" （本服實作：強酸攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_am_acidterror":20}},"warlockstone_middle":{"note":" （本服實作：隕石術傷害+20% **已補上生效**）","flat":{"skillDmg_meteorstorm":20}},"warlockstone_bottom":{"note":" （本服實作：火柱攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_firepillar":20}},"warlockstone_robe":{"note":" （本服實作：深紅岩漿傷害+10% **已補上生效**）","flat":{"skillDmg_wl_crimsonrock":10}},"shadowchasestone_bottom":{"note":" （本服實作：潛擊傷害+20% **已補上生效**）","flat":{"skillDmg_rg_raid":20}},"shadowchaserstone_robe":{"note":" （本服實作：三角射擊傷害+15% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":15}},"mechanicstone_robe":{"note":" （本服實作：斧刃旋風傷害+15% **已補上生效**）","flat":{"skillDmg_nc_axetornado":15}},"wanderminstrestone_robe":{"note":" （本服實作：驟雨箭傷害+15% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":15}},"archbishopstone_robe":{"note":" （本服實作：聖光讚歌傷害+15% **已補上生效**）","flat":{"skillDmg_ab_adoramus":15}},"royalguardstone_robe":{"note":" （本服實作：驅逐尖擊傷害+15% **已補上生效**）","flat":{"skillDmg_lg_banishingpoint":15}},"guillcrossstone_robe":{"note":" （本服實作：迴旋刃傷害+15% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":15}},"surastone_robe2":{"note":" （本服實作：導氣彈傷害+15% **已補上生效**）","flat":{"skillDmg_sr_knucklearrow":15}},"surastone_middle2":{"note":" （本服實作：猛龍誇強傷害+15% **已補上生效**）","flat":{"skillDmg_mo_combofinish":15}},"surastone_top2":{"note":" （本服實作：氣絕崩擊傷害+15% **已補上生效**）","flat":{"skillDmg_ch_chaincrush":15}},"sorcererstone_robe2":{"note":" （本服實作：鑽石星塵傷害+15% **已補上生效**）","flat":{"skillDmg_so_diamonddust":15}},"sorcererstone_middle2":{"note":" （本服實作：火箭術傷害+20%、冰箭術傷害+20%、雷擊術傷害+20% **已補上生效**）","flat":{"skillDmg_firebolt":20,"skillDmg_coldbolt":20,"skillDmg_lightningbolt":20}},"sorcererstone_top2":{"note":" （本服實作：地震術傷害+20%、崩裂術傷害+20% **已補上生效**）","flat":{"skillDmg_earthspike":20,"skillDmg_heavensdrive":20}},"shadowchaserstone_robe2":{"note":" （本服實作：致命威嚇傷害+15% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":15}},"shadowchasstone_middle2":{"note":" （本服實作：背刺傷害+15% **已補上生效**）","flat":{"skillDmg_rg_backstap":15}},"shadow_staff_k":{"note":" （本服實作：精煉每+3：大地之牙傷害+12%；精煉+11：精神波動冷卻-1秒 **已補上生效**）","per":{"3":{"skillDmg_so_earthgrave":12}},"refine":{"11":{"skillCdFlat_so_psychicwave":-1}}},"crimson_rose_stick":{"note":" （本服實作：精煉+11：深紅岩漿冷卻-1秒 **已補上生效**）","refine":{"11":{"skillCdFlat_wl_crimsonrock":-1}}},"psychic_spear_rod":{"note":" （本服實作：精煉+9：精神波動傷害+30%；精煉+11：雷光戰矛冷卻-2秒 **已補上生效**）","refine":{"9":{"skillDmg_so_psychicwave":30},"11":{"skillCdFlat_so_varetyrspear":-2}}},"dust_grave":{"note":" （本服實作：精煉+9：鑽石星塵傷害+30%、大地之牙傷害+30%；精煉+11：鑽石星塵傷害+20%、大地之牙傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_so_diamonddust":30,"skillDmg_so_earthgrave":30},"11":{"skillDmg_so_diamonddust":20,"skillDmg_so_earthgrave":20}}},"ponitendtia":{"note":" （本服實作：精煉+9：十字驅魔攻擊傷害+30%、神聖裁決傷害+30%；精煉+11：十字驅魔攻擊傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_asperio":30,"skillDmg_ab_judex":30},"11":{"skillDmg_asperio":20}}},"r_cleric_staff":{"note":" （本服實作：精煉+9：聖光讚歌傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_ab_adoramus":20}}},"scarlet_ribbon":{"note":" （本服實作：精煉+9：驟雨箭冷卻-1秒 **已補上生效**）","refine":{"9":{"skillCdFlat_wm_severerainstorm":-1}}},"ein_1hwhip":{"note":" （本服實作：精煉+9：驟雨箭傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_wm_severerainstorm":15}}},"probation_katar":{"note":" （本服實作：迴旋刃傷害+20% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":20}},"meuchler_os":{"note":" （本服實作：精煉+9：十字撕裂者傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_gc_crossripperslasher":15}}},"reaper_cross":{"note":" （本服實作：精煉+9：迴旋刃傷害+30%；精煉+11：十字撕裂者傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_gc_rollingcutter":30},"11":{"skillDmg_gc_crossripperslasher":20}}},"ein_bhkatar":{"note":" （本服實作：迴旋刃傷害+10%；精煉+9：迴旋刃傷害+15% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":10},"refine":{"9":{"skillDmg_gc_rollingcutter":15}}},"r_katar":{"note":" （本服實作：精煉+9：迴旋刃傷害+20%、十字撕裂者傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_gc_rollingcutter":20,"skillDmg_gc_crossripperslasher":20}}},"origin_of_elemental":{"note":" （本服實作：雷擊術傷害+10%、火箭術傷害+10%、冰箭術傷害+10%、地震術傷害+10% **已補上生效**）","flat":{"skillDmg_lightningbolt":10,"skillDmg_firebolt":10,"skillDmg_coldbolt":10,"skillDmg_earthspike":10}},"probation_magicbook":{"note":" （本服實作：大地之牙傷害+20% **已補上生效**）","flat":{"skillDmg_so_earthgrave":20}},"r_sage_book":{"note":" （本服實作：精煉+9：雷光戰矛傷害+20%、鑽石星塵傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_so_varetyrspear":20,"skillDmg_so_diamonddust":20}}},"sura_bottom":{"note":" （本服實作：連環全身掌傷害+20% **已補上生效**）","flat":{"skillDmg_mo_chaincombo":20}},"sura_robe2":{"note":" （本服實作：導氣彈傷害+15% **已補上生效**）","flat":{"skillDmg_sr_knucklearrow":15}},"ranger_bottom":{"note":" （本服實作：箭雨傷害+20% **已補上生效**）","flat":{"skillDmg_arrowshower":20}},"ranger_robe":{"note":" （本服實作：箭雨風暴傷害+10% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":10}},"sorcerer_bottom":{"note":" （本服實作：火箭術傷害+20%、冰箭術傷害+20%、雷擊術傷害+20% **已補上生效**）","flat":{"skillDmg_firebolt":20,"skillDmg_coldbolt":20,"skillDmg_lightningbolt":20}},"sorcerer_robe":{"note":" （本服實作：精神波動傷害+10% **已補上生效**）","flat":{"skillDmg_so_psychicwave":10}},"runeknight_middle":{"note":" （本服實作：螺旋擊刺傷害+15% **已補上生效**）","flat":{"skillDmg_lk_spiralpierce":15}},"genetic_bottom":{"note":" （本服實作：強酸攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_am_acidterror":20}},"genetic_robe":{"note":" （本服實作：手推車加農砲傷害+10% **已補上生效**）","flat":{"skillDmg_gn_cartcannon":10}},"warlock_middle":{"note":" （本服實作：隕石術傷害+20% **已補上生效**）","flat":{"skillDmg_meteorstorm":20}},"warlock_bottom":{"note":" （本服實作：火柱攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_firepillar":20}},"warlock_robe":{"note":" （本服實作：深紅岩漿傷害+10% **已補上生效**）","flat":{"skillDmg_wl_crimsonrock":10}},"shadowchaser_bottom":{"note":" （本服實作：潛擊傷害+20% **已補上生效**）","flat":{"skillDmg_rg_raid":20}},"shadowchaser_robe":{"note":" （本服實作：三角射擊傷害+15% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":15}},"mechanic_bottom":{"note":" （本服實作：手推車終結技傷害+20% **已補上生效**）","flat":{"skillDmg_ws_cartterm":20}},"mechanic_robe":{"note":" （本服實作：斧刃旋風傷害+15% **已補上生效**）","flat":{"skillDmg_nc_axetornado":15}},"wanderminstrel_bottom":{"note":" （本服實作：奧義箭亂舞傷害+20% **已補上生效**）","flat":{"skillDmg_cg_arrowvulcan":20}},"wanderminstrel_robe":{"note":" （本服實作：驟雨箭傷害+15% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":15}},"highpriest_bottom":{"note":" （本服實作：十字驅魔攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_asperio":20}},"archbishop_robe":{"note":" （本服實作：聖光讚歌傷害+15% **已補上生效**）","flat":{"skillDmg_ab_adoramus":15}},"paladin_bottom":{"note":" （本服實作：聖十字攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_cr_holycross":20}},"royalguard_robe":{"note":" （本服實作：驅逐尖擊傷害+15% **已補上生效**）","flat":{"skillDmg_lg_banishingpoint":15}},"assassincross_bottom":{"note":" （本服實作：音速投擲傷害+20% **已補上生效**）","flat":{"skillDmg_sonicblow":20}},"guillotinecross_robe":{"note":" （本服實作：迴旋刃傷害+15% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":15}},"sura_middle2":{"note":" （本服實作：猛龍誇強傷害+15% **已補上生效**）","flat":{"skillDmg_mo_combofinish":15}},"sura_top2":{"note":" （本服實作：氣絕崩擊傷害+15% **已補上生效**）","flat":{"skillDmg_ch_chaincrush":15}},"sorcerer_robe2":{"note":" （本服實作：鑽石星塵傷害+15% **已補上生效**）","flat":{"skillDmg_so_diamonddust":15}},"sorcerer_middle2":{"note":" （本服實作：火箭術傷害+20%、冰箭術傷害+20%、雷擊術傷害+20% **已補上生效**）","flat":{"skillDmg_firebolt":20,"skillDmg_coldbolt":20,"skillDmg_lightningbolt":20}},"sorcerer_top2":{"note":" （本服實作：地震術傷害+20%、崩裂術傷害+20% **已補上生效**）","flat":{"skillDmg_earthspike":20,"skillDmg_heavensdrive":20}},"shadowchaser_robe2":{"note":" （本服實作：致命威嚇傷害+15% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":15}},"shadowchaser_middle2":{"note":" （本服實作：背刺傷害+15% **已補上生效**）","flat":{"skillDmg_rg_backstap":15}},"probation_lance":{"note":" （本服實作：驅逐尖擊傷害+20% **已補上生效**）","flat":{"skillDmg_lg_banishingpoint":20}},"metal_stick":{"note":" （本服實作：加農長矛傷害+10%；精煉+7：騎士烙印傷害+10% **已補上生效**）","flat":{"skillDmg_lg_cannonspear":10},"refine":{"7":{"skillDmg_lg_overbrand":10}}},"undine_spear_k":{"note":" （本服實作：精煉+7：加農長矛傷害+15%、驅逐尖擊傷害+15%；精煉+11：加農長矛傷害+20%、驅逐尖擊傷害+20% **已補上生效**）","refine":{"7":{"skillDmg_lg_cannonspear":15,"skillDmg_lg_banishingpoint":15},"11":{"skillDmg_lg_cannonspear":20,"skillDmg_lg_banishingpoint":20}}},"boost_lance_os":{"note":" （本服實作：精煉+9：驅逐尖擊傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_lg_banishingpoint":20}}},"argen_blanco":{"note":" （本服實作：騎乘攻擊傷害+30%；精煉+9：百矛穿刺冷卻-1.5秒；精煉+11：騎乘攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_brandishspear":30},"refine":{"9":{"skillCdFlat_rk_hundredspear":-1.5},"11":{"skillDmg_brandishspear":20}}},"harve":{"note":" （本服實作：連續盾擊傷害+40%；精煉+9：盾牌重壓傷害+30%；精煉+11：連續盾擊傷害+20%、盾牌重壓傷害+20% **已補上生效**）","flat":{"skillDmg_pa_shieldchain":40},"refine":{"9":{"skillDmg_lg_shieldpress":30},"11":{"skillDmg_pa_shieldchain":20,"skillDmg_lg_shieldpress":20}}},"fortrage":{"note":" （本服實作：精煉+9：加農長矛傷害+20%；精煉+11：騎士烙印傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_lg_cannonspear":20},"11":{"skillDmg_lg_overbrand":20}}},"g_knight_spear":{"note":" （本服實作：精煉+9：驅逐尖擊傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_lg_banishingpoint":20}}},"farthezan":{"note":" （本服實作：精煉+9：創世之光傷害+30%；精煉+11：神之威壓傷害+20%、創世之光傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_lg_rayofgenesis":30},"11":{"skillDmg_pa_pressure":20,"skillDmg_lg_rayofgenesis":20}}},"estal":{"note":" （本服實作：孢子爆炸冷卻-1秒；精煉+9：孢子爆炸傷害+30%；精煉+11：孢子爆炸傷害+20% **已補上生效**）","flat":{"skillCdFlat_gn_sporeexplosion":-1},"refine":{"9":{"skillDmg_gn_sporeexplosion":30},"11":{"skillDmg_gn_sporeexplosion":20}}},"g_knight_jewelsword":{"note":" （本服實作：精煉+9：盾牌重壓傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_lg_shieldpress":20}}},"ranger_robe2":{"note":" （本服實作：瞄準標記傷害+15% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":15}},"mechanic_middle2":{"note":" （本服實作：手推車終結技傷害+15% **已補上生效**）","flat":{"skillDmg_ws_cartterm":15}},"mechanic_robe2":{"note":" （本服實作：臂裝加農砲傷害+15% **已補上生效**）","flat":{"skillDmg_nc_armscannon":15}},"highpriest_top2":{"note":" （本服實作：十字驅魔攻擊傷害+15% **已補上生效**）","flat":{"skillDmg_asperio":15}},"archbishop_robe2":{"note":" （本服實作：神聖裁決傷害+15% **已補上生效**）","flat":{"skillDmg_ab_judex":15}},"automatic_orb47":{"note":" （本服實作：音波斬傷害+15%、爆燃劍傷害+15% **已補上生效**）","flat":{"skillDmg_rk_sonicwave":15,"skillDmg_rk_ignitionbreak":15}},"automatic_orb48":{"note":" （本服實作：螺旋擊刺傷害+15%、百矛穿刺傷害+15% **已補上生效**）","flat":{"skillDmg_lk_spiralpierce":15,"skillDmg_rk_hundredspear":15}},"automatic_orb50":{"note":" （本服實作：驅逐尖擊傷害+15%、加農長矛傷害+15% **已補上生效**）","flat":{"skillDmg_lg_banishingpoint":15,"skillDmg_lg_cannonspear":15}},"automatic_orb51":{"note":" （本服實作：神之威壓傷害+15%、創世之光傷害+15% **已補上生效**）","flat":{"skillDmg_pa_pressure":15,"skillDmg_lg_rayofgenesis":15}},"automatic_orb52":{"note":" （本服實作：推進拳傷害+15%、臂裝加農砲傷害+15% **已補上生效**）","flat":{"skillDmg_nc_boostknuckle":15,"skillDmg_nc_armscannon":15}},"automatic_orb55":{"note":" （本服實作：龍捲手推車傷害+15%、手推車加農砲傷害+15% **已補上生效**）","flat":{"skillDmg_gn_carttornado":15,"skillDmg_gn_cartcannon":15}},"automatic_orb57":{"note":" （本服實作：強酸火煙瓶投擲傷害+15%、孢子爆炸傷害+15% **已補上生效**）","flat":{"skillDmg_bc_aciddemonstration":15,"skillDmg_gn_sporeexplosion":15}},"automatic_orb58":{"note":" （本服實作：音速投擲傷害+15%、十字斬傷害+15% **已補上生效**）","flat":{"skillDmg_sonicblow":15,"skillDmg_shc_crossslash":15}},"automatic_orb59":{"note":" （本服實作：十字撕裂者傷害+15%、迴旋刃傷害+15% **已補上生效**）","flat":{"skillDmg_gc_crossripperslasher":15,"skillDmg_gc_rollingcutter":15}},"automatic_orb60":{"note":" （本服實作：心靈震波傷害+15%、反擊斬傷害+15% **已補上生效**）","flat":{"skillDmg_asc_breaker":15,"skillDmg_gc_counterslash":15}},"automatic_orb61":{"note":" （本服實作：致命威嚇傷害+15%、潛擊傷害+15% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":15,"skillDmg_rg_raid":15}},"automatic_orb64":{"note":" （本服實作：深紅岩漿傷害+15%、大地脈動傷害+15% **已補上生效**）","flat":{"skillDmg_wl_crimsonrock":15,"skillDmg_wl_earthstrain":15}},"automatic_orb65":{"note":" （本服實作：傑克霜寒傷害+15%、連鎖閃電傷害+15% **已補上生效**）","flat":{"skillDmg_wl_jackfrost":15,"skillDmg_wl_chainlightning":15}},"automatic_orb67":{"note":" （本服實作：火箭術傷害+15%、冰箭術傷害+15%、雷擊術傷害+15% **已補上生效**）","flat":{"skillDmg_firebolt":15,"skillDmg_coldbolt":15,"skillDmg_lightningbolt":15}},"automatic_orb68":{"note":" （本服實作：精神波動傷害+15%、暖風冷卻-1秒 **已補上生效**）","flat":{"skillDmg_so_psychicwave":15,"skillCdFlat_so_warmer":-1}},"automatic_orb69":{"note":" （本服實作：鑽石星塵傷害+15%、大地之牙傷害+15% **已補上生效**）","flat":{"skillDmg_so_diamonddust":15,"skillDmg_so_earthgrave":15}},"automatic_orb70":{"note":" （本服實作：十字驅魔攻擊傷害+15%、聖光讚歌傷害+15% **已補上生效**）","flat":{"skillDmg_asperio":15,"skillDmg_ab_adoramus":15}},"automatic_orb71":{"note":" （本服實作：神聖之光傷害+15%、神聖裁決傷害+15% **已補上生效**）","flat":{"skillDmg_holylight":15,"skillDmg_ab_judex":15}},"automatic_orb73":{"note":" （本服實作：虎砲傷害+15%、大纏崩捶傷害+15% **已補上生效**）","flat":{"skillDmg_sr_tigercannon":15,"skillDmg_sr_fallenempire":15}},"automatic_orb75":{"note":" （本服實作：猛龍誇強傷害+15%、氣絕崩擊傷害+15% **已補上生效**）","flat":{"skillDmg_mo_combofinish":15,"skillDmg_ch_chaincrush":15}},"automatic_orb76":{"note":" （本服實作：集束炸彈傷害+15% **已補上生效**）","flat":{"skillDmg_ra_clusterbomb":15}},"automatic_orb78":{"note":" （本服實作：瞄準標記傷害+15%、箭雨風暴傷害+15% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":15,"skillDmg_ra_arrowstorm":15}},"automatic_orb81":{"note":" （本服實作：奧義箭亂舞傷害+15%、驟雨箭傷害+15% **已補上生效**）","flat":{"skillDmg_cg_arrowvulcan":15,"skillDmg_wm_severerainstorm":15}},"warlock_top2":{"note":" （本服實作：隕石術傷害+20% **已補上生效**）","flat":{"skillDmg_meteorstorm":20}},"royalguard_robe2":{"note":" （本服實作：創世之光傷害+15% **已補上生效**）","flat":{"skillDmg_lg_rayofgenesis":15}},"paladin_middle2":{"note":" （本服實作：神之威壓傷害+20% **已補上生效**）","flat":{"skillDmg_pa_pressure":20}},"assassincross_middle2":{"note":" （本服實作：音速投擲傷害+20% **已補上生效**）","flat":{"skillDmg_sonicblow":20}},"runeknight_robe2":{"note":" （本服實作：爆燃劍傷害+15% **已補上生效**）","flat":{"skillDmg_rk_ignitionbreak":15}},"runeknight_middle2":{"note":" （本服實作：怪物互擊傷害+20% **已補上生效**）","flat":{"skillDmg_bowlingbash":20}},"runeknight_bottom2":{"note":" （本服實作：螺旋擊刺傷害+20% **已補上生效**）","flat":{"skillDmg_lk_spiralpierce":20}},"genetic_robe2":{"note":" （本服實作：瘋狂野草傷害+20% **已補上生效**）","flat":{"skillDmg_gn_crazyweed":20}},"genetic_middle2":{"note":" （本服實作：強酸火煙瓶投擲傷害+25% **已補上生效**）","flat":{"skillDmg_bc_aciddemonstration":25}},"wandermins_top2":{"note":" （本服實作：奧義箭亂舞傷害+15% **已補上生效**）","flat":{"skillDmg_cg_arrowvulcan":15}},"wandermins_bottom2":{"note":" （本服實作：樂器攻擊傷害+15%、纏箭投擲傷害+15% **已補上生效**）","flat":{"skillDmg_ba_musicalstrike":15,"skillDmg_dc_throwarrow":15}},"wolf_orb_skill_2":{"note":" （本服實作：精煉+11：風刃傷害+15%、爆燃劍冷卻-0.3秒 **已補上生效**）","refine":{"11":{"skillDmg_rk_windcutter":15,"skillCdFlat_rk_ignitionbreak":-0.3}}},"wolf_orb_skill_8":{"note":" （本服實作：精煉+11：火神砲傷害+15%、迴旋飛斧冷卻-2秒 **已補上生效**）","refine":{"11":{"skillDmg_nc_vulcanarm":15,"skillCdFlat_nc_axeboomerang":-2}}},"wolf_orb_skill_31":{"note":" （本服實作：集束炸彈傷害+15%；精煉+7：集束炸彈傷害+15%；精煉+9：集束炸彈傷害+15%；精煉+11：集束炸彈傷害+15% **已補上生效**）","flat":{"skillDmg_ra_clusterbomb":15},"refine":{"7":{"skillDmg_ra_clusterbomb":15},"9":{"skillDmg_ra_clusterbomb":15},"11":{"skillDmg_ra_clusterbomb":15}}},"pg_b_sword":{"note":" （本服實作：精煉+13：神之威壓傷害+15%、創世之光傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_pa_pressure":15,"skillDmg_lg_rayofgenesis":15}}},"hs_t_sword":{"note":" （本服實作：精煉+13：地獄之樹傷害+15%、龍捲手推車傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_gn_hellsplant":15,"skillDmg_gn_carttornado":15}}},"adulter_f_g_sword":{"note":" （本服實作：創世之光傷害+10%；精煉+7：創世之光傷害+20%；精煉+9：創世之光冷卻-0.5秒；精煉+11：創世之光傷害+25% **已補上生效**）","flat":{"skillDmg_lg_rayofgenesis":10},"refine":{"7":{"skillDmg_lg_rayofgenesis":20},"9":{"skillCdFlat_lg_rayofgenesis":-0.5},"11":{"skillDmg_lg_rayofgenesis":25}}},"adulter_f_lapier":{"note":" （本服實作：手推車加農砲傷害+10%；精煉+7：手推車加農砲傷害+20%；精煉+11：手推車加農砲傷害+25% **已補上生效**）","flat":{"skillDmg_gn_cartcannon":10},"refine":{"7":{"skillDmg_gn_cartcannon":20},"11":{"skillDmg_gn_cartcannon":25}}},"vivatus_f_lapier":{"note":" （本服實作：手推車加農砲傷害+10%；精煉+7：手推車加農砲傷害+20%；精煉+11：手推車加農砲傷害+25% **已補上生效**）","flat":{"skillDmg_gn_cartcannon":10},"refine":{"7":{"skillDmg_gn_cartcannon":20},"11":{"skillDmg_gn_cartcannon":25}}},"slate_sword_lt":{"note":" （本服實作：精煉+7：龍捲手推車傷害+25%、地獄之樹傷害+30% **已補上生效**）","refine":{"7":{"skillDmg_gn_carttornado":25,"skillDmg_gn_hellsplant":30}}},"mf_b_dagger":{"note":" （本服實作：精煉+13：致命威嚇傷害+15%、精神波動傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_sc_fatalmenace":15,"skillDmg_so_psychicwave":15}}},"ep172_1h_spear":{"note":" （本服實作：創世之光傷害+10%；精煉+7：創世之光傷害+10%；精煉+11：創世之光傷害+15% **已補上生效**）","flat":{"skillDmg_lg_rayofgenesis":10},"refine":{"7":{"skillDmg_lg_rayofgenesis":10},"11":{"skillDmg_lg_rayofgenesis":15}}},"bc_b_spear":{"note":" （本服實作：精煉+13：騎士烙印傷害+15%、驅逐尖擊傷害+15%、加農長矛傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_lg_overbrand":15,"skillDmg_lg_banishingpoint":15,"skillDmg_lg_cannonspear":15}}},"poenitentia_hasta":{"note":" （本服實作：精煉+9：騎士烙印傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_lg_overbrand":25}}},"adulter_f_g_spear":{"note":" （本服實作：騎士烙印傷害+10%；精煉+7：騎士烙印傷害+20%；精煉+11：騎士烙印傷害+25% **已補上生效**）","flat":{"skillDmg_lg_overbrand":10},"refine":{"7":{"skillDmg_lg_overbrand":20},"11":{"skillDmg_lg_overbrand":25}}},"vivatus_f_g_spear":{"note":" （本服實作：騎士烙印傷害+10%；精煉+7：騎士烙印傷害+20%；精煉+11：騎士烙印傷害+25% **已補上生效**）","flat":{"skillDmg_lg_overbrand":10},"refine":{"7":{"skillDmg_lg_overbrand":20},"11":{"skillDmg_lg_overbrand":25}}},"undine_spear_k_lt":{"note":" （本服實作：精煉+9：加農長矛傷害+35%、驅逐尖擊傷害+35% **已補上生效**）","refine":{"9":{"skillDmg_lg_cannonspear":35,"skillDmg_lg_banishingpoint":35}}},"poenitentia_codex":{"note":" （本服實作：精煉+9：鑽石星塵傷害+25%、大地之牙傷害+25%；精煉+11：鑽石星塵冷卻-2秒、大地之牙冷卻-2秒 **已補上生效**）","refine":{"9":{"skillDmg_so_diamonddust":25,"skillDmg_so_earthgrave":25},"11":{"skillCdFlat_so_diamonddust":-2,"skillCdFlat_so_earthgrave":-2}}},"adulter_f_m_book":{"note":" （本服實作：精神波動傷害+10%；精煉+7：精神波動傷害+20%；精煉+9：精神波動冷卻-1秒；精煉+11：精神波動傷害+25% **已補上生效**）","flat":{"skillDmg_so_psychicwave":10},"refine":{"7":{"skillDmg_so_psychicwave":20},"9":{"skillCdFlat_so_psychicwave":-1},"11":{"skillDmg_so_psychicwave":25}}},"adulter_f_p_book":{"note":" （本服實作：毒素爆破傷害+10%；精煉+7：毒素爆破傷害+20%；精煉+9：毒素爆破冷卻-1秒；精煉+11：毒素爆破傷害+25% **已補上生效**）","flat":{"skillDmg_so_poisonbuster":10},"refine":{"7":{"skillDmg_so_poisonbuster":20},"9":{"skillCdFlat_so_poisonbuster":-1},"11":{"skillDmg_so_poisonbuster":25}}},"vivatus_f_m_book":{"note":" （本服實作：精神波動傷害+10%；精煉+7：精神波動傷害+20%；精煉+9：精神波動冷卻-1秒；精煉+11：精神波動傷害+25% **已補上生效**）","flat":{"skillDmg_so_psychicwave":10},"refine":{"7":{"skillDmg_so_psychicwave":20},"9":{"skillCdFlat_so_psychicwave":-1},"11":{"skillDmg_so_psychicwave":25}}},"vivatus_f_p_book":{"note":" （本服實作：毒素爆破傷害+10%；精煉+7：毒素爆破傷害+20%；精煉+9：毒素爆破冷卻-1秒；精煉+11：毒素爆破傷害+25% **已補上生效**）","flat":{"skillDmg_so_poisonbuster":10},"refine":{"7":{"skillDmg_so_poisonbuster":20},"9":{"skillCdFlat_so_poisonbuster":-1},"11":{"skillDmg_so_poisonbuster":25}}},"freezing_rod":{"note":" （本服實作：精煉每+3：鑽石星塵傷害+8% **已補上生效**）","per":{"3":{"skillDmg_so_diamonddust":8}}},"es_b_stick":{"note":" （本服實作：精煉+13：精神波動傷害+15%、鑽石星塵傷害+15%、大地之牙傷害+15%、雷光戰矛傷害+15%、毒素爆破傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_so_psychicwave":15,"skillDmg_so_diamonddust":15,"skillDmg_so_earthgrave":15,"skillDmg_so_varetyrspear":15,"skillDmg_so_poisonbuster":15}}},"an_b_wand":{"note":" （本服實作：精煉+13：十字驅魔攻擊傷害+15%、聖光讚歌傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_asperio":15,"skillDmg_ab_adoramus":15}}},"up_freezing_rod":{"note":" （本服實作：精煉每+3：鑽石星塵傷害+12% **已補上生效**）","per":{"3":{"skillDmg_so_diamonddust":12}}},"poenitentia_scipio":{"note":" （本服實作：精煉+9：精神波動傷害+25%、雷光戰矛傷害+25%；精煉+11：精神波動冷卻-1.5秒、雷光戰矛冷卻-2秒 **已補上生效**）","refine":{"9":{"skillDmg_so_psychicwave":25,"skillDmg_so_varetyrspear":25},"11":{"skillCdFlat_so_psychicwave":-1.5,"skillCdFlat_so_varetyrspear":-2}}},"poenitentia_crystallum":{"note":" （本服實作：精煉+9：聖光讚歌傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_ab_adoramus":30}}},"adulter_f_wand":{"note":" （本服實作：聖光讚歌傷害+10%；精煉+7：聖光讚歌傷害+20%；精煉+11：聖光讚歌傷害+25% **已補上生效**）","flat":{"skillDmg_ab_adoramus":10},"refine":{"7":{"skillDmg_ab_adoramus":20},"11":{"skillDmg_ab_adoramus":25}}},"vivatus_f_wand":{"note":" （本服實作：聖光讚歌傷害+10%；精煉+7：聖光讚歌傷害+20%；精煉+11：聖光讚歌傷害+25% **已補上生效**）","flat":{"skillDmg_ab_adoramus":10},"refine":{"7":{"skillDmg_ab_adoramus":20},"11":{"skillDmg_ab_adoramus":25}}},"shadow_staff_k_lt":{"note":" （本服實作：精煉每+3：大地之牙傷害+12%；精煉+11：精神波動傷害+15%、毒素爆破傷害+15%、精神波動冷卻-1秒 **已補上生效**）","per":{"3":{"skillDmg_so_earthgrave":12}},"refine":{"11":{"skillDmg_so_psychicwave":15,"skillDmg_so_poisonbuster":15,"skillCdFlat_so_psychicwave":-1}}},"freezing_rod_lt":{"note":" （本服實作：精煉每+3：鑽石星塵傷害+12% **已補上生效**）","per":{"3":{"skillDmg_so_diamonddust":12}}},"freedom_stick":{"note":" （本服實作：精煉每+3：崩裂術傷害+20% **已補上生效**）","per":{"3":{"skillDmg_heavensdrive":20}}},"up_freedom_stick":{"note":" （本服實作：精煉每+3：崩裂術傷害+30% **已補上生效**）","per":{"3":{"skillDmg_heavensdrive":30}}},"freedom_stick_lt":{"note":" （本服實作：精煉每+3：崩裂術傷害+30% **已補上生效**）","per":{"3":{"skillDmg_heavensdrive":30}}},"cp_b_knuckle":{"note":" （本服實作：精煉+13：天羅地網傷害+15%、虎砲傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_sr_skynetblow":15,"skillDmg_sr_tigercannon":15}}},"rs_b_violin":{"note":" （本服實作：精煉+9：驟雨箭冷卻-1秒、驟雨箭傷害+25%；精煉+13：驟雨箭傷害+15% **已補上生效**）","refine":{"9":{"skillCdFlat_wm_severerainstorm":-1,"skillDmg_wm_severerainstorm":25},"13":{"skillDmg_wm_severerainstorm":15}}},"poenitentia_flagellum":{"note":" （本服實作：金屬狂想傷害+10% **已補上生效**）","flat":{"skillDmg_tr_metalicfury":10}},"adulter_f_c_rope":{"note":" （本服實作：驟雨箭傷害+10%；精煉+7：驟雨箭傷害+20%；精煉+9：驟雨箭冷卻-2.5秒；精煉+11：驟雨箭傷害+25% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":10},"refine":{"7":{"skillDmg_wm_severerainstorm":20},"9":{"skillCdFlat_wm_severerainstorm":-2.5},"11":{"skillDmg_wm_severerainstorm":25}}},"vivatus_f_c_rope":{"note":" （本服實作：驟雨箭傷害+10%；精煉+7：驟雨箭傷害+20%；精煉+9：驟雨箭冷卻-2.5秒；精煉+11：驟雨箭傷害+25% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":10},"refine":{"7":{"skillDmg_wm_severerainstorm":20},"9":{"skillCdFlat_wm_severerainstorm":-2.5},"11":{"skillDmg_wm_severerainstorm":25}}},"rs_b_whip":{"note":" （本服實作：精煉+9：驟雨箭冷卻-1秒、驟雨箭傷害+25%；精煉+13：驟雨箭傷害+15% **已補上生效**）","refine":{"9":{"skillCdFlat_wm_severerainstorm":-1,"skillDmg_wm_severerainstorm":25},"13":{"skillDmg_wm_severerainstorm":15}}},"ak_b_mace":{"note":" （本服實作：精煉+13：火神砲傷害+15%、推進拳傷害+15%、臂裝加農砲傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_nc_vulcanarm":15,"skillDmg_nc_boostknuckle":15,"skillDmg_nc_armscannon":15}}},"ac_b_club":{"note":" （本服實作：精煉+13：強酸火煙瓶投擲傷害+15%、手推車加農砲傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_bc_aciddemonstration":15,"skillDmg_gn_cartcannon":15}}},"blade_katar":{"note":" （本服實作：精煉+9：迴旋刃傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_gc_rollingcutter":20}}},"ep172_bh_katar":{"note":" （本服實作：迴旋刃傷害+10%；精煉+7：十字撕裂者傷害+10%；精煉+11：迴旋刃傷害+15%、十字撕裂者傷害+15% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":10},"refine":{"7":{"skillDmg_gc_crossripperslasher":10},"11":{"skillDmg_gc_rollingcutter":15,"skillDmg_gc_crossripperslasher":15}}},"up_shiver_katar_k":{"note":" （本服實作：精煉每+3：十字斬傷害+10% **已補上生效**）","per":{"3":{"skillDmg_shc_crossslash":10}}},"up_blade_katar":{"note":" （本服實作：精煉+7：迴旋刃傷害+25%、十字撕裂者傷害+25% **已補上生效**）","refine":{"7":{"skillDmg_gc_rollingcutter":25,"skillDmg_gc_crossripperslasher":25}}},"rc_b_katar":{"note":" （本服實作：精煉+13：十字斬傷害+15%、迴旋刃傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_shc_crossslash":15,"skillDmg_gc_rollingcutter":15}}},"poenitentia_manus":{"note":" （本服實作：精煉+9：迴旋刃傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_gc_rollingcutter":30}}},"adulter_f_cakram":{"note":" （本服實作：迴旋刃傷害+10%；精煉+7：迴旋刃傷害+20%；精煉+11：迴旋刃傷害+25% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":10},"refine":{"7":{"skillDmg_gc_rollingcutter":20},"11":{"skillDmg_gc_rollingcutter":25}}},"adulter_f_katar":{"note":" （本服實作：反擊斬傷害+10%；精煉+7：反擊斬傷害+20%；精煉+11：反擊斬傷害+25% **已補上生效**）","flat":{"skillDmg_gc_counterslash":10},"refine":{"7":{"skillDmg_gc_counterslash":20},"11":{"skillDmg_gc_counterslash":25}}},"vivatus_f_cakram":{"note":" （本服實作：迴旋刃傷害+10%；精煉+7：迴旋刃傷害+20%；精煉+11：迴旋刃傷害+25% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":10},"refine":{"7":{"skillDmg_gc_rollingcutter":20},"11":{"skillDmg_gc_rollingcutter":25}}},"vivatus_f_katar":{"note":" （本服實作：反擊斬傷害+10%；精煉+11：反擊斬傷害+25% **已補上生效**）","flat":{"skillDmg_gc_counterslash":10},"refine":{"11":{"skillDmg_gc_counterslash":25}}},"ca_b_katar":{"note":" （本服實作：精煉+13：黑暗瞬間傷害+15%、反擊斬傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_asc_meteorassault":15,"skillDmg_gc_counterslash":15}}},"ep172_bh_spear":{"note":" （本服實作：百矛穿刺傷害+10%；精煉+7：百矛穿刺傷害+15%；精煉+9：百矛穿刺冷卻-1.5秒；精煉+11：百矛穿刺傷害+20% **已補上生效**）","flat":{"skillDmg_rk_hundredspear":10},"refine":{"7":{"skillDmg_rk_hundredspear":15},"9":{"skillCdFlat_rk_hundredspear":-1.5},"11":{"skillDmg_rk_hundredspear":20}}},"adulter_f_lance":{"note":" （本服實作：百矛穿刺傷害+10%；精煉+7：百矛穿刺傷害+20%；精煉+9：百矛穿刺冷卻-1.5秒；精煉+11：百矛穿刺傷害+25% **已補上生效**）","flat":{"skillDmg_rk_hundredspear":10},"refine":{"7":{"skillDmg_rk_hundredspear":20},"9":{"skillCdFlat_rk_hundredspear":-1.5},"11":{"skillDmg_rk_hundredspear":25}}},"blue_crystal_staff":{"note":" （本服實作：精煉每+3：傑克霜寒傷害+12% **已補上生效**）","per":{"3":{"skillDmg_wl_jackfrost":12}}},"cj_b_staff":{"note":" （本服實作：精煉+13：連鎖閃電傷害+15%、傑克霜寒傷害+15%、靈魂爆炸傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_wl_chainlightning":15,"skillDmg_wl_jackfrost":15,"skillDmg_wl_soulexpansion":15}}},"up_iron_staff":{"note":" （本服實作：精煉每+3：大地脈動傷害+12% **已補上生效**）","per":{"3":{"skillDmg_wl_earthstrain":12}}},"up_blue_crystal_staff":{"note":" （本服實作：精煉每+3：傑克霜寒傷害+12% **已補上生效**）","per":{"3":{"skillDmg_wl_jackfrost":12}}},"poenitentia_virga":{"note":" （本服實作：精煉+9：連鎖閃電傷害+25%、大地脈動傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_wl_chainlightning":25,"skillDmg_wl_earthstrain":25}}},"adulter_f_rod":{"note":" （本服實作：靈魂爆炸傷害+10%；精煉+7：靈魂爆炸傷害+20%；精煉+11：靈魂爆炸傷害+25% **已補上生效**）","flat":{"skillDmg_wl_soulexpansion":10},"refine":{"7":{"skillDmg_wl_soulexpansion":20},"11":{"skillDmg_wl_soulexpansion":25}}},"vivatus_f_rod":{"note":" （本服實作：靈魂爆炸傷害+10%；精煉+7：靈魂爆炸傷害+20%；精煉+11：靈魂爆炸傷害+25% **已補上生效**）","flat":{"skillDmg_wl_soulexpansion":10},"refine":{"7":{"skillDmg_wl_soulexpansion":20},"11":{"skillDmg_wl_soulexpansion":25}}},"iron_staff_lt":{"note":" （本服實作：精煉每+3：大地脈動傷害+12%、重力原野傷害+12% **已補上生效**）","per":{"3":{"skillDmg_wl_earthstrain":12,"skillDmg_hw_gravitation":12}}},"blue_crystal_staff_lt":{"note":" （本服實作：精煉每+3：傑克霜寒傷害+12% **已補上生效**）","per":{"3":{"skillDmg_wl_jackfrost":12}}},"tb_b_bow":{"note":" （本服實作：精煉+13：三角射擊傷害+25%、幻象炸彈傷害+25% **已補上生效**）","refine":{"13":{"skillDmg_sc_triangleshot":25,"skillDmg_sc_feintbomb":25}}},"as_b_bow":{"note":" （本服實作：精煉+13：箭雨風暴傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_ra_arrowstorm":15}}},"sb_b_bow":{"note":" （本服實作：精煉+13：銳利射擊傷害+15%、瞄準標記傷害+15% **已補上生效**）","refine":{"13":{"skillDmg_sn_sharpshooting":15,"skillDmg_ra_aimedbolt":15}}},"up_master_soul_rifle":{"note":" （本服實作：精煉每+3：聖靈召喚傷害+15%、念力連擊傷害+15% **已補上生效**）","per":{"3":{"skillDmg_soulstrike":15,"skillDmg_hw_napalmvulcan":15}}},"master_soul_rifle_lt":{"note":" （本服實作：精煉每+3：聖靈召喚傷害+20%、念力連擊傷害+20% **已補上生效**）","per":{"3":{"skillDmg_soulstrike":20,"skillDmg_hw_napalmvulcan":20}}},"rangerstone_robe2":{"note":" （本服實作：瞄準標記傷害+15% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":15}},"mechanicstone_middle2":{"note":" （本服實作：手推車終結技傷害+15% **已補上生效**）","flat":{"skillDmg_ws_cartterm":15}},"mechanicstone_robe2":{"note":" （本服實作：臂裝加農砲傷害+15% **已補上生效**）","flat":{"skillDmg_nc_armscannon":15}},"highprieststone_top2":{"note":" （本服實作：十字驅魔攻擊傷害+15% **已補上生效**）","flat":{"skillDmg_asperio":15}},"archbishopstone_robe2":{"note":" （本服實作：神聖裁決傷害+15% **已補上生效**）","flat":{"skillDmg_ab_judex":15}},"warlockstone_top2":{"note":" （本服實作：隕石術傷害+20% **已補上生效**）","flat":{"skillDmg_meteorstorm":20}},"royalguardstone_robe2":{"note":" （本服實作：創世之光傷害+15% **已補上生效**）","flat":{"skillDmg_lg_rayofgenesis":15}},"paladinstone_middle2":{"note":" （本服實作：神之威壓傷害+20% **已補上生效**）","flat":{"skillDmg_pa_pressure":20}},"assacrossstone_middle2":{"note":" （本服實作：音速投擲傷害+20% **已補上生效**）","flat":{"skillDmg_sonicblow":20}},"runeknightstone_robe2":{"note":" （本服實作：爆燃劍傷害+15% **已補上生效**）","flat":{"skillDmg_rk_ignitionbreak":15}},"runeknightstone_middle2":{"note":" （本服實作：怪物互擊傷害+20% **已補上生效**）","flat":{"skillDmg_bowlingbash":20}},"runeknightstone_bottom2":{"note":" （本服實作：螺旋擊刺傷害+20% **已補上生效**）","flat":{"skillDmg_lk_spiralpierce":20}},"geneticstone_robe2":{"note":" （本服實作：瘋狂野草傷害+20% **已補上生效**）","flat":{"skillDmg_gn_crazyweed":20}},"geneticstone_middle2":{"note":" （本服實作：強酸火煙瓶投擲傷害+25% **已補上生效**）","flat":{"skillDmg_bc_aciddemonstration":25}},"wanderminsstone_top2":{"note":" （本服實作：奧義箭亂舞傷害+15% **已補上生效**）","flat":{"skillDmg_cg_arrowvulcan":15}},"wanderminsstone_bottom2":{"note":" （本服實作：樂器攻擊傷害+15%、纏箭投擲傷害+15% **已補上生效**）","flat":{"skillDmg_ba_musicalstrike":15,"skillDmg_dc_throwarrow":15}},"gear_mt1":{"note":" （本服實作：戰斧踐踏傷害+5% **已補上生效**）","flat":{"skillDmg_mt_axestomp":5}},"gear_mt2":{"note":" （本服實作：斧刃旋風傷害+5%、斧刃旋風冷卻-1秒 **已補上生效**）","flat":{"skillDmg_nc_axetornado":5,"skillCdFlat_nc_axetornado":-1}},"gear_bo2":{"note":" （本服實作：龍捲手推車傷害+10% **已補上生效**）","flat":{"skillDmg_gn_carttornado":10}},"gear_abc2":{"note":" （本服實作：源自深淵傷害+10% **已補上生效**）","flat":{"skillDmg_abc_fromtheabyss":10}},"gear_em2":{"note":" （本服實作：精神波動傷害+5%、精神波動冷卻-1.5秒 **已補上生效**）","flat":{"skillDmg_so_psychicwave":5,"skillCdFlat_so_psychicwave":-1.5}},"gear_wh2":{"note":" （本服實作：箭雨風暴傷害+5%、箭雨風暴冷卻-1.2秒 **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":5,"skillCdFlat_ra_arrowstorm":-1.2}},"gear_ig2":{"note":" （本服實作：連續盾擊傷害+10% **已補上生效**）","flat":{"skillDmg_pa_shieldchain":10}},"gear_tr1":{"note":" （本服實作：薔薇綻放傷害+5%、節奏射擊傷害+5% **已補上生效**）","flat":{"skillDmg_tr_roseblossom":5,"skillDmg_tr_rhythmshooting":5}},"gear_tr2":{"note":" （本服實作：驟雨箭傷害+5%、驟雨箭冷卻-2秒 **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":5,"skillCdFlat_wm_severerainstorm":-2}},"ice_f_orb_skill_2":{"note":" （本服實作：精煉+11：風刃傷害+15%、爆燃劍冷卻-0.5秒 **已補上生效**）","refine":{"11":{"skillDmg_rk_windcutter":15,"skillCdFlat_rk_ignitionbreak":-0.5}}},"ice_f_orb_skill_12":{"note":" （本服實作：精煉+9：孢子爆炸冷卻-2秒 **已補上生效**）","refine":{"9":{"skillCdFlat_gn_sporeexplosion":-2}}},"ice_f_orb_skill_31":{"note":" （本服實作：瞄準標記傷害+15%；精煉+7：瞄準標記傷害+15%；精煉+9：瞄準標記傷害+15% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":15},"refine":{"7":{"skillDmg_ra_aimedbolt":15},"9":{"skillDmg_ra_aimedbolt":15}}},"ice_f_orb_skill_33":{"note":" （本服實作：箭雨風暴傷害+15%；精煉+7：箭雨風暴傷害+15%；精煉+9：箭雨風暴傷害+15% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":15},"refine":{"7":{"skillDmg_ra_arrowstorm":15},"9":{"skillDmg_ra_arrowstorm":15}}},"ice_f_orb_skill_35":{"note":" （本服實作：驟雨箭傷害+15%；精煉+7：驟雨箭傷害+15%；精煉+9：驟雨箭傷害+15%；精煉+11：驟雨箭傷害+15%、薔薇綻放傷害+15% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":15},"refine":{"7":{"skillDmg_wm_severerainstorm":15},"9":{"skillDmg_wm_severerainstorm":15},"11":{"skillDmg_wm_severerainstorm":15,"skillDmg_tr_roseblossom":15}}},"ice_f_orb_skill_36":{"note":" （本服實作：奧義箭亂舞傷害+20%；精煉+7：奧義箭亂舞傷害+20%；精煉+9：奧義箭亂舞傷害+20%；精煉+11：奧義箭亂舞傷害+20%、節奏射擊傷害+15% **已補上生效**）","flat":{"skillDmg_cg_arrowvulcan":20},"refine":{"7":{"skillDmg_cg_arrowvulcan":20},"9":{"skillDmg_cg_arrowvulcan":20},"11":{"skillDmg_cg_arrowvulcan":20,"skillDmg_tr_rhythmshooting":15}}},"ice_f_orb_skill_53":{"note":" （本服實作：迴旋盾擊傷害+15%；精煉+7：迴旋盾擊傷害+15%；精煉+9：迴旋盾擊傷害+15% **已補上生效**）","flat":{"skillDmg_cr_shieldboomerang":15},"refine":{"7":{"skillDmg_cr_shieldboomerang":15},"9":{"skillDmg_cr_shieldboomerang":15}}},"glacier_f_orb_2":{"note":" （本服實作：風刃傷害+20%；精煉每+3：風刃傷害+10%；精煉+9：風刃傷害+20%；精煉+11：風刃傷害+20% **已補上生效**）","flat":{"skillDmg_rk_windcutter":20},"per":{"3":{"skillDmg_rk_windcutter":10}},"refine":{"9":{"skillDmg_rk_windcutter":20},"11":{"skillDmg_rk_windcutter":20}}},"glacier_f_orb_3":{"note":" （本服實作：爆燃劍傷害+20%；精煉每+3：爆燃劍傷害+10%；精煉+9：爆燃劍冷卻-1秒；精煉+11：爆燃劍傷害+20% **已補上生效**）","flat":{"skillDmg_rk_ignitionbreak":20},"per":{"3":{"skillDmg_rk_ignitionbreak":10}},"refine":{"9":{"skillCdFlat_rk_ignitionbreak":-1},"11":{"skillDmg_rk_ignitionbreak":20}}},"glacier_f_orb_4":{"note":" （本服實作：百矛穿刺傷害+20%；精煉每+3：百矛穿刺傷害+10%；精煉+9：百矛穿刺冷卻-1.5秒；精煉+11：百矛穿刺傷害+20% **已補上生效**）","flat":{"skillDmg_rk_hundredspear":20},"per":{"3":{"skillDmg_rk_hundredspear":10}},"refine":{"9":{"skillCdFlat_rk_hundredspear":-1.5},"11":{"skillDmg_rk_hundredspear":20}}},"glacier_f_orb_5":{"note":" （本服實作：音波斬傷害+20%；精煉每+3：音波斬傷害+10%；精煉+9：音波斬冷卻-1.5秒；精煉+11：音波斬傷害+20% **已補上生效**）","flat":{"skillDmg_rk_sonicwave":20},"per":{"3":{"skillDmg_rk_sonicwave":10}},"refine":{"9":{"skillCdFlat_rk_sonicwave":-1.5},"11":{"skillDmg_rk_sonicwave":20}}},"glacier_f_orb_6":{"note":" （本服實作：騎士烙印傷害+20%；精煉每+3：騎士烙印傷害+10%；精煉+11：騎士烙印傷害+20% **已補上生效**）","flat":{"skillDmg_lg_overbrand":20},"per":{"3":{"skillDmg_lg_overbrand":10}},"refine":{"11":{"skillDmg_lg_overbrand":20}}},"glacier_f_orb_8":{"note":" （本服實作：驅逐尖擊傷害+20%；精煉每+3：驅逐尖擊傷害+10%；精煉+9：驅逐尖擊傷害+20%；精煉+11：驅逐尖擊傷害+20% **已補上生效**）","flat":{"skillDmg_lg_banishingpoint":20},"per":{"3":{"skillDmg_lg_banishingpoint":10}},"refine":{"9":{"skillDmg_lg_banishingpoint":20},"11":{"skillDmg_lg_banishingpoint":20}}},"glacier_f_orb_9":{"note":" （本服實作：加農長矛傷害+20%；精煉每+3：加農長矛傷害+10%；精煉+9：加農長矛冷卻-0.5秒；精煉+11：加農長矛傷害+20% **已補上生效**）","flat":{"skillDmg_lg_cannonspear":20},"per":{"3":{"skillDmg_lg_cannonspear":10}},"refine":{"9":{"skillCdFlat_lg_cannonspear":-0.5},"11":{"skillDmg_lg_cannonspear":20}}},"glacier_f_orb_10":{"note":" （本服實作：創世之光傷害+20%；精煉每+3：創世之光傷害+10%；精煉+9：創世之光冷卻-1秒；精煉+11：創世之光傷害+20% **已補上生效**）","flat":{"skillDmg_lg_rayofgenesis":20},"per":{"3":{"skillDmg_lg_rayofgenesis":10}},"refine":{"9":{"skillCdFlat_lg_rayofgenesis":-1},"11":{"skillDmg_lg_rayofgenesis":20}}},"glacier_f_orb_11":{"note":" （本服實作：盾牌重壓傷害+20%；精煉每+3：盾牌重壓傷害+10%；精煉+9：盾牌重壓冷卻-0.25秒；精煉+11：盾牌重壓傷害+20% **已補上生效**）","flat":{"skillDmg_lg_shieldpress":20},"per":{"3":{"skillDmg_lg_shieldpress":10}},"refine":{"9":{"skillCdFlat_lg_shieldpress":-0.25},"11":{"skillDmg_lg_shieldpress":20}}},"glacier_f_orb_13":{"note":" （本服實作：推進拳傷害+20%；精煉每+3：推進拳傷害+10%；精煉+9：推進拳傷害+20%；精煉+11：推進拳傷害+20% **已補上生效**）","flat":{"skillDmg_nc_boostknuckle":20},"per":{"3":{"skillDmg_nc_boostknuckle":10}},"refine":{"9":{"skillDmg_nc_boostknuckle":20},"11":{"skillDmg_nc_boostknuckle":20}}},"glacier_f_orb_14":{"note":" （本服實作：臂裝加農砲傷害+20%；精煉每+3：臂裝加農砲傷害+10%；精煉+9：臂裝加農砲傷害+20% **已補上生效**）","flat":{"skillDmg_nc_armscannon":20},"per":{"3":{"skillDmg_nc_armscannon":10}},"refine":{"9":{"skillDmg_nc_armscannon":20}}},"glacier_f_orb_15":{"note":" （本服實作：斧刃旋風傷害+20%；精煉每+3：斧刃旋風傷害+10%；精煉+9：斧刃旋風冷卻-1秒；精煉+11：斧刃旋風傷害+20% **已補上生效**）","flat":{"skillDmg_nc_axetornado":20},"per":{"3":{"skillDmg_nc_axetornado":10}},"refine":{"9":{"skillCdFlat_nc_axetornado":-1},"11":{"skillDmg_nc_axetornado":20}}},"glacier_f_orb_17":{"note":" （本服實作：火神砲傷害+20%；精煉每+3：火神砲傷害+10%；精煉+9：火神砲傷害+20%；精煉+11：火神砲傷害+20% **已補上生效**）","flat":{"skillDmg_nc_vulcanarm":20},"per":{"3":{"skillDmg_nc_vulcanarm":10}},"refine":{"9":{"skillDmg_nc_vulcanarm":20},"11":{"skillDmg_nc_vulcanarm":20}}},"glacier_f_orb_18":{"note":" （本服實作：迴旋飛斧傷害+20%；精煉每+3：迴旋飛斧傷害+10%；精煉+9：迴旋飛斧傷害+20%；精煉+11：迴旋飛斧傷害+20% **已補上生效**）","flat":{"skillDmg_nc_axeboomerang":20},"per":{"3":{"skillDmg_nc_axeboomerang":10}},"refine":{"9":{"skillDmg_nc_axeboomerang":20},"11":{"skillDmg_nc_axeboomerang":20}}},"glacier_f_orb_19":{"note":" （本服實作：龍捲手推車傷害+20%；精煉每+3：龍捲手推車傷害+10%；精煉+9：龍捲手推車傷害+20%；精煉+11：龍捲手推車傷害+20% **已補上生效**）","flat":{"skillDmg_gn_carttornado":20},"per":{"3":{"skillDmg_gn_carttornado":10}},"refine":{"9":{"skillDmg_gn_carttornado":20},"11":{"skillDmg_gn_carttornado":20}}},"glacier_f_orb_20":{"note":" （本服實作：手推車加農砲傷害+20%；精煉每+3：手推車加農砲傷害+10%；精煉+9：手推車加農砲傷害+20%；精煉+11：手推車加農砲傷害+20% **已補上生效**）","flat":{"skillDmg_gn_cartcannon":20},"per":{"3":{"skillDmg_gn_cartcannon":10}},"refine":{"9":{"skillDmg_gn_cartcannon":20},"11":{"skillDmg_gn_cartcannon":20}}},"glacier_f_orb_21":{"note":" （本服實作：孢子爆炸傷害+20%；精煉每+3：孢子爆炸傷害+10%；精煉+9：孢子爆炸冷卻-2秒；精煉+11：孢子爆炸傷害+20% **已補上生效**）","flat":{"skillDmg_gn_sporeexplosion":20},"per":{"3":{"skillDmg_gn_sporeexplosion":10}},"refine":{"9":{"skillCdFlat_gn_sporeexplosion":-2},"11":{"skillDmg_gn_sporeexplosion":20}}},"glacier_f_orb_22":{"note":" （本服實作：瘋狂野草傷害+20%；精煉每+3：瘋狂野草傷害+10%；精煉+9：瘋狂野草冷卻-2.5秒；精煉+11：瘋狂野草傷害+20% **已補上生效**）","flat":{"skillDmg_gn_crazyweed":20},"per":{"3":{"skillDmg_gn_crazyweed":10}},"refine":{"9":{"skillCdFlat_gn_crazyweed":-2.5},"11":{"skillDmg_gn_crazyweed":20}}},"glacier_f_orb_23":{"note":" （本服實作：十字撕裂者傷害+20%；精煉每+3：十字撕裂者傷害+10%；精煉+9：十字撕裂者傷害+20%；精煉+11：十字撕裂者傷害+20% **已補上生效**）","flat":{"skillDmg_gc_crossripperslasher":20},"per":{"3":{"skillDmg_gc_crossripperslasher":10}},"refine":{"9":{"skillDmg_gc_crossripperslasher":20},"11":{"skillDmg_gc_crossripperslasher":20}}},"glacier_f_orb_24":{"note":" （本服實作：迴旋刃傷害+20%；精煉每+3：迴旋刃傷害+10%；精煉+9：迴旋刃傷害+20%；精煉+11：迴旋刃傷害+20% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":20},"per":{"3":{"skillDmg_gc_rollingcutter":10}},"refine":{"9":{"skillDmg_gc_rollingcutter":20},"11":{"skillDmg_gc_rollingcutter":20}}},"glacier_f_orb_25":{"note":" （本服實作：反擊斬傷害+20%；精煉每+3：反擊斬傷害+10%；精煉+9：反擊斬傷害+20%；精煉+11：反擊斬傷害+20% **已補上生效**）","flat":{"skillDmg_gc_counterslash":20},"per":{"3":{"skillDmg_gc_counterslash":10}},"refine":{"9":{"skillDmg_gc_counterslash":20},"11":{"skillDmg_gc_counterslash":20}}},"glacier_f_orb_26":{"note":" （本服實作：十字斬傷害+20%；精煉每+3：十字斬傷害+10%；精煉+11：十字斬傷害+20% **已補上生效**）","flat":{"skillDmg_shc_crossslash":20},"per":{"3":{"skillDmg_shc_crossslash":10}},"refine":{"11":{"skillDmg_shc_crossslash":20}}},"glacier_f_orb_27":{"note":" （本服實作：致命威嚇傷害+20%；精煉每+3：致命威嚇傷害+10%；精煉+9：致命威嚇傷害+20%；精煉+11：致命威嚇傷害+20% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":20},"per":{"3":{"skillDmg_sc_fatalmenace":10}},"refine":{"9":{"skillDmg_sc_fatalmenace":20},"11":{"skillDmg_sc_fatalmenace":20}}},"glacier_f_orb_28":{"note":" （本服實作：三角射擊傷害+20%；精煉每+3：三角射擊傷害+10%；精煉+9：三角射擊傷害+20%；精煉+11：三角射擊傷害+20% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":20},"per":{"3":{"skillDmg_sc_triangleshot":10}},"refine":{"9":{"skillDmg_sc_triangleshot":20},"11":{"skillDmg_sc_triangleshot":20}}},"glacier_f_orb_29":{"note":" （本服實作：幻象炸彈傷害+20%；精煉每+3：幻象炸彈傷害+10%；精煉+9：幻象炸彈傷害+20%；精煉+11：幻象炸彈傷害+20% **已補上生效**）","flat":{"skillDmg_sc_feintbomb":20},"per":{"3":{"skillDmg_sc_feintbomb":10}},"refine":{"9":{"skillDmg_sc_feintbomb":20},"11":{"skillDmg_sc_feintbomb":20}}},"glacier_f_orb_30":{"note":" （本服實作：精煉每+3：隕石術傷害+25%；精煉+11：精神波動傷害+40% **已補上生效**）","per":{"3":{"skillDmg_meteorstorm":25}},"refine":{"11":{"skillDmg_so_psychicwave":40}}},"glacier_f_orb_32":{"note":" （本服實作：靈魂爆炸傷害+20%；精煉每+3：靈魂爆炸傷害+10%；精煉+11：靈魂爆炸傷害+20% **已補上生效**）","flat":{"skillDmg_wl_soulexpansion":20},"per":{"3":{"skillDmg_wl_soulexpansion":10}},"refine":{"11":{"skillDmg_wl_soulexpansion":20}}},"glacier_f_orb_34":{"note":" （本服實作：精神波動傷害+20%；精煉每+3：精神波動傷害+10%；精煉+9：精神波動冷卻-1.5秒；精煉+11：精神波動傷害+20% **已補上生效**）","flat":{"skillDmg_so_psychicwave":20},"per":{"3":{"skillDmg_so_psychicwave":10}},"refine":{"9":{"skillCdFlat_so_psychicwave":-1.5},"11":{"skillDmg_so_psychicwave":20}}},"glacier_f_orb_35":{"note":" （本服實作：鑽石星塵傷害+20%；精煉每+3：鑽石星塵傷害+10%；精煉+9：鑽石星塵傷害+20%；精煉+11：鑽石星塵傷害+20% **已補上生效**）","flat":{"skillDmg_so_diamonddust":20},"per":{"3":{"skillDmg_so_diamonddust":10}},"refine":{"9":{"skillDmg_so_diamonddust":20},"11":{"skillDmg_so_diamonddust":20}}},"glacier_f_orb_36":{"note":" （本服實作：雷光戰矛傷害+20%；精煉每+3：雷光戰矛傷害+10%；精煉+9：雷光戰矛冷卻-2秒；精煉+11：雷光戰矛傷害+20% **已補上生效**）","flat":{"skillDmg_so_varetyrspear":20},"per":{"3":{"skillDmg_so_varetyrspear":10}},"refine":{"9":{"skillCdFlat_so_varetyrspear":-2},"11":{"skillDmg_so_varetyrspear":20}}},"glacier_f_orb_37":{"note":" （本服實作：大地之牙傷害+20%；精煉每+3：大地之牙傷害+10%；精煉+9：大地之牙冷卻-2秒；精煉+11：大地之牙傷害+20% **已補上生效**）","flat":{"skillDmg_so_earthgrave":20},"per":{"3":{"skillDmg_so_earthgrave":10}},"refine":{"9":{"skillCdFlat_so_earthgrave":-2},"11":{"skillDmg_so_earthgrave":20}}},"glacier_f_orb_38":{"note":" （本服實作：毒素爆破傷害+20%；精煉每+3：毒素爆破傷害+10%；精煉+9：毒素爆破冷卻-1秒；精煉+11：毒素爆破傷害+20% **已補上生效**）","flat":{"skillDmg_so_poisonbuster":20},"per":{"3":{"skillDmg_so_poisonbuster":10}},"refine":{"9":{"skillCdFlat_so_poisonbuster":-1},"11":{"skillDmg_so_poisonbuster":20}}},"glacier_f_orb_39":{"note":" （本服實作：聖光讚歌傷害+20%；精煉每+3：聖光讚歌傷害+10%；精煉+9：聖光讚歌傷害+20%；精煉+11：聖光讚歌傷害+20% **已補上生效**）","flat":{"skillDmg_ab_adoramus":20},"per":{"3":{"skillDmg_ab_adoramus":10}},"refine":{"9":{"skillDmg_ab_adoramus":20},"11":{"skillDmg_ab_adoramus":20}}},"glacier_f_orb_40":{"note":" （本服實作：神聖裁決傷害+20%；精煉每+3：神聖裁決傷害+10%；精煉+9：神聖裁決傷害+20%；精煉+11：神聖裁決傷害+20% **已補上生效**）","flat":{"skillDmg_ab_judex":20},"per":{"3":{"skillDmg_ab_judex":10}},"refine":{"9":{"skillDmg_ab_judex":20},"11":{"skillDmg_ab_judex":20}}},"glacier_f_orb_42":{"note":" （本服實作：虎砲傷害+20%；精煉每+3：虎砲傷害+10%；精煉+9：虎砲冷卻-1秒；精煉+11：虎砲傷害+20% **已補上生效**）","flat":{"skillDmg_sr_tigercannon":20},"per":{"3":{"skillDmg_sr_tigercannon":10}},"refine":{"9":{"skillCdFlat_sr_tigercannon":-1},"11":{"skillDmg_sr_tigercannon":20}}},"glacier_f_orb_44":{"note":" （本服實作：天羅地網傷害+20%；精煉每+3：天羅地網傷害+10%；精煉+9：天羅地網傷害+20%；精煉+11：天羅地網傷害+20% **已補上生效**）","flat":{"skillDmg_sr_skynetblow":20},"per":{"3":{"skillDmg_sr_skynetblow":10}},"refine":{"9":{"skillDmg_sr_skynetblow":20},"11":{"skillDmg_sr_skynetblow":20}}},"glacier_f_orb_46":{"note":" （本服實作：導氣彈傷害+20%；精煉每+3：導氣彈傷害+10%；精煉+9：導氣彈傷害+20%；精煉+11：導氣彈傷害+20% **已補上生效**）","flat":{"skillDmg_sr_knucklearrow":20},"per":{"3":{"skillDmg_sr_knucklearrow":10}},"refine":{"9":{"skillDmg_sr_knucklearrow":20},"11":{"skillDmg_sr_knucklearrow":20}}},"glacier_f_orb_47":{"note":" （本服實作：瞄準標記傷害+20%；精煉每+3：瞄準標記傷害+10%；精煉+9：瞄準標記冷卻-1秒；精煉+11：瞄準標記傷害+20% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":20},"per":{"3":{"skillDmg_ra_aimedbolt":10}},"refine":{"9":{"skillCdFlat_ra_aimedbolt":-1},"11":{"skillDmg_ra_aimedbolt":20}}},"glacier_f_orb_48":{"note":" （本服實作：箭雨風暴傷害+20%；精煉每+3：箭雨風暴傷害+10%；精煉+9：箭雨風暴冷卻-1.2秒；精煉+11：箭雨風暴傷害+20% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":20},"per":{"3":{"skillDmg_ra_arrowstorm":10}},"refine":{"9":{"skillCdFlat_ra_arrowstorm":-1.2},"11":{"skillDmg_ra_arrowstorm":20}}},"glacier_f_orb_49":{"note":" （本服實作：戰狼突擊傷害+20%；精煉每+3：戰狼突擊傷害+10%；精煉+9：戰狼突擊傷害+20%；精煉+11：戰狼突擊傷害+20% **已補上生效**）","flat":{"skillDmg_ra_wugstrike":20},"per":{"3":{"skillDmg_ra_wugstrike":10}},"refine":{"9":{"skillDmg_ra_wugstrike":20},"11":{"skillDmg_ra_wugstrike":20}}},"glacier_f_orb_50":{"note":" （本服實作：驟雨箭傷害+20%；精煉每+3：驟雨箭傷害+10%；精煉+9：驟雨箭冷卻-2秒；精煉+11：驟雨箭傷害+20% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":20},"per":{"3":{"skillDmg_wm_severerainstorm":10}},"refine":{"9":{"skillCdFlat_wm_severerainstorm":-2},"11":{"skillDmg_wm_severerainstorm":20}}},"glacier_f_orb_74":{"note":" （本服實作：聖十字攻擊傷害+20%；精煉每+3：聖十字攻擊傷害+20%；精煉+9：聖十字攻擊傷害+30%；精煉+11：聖十字攻擊傷害+20% **已補上生效**）","flat":{"skillDmg_cr_holycross":20},"per":{"3":{"skillDmg_cr_holycross":20}},"refine":{"9":{"skillDmg_cr_holycross":30},"11":{"skillDmg_cr_holycross":20}}},"glacier_f_orb_75":{"note":" （本服實作：背刺傷害+20%；精煉每+3：背刺傷害+20%；精煉+9：背刺傷害+30%；精煉+11：背刺傷害+20% **已補上生效**）","flat":{"skillDmg_rg_backstap":20},"per":{"3":{"skillDmg_rg_backstap":20}},"refine":{"9":{"skillDmg_rg_backstap":30},"11":{"skillDmg_rg_backstap":20}}},"glacier_f_orb_76":{"note":" （本服實作：迴旋盾擊傷害+20%；精煉每+3：迴旋盾擊傷害+20%；精煉+9：迴旋盾擊傷害+30%；精煉+11：迴旋盾擊傷害+20% **已補上生效**）","flat":{"skillDmg_cr_shieldboomerang":20},"per":{"3":{"skillDmg_cr_shieldboomerang":20}},"refine":{"9":{"skillDmg_cr_shieldboomerang":30},"11":{"skillDmg_cr_shieldboomerang":20}}},"glacier_f_orb_77":{"note":" （本服實作：怒雷強擊傷害+20%；精煉每+3：怒雷強擊傷害+20%；精煉+9：怒雷強擊傷害+30%；精煉+11：怒雷強擊傷害+20% **已補上生效**）","flat":{"skillDmg_lordofvermillion":20},"per":{"3":{"skillDmg_lordofvermillion":20}},"refine":{"9":{"skillDmg_lordofvermillion":30},"11":{"skillDmg_lordofvermillion":20}}},"glacier_f_orb_78":{"note":" （本服實作：雷鳴術傷害+20%；精煉每+3：雷鳴術傷害+20%；精煉+9：雷鳴術傷害+30%；精煉+11：雷鳴術傷害+20% **已補上生效**）","flat":{"skillDmg_jupitel":20},"per":{"3":{"skillDmg_jupitel":20}},"refine":{"9":{"skillDmg_jupitel":30},"11":{"skillDmg_jupitel":20}}},"glacier_f_orb_79":{"note":" （本服實作：隕石術傷害+20%；精煉每+3：隕石術傷害+20%；精煉+9：隕石術傷害+30%；精煉+11：隕石術傷害+20% **已補上生效**）","flat":{"skillDmg_meteorstorm":20},"per":{"3":{"skillDmg_meteorstorm":20}},"refine":{"9":{"skillDmg_meteorstorm":30},"11":{"skillDmg_meteorstorm":20}}},"glacier_f_orb_80":{"note":" （本服實作：暴風雪傷害+20%；精煉每+3：暴風雪傷害+20%；精煉+9：暴風雪傷害+30%；精煉+11：暴風雪傷害+20% **已補上生效**）","flat":{"skillDmg_stormgust":20},"per":{"3":{"skillDmg_stormgust":20}},"refine":{"9":{"skillDmg_stormgust":30},"11":{"skillDmg_stormgust":20}}},"glacier_f_orb_88":{"note":" （本服實作：戰斧踐踏傷害+10%；精煉每+4：戰斧踐踏傷害+5%；精煉+9：戰斧踐踏傷害+10% **已補上生效**）","flat":{"skillDmg_mt_axestomp":10},"per":{"4":{"skillDmg_mt_axestomp":5}},"refine":{"9":{"skillDmg_mt_axestomp":10}}},"glacier_f_orb_93":{"note":" （本服實作：深淵之刃傷害+10%；精煉每+4：深淵之刃傷害+5%；精煉+9：深淵之刃傷害+10% **已補上生效**）","flat":{"skillDmg_abc_abyssdagger":10},"per":{"4":{"skillDmg_abc_abyssdagger":5}},"refine":{"9":{"skillDmg_abc_abyssdagger":10}}},"glacier_f_orb_94":{"note":" （本服實作：連鎖爆射傷害+10%；精煉每+4：連鎖爆射傷害+5%；精煉+9：連鎖爆射傷害+10% **已補上生效**）","flat":{"skillDmg_abc_chainreactionshot":10},"per":{"4":{"skillDmg_abc_chainreactionshot":5}},"refine":{"9":{"skillDmg_abc_chainreactionshot":10}}},"glacier_f_orb_103":{"note":" （本服實作：鑽石風暴傷害+10%；精煉每+4：鑽石風暴傷害+5%；精煉+9：鑽石風暴傷害+10% **已補上生效**）","flat":{"skillDmg_em_diamondstorm":10},"per":{"4":{"skillDmg_em_diamondstorm":5}},"refine":{"9":{"skillDmg_em_diamondstorm":10}}},"glacier_f_orb_107":{"note":" （本服實作：劇毒沼澤傷害+10%；精煉每+4：劇毒沼澤傷害+5%；精煉+9：劇毒沼澤傷害+10% **已補上生效**）","flat":{"skillDmg_em_venomswamp":10},"per":{"4":{"skillDmg_em_venomswamp":5}},"refine":{"9":{"skillDmg_em_venomswamp":10}}},"glacier_f_orb_117":{"note":" （本服實作：增幅箭傷害+10%；精煉每+4：增幅箭傷害+5%；精煉+9：增幅箭傷害+10% **已補上生效**）","flat":{"skillDmg_wh_crescivebolt":10},"per":{"4":{"skillDmg_wh_crescivebolt":5}},"refine":{"9":{"skillDmg_wh_crescivebolt":10}}},"glacier_f_orb_118":{"note":" （本服實作：金屬狂想傷害+10%；精煉每+4：金屬狂想傷害+5%；精煉+9：金屬狂想傷害+10% **已補上生效**）","flat":{"skillDmg_tr_metalicfury":10},"per":{"4":{"skillDmg_tr_metalicfury":5}},"refine":{"9":{"skillDmg_tr_metalicfury":10}}},"glacier_f_orb_119":{"note":" （本服實作：節奏射擊傷害+10%；精煉每+4：節奏射擊傷害+5%；精煉+9：節奏射擊傷害+10% **已補上生效**）","flat":{"skillDmg_tr_rhythmshooting":10},"per":{"4":{"skillDmg_tr_rhythmshooting":5}},"refine":{"9":{"skillDmg_tr_rhythmshooting":10}}},"glacier_f_orb_120":{"note":" （本服實作：薔薇綻放傷害+10%；精煉每+4：薔薇綻放傷害+5%；精煉+9：薔薇綻放傷害+10% **已補上生效**）","flat":{"skillDmg_tr_roseblossom":10},"per":{"4":{"skillDmg_tr_roseblossom":5}},"refine":{"9":{"skillDmg_tr_roseblossom":10}}},"glacier_f_orb_162":{"note":" （本服實作：龍炎吐息傷害+10%；精煉每+4：龍炎吐息傷害+5%；精煉+9：龍炎吐息傷害+10% **已補上生效**）","flat":{"skillDmg_dk_dragonicbreath":10},"per":{"4":{"skillDmg_dk_dragonicbreath":5}},"refine":{"9":{"skillDmg_dk_dragonicbreath":10}}},"glacier_f_orb_165":{"note":" （本服實作：強力粉碎傷害+10%；精煉每+4：強力粉碎傷害+5%；精煉+9：強力粉碎傷害+10% **已補上生效**）","flat":{"skillDmg_mt_mightysmash":10},"per":{"4":{"skillDmg_mt_mightysmash":5}},"refine":{"9":{"skillDmg_mt_mightysmash":10}}},"wicked_blade":{"note":" （本服實作：精煉每+3：龍捲手推車傷害+7% **已補上生效**）","per":{"3":{"skillDmg_gn_carttornado":7}}},"poenitentia_orbis":{"note":" （本服實作：精煉+9：迴旋盾擊傷害+25%、背刺傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_cr_shieldboomerang":25,"skillDmg_rg_backstap":25}}},"cannon_rapier_ad":{"note":" （本服實作：精煉+9：火箭術傷害+60%、火球術傷害+60% **已補上生效**）","refine":{"9":{"skillDmg_firebolt":60,"skillDmg_fireball":60}}},"boost_lance_ad":{"note":" （本服實作：精煉+9：驅逐尖擊傷害+20%、加農長矛傷害+20%；精煉+11：驅逐尖擊傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_lg_banishingpoint":20,"skillDmg_lg_cannonspear":20},"11":{"skillDmg_lg_banishingpoint":25}}},"solid_manual":{"note":" （本服實作：精煉每+3：精神波動傷害+15% **已補上生效**）","per":{"3":{"skillDmg_so_psychicwave":15}}},"poenitentia_ferrum":{"note":" （本服實作：精煉+9：隕石術傷害+30%、霜凍之術傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_meteorstorm":30,"skillDmg_frostdiver_wiz":30}}},"ice_f_stone_skill_12":{"note":" （本服實作：精煉+9：孢子爆炸冷卻-2秒 **已補上生效**）","refine":{"9":{"skillCdFlat_gn_sporeexplosion":-2}}},"ice_f_stone_skill_18":{"note":" （本服實作：精煉+9：三角射擊傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_sc_triangleshot":15}}},"ice_f_stone_skill_31":{"note":" （本服實作：精煉+7：瞄準標記傷害+15%；精煉+9：瞄準標記傷害+15% **已補上生效**）","refine":{"7":{"skillDmg_ra_aimedbolt":15},"9":{"skillDmg_ra_aimedbolt":15}}},"ice_f_stone_skill_33":{"note":" （本服實作：精煉+7：箭雨風暴傷害+15%；精煉+9：箭雨風暴傷害+15% **已補上生效**）","refine":{"7":{"skillDmg_ra_arrowstorm":15},"9":{"skillDmg_ra_arrowstorm":15}}},"ice_f_stone_skill_35":{"note":" （本服實作：精煉+7：驟雨箭傷害+15%；精煉+9：驟雨箭傷害+15% **已補上生效**）","refine":{"7":{"skillDmg_wm_severerainstorm":15},"9":{"skillDmg_wm_severerainstorm":15}}},"ice_f_stone_skill_36":{"note":" （本服實作：精煉+7：奧義箭亂舞傷害+20%；精煉+9：奧義箭亂舞傷害+20%；精煉+11：奧義箭亂舞傷害+20% **已補上生效**）","refine":{"7":{"skillDmg_cg_arrowvulcan":20},"9":{"skillDmg_cg_arrowvulcan":20},"11":{"skillDmg_cg_arrowvulcan":20}}},"ice_f_stone_skill_53":{"note":" （本服實作：精煉+7：迴旋盾擊傷害+15%；精煉+9：迴旋盾擊傷害+15% **已補上生效**）","refine":{"7":{"skillDmg_cr_shieldboomerang":15},"9":{"skillDmg_cr_shieldboomerang":15}}},"combo_fist":{"note":" （本服實作：連環全身掌傷害+30%；精煉+9：猛龍誇強傷害+50%、氣絕崩擊傷害+50%；精煉+11：氣絕崩擊傷害+30% **已補上生效**）","flat":{"skillDmg_mo_chaincombo":30},"refine":{"9":{"skillDmg_mo_combofinish":50,"skillDmg_ch_chaincrush":50},"11":{"skillDmg_ch_chaincrush":30}}},"asura_bandage":{"note":" （本服實作：精煉+9：導氣彈傷害+40% **已補上生效**）","refine":{"9":{"skillDmg_sr_knucklearrow":40}}},"sword_of_bluefire":{"note":" （本服實作：精煉+11：手推車加農砲傷害+15% **已補上生效**）","refine":{"11":{"skillDmg_gn_cartcannon":15}}},"cannon_rapier_os":{"note":" （本服實作：精煉+9：火球術傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_fireball":30}}},"vigilante_suits":{"note":" （本服實作：精煉+9：三角射擊傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_sc_triangleshot":20}}},"saphir_hall_os":{"note":" （本服實作：精煉+9：手推車加農砲傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_gn_cartcannon":20}}},"ultio_spes_os":{"note":" （本服實作：精煉+9：聖光讚歌傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_ab_adoramus":20}}},"engine_pilebuncker":{"note":" （本服實作：精煉+9：臂裝加農砲傷害+15%、推進拳傷害+15%；精煉+11：火神砲傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_nc_armscannon":15,"skillDmg_nc_boostknuckle":15},"11":{"skillDmg_nc_vulcanarm":15}}},"coolant_injection":{"note":" （本服實作：精煉+9：手推車加農砲傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_gn_cartcannon":25}}},"gene_rod":{"note":" （本服實作：瘋狂野草傷害+20%；精煉+9：瘋狂野草傷害+30%；精煉+11：瘋狂野草冷卻-2秒 **已補上生效**）","flat":{"skillDmg_gn_crazyweed":20},"refine":{"9":{"skillDmg_gn_crazyweed":30},"11":{"skillCdFlat_gn_crazyweed":-2}}},"ein_1hhammer":{"note":" （本服實作：精煉+9：聖光讚歌傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_ab_adoramus":15}}},"probation_cross_bow":{"note":" （本服實作：箭雨風暴傷害+20% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":20}},"narcis_bow":{"note":" （本服實作：精煉+9：驟雨箭傷害+10%；精煉+11：驟雨箭冷卻-2秒 **已補上生效**）","refine":{"9":{"skillDmg_wm_severerainstorm":10},"11":{"skillCdFlat_wm_severerainstorm":-2}}},"virtual_bow_os":{"note":" （本服實作：精煉+9：箭雨風暴傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_ra_arrowstorm":30}}},"mh_p89_os":{"note":" （本服實作：精煉+9：驟雨箭冷卻-2秒；精煉+11：驟雨箭傷害+15% **已補上生效**）","refine":{"9":{"skillCdFlat_wm_severerainstorm":-2},"11":{"skillDmg_wm_severerainstorm":15}}},"ac_b44_os":{"note":" （本服實作：精煉+9：三角射擊傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_sc_triangleshot":15}}},"rapid_fire_c_bow":{"note":" （本服實作：精煉+9：三角射擊傷害+20%；精煉+11：三角射擊傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_sc_triangleshot":20},"11":{"skillDmg_sc_triangleshot":15}}},"sharp_star_bow":{"note":" （本服實作：精煉+11：銳利射擊傷害+10% **已補上生效**）","refine":{"11":{"skillDmg_sn_sharpshooting":10}}},"aiming_bow":{"note":" （本服實作：精煉+9：瞄準標記傷害+30%；精煉+11：瞄準標記冷卻-1秒、瞄準標記傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_ra_aimedbolt":30},"11":{"skillCdFlat_ra_aimedbolt":-1,"skillDmg_ra_aimedbolt":15}}},"falken_shooter":{"note":" （本服實作：精煉+9：箭雨風暴傷害+25%；精煉+11：箭雨風暴冷卻-0.7秒 **已補上生效**）","refine":{"9":{"skillDmg_ra_arrowstorm":25},"11":{"skillCdFlat_ra_arrowstorm":-0.7}}},"wind_gale":{"note":" （本服實作：精煉+9：驟雨箭傷害+30%；精煉+11：驟雨箭冷卻-2秒 **已補上生效**）","refine":{"9":{"skillDmg_wm_severerainstorm":30},"11":{"skillCdFlat_wm_severerainstorm":-2}}},"ein_bhbow":{"note":" （本服實作：瞄準標記傷害+10%；精煉+9：瞄準標記傷害+15% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":10},"refine":{"9":{"skillDmg_ra_aimedbolt":15}}},"g_knight_bow":{"note":" （本服實作：精煉+9：三角射擊傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_sc_triangleshot":20}}},"green_foxtail":{"note":" （本服實作：崩裂術傷害+3%、大地脈動傷害+3% **已補上生效**）","flat":{"skillDmg_heavensdrive":3,"skillDmg_wl_earthstrain":3}},"old_rune_circlet":{"note":" （本服實作：精煉每+2：百矛穿刺傷害+15% **已補上生效**） （本服實作：精煉每+2：致命爆裂（本服名稱：爆燃劍）傷害+20% **已補上生效**）","per":{"2":{"skillDmg_rk_hundredspear":15,"skillDmg_rk_ignitionbreak":20}}},"old_driver_band_y":{"note":" （本服實作：精煉每+2：臂裝加農砲傷害+15% **已補上生效**）","per":{"2":{"skillDmg_nc_armscannon":15}}},"old_shadow_handicraft":{"note":" （本服實作：精煉每+2：三角射擊傷害+25% **已補上生效**）","per":{"2":{"skillDmg_sc_triangleshot":25}}},"old_minstrel_song_hat":{"note":" （本服實作：精煉每+2：奧義箭亂舞傷害+20%、驟雨箭傷害+15% **已補上生效**）","per":{"2":{"skillDmg_cg_arrowvulcan":20,"skillDmg_wm_severerainstorm":15}}},"old_midas_whisper":{"note":" （本服實作：精煉每+2：手推車加農砲傷害+15% **已補上生效**）","per":{"2":{"skillDmg_gn_cartcannon":15}}},"old_magic_stone_hat":{"note":" （本服實作：精煉每+2：靈魂爆炸傷害+15% **已補上生效**）","per":{"2":{"skillDmg_wl_soulexpansion":15}}},"old_wind_whisper":{"note":" （本服實作：精煉每+2：毒素爆破傷害+15% **已補上生效**）","per":{"2":{"skillDmg_so_poisonbuster":15}}},"old_dying_swan":{"note":" （本服實作：精煉每+2：奧義箭亂舞傷害+20%、驟雨箭傷害+15% **已補上生效**）","per":{"2":{"skillDmg_cg_arrowvulcan":20,"skillDmg_wm_severerainstorm":15}}},"old_circlet_of_bone":{"note":" （本服實作：精煉每+2：十字斬傷害+15%、十字撕裂者傷害+20% **已補上生效**） （本服實作：精煉每+1：暴擊傷害+1%、攻擊速度+1% **已補上生效**）","per":{"1":{"critDmgPct":1,"aspdPct":1},"2":{"skillDmg_shc_crossslash":15,"skillDmg_gc_crossripperslasher":20}}},"old_protect_of_crown":{"note":" （本服實作：精煉每+2：加農長矛傷害+20%、騎士烙印傷害+15% **已補上生效**）","per":{"2":{"skillDmg_lg_cannonspear":20,"skillDmg_lg_overbrand":15}}},"old_camo_rabbit_hood":{"note":" （本服實作：精煉每+2：集束炸彈傷害+15% **已補上生效**） （本服實作：精煉每+1：遠距離物理傷害+1%；精煉每+2：狼突擊（本服名稱：戰狼突擊）傷害+10% **已補上生效**） （⚠本服說明：「遠距離物理傷害%」目前只作用在普通攻擊上，技能不吃）","per":{"1":{"rangedDmgPct":1},"2":{"skillDmg_ra_clusterbomb":15,"skillDmg_ra_wugstrike":10}}},"oriental_sword":{"note":" （本服實作：精煉每+3：音波斬傷害+10% **已補上生效**）","per":{"3":{"skillDmg_rk_sonicwave":10}}},"volar":{"note":" （本服實作：怪物互擊傷害+30%；精煉+9：爆燃劍冷卻-1秒、怪物互擊冷卻-1秒 **已補上生效**）","flat":{"skillDmg_bowlingbash":30},"refine":{"9":{"skillCdFlat_rk_ignitionbreak":-1,"skillCdFlat_bowlingbash":-1}}},"vernan":{"note":" （本服實作：精煉+9：螺旋擊刺傷害+30%、音波斬傷害+30%；精煉+11：音波斬冷卻-1.5秒 **已補上生效**）","refine":{"9":{"skillDmg_lk_spiralpierce":30,"skillDmg_rk_sonicwave":30},"11":{"skillCdFlat_rk_sonicwave":-1.5}}},"bs_item_m_s_16":{"note":" （本服實作：狂擊傷害+4%、怒爆傷害+4% **已補上生效**）","flat":{"skillDmg_bash":4,"skillDmg_magnumbreak":4}},"sura_stone_bottom":{"note":" （本服實作：連環全身掌傷害+20% **已補上生效**）","flat":{"skillDmg_mo_chaincombo":20}},"ranger_stone_bottom":{"note":" （本服實作：箭雨傷害+20% **已補上生效**）","flat":{"skillDmg_arrowshower":20}},"sorcerer_stone_bottom":{"note":" （本服實作：火箭術傷害+20%、冰箭術傷害+20%、雷擊術傷害+20% **已補上生效**）","flat":{"skillDmg_firebolt":20,"skillDmg_coldbolt":20,"skillDmg_lightningbolt":20}},"sorcerer_stone_robe":{"note":" （本服實作：精神波動傷害+10% **已補上生效**）","flat":{"skillDmg_so_psychicwave":10}},"runeknight_stone_middle":{"note":" （本服實作：螺旋擊刺傷害+15% **已補上生效**）","flat":{"skillDmg_lk_spiralpierce":15}},"genetic_stone_robe":{"note":" （本服實作：手推車加農砲傷害+10% **已補上生效**）","flat":{"skillDmg_gn_cartcannon":10}},"warlock_stone_middle":{"note":" （本服實作：隕石術傷害+20% **已補上生效**）","flat":{"skillDmg_meteorstorm":20}},"warlock_stone_robe":{"note":" （本服實作：深紅岩漿傷害+10% **已補上生效**）","flat":{"skillDmg_wl_crimsonrock":10}},"shadowchase_stone_bottom":{"note":" （本服實作：潛擊傷害+20% **已補上生效**）","flat":{"skillDmg_rg_raid":20}},"shadowchaser_stone_robe":{"note":" （本服實作：三角射擊傷害+15% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":15}},"mechanic_stone_robe":{"note":" （本服實作：斧刃旋風傷害+15% **已補上生效**）","flat":{"skillDmg_nc_axetornado":15}},"wander_minstre_stone_robe":{"note":" （本服實作：驟雨箭傷害+15% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":15}},"archbishop_stone_robe":{"note":" （本服實作：聖光讚歌傷害+15% **已補上生效**）","flat":{"skillDmg_ab_adoramus":15}},"guillcross_stone_robe":{"note":" （本服實作：迴旋刃傷害+15% **已補上生效**）","flat":{"skillDmg_gc_rollingcutter":15}},"sura_stone_robe2":{"note":" （本服實作：導氣彈傷害+15% **已補上生效**）","flat":{"skillDmg_sr_knucklearrow":15}},"sura_stone_middle2":{"note":" （本服實作：猛龍誇強傷害+15% **已補上生效**）","flat":{"skillDmg_mo_combofinish":15}},"sura_stone_top2":{"note":" （本服實作：氣絕崩擊傷害+15% **已補上生效**）","flat":{"skillDmg_ch_chaincrush":15}},"sorcerer_stone_robe2":{"note":" （本服實作：鑽石星塵傷害+15% **已補上生效**）","flat":{"skillDmg_so_diamonddust":15}},"sorcerer_stone_middle2":{"note":" （本服實作：火箭術傷害+20%、冰箭術傷害+20%、雷擊術傷害+20% **已補上生效**）","flat":{"skillDmg_firebolt":20,"skillDmg_coldbolt":20,"skillDmg_lightningbolt":20}},"sorcerer_stone_top2":{"note":" （本服實作：地震術傷害+20%、崩裂術傷害+20% **已補上生效**）","flat":{"skillDmg_earthspike":20,"skillDmg_heavensdrive":20}},"shadowchaser_stone_robe2":{"note":" （本服實作：致命威嚇傷害+15% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":15}},"shadowchas_stone_middle2":{"note":" （本服實作：背刺傷害+15% **已補上生效**）","flat":{"skillDmg_rg_backstap":15}},"avenger":{"note":" （本服實作：精煉每+3：斧刃旋風傷害+10%；精煉+9：迴旋飛斧傷害+40% **已補上生效**）","per":{"3":{"skillDmg_nc_axetornado":10}},"refine":{"9":{"skillDmg_nc_axeboomerang":40}}},"maxi_spanner":{"note":" （本服實作：精煉+11：斧刃旋風傷害+15% **已補上生效**）","refine":{"11":{"skillDmg_nc_axetornado":15}}},"king_of_spirit_ring_tw":{"note":" （本服實作：大地之牙冷卻-0.5秒、鑽石星塵冷卻-0.5秒 **已補上生效**）","flat":{"skillCdFlat_so_earthgrave":-0.5,"skillCdFlat_so_diamonddust":-0.5}},"jack_the_knife":{"note":" （本服實作：背刺傷害+40%；精煉+9：致命威嚇傷害+30% **已補上生效**）","flat":{"skillDmg_rg_backstap":40},"refine":{"9":{"skillDmg_sc_fatalmenace":30}}},"antique_cello":{"note":" （本服實作：精煉+9：驟雨箭冷卻-1秒 **已補上生效**）","refine":{"9":{"skillCdFlat_wm_severerainstorm":-1}}},"ein_1hlute":{"note":" （本服實作：精煉+9：驟雨箭傷害+15% **已補上生效**）","refine":{"9":{"skillDmg_wm_severerainstorm":15}}},"r_pillar":{"note":" （本服實作：精煉+9：臂裝加農砲傷害+20%、推進拳傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_nc_armscannon":20,"skillDmg_nc_boostknuckle":20}}},"r_syringe":{"note":" （本服實作：精煉+9：手推車加農砲傷害+20%、孢子爆炸傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_gn_cartcannon":20,"skillDmg_gn_sporeexplosion":20}}},"g_alchemist_staff":{"note":" （本服實作：精煉+9：瘋狂野草傷害+30%、瘋狂野草冷卻-1秒 **已補上生效**）","refine":{"9":{"skillDmg_gn_crazyweed":30,"skillCdFlat_gn_crazyweed":-1}}},"ec_boots_tw":{"note":" （本服實作：精煉每+3：驟雨箭傷害+10%、奧義箭亂舞傷害+20% **已補上生效**）","per":{"3":{"skillDmg_wm_severerainstorm":10,"skillDmg_cg_arrowvulcan":20}}},"light_blade":{"note":" （本服實作：精煉每+3：神之威壓傷害+5%、創世之光傷害+5% **已補上生效**）","per":{"3":{"skillDmg_pa_pressure":5,"skillDmg_lg_rayofgenesis":5}}},"up_sword_of_bluefire":{"note":" （本服實作：精煉+9：手推車加農砲傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_gn_cartcannon":20}}},"up_slate_sword":{"note":" （本服實作：精煉每+3：龍捲手推車傷害+10%、地獄之樹傷害+5% **已補上生效**）","per":{"3":{"skillDmg_gn_carttornado":10,"skillDmg_gn_hellsplant":5}}},"up_light_blade":{"note":" （本服實作：精煉每+3：神之威壓傷害+5%、創世之光傷害+5% **已補上生效**）","per":{"3":{"skillDmg_pa_pressure":5,"skillDmg_lg_rayofgenesis":5}}},"poenitentia_gladius":{"note":" （本服實作：精煉+9：創世之光傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_lg_rayofgenesis":25}}},"poenitentia_ligula":{"note":" （本服實作：精煉+9：手推車加農砲傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_gn_cartcannon":25}}},"vivatus_f_g_sword":{"note":" （本服實作：創世之光傷害+10%；精煉+7：創世之光傷害+20%；精煉+9：創世之光冷卻-0.5秒；精煉+11：創世之光傷害+25% **已補上生效**）","flat":{"skillDmg_lg_rayofgenesis":10},"refine":{"7":{"skillDmg_lg_rayofgenesis":20},"9":{"skillCdFlat_lg_rayofgenesis":-0.5},"11":{"skillDmg_lg_rayofgenesis":25}}},"light_blade_lt":{"note":" （本服實作：精煉每+3：神之威壓傷害+5%、創世之光傷害+5% **已補上生效**）","per":{"3":{"skillDmg_pa_pressure":5,"skillDmg_lg_rayofgenesis":5}}},"fatalist":{"note":" （本服實作：精煉+9：致命威嚇傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_sc_fatalmenace":20}}},"up_fatalist":{"note":" （本服實作：精煉+7：致命威嚇傷害+25% **已補上生效**）","refine":{"7":{"skillDmg_sc_fatalmenace":25}}},"poenitentia_mucro":{"note":" （本服實作：精煉+9：十字斬傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_shc_crossslash":30}}},"poenetentia_dilacero":{"note":" （本服實作：精煉+9：致命威嚇傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_sc_fatalmenace":30}}},"adulter_f_dagger":{"note":" （本服實作：致命威嚇傷害+10%；精煉+7：致命威嚇傷害+20%；精煉+11：致命威嚇傷害+25% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":10},"refine":{"7":{"skillDmg_sc_fatalmenace":20},"11":{"skillDmg_sc_fatalmenace":25}}},"vivatus_f_dagger":{"note":" （本服實作：致命威嚇傷害+10%；精煉+7：致命威嚇傷害+20%；精煉+11：致命威嚇傷害+25% **已補上生效**）","flat":{"skillDmg_sc_fatalmenace":10},"refine":{"7":{"skillDmg_sc_fatalmenace":20},"11":{"skillDmg_sc_fatalmenace":25}}},"fatalist_lt":{"note":" （本服實作：精煉+7：致命威嚇傷害+25% **已補上生效**）","refine":{"7":{"skillDmg_sc_fatalmenace":25}}},"blessed_knife":{"note":" （本服實作：精煉每+3：背刺傷害+20% **已補上生效**）","per":{"3":{"skillDmg_rg_backstap":20}}},"up_blessed_knife":{"note":" （本服實作：精煉每+3：背刺傷害+25% **已補上生效**）","per":{"3":{"skillDmg_rg_backstap":25}}},"blessed_knife_lt":{"note":" （本服實作：精煉每+3：背刺傷害+25% **已補上生效**）","per":{"3":{"skillDmg_rg_backstap":25}}},"adulter_f_axe":{"note":" （本服實作：迴旋飛斧傷害+10%；精煉+7：迴旋飛斧傷害+20%；精煉+11：迴旋飛斧傷害+25% **已補上生效**）","flat":{"skillDmg_nc_axeboomerang":10},"refine":{"7":{"skillDmg_nc_axeboomerang":20},"11":{"skillDmg_nc_axeboomerang":25}}},"vivatus_f_axe":{"note":" （本服實作：迴旋飛斧傷害+10%；精煉+7：迴旋飛斧傷害+20%；精煉+11：迴旋飛斧傷害+25% **已補上生效**）","flat":{"skillDmg_nc_axeboomerang":10},"refine":{"7":{"skillDmg_nc_axeboomerang":20},"11":{"skillDmg_nc_axeboomerang":25}}},"ray_knuckle":{"note":" （本服實作：精煉每+3：虎砲傷害+4%；精煉+11：虎砲冷卻-1秒 **已補上生效**）","per":{"3":{"skillDmg_sr_tigercannon":4}},"refine":{"11":{"skillCdFlat_sr_tigercannon":-1}}},"up_ray_knuckle":{"note":" （本服實作：精煉每+3：虎砲傷害+4%；精煉+9：虎砲冷卻-1秒 **已補上生效**）","per":{"3":{"skillDmg_sr_tigercannon":4}},"refine":{"9":{"skillCdFlat_sr_tigercannon":-1}}},"poenitentia_caestus":{"note":" （本服實作：精煉+9：虎砲傷害+30%；精煉+11：虎砲冷卻-1秒 **已補上生效**）","refine":{"9":{"skillDmg_sr_tigercannon":30},"11":{"skillCdFlat_sr_tigercannon":-1}}},"adulter_f_knuckle":{"note":" （本服實作：虎砲傷害+10%；精煉+7：虎砲傷害+20%；精煉+9：虎砲冷卻-0.5秒；精煉+11：虎砲傷害+25% **已補上生效**）","flat":{"skillDmg_sr_tigercannon":10},"refine":{"7":{"skillDmg_sr_tigercannon":20},"9":{"skillCdFlat_sr_tigercannon":-0.5},"11":{"skillDmg_sr_tigercannon":25}}},"vivatus_f_knuckle":{"note":" （本服實作：虎砲傷害+10%；精煉+7：虎砲傷害+20%；精煉+9：虎砲冷卻-0.5秒；精煉+11：虎砲傷害+25% **已補上生效**）","flat":{"skillDmg_sr_tigercannon":10},"refine":{"7":{"skillDmg_sr_tigercannon":20},"9":{"skillCdFlat_sr_tigercannon":-0.5},"11":{"skillDmg_sr_tigercannon":25}}},"ray_knuckle_lt":{"note":" （本服實作：精煉每+3：虎砲傷害+4%；精煉+7：虎砲傷害+25%、羅剎破凰擊傷害+30% **已補上生效**）","per":{"3":{"skillDmg_sr_tigercannon":4}},"refine":{"7":{"skillDmg_sr_tigercannon":25,"skillDmg_sr_gateofhell":30}}},"poenitentia_chorda":{"note":" （本服實作：金屬狂想傷害+10% **已補上生效**）","flat":{"skillDmg_tr_metalicfury":10}},"adulter_f_violin":{"note":" （本服實作：驟雨箭傷害+10%；精煉+7：驟雨箭傷害+20%；精煉+9：驟雨箭冷卻-2.5秒；精煉+11：驟雨箭傷害+25% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":10},"refine":{"7":{"skillDmg_wm_severerainstorm":20},"9":{"skillCdFlat_wm_severerainstorm":-2.5},"11":{"skillDmg_wm_severerainstorm":25}}},"vivatus_f_violin":{"note":" （本服實作：驟雨箭傷害+10%；精煉+7：驟雨箭傷害+20%；精煉+9：驟雨箭冷卻-2.5秒；精煉+11：驟雨箭傷害+25% **已補上生效**）","flat":{"skillDmg_wm_severerainstorm":10},"refine":{"7":{"skillDmg_wm_severerainstorm":20},"9":{"skillCdFlat_wm_severerainstorm":-2.5},"11":{"skillDmg_wm_severerainstorm":25}}},"meteor_striker":{"note":" （本服實作：精煉+9：火神砲傷害+10%、臂裝加農砲傷害+10% **已補上生效**）","refine":{"9":{"skillDmg_nc_vulcanarm":10,"skillDmg_nc_armscannon":10}}},"saint_hall":{"note":" （本服實作：精煉每+3：聖光讚歌傷害+5% **已補上生效**）","per":{"3":{"skillDmg_ab_adoramus":5}}},"up_meteor_striker":{"note":" （本服實作：精煉每+3：火神砲傷害+10%、推進拳傷害+10%；精煉+9：臂裝加農砲傷害+25% **已補上生效**）","per":{"3":{"skillDmg_nc_vulcanarm":10,"skillDmg_nc_boostknuckle":10}},"refine":{"9":{"skillDmg_nc_armscannon":25}}},"up_saint_hall":{"note":" （本服實作：精煉每+3：聖光讚歌傷害+5% **已補上生效**）","per":{"3":{"skillDmg_ab_adoramus":5}}},"poenitentia_clava":{"note":" （本服實作：戰斧踐踏傷害+10%；精煉+9：火神砲傷害+25%；精煉+11：臂裝加農砲傷害+25% **已補上生效**）","flat":{"skillDmg_mt_axestomp":10},"refine":{"9":{"skillDmg_nc_vulcanarm":25},"11":{"skillDmg_nc_armscannon":25}}},"poenitentia_pendulus":{"note":" （本服實作：精煉+9：龍捲手推車傷害+25% **已補上生效**）","refine":{"9":{"skillDmg_gn_carttornado":25}}},"adulter_f_mace":{"note":" （本服實作：火神砲傷害+10%；精煉+7：火神砲傷害+20%；精煉+11：火神砲傷害+25% **已補上生效**）","flat":{"skillDmg_nc_vulcanarm":10},"refine":{"7":{"skillDmg_nc_vulcanarm":20},"11":{"skillDmg_nc_vulcanarm":25}}},"adulter_f_hall":{"note":" （本服實作：龍捲手推車傷害+10%；精煉+7：龍捲手推車傷害+20%；精煉+11：龍捲手推車傷害+25% **已補上生效**）","flat":{"skillDmg_gn_carttornado":10},"refine":{"7":{"skillDmg_gn_carttornado":20},"11":{"skillDmg_gn_carttornado":25}}},"vivatus_f_mace":{"note":" （本服實作：火神砲傷害+10%；精煉+7：火神砲傷害+20%；精煉+11：火神砲傷害+25% **已補上生效**）","flat":{"skillDmg_nc_vulcanarm":10},"refine":{"7":{"skillDmg_nc_vulcanarm":20},"11":{"skillDmg_nc_vulcanarm":25}}},"vivatus_f_hall":{"note":" （本服實作：龍捲手推車傷害+10%；精煉+7：龍捲手推車傷害+20%；精煉+11：龍捲手推車傷害+25% **已補上生效**）","flat":{"skillDmg_gn_carttornado":10},"refine":{"7":{"skillDmg_gn_carttornado":20},"11":{"skillDmg_gn_carttornado":25}}},"saint_hall_lt":{"note":" （本服實作：精煉每+3：聖光讚歌傷害+5%；精煉+11：聖光讚歌傷害+30% **已補上生效**）","per":{"3":{"skillDmg_ab_adoramus":5}},"refine":{"11":{"skillDmg_ab_adoramus":30}}},"meteor_striker_lt":{"note":" （本服實作：精煉每+3：火神砲傷害+10%、推進拳傷害+10%；精煉+7：火神砲傷害+15%、推進拳傷害+15% **已補上生效**）","per":{"3":{"skillDmg_nc_vulcanarm":10,"skillDmg_nc_boostknuckle":10}},"refine":{"7":{"skillDmg_nc_vulcanarm":15,"skillDmg_nc_boostknuckle":15}}},"up_oriental_sword":{"note":" （本服實作：精煉每+3：音波斬傷害+10% **已補上生效**）","per":{"3":{"skillDmg_rk_sonicwave":10}}},"poenitentia_ensis":{"note":" （本服實作：精煉+9：爆燃劍傷害+25%；精煉+11：爆燃劍冷卻-0.7秒 **已補上生效**）","refine":{"9":{"skillDmg_rk_ignitionbreak":25},"11":{"skillCdFlat_rk_ignitionbreak":-0.7}}},"adulter_f_t_sword":{"note":" （本服實作：風刃傷害+10%；精煉+7：風刃傷害+20%；精煉+11：風刃傷害+25% **已補上生效**）","flat":{"skillDmg_rk_windcutter":10},"refine":{"7":{"skillDmg_rk_windcutter":20},"11":{"skillDmg_rk_windcutter":25}}},"vivatus_f_t_sword":{"note":" （本服實作：風刃傷害+10%；精煉+7：風刃傷害+20%；精煉+11：風刃傷害+25% **已補上生效**）","flat":{"skillDmg_rk_windcutter":10},"refine":{"7":{"skillDmg_rk_windcutter":20},"11":{"skillDmg_rk_windcutter":25}}},"up_avenger":{"note":" （本服實作：精煉每+3：斧刃旋風傷害+10%；精煉+7：迴旋飛斧傷害+40%、斧刃旋風冷卻-1秒 **已補上生效**）","per":{"3":{"skillDmg_nc_axetornado":10}},"refine":{"7":{"skillDmg_nc_axeboomerang":40,"skillCdFlat_nc_axetornado":-1}}},"poenitentia_ascia":{"note":" （本服實作：戰斧踐踏傷害+10%；精煉+9：斧刃旋風傷害+25% **已補上生效**）","flat":{"skillDmg_mt_axestomp":10},"refine":{"9":{"skillDmg_nc_axetornado":25}}},"avenger_lt":{"note":" （本服實作：精煉每+3：斧刃旋風傷害+10%；精煉+7：迴旋飛斧傷害+40%、斧刃旋風冷卻-1秒 **已補上生效**）","per":{"3":{"skillDmg_nc_axetornado":10}},"refine":{"7":{"skillDmg_nc_axeboomerang":40,"skillCdFlat_nc_axetornado":-1}}},"up_narcis_bow":{"note":" （本服實作：精煉+7：驟雨箭冷卻-2秒；精煉+9：驟雨箭傷害+15% **已補上生效**）","refine":{"7":{"skillCdFlat_wm_severerainstorm":-2},"9":{"skillDmg_wm_severerainstorm":15}}},"up_royal_bow_k":{"note":" （本服實作：精煉每+3：箭雨風暴傷害+12% **已補上生效**）","per":{"3":{"skillDmg_ra_arrowstorm":12}}},"poenitentia_tenon":{"note":" （本服實作：精煉+9：三角射擊傷害+30% **已補上生效**）","refine":{"9":{"skillDmg_sc_triangleshot":30}}},"poenitentia_nervus":{"note":" （本服實作：增幅箭傷害+10%；精煉+9：瞄準標記傷害+30%；精煉+11：瞄準標記冷卻-1秒 **已補上生效**）","flat":{"skillDmg_wh_crescivebolt":10},"refine":{"9":{"skillDmg_ra_aimedbolt":30},"11":{"skillCdFlat_ra_aimedbolt":-1}}},"poenetentia_vatia":{"note":" （本服實作：節奏射擊傷害+10%；精煉+9：驟雨箭傷害+30%；精煉+11：驟雨箭冷卻-2秒 **已補上生效**）","flat":{"skillDmg_tr_rhythmshooting":10},"refine":{"9":{"skillDmg_wm_severerainstorm":30},"11":{"skillCdFlat_wm_severerainstorm":-2}}},"adulter_f_c_bow":{"note":" （本服實作：三角射擊傷害+10%；精煉+7：三角射擊傷害+20%；精煉+11：三角射擊傷害+25% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":10},"refine":{"7":{"skillDmg_sc_triangleshot":20},"11":{"skillDmg_sc_triangleshot":25}}},"adulter_f_ballista":{"note":" （本服實作：箭雨風暴傷害+10%；精煉+7：箭雨風暴傷害+20%；精煉+9：箭雨風暴冷卻-1.2秒；精煉+11：箭雨風暴傷害+25% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":10},"refine":{"7":{"skillDmg_ra_arrowstorm":20},"9":{"skillCdFlat_ra_arrowstorm":-1.2},"11":{"skillDmg_ra_arrowstorm":25}}},"adulter_f_a_bow":{"note":" （本服實作：瞄準標記傷害+10%；精煉+7：瞄準標記傷害+20%；精煉+11：瞄準標記傷害+25% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":10},"refine":{"7":{"skillDmg_ra_aimedbolt":20},"11":{"skillDmg_ra_aimedbolt":25}}},"vivatus_f_c_bow":{"note":" （本服實作：三角射擊傷害+10%；精煉+7：三角射擊傷害+20%；精煉+11：三角射擊傷害+25% **已補上生效**）","flat":{"skillDmg_sc_triangleshot":10},"refine":{"7":{"skillDmg_sc_triangleshot":20},"11":{"skillDmg_sc_triangleshot":25}}},"vivatus_f_ballista":{"note":" （本服實作：箭雨風暴傷害+10%；精煉+7：箭雨風暴傷害+20%；精煉+9：箭雨風暴冷卻-1.2秒；精煉+11：箭雨風暴傷害+25% **已補上生效**）","flat":{"skillDmg_ra_arrowstorm":10},"refine":{"7":{"skillDmg_ra_arrowstorm":20},"9":{"skillCdFlat_ra_arrowstorm":-1.2},"11":{"skillDmg_ra_arrowstorm":25}}},"vivatus_f_a_bow":{"note":" （本服實作：瞄準標記傷害+10%；精煉+7：瞄準標記傷害+20%；精煉+11：瞄準標記傷害+25% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":10},"refine":{"7":{"skillDmg_ra_aimedbolt":20},"11":{"skillDmg_ra_aimedbolt":25}}},"royal_bow_k_lt":{"note":" （本服實作：精煉+7：箭雨風暴傷害+20%、箭雨風暴冷卻-1秒 **已補上生效**）","refine":{"7":{"skillDmg_ra_arrowstorm":20,"skillCdFlat_ra_arrowstorm":-1}}},"narcis_bow_lt":{"note":" （本服實作：精煉+7：驟雨箭傷害+25%、驟雨箭冷卻-2秒 **已補上生效**）","refine":{"7":{"skillDmg_wm_severerainstorm":25,"skillCdFlat_wm_severerainstorm":-2}}},"ranger_stone_robe2":{"note":" （本服實作：瞄準標記傷害+15% **已補上生效**）","flat":{"skillDmg_ra_aimedbolt":15}},"mechanic_stone_middle2":{"note":" （本服實作：手推車終結技傷害+15% **已補上生效**）","flat":{"skillDmg_ws_cartterm":15}},"mechanic_stone_robe2":{"note":" （本服實作：臂裝加農砲傷害+15% **已補上生效**）","flat":{"skillDmg_nc_armscannon":15}},"archbishop_stone_robe2":{"note":" （本服實作：神聖裁決傷害+15% **已補上生效**）","flat":{"skillDmg_ab_judex":15}},"warlock_stone_top2":{"note":" （本服實作：隕石術傷害+20% **已補上生效**）","flat":{"skillDmg_meteorstorm":20}},"paladin_stone_middle2":{"note":" （本服實作：神之威壓傷害+20% **已補上生效**）","flat":{"skillDmg_pa_pressure":20}},"assacross_stone_middle2":{"note":" （本服實作：音速投擲傷害+20% **已補上生效**）","flat":{"skillDmg_sonicblow":20}},"runeknight_stone_robe2":{"note":" （本服實作：爆燃劍傷害+15% **已補上生效**）","flat":{"skillDmg_rk_ignitionbreak":15}},"runeknight_stone_middle2":{"note":" （本服實作：怪物互擊傷害+20% **已補上生效**）","flat":{"skillDmg_bowlingbash":20}},"runeknight_stone_bottom2":{"note":" （本服實作：螺旋擊刺傷害+20% **已補上生效**）","flat":{"skillDmg_lk_spiralpierce":20}},"genetic_stone_robe2":{"note":" （本服實作：瘋狂野草傷害+20% **已補上生效**）","flat":{"skillDmg_gn_crazyweed":20}},"genetic_stone_middle2":{"note":" （本服實作：強酸火煙瓶投擲傷害+25% **已補上生效**）","flat":{"skillDmg_bc_aciddemonstration":25}},"wander_mins_stone_top2":{"note":" （本服實作：奧義箭亂舞傷害+15% **已補上生效**）","flat":{"skillDmg_cg_arrowvulcan":15}},"viva_adul_hat_wl1":{"note":" （本服實作：精煉每+3：靈魂爆炸傷害+15% **已補上生效**）","per":{"3":{"skillDmg_wl_soulexpansion":15}}},"viva_adul_hat_sr1":{"note":" （本服實作：精煉每+3：虎砲傷害+15% **已補上生效**）","per":{"3":{"skillDmg_sr_tigercannon":15}}},"viva_adul_hat_ab1":{"note":" （本服實作：精煉每+3：聖光讚歌傷害+15% **已補上生效**）","per":{"3":{"skillDmg_ab_adoramus":15}}},"viva_adul_hat_sc1":{"note":" （本服實作：精煉每+3：致命威嚇傷害+15% **已補上生效**）","per":{"3":{"skillDmg_sc_fatalmenace":15}}},"viva_adul_hat_sc2":{"note":" （本服實作：精煉每+3：三角射擊傷害+15% **已補上生效**）","per":{"3":{"skillDmg_sc_triangleshot":15}}},"viva_adul_hat_ra1":{"note":" （本服實作：精煉每+3：箭雨風暴傷害+15% **已補上生效**）","per":{"3":{"skillDmg_ra_arrowstorm":15}}},"viva_adul_hat_ra2":{"note":" （本服實作：精煉每+3：瞄準標記傷害+15% **已補上生效**）","per":{"3":{"skillDmg_ra_aimedbolt":15}}},"viva_adul_hat_lg1":{"note":" （本服實作：精煉每+3：創世之光傷害+15% **已補上生效**）","per":{"3":{"skillDmg_lg_rayofgenesis":15}}},"viva_adul_hat_lg2":{"note":" （本服實作：精煉每+3：騎士烙印傷害+15% **已補上生效**）","per":{"3":{"skillDmg_lg_overbrand":15}}},"viva_adul_hat_gc1":{"note":" （本服實作：精煉每+3：反擊斬傷害+15% **已補上生效**）","per":{"3":{"skillDmg_gc_counterslash":15}}},"viva_adul_hat_gc2":{"note":" （本服實作：精煉每+3：迴旋刃傷害+15% **已補上生效**）","per":{"3":{"skillDmg_gc_rollingcutter":15}}},"viva_adul_hat_so1":{"note":" （本服實作：精煉每+3：毒素爆破傷害+15% **已補上生效**）","per":{"3":{"skillDmg_so_poisonbuster":15}}},"viva_adul_hat_so2":{"note":" （本服實作：精煉每+3：精神波動傷害+15% **已補上生效**）","per":{"3":{"skillDmg_so_psychicwave":15}}},"viva_adul_hat_rk1":{"note":" （本服實作：精煉每+3：風刃傷害+15%、爆燃劍傷害+15% **已補上生效**）","per":{"3":{"skillDmg_rk_windcutter":15,"skillDmg_rk_ignitionbreak":15}}},"viva_adul_hat_wm2":{"note":" （本服實作：精煉每+3：驟雨箭傷害+15% **已補上生效**）","per":{"3":{"skillDmg_wm_severerainstorm":15}}},"viva_adul_hat_nc1":{"note":" （本服實作：精煉每+3：迴旋飛斧傷害+15%、斧刃旋風傷害+15% **已補上生效**）","per":{"3":{"skillDmg_nc_axeboomerang":15,"skillDmg_nc_axetornado":15}}},"viva_adul_hat_nc2":{"note":" （本服實作：精煉每+3：火神砲傷害+15% **已補上生效**）","per":{"3":{"skillDmg_nc_vulcanarm":15}}},"viva_adul_hat_gn1":{"note":" （本服實作：精煉每+3：手推車加農砲傷害+15% **已補上生效**）","per":{"3":{"skillDmg_gn_cartcannon":15}}},"viva_adul_hat_gn2":{"note":" （本服實作：精煉每+3：龍捲手推車傷害+15% **已補上生效**）","per":{"3":{"skillDmg_gn_carttornado":15}}},"mars_armor_tw_lt":{"note":" （本服實作：精煉每+3：十字斬傷害+20%、迴旋刃傷害+20%、三角射擊傷害+20%、致命威嚇傷害+20% **已補上生效**）","per":{"3":{"skillDmg_shc_crossslash":20,"skillDmg_gc_rollingcutter":20,"skillDmg_sc_triangleshot":20,"skillDmg_sc_fatalmenace":20}}},"vulcan_armor_tw_lt":{"note":" （本服實作：精煉每+3：臂裝加農砲傷害+20%、斧刃旋風傷害+20%、瘋狂野草傷害+20%、龍捲手推車傷害+20% **已補上生效**）","per":{"3":{"skillDmg_nc_armscannon":20,"skillDmg_nc_axetornado":20,"skillDmg_gn_crazyweed":20,"skillDmg_gn_carttornado":20}}},"mh_p89_ad":{"note":" （本服實作：精煉+9：驟雨箭冷卻-2秒；精煉+11：驟雨箭傷害+40% **已補上生效**）","refine":{"9":{"skillCdFlat_wm_severerainstorm":-2},"11":{"skillDmg_wm_severerainstorm":40}}},"ac_b44_ad":{"note":" （本服實作：精煉+9：三角射擊傷害+25%；精煉+11：三角射擊傷害+20% **已補上生效**）","refine":{"9":{"skillDmg_sc_triangleshot":25},"11":{"skillDmg_sc_triangleshot":20}}},"old_mitra":{"per":{"2":{"skillDmg_ab_judex":20,"skillDmg_asperio":10}},"note":" （本服實作：精煉每+2：審判（本服名稱：神聖裁決）傷害+20%、十字驅魔攻擊傷害+10% **已補上生效**）"}};
+(function applySkillBonusBackfill() {
+  /* ⚠ 這裡**只碰 ITEMS**，不引用 SKILLS 或任何其他檔案的變數。
+     第一版在這裡查 SKILLS 拿技能中文名，踩到 TDZ：
+     skills.js 是 `const SKILLS`，而 const/let 在 TDZ 裡 `typeof` 會**拋
+     ReferenceError**（不是回 'undefined'），把 game/*.js 串成一支 script 的
+     分析工具因此整個載不進 data.js。
+     現在中文名在產生時就寫進 note 了，執行期零依賴。 */
+  if (typeof ITEMS === 'undefined') return;
+  function add(t, s) { for (var k in s) t[k] = (t[k] || 0) + s[k]; }
+  for (var id in SKILL_BONUS_BACKFILL) {
+    var it = ITEMS[id]; if (!it) continue;
+    var p = SKILL_BONUS_BACKFILL[id];
+    if (p.flat) { it.bonus = it.bonus || {}; add(it.bonus, p.flat); }
+    if (p.per) for (var s in p.per) {
+      var f = s === '1' ? 'perRefine' : 'per' + s + 'Refine';
+      it[f] = it[f] || {}; add(it[f], p.per[s]);
+    }
+    if (p.refine) {
+      it.condBonus = it.condBonus || [];
+      for (var r in p.refine) it.condBonus.push({ when: { refineMin: +r }, bonus: p.refine[r] });
+    }
+    if (p.note) it.desc = (it.desc || '') + p.note;
+  }
+})();
+/* ==== SKILL-BACKFILL END ==== */
+
+/* ==== DUP-ALIGN BEGIN(tools/dupclass.js 生成,勿手改) ==== */
+/* 同名、**官方說明也完全相同**、但實作欄位不一致的道具對齊。
+
+   官方說明一樣就代表效果一樣，所以兩個編號的實作不同一定是**漏改**。
+   今天出過真事：潛能激發冒險帽-LT 兩個編號，一個有頂層 hp:2000、一個完全沒有，
+   玩家 +20 時少拿 20000 HP（見 6-5c）。
+
+   這一批只處理「一邊是另一邊的**嚴格超集**」的情形——
+   也就是缺的那一份只是**少了欄位**，沒有任何欄位的值互相矛盾。
+   互有衝突的另外 25 組**不在這裡**，要人逐組判斷。
+
+   只補缺的欄位，**不動任何已經有的值**。 */
+const DUP_ALIGN = {"mysteltainn_":{"element":"shadow"},"tale_fing_":{"element":"shadow"},"golden_necklace":{"bonus":{"sp":10}},"cone_hat":{"agi":3,"dex":3,"int":3,"luk":3,"str":3,"vit":3},"queen_anz_revenge":{"bonus":{"str":5,"allTargetDmgPct":7,"ignoreSizePenalty":1},"condBonus":[{"when":{"refineMin":5},"bonus":{"allTargetDmgPct":2}},{"when":{"refineMin":7},"bonus":{"allTargetDmgPct":3}},{"when":{"refineMin":9},"bonus":{"allTargetDmgPct":4}}]},"lunar_eclipse_armor_":{"hp":5},"probation_crossbow":{"weaponWeight":-50},"item_2012rmscno1":{"agi":5,"dex":5,"int":5,"luk":5,"str":5,"vit":5},"item_2012rmscno2":{"agi":4,"dex":4,"int":4,"luk":4,"str":4,"vit":4},"item_2012rmscno3":{"agi":3,"dex":3,"int":3,"luk":3,"str":3,"vit":3},"item_2012rmscno4":{"agi":2,"dex":2,"int":2,"luk":2,"str":2,"vit":2},"santa_poring_balloon":{"bonus":{"expAllPct":5,"dropRatePct":5}},"general_helmet_":{"bonus":{"mdef":3}},"c_bearballoon_tw":{"hpPct":2,"spPct":2},"vet_sliver_fox_boots":{"bonus":{"rangedDmgPct":5}},"item_4seasons_clover":{"agi":1,"dex":1,"int":1,"luk":1,"str":1,"vit":1},"ringofdevil":{"hp":5},"2020maypay_03":{"hp":2},"2020maypay_05":{"hp":1000},"walk_of_dark_void":{"bonus":{"mdef":10,"allStat":2,"normalDmgTakenPct":-2},"condBonus":[{"when":{"refineMin":7},"bonus":{"hpPct":5,"spPct":5}},{"when":{"refineMin":10},"bonus":{"normalDmgTakenPct":-10}}],"grantSkill":[{"id":"hiding","lv":1}],"per3Refine":{"aspdPct":3}},"item_1para_cap_a":{"bonus":{"atk":5}},"item_2para_cap_a":{"bonus":{"atk":60}}};
+(function applyDupAlign() {
+  if (typeof ITEMS === 'undefined') return;
+  for (var id in DUP_ALIGN) {
+    var it = ITEMS[id]; if (!it) continue;
+    var add = DUP_ALIGN[id];
+    for (var k in add) if (it[k] === undefined) it[k] = add[k];
+  }
+})();
+/* ==== DUP-ALIGN END ==== */
+
+/* ==== DUP-CONDBONUS BEGIN(tools/biocrown.js 生成,勿手改) ==== */
+/* 同名同說明的兩個編號中，**一邊有 condBonus、另一邊完全沒有**的情形。
+
+   典型是生體研究頭冠家族：一邊帶著官方的「搭配XX武器時…」那組加成，
+   另一邊只有 reqJob。照既定規則**只補「給予」不補「限制」**——
+   把 condBonus 補給缺的那一半，reqJob 不動（補上去等於限縮現在穿著的玩家）。
+
+   其餘欄位有任何值衝突的都不在這裡（那代表不只是缺漏）。 */
+const DUP_CONDBONUS = {"seraphimcoronet":{"perStat_int_8_atk":5,"perStat_int_8_healPct":1,"condBonus":[{"when":{"statMin":{"int":108}},"bonus":{"atk":50,"healPct":5}},{"when":{"statMin":{"int":120}},"bonus":{"atk":125,"healPct":10}}]},"angelporing_boots":{"condBonus":[{"when":{"withAnyItem":["poring_sunglasses_k_","poring_sunglasses_k"]},"bonus":{"fixedCast":-0.4}}]},"bio_weapon_helm_lg":{"condBonus":[{"when":{"withAnyItem":["farthezan"]},"bonus":{"skillCdFlat":-1.5}}]},"bio_weapon_helm_wl":{"condBonus":[{"when":{"withAnyItem":["staff_of_miracle"]},"bonus":{"eleDmg_ghost":3}},{"when":{"withAnyItem":["gravitation_staff"]},"bonus":{"eleDmg_none":3}}]},"bio_weapon_helm_so":{"condBonus":[{"when":{"withAnyItem":["boltigin"]},"bonus":{"matkPct":2}},{"when":{"withAnyItem":["psychic_spear_rod"]},"bonus":{"magicEleDmg_wind":3}},{"when":{"withAnyItem":["dust_grave"]},"bonus":{"magicEleDmg_water":3}}]},"bio_weapon_helm_sc":{"condBonus":[{"when":{"withAnyItem":["jack_the_knife"]},"bonus":{"skillCdFlat":-1}},{"when":{"withAnyItem":["platinum_dagger"]},"bonus":{"allEleDmg":5}},{"when":{"withAnyItem":["rapid_fire_c_bow"]},"bonus":{"rangedDmgPct":10}}]}};
+(function applyDupCondBonus() {
+  if (typeof ITEMS === 'undefined') return;
+  for (var id in DUP_CONDBONUS) {
+    var it = ITEMS[id]; if (!it) continue;
+    var add = DUP_CONDBONUS[id];
+    for (var k in add) if (it[k] === undefined || (k === 'condBonus' && (!it[k] || !it[k].length))) it[k] = add[k];
+  }
+})();
+/* ==== DUP-CONDBONUS END ==== */
+/* ==== BIOCROWN-WL BEGIN(acc361 #3114) ==== */
+/* 生體研究寶瓶頭冠：敘述宣告四階精煉＋三段套裝，本服只做了「每+2」而且做錯
+   （寫成 MATK+2 點，敘述是 MATK+2%）。玩家 acc361 回報「只有+2生效、各階段
+   都無效、套裝也沒生效」—— 查證屬實，照官方敘述補齊。
+
+   兩個編號一起寫：這一家族靠 DUP_CONDBONUS 互補，只改一邊會讓玩家拿到哪個
+   編號變成碰運氣。本區塊排在 DUP-CONDBONUS 之後，所以直接覆蓋沒有競爭問題。
+
+   ⚠ 套裝那兩條原本用 eleDmg_（看怪的屬性），敘述講的是「X 屬性魔法傷害」
+     ＝ magicEleDmg_（看自己技能的屬性）。方向錯，順手改正。
+   ⚠ 「碧血玫瑰魔杖」那一段沒有補：本服沒有「碧血隕石」這支技能。 */
+(function fixBioCrownWL() {
+  if (typeof ITEMS === 'undefined') return;
+  var IDS = ['bioweapon_helm_wl', 'bio_weapon_helm_wl'];
+  var TIERS = [
+    { when: { refineMin: 7 },  bonus: { allStat: 3 } },
+    { when: { refineMin: 9 },  bonus: { matkPct: 4 } },
+    { when: { refineMin: 11 }, bonus: { magicEleDmg_none: 20, magicEleDmg_fire: 20, magicEleDmg_ghost: 20 } }
+  ];
+  var SETS = [
+    { when: { withAnyItem: ['staff_of_miracle'] },  bonus: { magicEleDmg_ghost: 3 } },
+    { when: { withAnyItem: ['gravitation_staff'] }, bonus: { magicEleDmg_none: 3 } }
+  ];
+  IDS.forEach(function (id) {
+    var it = ITEMS[id];
+    if (!it) return;
+    it.per2Refine = { matkPct: 2, spRegenPct: 6 };
+    /* 保留這件本來就有、但不屬於上面兩組的其他條件加成 */
+    var keep = (it.condBonus || []).filter(function (c) {
+      var w = c && c.when || {};
+      if (w.refineMin === 7 || w.refineMin === 9 || w.refineMin === 11) return false;
+      var pick = [].concat(w.withAnyItem || [], w.withItems || []);
+      if (pick.indexOf('staff_of_miracle') >= 0 || pick.indexOf('gravitation_staff') >= 0) return false;
+      return true;
+    });
+    it.condBonus = TIERS.concat(SETS, keep);
+    it.desc = String(it.desc || '')
+      + ' （本服實作：精煉每+2：MATK+2%、SP恢復+6%；精煉+7：全素質+3；精煉+9：MATK+4%；'
+      + '精煉+11：無/火/念屬性魔法傷害+20%；搭配天降奇蹟法杖/萬有引力法杖的屬性魔法加成 **已補上生效**。'
+      + '⚠「碧血玫瑰魔杖」那一段本服沒有「碧血隕石」這支技能，拿不到）';
+  });
+})();
+/* ==== BIOCROWN-WL END ==== */
+/* ==== WINDCAPE BEGIN(acc361 #3119) ==== */
+/* 念動風神斗篷：敘述宣告六階精煉＋兩段套裝，本服只做了 每+2 與 +9，
+   而且兩段套裝的鍵**方向錯**（用 eleDmg_ 打怪屬性，敘述講的是自己技能的屬性）。
+   玩家原話：「套裝說明是說念屬性攻擊，顯示卻變成對念屬性魔物加成」——完全命中。
+
+   ⚠ 沒補「披肩精煉每+2時風屬性魔法+3%」：那是套裝成立**且**隨精煉遞增，
+     本服 condBonus 只能給固定值，沒有這個機制。 */
+(function fixWindCape() {
+  if (typeof ITEMS === 'undefined') return;
+  var it = ITEMS['tele_wg_cape'];
+  if (!it) return;
+  it.per4Refine = { magicEleDmg_wind: 3, magicEleDmg_ghost: 3 };
+  var keep = (it.condBonus || []).filter(function (c) {
+    var w = c && c.when || {};
+    if (w.refineMin === 7 || w.refineMin === 11 || w.refineMin === 13) return false;
+    /* ⚠ 原本那兩條寫的是 withAnyItem 不是 withCards —— 兩個都要濾掉，
+       只濾 withCards 會留下舊的，變成新舊並存（我第一版就是這樣，跑出 8 條）。 */
+    var cards = [].concat(w.withCards || [], w.withAnyItem || [], w.withItems || []);
+    if (cards.indexOf('ceila_card') >= 0 || cards.indexOf('katrinn_card') >= 0) return false;
+    return true;                      /* +9 的 allTargetDmgPct 本來就對，留著 */
+  });
+  it.condBonus = [
+    { when: { refineMin: 7 },  bonus: { matkPct: 10 } },
+    { when: { refineMin: 11 }, bonus: { skillCdFlat: -1.2 } },
+    { when: { refineMin: 13 }, bonus: { bossMdefIgnorePct: 10 } },
+    { when: { withCards: ['ceila_card'] },   bonus: { magicEleDmg_wind: 10 } },
+    { when: { withCards: ['katrinn_card'] }, bonus: { magicEleDmg_ghost: 30, allTargetDmgPct: 15 } }
+  ].concat(keep);
+  it.desc = String(it.desc || '')
+    + ' （本服實作：精煉每+4：風/念屬性魔法傷害+3%；精煉+7：MATK+10%；精煉+11：技能冷卻-1.2秒；'
+    + '精煉+13：無視BOSS魔防10%；兩段卡片套裝改為「自己施放的該屬性魔法」增傷 **已補上生效**。'
+    + '⚠「披肩精煉每+2時風屬性魔法再+3%」本服的條件式加成不能隨精煉遞增，這一條拿不到）';
+})();
+/* ==== WINDCAPE END ==== */
+/* ==== DEADKEY-FIX BEGIN(2026-08-31 生成,勿手改) ==== */
+/* 裝備上寫錯鍵名、導致**完全沒有生效**的加成（16 處）。
+
+   ⚠ 這種錯不會報錯：applyCardBonuses 的分流迴圈結尾是 `if (!prefix) continue;`，
+     不認得的鍵靜靜丟掉，而圖鑑與浮層照樣把效果顯示給玩家看 —— 玩家以為有、實際沒有。
+
+   ⚠ **只走 bonus / condBonus[].bonus / perRefine / per3Refine 這幾個容器**，
+     不能對整份 data.js 做字串取代：`healPct` 在**消耗品**上是有用的欄位
+     （藥水回復 maxHP 的百分比，engine.js 在讀），動到就會弄壞藥水。
+
+   ⚠ raceDmgTaken_ -> raceDmgReduce_ **要翻正負號**：
+     既有資料一律是「正數＝減傷」（raceDmgReduce_dragon: 10），
+     而錯的那批寫成「負數＝少受傷」（raceDmgTaken_dragon: -2）。
+     只改鍵名不翻號會變成「受到龍族傷害增加 2%」，比沒生效更糟。
+
+   不在這裡處理的兩種（無法實作，另行回報）：
+     fixedCast            本作技能瞬發，沒有詠唱時間這個維度
+     autoSpellWindcutter  那是「有機率觸發技能」，要用 autoSpell 陣列，bonus 放不下 */
+const DEADKEY_RENAME = {
+  healPct: { to: 'healPower' },
+  aspd: { to: 'aspdFlat' },
+  crit: { to: 'critRate' },
+  skillCd_holyspear: { to: 'skillCdFlat_holyspear' },
+  raceDmgTaken_dragon: { to: 'raceDmgReduce_dragon', negate: true }
+};
+(function applyDeadKeyFix() {
+  if (typeof ITEMS === 'undefined') return;
+  var n = 0;
+  function fix(o) {
+    if (!o) return;
+    for (var k in DEADKEY_RENAME) {
+      if (o[k] === undefined) continue;
+      var r = DEADKEY_RENAME[k];
+      var v = r.negate ? -o[k] : o[k];
+      if (o[r.to] === undefined) o[r.to] = v;
+      delete o[k];
+      n++;
+    }
+  }
+  /* ⚠ 容器要列全。原本漏了 per2Refine 那一批,結果藍龍鎧甲的
+     per2Refine.healPct 一直沒被修到（同名的另一個編號是對的,兩份行為不一致,
+     玩家 acc227 #1318 稽核重複道具時發現）。
+     這些容器**只出現在裝備上**,消耗品的 healPct 是頂層欄位,不會被誤傷。 */
+  var DEADKEY_CONTAINERS = ['bonus', 'perRefine', 'per2Refine', 'per3Refine', 'per4Refine',
+    'perRefineSq', 'perRefineSquare', 'per2RefineExtra', 'perBaseLvEvery', 'perBaseLv10'];
+  for (var id in ITEMS) {
+    var it = ITEMS[id];
+    for (var ci = 0; ci < DEADKEY_CONTAINERS.length; ci++) fix(it[DEADKEY_CONTAINERS[ci]]);
+    if (Array.isArray(it.condBonus)) {
+      for (var i = 0; i < it.condBonus.length; i++) {
+        if (it.condBonus[i]) fix(it.condBonus[i].bonus);
+      }
+    }
+  }
+  if (typeof console !== 'undefined' && console.log) {
+    /* 只在 Node（伺服器）印，瀏覽器不吵 */
+    if (typeof window === 'undefined') console.log('[data] DEADKEY-FIX 修正 ' + n + ' 處');
+  }
+})();
+/* ==== DEADKEY-FIX END ==== */
+/* ==== DISHNOTE BEGIN(2026-09-04 生成,勿手改) ==== */
+/* 六系料理的敘述寫著「STR+8」這類素質加成，但本作**沒有「吃消耗品拿素質加成」這個機制**，
+   實作的只有 healPct / restoreSpPct（依最大值的百分比回復）。
+   玩家 acc470 回報（feedback #290）：「料理沒效果…有一些是恢復sp hp %數的，根本也不知道有沒有效果」。
+
+   查證：
+     ・str/agi/vit/int/dex/luk_dishNN 共 114 件，其中 72 件敘述宣稱素質加成
+     ・這些道具身上只有 heal / healPct / restoreSp / restoreSpPct 四種欄位
+     ・engine.js 的 useItem() 沒有任何一條路會把消耗品變成素質 buff
+   ⇒ 敘述那一段永遠不會發生。
+
+   ⚠ 只補文字，不動任何數值。
+   ⚠ 判定用**實作**（id 屬於六系料理 ＋ 沒有任何加成欄位），不是掃敘述關鍵字。
+   ⚠ 措辭配合註記分色：開頭「（⚠本服」才會被切進註記段。 */
+var DISHNOTE_RE = /^(str|agi|vit|int|dex|luk)_dish[0-9]+$/;
+var DISHNOTE_BONUS_KEYS = ['bonus', 'condBonus', 'grantSkill', 'statBuff', 'aspdPct', 'expBoost', 'jobExpBoost'];
+(function applyDishNote() {
+  if (typeof ITEMS === 'undefined') return;
+  var n = 0, inert = 0;
+  Object.keys(ITEMS).forEach(function (id) {
+    if (!DISHNOTE_RE.test(id)) return;
+    var it = ITEMS[id];
+    if (!it || it.type !== 'consumable') return;
+    var d = String(it.desc || '');
+    if (d.indexOf('本服未實作') >= 0) return;            /* 重複套用時不再加一次 */
+    /* 真的有做出加成的就不要亂註記 */
+    var hasBonus = false;
+    DISHNOTE_BONUS_KEYS.forEach(function (k) { if (it[k]) hasBonus = true; });
+    if (hasBonus) return;
+    var parts = [];
+    if (it.healPct) parts.push('HP 回復最大值的 ' + it.healPct + '%');
+    if (it.heal) parts.push('HP 回復 ' + it.heal);
+    if (it.restoreSpPct) parts.push('SP 回復最大值的 ' + it.restoreSpPct + '%');
+    if (it.restoreSp) parts.push('SP 回復 ' + it.restoreSp);
+    var txt;
+    if (parts.length) {
+      txt = '（⚠本服未實作：敘述裡的**素質加成沒有做**，吃下去不會加素質。'
+          + '實際生效的只有 **' + parts.join('、') + '**，而且吃的當下就結算完，沒有持續時間。'
+          + 'HP／SP 已經是滿的時候吃下去等於沒有效果）';
+    } else {
+      txt = '（⚠本服未實作：這件料理**目前沒有任何效果** —— 敘述裡的素質加成沒有做，'
+          + '也沒有設定回復量。吃下去只會消耗掉它）';
+      inert++;
+    }
+    it.desc = d + ' ' + txt;
+    n++;
+  });
+  if (typeof console !== 'undefined') console.log('[data] DISHNOTE 標註 ' + n + ' 件（其中完全沒效果的 ' + inert + ' 件）');
+})();
+/* ==== DISHNOTE END ==== */
+/* ==== DROPNOTE BEGIN(2026-09-01 生成,勿手改) ==== */
+/* 掉寶加成道具補上「不影響卡片」的說明（玩家 acc200 連問兩次才問清楚）。
+
+   本服從來沒有在任何地方寫過這件事,堆掉寶裝想多拿卡的人會一直做白工。
+
+   查證（engine.js）：
+     8455  def.drops → min(1, chance × dropMult)          吃掉寶加成
+     8492  卡片      → Math.random() < cardDrop.chance    **不乘 dropMult**
+     8115/8133  偷竊 / 貪婪 → 只從 def.drops 加權抽,碰不到卡片
+     14963 離線的卡片 → cd.chance × spawnShare             也不乘
+   ⇒ 卡片只有固定機率一條路,每殺一隻判定一次。
+
+   ⚠ 對象是**實際給加成的道具**(bonus 有 dropRatePct、或給 dropboost buff),
+     不是用敘述關鍵字掃 —— 「升級寶箱」那種只是內容物提到掉寶,掃字會誤傷 28 件。
+   ⚠ 措辭配合註記分色:開頭「（⚠本服」才會被切進註記段;
+     不寫「本服未實作」(它不是未實作,是作用範圍說明);
+     粗體裡含「不會生效」→ 前端會把那句標紅。 */
+var DROPNOTE_IDS = ['santaporing_balloon', 'amistrbag_greed', 'amistrbag_incagi', 'amistrbag_hiding', 'amistrbag_magnum', 'amistrbag_endure', 'amistrbag_concentrate', 'amistr_cap', 'happy_balloon_k', 'santa_poring_balloon', 'archangeling_balloon', 'amistr_beret', 'amistr_bag', 'amistr_bag_greed', 'amistr_bag_incagi', 'amistr_bag_hiding', 'amistr_bag_magnum', 'amistr_bag_endure', 'amistr_bag_concentrate', 'bubble_gum', 'comp_bubble_gum', 'he_bubble_gum', 'comp_battle_bubble'];
+var DROPNOTE_TEXT = '（⚠本服說明：掉寶率加成**對卡片掉落不會生效**。'
+  + '卡片走固定機率，每殺一隻判定一次，與掉寶加成、偷竊、貪婪都無關；'
+  + '想多拿卡片只能提高擊殺數。掉寶加成對一般道具、素材、裝備仍然完全有效）';
+(function applyDropNote() {
+  if (typeof ITEMS === 'undefined') return;
+  var n = 0;
+  DROPNOTE_IDS.forEach(function (id) {
+    var it = ITEMS[id];
+    if (!it) return;
+    var d = String(it.desc || '');
+    if (d.indexOf('對卡片掉落不會生效') >= 0) return;   /* 重複套用時不再加一次 */
+    it.desc = d + ' ' + DROPNOTE_TEXT;
+    n++;
+  });
+  if (typeof console !== 'undefined') console.log('[data] DROPNOTE 標註 ' + n + ' 件');
+})();
+/* ==== DROPNOTE END ==== */
+/* ==== CASTNOTE BEGIN(2026-09-01 生成,勿手改) ==== */
+/* 「固定詠唱」是死欄位（本作技能瞬發,沒有詠唱時間這個維度）,
+   但既有註記會把「精煉+11 有生效」整段講成有效 —— 而那一段裡就含著固定詠唱。
+   玩家 acc227(#1321) 要求核對 -LT 裝備的敘述與參數時查出。
+
+   ⚠ 只補文字,不動任何數值。
+   ⚠ 條件三個都要成立才加:帶 fixedCast、敘述真的提到詠唱、現有註記還沒講過詠唱
+     —— 否則會對敘述根本沒提詠唱的道具（例如羽毛貝雷帽）加上莫名其妙的說明。 */
+var CASTNOTE_TEXT = '（⚠本服說明：敘述中的「固定詠唱」**對本服不會生效**——'
+  + '本作技能瞬發，沒有詠唱時間這個維度。同一段裡的其他效果不受影響）';
+(function applyCastNote() {
+  if (typeof ITEMS === 'undefined') return;
+  var CONT = ['bonus', 'perRefine', 'per2Refine', 'per3Refine', 'per4Refine',
+    'perRefineSq', 'perRefineSquare', 'per2RefineExtra', 'perBaseLvEvery', 'perBaseLv10'];
+  var n = 0;
+  for (var id in ITEMS) {
+    var it = ITEMS[id];
+    var d = String(it.desc || '');
+    if (d.indexOf('詠唱') < 0) continue;                    /* 敘述沒提詠唱就不加 */
+    if (d.indexOf('固定詠唱」') >= 0) continue;              /* 已經加過 */
+    var objs = [];
+    for (var i = 0; i < CONT.length; i++) if (it[CONT[i]] && typeof it[CONT[i]] === 'object') objs.push(it[CONT[i]]);
+    if (Array.isArray(it.condBonus)) for (var j = 0; j < it.condBonus.length; j++) if (it.condBonus[j] && it.condBonus[j].bonus) objs.push(it.condBonus[j].bonus);
+    var hasFC = false;
+    for (var x = 0; x < objs.length; x++) if (objs[x].fixedCast !== undefined) { hasFC = true; break; }
+    if (!hasFC) continue;
+    it.desc = d + ' ' + CASTNOTE_TEXT;
+    n++;
+  }
+  if (typeof console !== 'undefined' && typeof window === 'undefined') console.log('[data] CASTNOTE 標註 ' + n + ' 件');
+})();
+/* ==== CASTNOTE END ==== */
+/* ==== PASSIVEMOB BEGIN(2026-09-01 生成,勿手改) ==== */
+/* 官方 `Ai: 06`＝不移動、不攻擊的怪（草／菇／卵／氣泡蟲／公會石／寶物箱那一類）,
+   本服卻全部都會攻擊。玩家 acc558 從蟲蛹指出這件事,老闆批准修正。
+
+   ⚠ **用 id（＝小寫 AegisName）配對,絕不能用名稱**:
+     官方有 8 組同名但一隻會打一隻不會 ——
+       whisper(Ai19,ATK77) / whisper_(Ai06,ATK198)  都叫「白幽靈」
+       hydra(Ai10) / seaanemone(Ai06)               都叫「海葵」
+       alarm(Ai21) / event_alarm(Ai06)              都叫「鍾怪」
+     第一版用名稱配對會誤傷 7 隻會攻擊的怪,其中一隻 ATK 是 10000。
+
+   實際影響:這 165 隻裡玩家真的會遇到的只有 21 隻,其中 20 隻 ATK 只有 1
+   （草、菇、各種卵、蟲蛹、氣泡蟲）,唯一有感的是白幽靈（198）。
+   所以這是還原官方設定,不是難度調整。
+
+   要還原:整個區塊拿掉即可,MONSTERS 的原始定義沒有被改寫。 */
+var PASSIVE_MOB_IDS = [
+  'ant_egg', 'antler_scaraba_egg', 'bangungot_2', 'bangungot_3', 'barricade', 'black_mushroom',
+  'blue_flower', 'blue_plant', 'bomb', 'buwaya_egg', 'buwaya_weak', 'draco_egg',
+  'dragon_egg', 'dreammetal', 'dummy_10', 'dummy_100', 'dummy_10_fire', 'dummy_150',
+  'dummy_50', 'e_hydra', 'e_shining_plant', 'e_treasure1', 'e_treasure2', 'eclipse_p',
+  'empelium', 'ep14_mors_dummy', 'ep14_mors_hidden', 'ep16_2_mm_u_energy_b', 'ep16_2_mm_u_energy_g', 'ep16_2_mm_u_energy_r',
+  'ep17_2_guardian_parts', 'event_alarm', 'event_gourd', 'event_ricecake', 'faceworm_egg', 'g_red_plant',
+  'g_treasure_box', 'g_treasure_box_', 'glass_plate', 'gld_treasure', 'golden_tulip', 'green_plant',
+  'guild_skill_flag', 'horn_scaraba2_egg', 'horn_scaraba_egg', 'i_antler_scaraba_egg', 'i_horn_scaraba2_egg', 'i_horn_scaraba_egg',
+  'i_rake_scaraba_egg', 'ill_ant_egg', 'ill_black_mushroom', 'ill_frozen_gc', 'ill_frozen_kn', 'illegal_promotion',
+  'ma_drum', 'ma_treasure', 'magicdecoy_earth', 'magicdecoy_fire', 'magicdecoy_water', 'magicdecoy_wind',
+  'marine_sphere', 'md_hidden_ground02', 'md_papila_cae2', 'md_papila_ruba2', 'meta_ant_egg', 'meta_pecopeco_egg',
+  'meta_pupa', 'mm_flamecross', 'mm_ice_mine', 'mm_magic_seal', 'mm_mana_red', 'mm_mana_white',
+  'mm_mana_yellow', 'nihility_zem', 'obj_a', 'obj_a2', 'obj_b', 'obj_b2',
+  'obj_flag_a', 'obj_flag_b', 'obj_neutral', 'pecopeco_egg', 'pupa', 'purplestone',
+  'rake_scaraba_egg', 'red_flower', 'red_mushroom', 'red_plant', 'rock', 's_empel_1',
+  's_empel_2', 'seaanemone', 'shining_plant', 'soil', 'sonia', 'thicket',
+  'thief_bug_egg', 'thief_mushroom', 'treasure_box1', 'treasure_box10', 'treasure_box11', 'treasure_box12',
+  'treasure_box13', 'treasure_box14', 'treasure_box15', 'treasure_box16', 'treasure_box17', 'treasure_box18',
+  'treasure_box19', 'treasure_box2', 'treasure_box20', 'treasure_box21', 'treasure_box22', 'treasure_box23',
+  'treasure_box24', 'treasure_box25', 'treasure_box26', 'treasure_box27', 'treasure_box28', 'treasure_box29',
+  'treasure_box3', 'treasure_box30', 'treasure_box31', 'treasure_box32', 'treasure_box33', 'treasure_box34',
+  'treasure_box35', 'treasure_box36', 'treasure_box37', 'treasure_box38', 'treasure_box39', 'treasure_box4',
+  'treasure_box40', 'treasure_box41', 'treasure_box42', 'treasure_box43', 'treasure_box44', 'treasure_box45',
+  'treasure_box46', 'treasure_box47', 'treasure_box48', 'treasure_box49', 'treasure_box5', 'treasure_box6',
+  'treasure_box7', 'treasure_box8', 'treasure_box9', 'treasure_box_i', 'treasure_box_te', 'treasure_box_te_1',
+  'treasure_box_te_10', 'treasure_box_te_2', 'treasure_box_te_3', 'treasure_box_te_4', 'treasure_box_te_5', 'treasure_box_te_6',
+  'treasure_box_te_7', 'treasure_box_te_8', 'treasure_box_te_9', 'wa_treasure', 'watermelon', 'whisper_',
+  'white_plant', 'yell_flower', 'yellow_plant',
+];
+(function applyPassiveMobs() {
+  if (typeof MONSTERS === 'undefined') return;
+  var n = 0;
+  for (var i = 0; i < PASSIVE_MOB_IDS.length; i++) {
+    var m = MONSTERS[PASSIVE_MOB_IDS[i]];
+    if (m && m.atk > 0) { m.atk = 0; n++; }
+  }
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] PASSIVEMOB 設為不攻擊 ' + n + ' 隻');
+  }
+})();
+/* ==== PASSIVEMOB END ==== */
+/* ==== GRANTSKILL BEGIN(2026-09-01 生成,勿手改) ==== */
+/* 敘述寫「可使用○○Lv N」但沒有 grantSkill 的道具（老闆批准補上）。
+
+   全服 123 件這樣寫,原本只有 21 件真的有。可補的 71 件裡,
+   **只收 59 件會生效的** —— cardGrantedSkills() 只看「已裝備的卡片」與
+   「已裝備的裝備本身」,捲軸／寵物蛋那類消耗品穿不上,加了是死資料,
+   將來還會讓人誤以為補過。
+
+   ⚠ 技能用名稱比對,本服有 8 組同名技能,**撞名一律跳過**（這批剛好 0 件）。
+   ⚠ 敘述等級超過本服上限時夾到上限（冰淇淋帽子 冰凍術 Lv3 → Lv1）。
+   ⚠ grantSkill 走獨立的 state.cardSkills,不併入 learnedSkills,
+     所以不影響玩家自己點的技能、轉職退點與技能重置。
+
+   要還原:整個區塊拿掉即可,ITEMS 的原始定義沒有被改寫。 */
+var GRANT_SKILL_FIX = {
+  "1para_acc_r_a": [{ id: 'heal', lv: 1 }],
+  "1para_acc_r_b": [{ id: 'heal', lv: 1 }],
+  "2012rmscno1": [{ id: 'teleport', lv: 1 }],
+  "2012rmscno2": [{ id: 'teleport', lv: 1 }],
+  "2012rmscno3": [{ id: 'teleport', lv: 1 }],
+  "2para_acc_r_a": [{ id: 'heal', lv: 1 }],
+  "2para_acc_r_b": [{ id: 'heal', lv: 1 }],
+  "4seasonsclover": [{ id: 'hw_napalmvulcan', lv: 3 }],
+  "angel_poring_boots": [{ id: 'heal', lv: 1 }],
+  "angelporing_boots": [{ id: 'heal', lv: 1 }],
+  "anger_moonlight_card": [{ id: 'pa_pressure', lv: 4 }],
+  "arch_priest_glove": [{ id: 'heal', lv: 3 }],
+  "archpriest_glove": [{ id: 'heal', lv: 3 }],
+  "asprika": [{ id: 'teleport', lv: 1 }],
+  "bacchus_armor_lt": [{ id: 'sn_sight', lv: 10 }],
+  "bell_ribbon": [{ id: 'angelusbarrier', lv: 1 }],
+  "boxer_glove": [{ id: 'mo_absorbspirits', lv: 1 }],
+  "candy_hat": [{ id: 'heal', lv: 3 }],
+  "ceila_card": [{ id: 'sa_abracadabra', lv: 1 }],
+  "ceres_armor_tw_lt": [{ id: 'ba_poembragi', lv: 5 }],
+  "change_timespace_tw": [{ id: 'teleport', lv: 2 }],
+  "chen_card": [{ id: 'mo_callspirits', lv: 2 }],
+  "crown_of_saint": [{ id: 'cure', lv: 1 }],
+  "downtownmap_": [{ id: 'increaseagi', lv: 3 }],
+  "droopy_turtle_hat": [{ id: 'decreaseagi', lv: 3 }],
+  "earring_of_sarah_l": [{ id: 'heal', lv: 1 }],
+  "earring_of_sarah_r": [{ id: 'teleport', lv: 1 }],
+  "eternal_protected_love": [{ id: 'heal', lv: 3 }],
+  "garden_of_eden_br": [{ id: 'hiding', lv: 1 }],
+  "gelato_hat": [{ id: 'frostdiver', lv: 1 }],
+  "gertie_card": [{ id: 'rg_closeconfine', lv: 1 }],
+  "gyges_ring": [{ id: 'hiding', lv: 1 }],
+  "half_asprika": [{ id: 'teleport', lv: 1 }],
+  "icecream_hat": [{ id: 'frostdiver', lv: 1 }],
+  "item_2012rmscno1": [{ id: 'teleport', lv: 1 }],
+  "item_2012rmscno2": [{ id: 'teleport', lv: 1 }],
+  "item_2012rmscno3": [{ id: 'teleport', lv: 1 }],
+  "item_4seasons_clover": [{ id: 'hw_napalmvulcan', lv: 3 }],
+  "janus_armor": [{ id: 'wl_soulexpansion', lv: 5 }],
+  "light_of_world_tw": [{ id: 'teleport', lv: 1 }],
+  "lost_timespace_tw": [{ id: 'teleport', lv: 2 }],
+  "love_boy_knot": [{ id: 'heal', lv: 2 }],
+  "love_girl_knot": [{ id: 'heal', lv: 2 }],
+  "luminous_blue_stone_tw": [{ id: 'sight', lv: 1 }],
+  "nergal_shoes_tw": [{ id: 'heal', lv: 10 }],
+  "orange_hat": [{ id: 'mammonite', lv: 2 }],
+  "rabbit_ear_eggshell": [{ id: 'magnificat', lv: 1 }],
+  "radio_antenna": [{ id: 'lightningbolt', lv: 1 }],
+  "randel_card": [{ id: 'autoguard', lv: 3 }],
+  "record_acher2_tw": [{ id: 'ra_unlimit', lv: 3 }],
+  "robe_of_flattery": [{ id: 'endure', lv: 1 }],
+  "robe_of_vituperation": [{ id: 'improveconc', lv: 1 }],
+  "rocket_helm1": [{ id: 'teleport', lv: 1 }],
+  "rocket_helm2": [{ id: 'teleport', lv: 1 }],
+  "rocket_helm3": [{ id: 'teleport', lv: 1 }],
+  "silversmith_bracelet": [{ id: 'sa_spellbreaker', lv: 5 }],
+  "twisted_timespace_tw": [{ id: 'teleport', lv: 2 }],
+  "ur_plate": [{ id: 'autoguard', lv: 1 }],
+  "yggdrasil_faith": [{ id: 'wl_comet', lv: 3 }],
+};
+(function applyGrantSkill() {
+  if (typeof ITEMS === 'undefined') return;
+  var n = 0;
+  for (var id in GRANT_SKILL_FIX) {
+    var it = ITEMS[id];
+    if (!it || it.grantSkill) continue;      /* 已經有的不覆蓋 */
+    it.grantSkill = GRANT_SKILL_FIX[id];
+    n++;
+  }
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] GRANTSKILL 補上 ' + n + ' 件');
+  }
+})();
+/* ==== GRANTSKILL END ==== */
+/* ==== GRANTSKILL-COND BEGIN(2026-09-01) ==== */
+/* 撤回 6 件:敘述其實寫著前提條件（搭配某張卡／某職業系列／精煉+N 時）,
+   但 GRANTSKILL 那批做成了**無條件**——比敘述給得多,超出「補」的範圍。
+
+   grantSkill 沒有條件欄位（cardGrantedSkills() 直接讀陣列,不看 when）,
+   所以做不到「有條件地給」。寧可漏不可錯。
+
+   ⚠ 只刪 GRANT_SKILL_FIX 裡的（＝這一批我加的）。
+     原本就有 grantSkill 的道具不會被碰到（GRANTSKILL 區塊本來就 `if (it.grantSkill) continue`）。 */
+(function revertConditionalGrants() {
+  if (typeof ITEMS === 'undefined' || typeof GRANT_SKILL_FIX === 'undefined') return;
+  /* ⚠ 這串 id 是**用程式從 GRANT_SKILL_FIX ＋ 敘述前綴算出來的**,不是手打的。
+     我第一版手打,六個裡打錯四個（只撤掉 2 件就以為做完了）。
+     判準:「可使用○○LvN」前面 60 字內出現
+     搭配／裝備者為／同時裝備／一起裝備／系列時／以上時／「時，」 */
+  var IDS = ['ceres_armor_tw_lt',   /* 刻瑞斯皮甲-LT:精煉+13 且裝備樂器/鞭子時 */
+             'garden_of_eden_br',   /* 伊甸園帽:精煉+12 時 */
+             'janus_armor',         /* 雅努斯鎧甲:超級初心者系列裝備時 */
+             'nergal_shoes_tw',     /* 火雷大神靴:與月夜貓卡片同時裝備時 */
+             'record_acher2_tw',    /* 思念體…(弓箭手):與特定兩張卡之一同時裝備時 */
+             'yggdrasil_faith'];    /* 天地樹的信仰:搭配潘利爾卡片且為元素使系列時 */
+  var n = 0;
+  IDS.forEach(function (id) {
+    if (!GRANT_SKILL_FIX[id]) return;          /* 不是這一批加的就別動 */
+    if (ITEMS[id] && ITEMS[id].grantSkill) { delete ITEMS[id].grantSkill; n++; }
+  });
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] GRANTSKILL-COND 撤回附條件的 ' + n + ' 件');
+  }
+})();
+/* ==== GRANTSKILL-COND END ==== */
+
+/* ==== EQUIPFIX BEGIN(2026-09-01 生成,勿手改) ==== */
+/* acc227 的十件實裝稽核（6-94a／6-97a）——把「官方有、本服沒有」的段落補上。
+
+   ⚠ 只補**缺的**,不改已經在運作的實作。
+     那三件「換了機制」的（世界之光／布倫希爾德／阿斯特莉亞斗篷,
+     敘述 ATK+30% 實裝成 allTargetDmgPct+30）維持原狀 —— 它們**現在是有效的**,
+     改寫等於動到既有數值,那是平衡決定不是補缺口。
+
+   ⚠ 欄位名與正負號都對過實際資料,不是照敘述字面猜:
+       spCostPct   是**差值**,負數＝減少（法老王卡 -30、黃金蟲卡 +100）
+       allEleDmg   是「全屬性**魔法**傷害」(engine.js:10164 自己註解確認)
+       eleDmg_none 無屬性用 none 不是 neutral
+       perStat_<來源>_<每N點>_<目標>  範本:暗天使之翼 perStat_str_20_atk
+
+   ⚠ 做不到而**故意留空**的（不是漏掉）:
+       固定詠唱／變動詠唱  本作技能瞬發,沒有這個維度
+       P.ATK ／ S.MATK    本作沒有這兩個素質維度
+       變身為狸貓          engine.js:3511 明寫本服沒有變身系統
+       精煉每+5           引擎只有 perRefine/per2/per3/per4,**沒有 per5Refine**
+       搭配「餓熊威力」     全服查無這件道具,補了也觸發不了
+       別件裝備的精煉數     condMet 沒有「頭盔精煉每+N」這種跨裝備維度
+
+   要還原:整個區塊拿掉即可。 */
+(function equipFix() {
+  if (typeof ITEMS === 'undefined') return;
+  var n = 0, miss = [];
+  function add(id, field, obj) {
+    var it = ITEMS[id];
+    if (!it) { miss.push(id); return; }
+    it[field] = it[field] || {};
+    for (var k in obj) { if (it[field][k] === undefined) { it[field][k] = obj[k]; n++; } }
+  }
+  function cond(id, when, bonus) {
+    var it = ITEMS[id];
+    if (!it) { miss.push(id); return; }
+    it.condBonus = it.condBonus || [];
+    var sig = JSON.stringify(when);
+    for (var i = 0; i < it.condBonus.length; i++) {
+      if (JSON.stringify(it.condBonus[i].when) === sig) return;   /* 已有同條件就不重複加 */
+    }
+    it.condBonus.push({ when: when, bonus: bonus });
+    n++;
+  }
+
+  /* ── 求生哨:原本只有 Flee+10,敘述七段全空 ───────────────
+     六段「基本屬性○每+20時,對○屬性敵人的物理傷害+1%」全部可做。 */
+  add('rescue_whistle', 'bonus', {
+    perStat_str_20_allTargetDmgPct: 1,   /* 全屬性 */
+    perStat_agi_20_eleDmg_none: 1,       /* 無屬性 */
+    perStat_vit_20_eleDmg_water: 1,
+    perStat_int_20_eleDmg_earth: 1,
+    perStat_dex_20_eleDmg_fire: 1,
+    perStat_luk_20_eleDmg_wind: 1
+  });
+  cond('rescue_whistle',
+    { statSumMin: 600, statSumOf: ['str', 'agi', 'vit', 'int', 'dex', 'luk'] },
+    { allTargetDmgPct: 10, flee: 10 });
+
+  /* ── 大神官手套（本服有兩個 id 指同一件）───────────────── */
+  ['archpriest_glove', 'arch_priest_glove'].forEach(function (id) {
+    add(id, 'bonus', { spCostPct: -5 });                          /* SP消耗-5% */
+    cond(id, { statMin: { int: 100 } }, { matkPct: 5 });           /* INT100以上 MATK+5% */
+  });
+
+  /* ── 超時空頭冠(元素使) ─────────────────────────────── */
+  add('s_circlet_of_time_so', 'per4Refine',
+    { magicEleDmg_none: 5, magicEleDmg_water: 5 });                /* 每+4 無/水魔傷+5% */
+  cond('s_circlet_of_time_so', { refineMin: 11 }, { matkPct: 5 }); /* +11 MATK+5% */
+
+  /* ── 超時空冰魔靈力:「對所有體型敵人的魔法傷害+5%」 ───────
+     體型只影響物理,這句實質等於「魔法傷害+5%」→ 用全屬性魔傷。 */
+  add('temporal_ice_power_tw', 'bonus', { allEleDmg: 5 });
+
+  /* ── 時光超越者之戒-LT:敘述「ATK、MATK+7%」只實作了 MATK ── */
+  add('temporal_ring_tw_lt', 'bonus', { atkPct: 7 });
+  [['speed_of_light', { skillCdFlat: -0.12 }],   /* 光速瞬移:技能後延遲-12% */
+   ['muscle_fool',    { hpPct: 20 }],            /* 無感肌肉 */
+   ['runaway_magic',  { matk: 100 }],            /* 暴走魔法 */
+   ['hawkeye',        { rangedDmgPct: 20 }],     /* 犀利鷹眼 */
+   ['lucky_day',      { critDmgPct: 20 }]        /* 幸運之日 */
+  ].forEach(function (p) {
+    cond('temporal_ring_tw_lt', { withItems: [p[0]] }, p[1]);
+  });
+
+  /* ── 敘述寫「ATK、MATK+N%」卻只匯入 matkPct 的那一批(acc124 #3554) ──
+     玩家回報聖光寶石庇佑髮飾少了 ATK+2%。全庫掃過，同樣症狀的無條件款共 5 個 id。
+     只補「無條件、而且敘述的百分比跟現有 matkPct 對得上」的 —— 那明顯是漏了一半，不是平衡。
+     ⚠ 奇妙/魔力狐尾草**不在此列**:牠們敘述那句本來就只有 MATK,
+       ATK+40% 是「精煉+7」那段(本服未實作),補下去等於憑空加強。 */
+  [['item_410183', 2],           /* 聖光寶石庇佑髮飾 [1] */
+   ['item_410184', 2],           /* 撒旦寶石詛咒髮飾 [1] */
+   ['auto_m_ring_tw', 5],        /* 全自動戰戒 [1] */
+   ['royalgard_seal_ring', 6],   /* 皇家圖騰戒 [1](本服有兩個 id 指同一件) */
+   ['royal_gard_seal_ring', 6]
+  ].forEach(function (p) { add(p[0], 'bonus', { atkPct: p[1] }); });
+
+  /* 同一批的精煉階梯版:敘述「精煉每+3時,ATK、MATK+2%」,
+     而同一件的 per2Refine 已經 {atk:15, matk:15} 兩半都做了 —— per3Refine 只漏了 atkPct。 */
+  ['up_meawfoxtail', 'meawfoxtail_lt'].forEach(function (id) {
+    add(id, 'per3Refine', { atkPct: 2 });
+  });
+
+  /* ── 狸貓變身樹葉-LT:「精煉每+3 MATK+2%」──────────────── */
+  ['smoky_transformhat_lt', 'smoky_transform_hat_lt'].forEach(function (id) {
+    add(id, 'per3Refine', { matkPct: 2 });
+  });
+
+  /* ── bug 修正:8 條 withItems 指向不存在的道具 id,永遠觸發不了 ──
+     這不是平衡,是資料寫錯。三個對得回真 id;「餓熊威力」全服查無,留著不動。 */
+  var REMAP = { light_speed_move: 'speed_of_light', num_sense: 'muscle_fool',
+                sharp_eagle_eye: 'hawkeye' };
+  var fixed = 0;
+  for (var iid in ITEMS) {
+    var cbs = ITEMS[iid].condBonus;
+    if (!cbs) continue;
+    for (var i = 0; i < cbs.length; i++) {
+      var w = cbs[i].when && cbs[i].when.withItems;
+      if (!Array.isArray(w)) continue;
+      for (var j = 0; j < w.length; j++) {
+        if (REMAP[w[j]]) { w[j] = REMAP[w[j]]; fixed++; }
+      }
+    }
+  }
+
+  /* bug 修正:同一個 perStat_ 鍵**同時**寫在道具頂層和 bonus 裡,會被算兩次。
+     effectiveGearBonuses() 有兩條路都會收它:mergeBonus(total, def.bonus),
+     以及後面掃 def 頂層 /^per(BaseLv10|JobLv10|Stat)_/ 的那個迴圈。
+     全服只有暗天使之翼這一件踩到(5 個鍵),實測 STR100 時 atk 給了 10 而不是 5。
+     留頂層、拿掉 bonus 裡的重複 —— 因為 perStat_vit_20_eleReduce_none 只在頂層有。 */
+  (function dedupePerStat() {
+    var dup = 0;
+    for (var did in ITEMS) {
+      var d = ITEMS[did], b = d.bonus;
+      if (!b) continue;
+      for (var bk in b) {
+        if (!/^per(BaseLv10|JobLv10|Stat)_/.test(bk)) continue;
+        if (typeof d[bk] === 'number') { delete b[bk]; dup++; }
+      }
+    }
+    if (typeof console !== 'undefined' && typeof window === 'undefined' && dup) {
+      console.log('[data] EQUIPFIX 去除重複計算的 perStat_ 鍵 ' + dup + ' 個');
+    }
+  })();
+
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] EQUIPFIX 補 ' + n + ' 項、修正死 id ' + fixed + ' 條'
+      + (miss.length ? '  ⚠查無:' + miss.join(',') : ''));
+  }
+})();
+/* ==== EQUIPFIX END ==== */
+/* ==== GAPFIX2 BEGIN(2026-09-01 生成,勿手改) ==== */
+/* ① acc132 #1368:智慧湧現魔甲七段敘述只有「MATK+50」有做,其餘全空。
+   ② 順帶把 EQUIPFIX 補完後**變成錯的**註記改掉 ——
+      那些「⚠本服未實作」如果留著,就變成 6-101a 那個坑的翻版
+      （敘述說沒生效、其實已經生效,玩家反而不敢用）。 */
+(function gapFix2() {
+  if (typeof ITEMS === 'undefined') return;
+  var n = 0;
+  function cond(id, when, bonus) {
+    var it = ITEMS[id]; if (!it) return;
+    it.condBonus = it.condBonus || [];
+    var sig = JSON.stringify(when);
+    for (var i = 0; i < it.condBonus.length; i++) {
+      if (JSON.stringify(it.condBonus[i].when) === sig) return;
+    }
+    it.condBonus.push({ when: when, bonus: bonus }); n++;
+  }
+
+  /* ── 智慧湧現魔甲 ───────────────────────────────────────
+     ⚠「對動物型／惡魔型魔物的**魔法**傷害+10%」——
+       本服**沒有**「只吃魔法的種族增傷」這個欄位（其他同類道具也全都沒實作）。
+       用 raceDmg_ 是最接近的,但它物理魔法都吃。這件是 MATK+50 的法系鎧甲,
+       實務上只有法系會穿,差異很小 —— 但**敘述要照實說**,不能讓玩家以為是魔法專屬。
+     ⚠「變形的智力靴子」全服查無,所以只掛智力時空之靴（無孔/有孔兩個 id）。 */
+  var A = 'overwhelm_int_armor';
+  var BOOTS = ['temporal_int_boots', 'temporal_int_boots_'];
+  if (ITEMS[A]) {
+    if (!ITEMS[A].per3Refine) { ITEMS[A].per3Refine = { matkPct: 2 }; n++; }
+    cond(A, { refineMin: 7 }, { mdefIgnoreRace_brute: 30, mdefIgnoreRace_demon: 30 });
+    cond(A, { refineMin: 9 }, { raceDmg_brute: 10, raceDmg_demon: 10 });
+    cond(A, { refineMin: 11 }, { magicEleDmg_wind: 10, magicEleDmg_earth: 10 });
+    cond(A, { withAnyItem: BOOTS }, { matkPct: 10 });
+    cond(A, { withAnyItem: BOOTS, refineSumMin: 21, refineSumOf: [A].concat(BOOTS) },
+         { mdefIgnoreRace_brute: 20, mdefIgnoreRace_demon: 20 });
+  }
+
+  /* ── 註記同步 ─────────────────────────────────────────
+     舊註記裡「⚠本服未實作」那一整段講的是精煉特效,現在有生效了。
+     不整段刪 —— 有些段落（詠唱、P.ATK）**還是**沒實作,直接刪會變成另一個謊。
+     改成逐件寫清楚「哪幾段補上了、哪幾段仍然沒有」。 */
+  var NOTES = {
+    'overwhelm_int_armor':
+      '（本服實作：精煉每+3、+7、+9、+11 與智力時空之靴的搭配加成**已全部補上生效**。'
+      + '⚠ 其中「對動物型／惡魔型魔物的魔法傷害+10%」本服**物理魔法都會吃到**——'
+      + '本服沒有只吃魔法的種族增傷欄位，這是最接近的做法）',
+    'temporal_ice_power_tw':
+      '（本服實作：「對所有體型敵人的魔法傷害+5%」**已補上生效**。'
+      + '⚠ 與超時空頭冠(大法師)的聯動仍未實作——本服沒有「讀另一件裝備精煉度」的條件）',
+    's_circlet_of_time_so':
+      '（本服實作：精煉每+4 無屬性／水屬性魔法傷害+5%、精煉+11 MATK+5% **已補上生效**。'
+      + '⚠ 「變動詠唱-3%」仍不會生效——本作技能瞬發，沒有詠唱這個維度）',
+    'temporal_ring_tw_lt':
+      '（本服實作：ATK+7% **已補上生效**（原本敘述寫 ATK、MATK+7% 卻只做了 MATK）。'
+      + '⚠ 六條「搭配○○時」目前**一條都拿不到**：光速瞬移／無感肌肉／暴走魔法／犀利鷹眼／幸運之日'
+      + '這五樣在本服是「材料」道具，沒有可以裝備的欄位，而搭配條件要求它們**穿在身上**才算數'
+      + '（官方那邊它們是時空之靴的附魔，本服還沒有這套機制）；「餓熊威力」則是全服查無此道具。'
+      + '搭配靴子的 P.ATK／S.MATK 本作沒有這兩個素質，也不會生效）',
+    'item_410183':
+      '（本服實作：敘述的「ATK/MATK+2%」原本只匯入了 MATK 那一半，ATK+2% **已補上生效**）',
+    'item_410184':
+      '（本服實作：敘述的「ATK/MATK+2%」原本只匯入了 MATK 那一半，ATK+2% **已補上生效**）',
+    'auto_m_ring_tw':
+      '（本服實作：敘述的「ATK、MATK+5%」原本只匯入了 MATK 那一半，ATK+5% **已補上生效**）',
+    'royalgard_seal_ring':
+      '（本服實作：敘述的「ATK、MATK+6%」原本只匯入了 MATK 那一半，ATK+6% **已補上生效**）',
+    'royal_gard_seal_ring':
+      '（本服實作：敘述的「ATK、MATK+6%」原本只匯入了 MATK 那一半，ATK+6% **已補上生效**）',
+    'up_meawfoxtail':
+      '（本服實作：「精煉每+3時，ATK、MATK+2%」原本只匯入了 MATK 那一半，ATK+2% **已補上生效**）',
+    'meawfoxtail_lt':
+      '（本服實作：「精煉每+3時，ATK、MATK+2%」原本只匯入了 MATK 那一半，ATK+2% **已補上生效**）',
+    'rescue_whistle':
+      '（本服實作：六段「基本屬性每+20」與「六大素質總和600以上」**已全部補上生效**）',
+    'archpriest_glove':
+      '（本服實作：SP消耗-5%、INT100以上MATK+5% **已補上生效**。'
+      + '⚠ 與魔力1Lv／2Lv的搭配仍未實作——本服沒有那兩件道具）',
+    'arch_priest_glove':
+      '（本服實作：SP消耗-5%、INT100以上MATK+5% **已補上生效**。'
+      + '⚠ 與魔力1Lv／2Lv的搭配仍未實作——本服沒有那兩件道具）',
+    'smoky_transformhat_lt':
+      '（本服實作：精煉每+3 MATK+2% **已補上生效**。'
+      + '⚠ 「精煉每+5 ASPD+1」本服的精煉階梯只支援每+1／+2／+3／+4，這段拿不到）',
+    'smoky_transform_hat_lt':
+      '（本服實作：精煉每+3 MATK+2% **已補上生效**。'
+      + '⚠ 「精煉每+5 ASPD+1」本服的精煉階梯只支援每+1／+2／+3／+4，這段拿不到）'
+  };
+  var m = 0;
+  for (var id in NOTES) {
+    var it2 = ITEMS[id];
+    if (!it2 || String(it2.desc || '').indexOf(NOTES[id]) >= 0) continue;
+    it2.desc = String(it2.desc || '') + ' ' + NOTES[id];
+    m++;
+  }
+
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] GAPFIX2 補 ' + n + ' 項、更新註記 ' + m + ' 件');
+  }
+})();
+/* ==== GAPFIX2 END ==== */
+/* ==== CARDCOND BEGIN(2026-09-01 生成,勿手改) ==== */
+/* 「搭配○○卡片時」寫成 withItems/withAnyItem —— 那兩個查的是 lo.items（裝備本體),
+   卡片在 lo.cards,所以條件永遠不成立,玩家插了卡也拿不到（acc132 #1383 問出來的）。
+
+   全服 13 條、10 件裝備。反向錯誤（withCards 指到非卡片）0 條。
+
+   ⚠ 語意要保持一致:withAnyItem 是「任一」、withCards 是「全部」。
+     這 13 條全部都是**單張卡**的陣列,任一＝全部,等價。
+     唯一混合的（粉紅米田共帽 withItems:['sandals','chonchon_card']）拆成
+     withItems:['sandals'] + withCards:['chonchon_card'],兩者都要成立,
+     跟原本 .every() 一樣。
+
+   ⚠ 這裡是**通用修法**,不是寫死那 13 筆 —— 只要是「條件裡出現卡片 id」就搬到
+     withCards。將來新資料再犯同樣的錯也會自動被接住。 */
+(function fixCardConds() {
+  if (typeof ITEMS === 'undefined' || typeof CARDS === 'undefined') return;
+  var moved = 0, split = 0, skipped = 0;
+  function fix(src) {
+    for (var id in src) {
+      var cbs = src[id].condBonus;
+      if (!cbs) continue;
+      for (var i = 0; i < cbs.length; i++) {
+        var w = cbs[i] && cbs[i].when;
+        if (!w) continue;
+        ['withItems', 'withAnyItem'].forEach(function (key) {
+          var list = w[key];
+          if (!Array.isArray(list) || !list.length) return;
+          var cards = list.filter(function (x) { return !!CARDS[x]; });
+          if (!cards.length) return;
+          var items = list.filter(function (x) { return !CARDS[x]; });
+          /* ⚠ withAnyItem（任一）帶**兩張以上**卡片時,搬到 withCards 會從
+             「任一」變成「全部」——語意不同,寧可不動也不要偷偷改強度。
+             目前資料沒有這種案例,留著這道防線是給將來的。 */
+          if (key === 'withAnyItem' && cards.length > 1) { skipped++; return; }
+          w.withCards = (w.withCards || []).concat(cards);
+          if (items.length) { w[key] = items; split++; }
+          else { delete w[key]; }
+          moved++;
+        });
+      }
+    }
+  }
+  fix(ITEMS); fix(CARDS);
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] CARDCOND 修正 ' + moved + ' 條（其中拆分 ' + split
+      + ' 條）' + (skipped ? '，語意不等價而跳過 ' + skipped + ' 條' : ''));
+  }
+})();
+/* ==== CARDCOND END ==== */
+/* ==== BOWFIX BEGIN(2026-09-01) ==== */
+/* acc227 #1400:「兩件基礎素質相同的裝備,顯示的加乘數值不同」——他是對的。
+
+   火龍穿心神弓-LT 的六段全都有實作,王室名弓-LT 少了三段:
+     ATK+5%／精煉+9／精煉+11
+   兩把是同一組敘述結構的姊妹裝,補齊之後才對得起來。
+
+   數值全部照敘述,沒有加碼。「技能後延遲-10%」寫成 skillCdFlat -0.2 是
+   **照火龍 +9 那條的既有慣例**,不是我自己換算的。 */
+(function bowFix() {
+  if (typeof ITEMS === 'undefined') return;
+  var it = ITEMS['royal_bow_k_lt'];
+  if (!it) return;
+  var n = 0;
+  it.bonus = it.bonus || {};
+  if (it.bonus.atkPct === undefined) { it.bonus.atkPct = 5; n++; }   /* 敘述:ATK+5% */
+  it.condBonus = it.condBonus || [];
+  function add(when, bonus) {
+    var sig = JSON.stringify(when) + '|' + JSON.stringify(bonus);
+    for (var i = 0; i < it.condBonus.length; i++) {
+      if (JSON.stringify(it.condBonus[i].when) + '|' + JSON.stringify(it.condBonus[i].bonus) === sig) return;
+    }
+    it.condBonus.push({ when: when, bonus: bonus }); n++;
+  }
+  /* 精煉+9:箭雨風暴傷害再+30%、技能後延遲-10% */
+  add({ refineMin: 9 }, { skillDmg_ra_arrowstorm: 30 });
+  add({ refineMin: 9 }, { skillCdFlat: -0.2 });
+  /* 精煉+11:箭雨風暴再+20%、銳利射擊+35%、暴擊傷害+15% */
+  add({ refineMin: 11 }, { skillDmg_ra_arrowstorm: 20, skillDmg_sn_sharpshooting: 35, critDmgPct: 15 });
+
+  /* 註記同步:舊註記說「只有每+2、每+3、精煉+7 有生效」,補完就變成謊話了。 */
+  var NOTE = '（本服實作：ATK+5%、精煉+9（箭雨風暴+30%、技能後延遲-10%）、'
+    + '精煉+11（箭雨風暴+20%、銳利射擊+35%、暴擊傷害+15%）**已補上生效**。'
+    + '⚠ 各階級追加能力與 POW／P.ATK 仍未實作——本作沒有那兩個素質維度）';
+  if (String(it.desc || '').indexOf(NOTE) < 0) it.desc = String(it.desc || '') + ' ' + NOTE;
+
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] BOWFIX 王室名弓-LT 補 ' + n + ' 項');
+  }
+})();
+/* ==== BOWFIX END ==== */
+/* ==== LOWFIX BEGIN(2026-09-01) ==== */
+/* 世界之光●阿斯普利卡：敘述七項只差「技能後延遲-10%」沒做（acc498 #1437 問出來的）。
+
+   ⚠ 「-10% → skillCdFlat -0.2」是本服既有慣例（火龍穿心神弓-LT 的
+     「精煉+9 技能後延遲-10%」就是 -0.2），照抄,不自創換算。
+
+   ⚠ 順帶更正 6-94a:那份稽核把這件列為「換了機制」,但它的敘述原文就是
+     「對全體型敵人的**物理和魔法**傷害+30%」,而 allTargetDmgPct 經 6-130a 查證
+     確實物理魔法都吃 —— **這一條是忠實實作,不是換機制。** */
+(function lowFix() {
+  if (typeof ITEMS === 'undefined') return;
+  var it = ITEMS['light_of_world_tw'];
+  if (!it) return;
+  var n = 0;
+  it.bonus = it.bonus || {};
+  if (it.bonus.skillCdFlat === undefined) { it.bonus.skillCdFlat = -0.2; n++; }
+  var NOTE = '（本服實作：MHP+20%、Flee+40、MDEF+10、瞬間移動Lv1、全屬性抗性+30%、'
+    + '對全體型敵人的物理與魔法傷害+30%、技能後延遲-10% —— **敘述的效果全部生效**。'
+    + '※TE城戰是官方原文，本作沒有城戰系統）';
+  if (String(it.desc || '').indexOf(NOTE) < 0) it.desc = String(it.desc || '') + ' ' + NOTE;
+  if (typeof console !== 'undefined' && typeof window === 'undefined') {
+    console.log('[data] LOWFIX 世界之光 補 ' + n + ' 項');
+  }
+})();
+/* ==== LOWFIX END ==== */
+
+/* ==== DELAYNOTE BEGIN ==== */
+/* acc498 #1459：官方敘述寫「技能後延遲／攻擊後延遲」，本作沒有這個機制
+   （只有技能冷卻時間）。這些道具原本連一句說明都沒有，玩家會照著錯的資訊
+   決定要不要衝精煉。分三種說法補上註記 —— 混成一句就等於騙人。
+   ⚠ 冪等：整個區塊由 tools/gen_delaynote.js 產生，改資料後重跑即可。 */
+{
+  const _DN = {
+    "A": "（本服實作：敘述的「技能後延遲／攻擊後延遲」本服沒有這個機制，已折算成**技能冷卻時間**，已補上生效）",
+    "B": "（⚠本服未實作：敘述的「技能後延遲／攻擊後延遲」本服沒有這個機制（本作只有技能冷卻時間），這一項不會生效）",
+    "C": "（⚠本服未實作：這件裝備敘述中的效果目前**一項都沒有實作**，只有基礎防禦／重量那些規格生效。「技能後延遲」本服更是沒有這個機制（本作只有技能冷卻時間）。衝精煉前請把這點算進去）"
+  };
+  const _DL = [["r_hunting_mail","A"],["airship_boots","B"],["r_hunting_boots","B"],["diabolus_robe","B"],["dance_shoes","B"],["expert_ring","C"],["body_power_up_ring","C"],["scuba_mask_k","B"],["velum_jamadhar","B"],["bf_staff4","B"],["thorn_staff_","B"],["gymnastics_ribbon","B"],["elite_archer_suit","B"],["elite_shooter_suit","B"],["new_wave_sunglasses_","C"],["rental_scuba_mask","B"],["c_baphoj_parachute_tw","C"],["muramasa_","B"],["cannonconverter_tw","A"],["victory_wing_ear_","B"],["booster_mask_a","C"],["twincannon_tw","A"],["signet_of_con_star","B"],["hs_cr_spear","B"],["2para_book2_sa","B"],["hs_sg_book","B"],["hs_wz_wand","B"],["hs_pr_holy_wand","B"],["hs_su_min_puppy_pool","B"],["hs_su_puppy_pool","B"],["3para_katar1_gc","B"],["crescent_armguard","B"],["sniping_suit","B"],["dark_knight_glove","B"],["rabbit_magic_hat","B"],["taurus_diadem","B"],["taurus_crown","B"],["k_rabbit_bonnet","B"],["pig_moneybox","B"],["sagittarius_crown","B"],["velum_damascus","B"],["excelion_suit","B"],["new_wave_sunglasses","C"],["baron_evil_eye","C"],["laser_of_eagle","B"],["shadow_booster","C"],["doram_balloon","B"],["c_bapho_j_parachute_tw","C"],["poring_letter_tw","B"],["excelion_wing","B"],["k_fallen_angel_wing","B"],["bs_item_m_s_20","C"],["fairy_leaf_powder","B"],["dictator_necklace_tw","B"],["cannon_converter_tw","A"],["luminous_blue_stone_tw","B"],["victory_wing_ear","B"],["lost_timespace_tw","A"],["change_timespace_tw","A"],["tree_of_sprout_str","A"],["tree_of_sprout_agi","A"],["tree_of_sprout_vit","A"],["twin_cannon_tw","A"],["temporal_sprout_tw","A"],["mind_of_valhalla_tw","B"],["temporal_ring_tw","A"],["record_merchant2_tw","B"],["record_thief2_tw","B"],["record_acher2_tw","B"],["garnet_pendant_lt","B"],["hs_biretta","B"],["old_moroc_acc","B"],["hs_nj_dagger","B"],["hs_nj_knife","B"]];
+  let _dn = 0;
+  for (const [id, kind] of _DL) {
+    const it = ITEMS[id];
+    if (!it || !_DN[kind]) continue;
+    if (/（\s*(?:⚠\s*)?本服/.test(String(it.desc || ""))) continue;   // 別人已經加過就不重複
+    it.desc = String(it.desc || "").trim() + " " + _DN[kind];
+    _dn++;
+  }
+  console.log('[data] DELAYNOTE 補上「技能後延遲」註記 ' + _dn + ' 件');
+}
+/* ==== DELAYNOTE END ==== */
+
+/* ==== PROCNOTE BEGIN ==== */
+/* acc498 #1556：官方敘述寫「以一定概率每秒HP恢復N、SP恢復M，總共各恢復X次」，
+   本服**沒有實作這種觸發式持續回復** —— 引擎只有 lifeStealChance/lifeStealPct/
+   spStealChance 這組物理吸血 proc，沒有「攻擊時觸發、之後每秒回復數次」的機制。
+   所以那個「一定概率」實際上是 0。
+
+   ⚠ 為什麼要另外補一句：塔諾斯-AD 系列**已經有**一段「本服實作」附註，
+     但那段只講精煉段落。玩家讀完會合理推論「其他行都有效」，反而更被誤導。
+     所以這裡刻意**不套用**「已經有本服註記就跳過」那條慣例，用自己的標記去重。
+
+   實作它會增加續戰力＝動到平衡，依規則只回報不做。 */
+{
+  const _PN = '（⚠本服未實作：敘述中「以一定概率…每秒恢復HP／SP、共數次」的**觸發式回復**'
+    + '本服沒有這個機制，觸發機率實際上是 0，不會回復。同一段敘述的其他項目照常生效。）';
+  const _PRE = /(一定概率|一定機率|有機率|有一定機率)[^。]{0,40}(恢復|回復)/;
+  let _pn = 0;
+  for (const _id in ITEMS) {
+    const _it = ITEMS[_id];
+    const _d = String(_it.desc || '');
+    if (!_PRE.test(_d)) continue;
+    if (_d.indexOf('觸發式回復') >= 0) continue;    // 自己的標記，冪等
+    _it.desc = _d.trim() + ' ' + _PN;
+    _pn++;
+  }
+  console.log('[data] PROCNOTE 補上「觸發式回復未實作」註記 ' + _pn + ' 件');
+}
+/* ==== PROCNOTE END ==== */
+
+/* ==== SONGNOTE BEGIN ==== */
+/* acc431 #1555：「演奏／合奏／舞蹈只能選一個放，但部分技能沒載明是哪一類」。
+   他舉的例子都對：布萊奇之詩沒寫自己是演奏，觸媒之所沒寫是合奏。
+
+   分組**照引擎的真規則算出來**，不要自己寫死：
+     ・組別 = sk.exclusiveGroup（skills.js 指定），沒指定才退回 type 推斷
+     ・只有 GROUP_REPLACERS 這幾種 type 會真的佔用／頂掉名額（engine.js #11859）；
+       同樣掛 'ensemble' 標籤的搖籃曲、洛奇的悲鳴、永遠的混沌是攻擊型技能，不佔名額。
+   這樣之後有人改分組，敘述會跟著對。
+
+   ⚠ 臨機應變（bd_adaptation）自己一組 'adapt'，原本的「不佔演奏／合奏的名額」
+     是**正確**的，不要動它。 */
+{
+  const _REPLACERS = ['buff_song', 'buff_ensemble', 'buff_block_timed',
+                      'debuff_aspd_aoe', 'buff_elementfield'];
+  const _GRP = {};
+  for (const _id in SKILLS) {
+    const _sk = SKILLS[_id];
+    if (!_REPLACERS.includes(_sk.type)) continue;
+    const _g = _sk.exclusiveGroup || (_sk.type === 'buff_ensemble' ? 'ensemble' : 'song');
+    (_GRP[_g] = _GRP[_g] || []).push(_id);
+  }
+  const _nSong = (_GRP.song || []).length;
+  const _nEns = (_GRP.ensemble || []).length;
+  const _TXT = {
+    song: '（🎵名額：**演奏／舞蹈**共用一格。⚠ 本服的演奏（詩人）與舞蹈（舞孃）'
+      + '**算同一格**，連同勿忘我、赫魯梅斯之杖共 ' + _nSong + ' 個技能搶這一格，'
+      + '同時只能開 1 個，放新的會把舊的頂掉 —— 沒辦法演奏＋舞蹈各開一個。'
+      + '合奏是另外一格，可以跟這一格同時開。）',
+    ensemble: '（🎵名額：**合奏**一格。本服 ' + _nEns + ' 個技能搶這一格，'
+      + '同時只能開 1 個，放新的會把舊的頂掉。合奏與演奏／舞蹈是**分開的兩格**，'
+      + '可以各開 1 個。單人施放效果減半。）',
+  };
+  let _sn = 0;
+  ['song', 'ensemble'].forEach(_g => {
+    (_GRP[_g] || []).forEach(_id => {
+      const _sk = SKILLS[_id];
+      let _d = String(_sk.desc || '');
+      if (_d.indexOf('🎵名額') >= 0) return;                       // 冪等
+      /* 舊的講法拆掉：它們把演奏與舞蹈講成兩格，跟實際行為不符 */
+      ['（演奏技能同時只能開一個）', '（舞蹈技能同時只能開一個）',
+       '（合奏技能同時只能開一個）'].forEach(x => { _d = _d.split(x).join(''); });
+      _sk.desc = (_d.trim() + ' ' + _TXT[_g]).replace(/\s+/g, ' ').trim();
+      _sn++;
+    });
+  });
+  console.log('[data] SONGNOTE 標明名額 ' + _sn + ' 個技能'
+    + '（演奏舞蹈格 ' + _nSong + '、合奏格 ' + _nEns + '）');
+}
+/* ==== SONGNOTE END ==== */
+/* ==== LUKARMOR-FILLIN ====
+   幸運湧現護甲 [1]:補回敘述裡官方有、本服漏匯的六段效果。
+   來源 feedback #339(玩家「累累」2026-09-10 回報,附官方敘述原文)。
+   原本只有 bonus.atk=50,敘述尾巴掛著「另有 15 項條件／機率效果未實作」。
+
+   ⚠ **這個區塊一定要放在 SETNOTE 之前**。
+     SETNOTE 靠「有沒有套裝 condBonus」來決定標 🧩有實作 還是 未實作;
+     放在它後面的話,它會在這件還沒有套裝加成時就掃過去,這件就變成漏標
+     (我第一版放在檔尾,testsetnote 立刻抓到「漏標 1 件:幸運湧現護甲 [1]」)。
+
+   欄位名一律先從全庫反查確認引擎真的在吃,不自己發明:
+     defIgnoreRace_brute/_demon(全庫各 17 件在用)、raceDmg_brute/_demon、
+     eleDmg_wind/_earth、per3Refine、when.withAnyItem、when.refineSumMin+refineSumOf。
+
+   ⚠ 敘述寫「變形的幸運戰靴[1]」,本服這件叫「變異幸運戰靴 [1]」(modify_luk_boots_),
+     是同一件;用 id 綁定所以不受譯名影響。
+   ⚠ condMet() 的多個 when 鍵是 AND(engine.js:14337);refineSumOf 只加總實際穿著的那幾件
+     (engine.js:14357),所以三個 id 都列進去是安全的,沒穿的算 0。
+   逐項與實穿驗證見 testlukarmor.js(19 項)。 */
+(function () {
+  var it = ITEMS['overwhelm_luk_armor'];
+  if (!it) { console.log('[data] LUKARMOR-FILLIN 找不到 overwhelm_luk_armor,略過'); return; }
+
+  var already = (it.per3Refine && it.per3Refine.critDmgPct) ||
+                (it.condBonus || []).some(function (c) {
+                  return c && c.bonus && (c.bonus.defIgnoreRace_brute || c.bonus.raceDmg_brute);
+                });
+  if (already) { console.log('[data] LUKARMOR-FILLIN 已補過,略過'); return; }
+
+  var BOOTS = ['temporal_luk_boots_', 'modify_luk_boots_'];
+
+  it.per3Refine = it.per3Refine || {};
+  it.per3Refine.critDmgPct = 2;
+
+  it.condBonus = (it.condBonus || []).concat([
+    { when: { refineMin: 7 },  bonus: { defIgnoreRace_brute: 30, defIgnoreRace_demon: 30 } },
+    { when: { refineMin: 9 },  bonus: { raceDmg_brute: 10, raceDmg_demon: 10 } },
+    { when: { refineMin: 11 }, bonus: { eleDmg_wind: 10, eleDmg_earth: 10 } },
+    { when: { withAnyItem: BOOTS }, bonus: { critDmgPct: 10 } },
+    { when: { withAnyItem: BOOTS, refineSumMin: 21,
+              refineSumOf: ['overwhelm_luk_armor'].concat(BOOTS) },
+      bonus: { defIgnoreRace_brute: 20, defIgnoreRace_demon: 20 } }
+  ]);
+
+  /* 只換掉「另有 N 項未實作」那一句 —— 它現在不成立了。
+     其餘(「本服實作:atk+50」以及後面 SETNOTE 要加的 🧩 標記)交給原本的產生器,
+     不要整段手寫覆蓋。 */
+  var OLD = '另有 15 項條件／機率效果未實作';
+  var NEW = '敘述裡其餘 6 段(精煉每+3 暴擊傷害、精煉+7／+9／+11 三階、'
+          + '以及搭配幸運時空之靴或變異幸運戰靴的兩段)已於 2026-09-11 全部補上並生效';
+  if (it.desc && it.desc.indexOf(OLD) >= 0) it.desc = it.desc.split(OLD).join(NEW);
+
+  console.log('[data] LUKARMOR-FILLIN 幸運湧現護甲 [1] 補上 6 段效果');
+})();
+/* ==== LUKARMOR-FILLIN END ==== */
+
+/* ==== DEXARMOR-FILLIN ====
+   靈巧湧現鎧甲 [1]：補回敘述裡官方有、本服漏匯的六段。來源 feedback #344（玩家「累累」2026-09-11）。
+   跟上面的幸運湧現護甲（#339）是同一系列、同一種漏法（只有 bonus.atk=50），寫法逐行對照 LUKARMOR-FILLIN：
+     精煉每+3 遠距離物理傷害+2%          → per3Refine.rangedDmgPct
+     +7 無視動物型／惡魔型物理防禦 30%     → defIgnoreRace_brute/_demon
+     +9 對動物型／惡魔型物理傷害 +10%      → raceDmg_brute/_demon
+     +11 對風／地屬性物理傷害 +10%         → eleDmg_wind/_earth
+     搭配時光靈巧戰靴[1]／變異靈巧戰靴[1] 遠距離物理傷害 +5%
+     再加精煉合計 21 以上 追加無視動物型／惡魔型物理防禦 20%
+   ⚠ 敘述的「時光靈巧戰靴[1]」本服叫「靈巧時空之靴 [1]」(temporal_dex_boots_)，用 id 綁定不受譯名影響。
+   ⚠ rangedDmgPct 在本服只加普攻（見 playerAttackInner），這是既有機制，不在這裡改。
+   ⚠ 放在 SETNOTE 之前（理由同 LUKARMOR-FILLIN）。驗證見 testdexarmor.js。 */
+(function () {
+  var it = ITEMS['overwhelm_dex_armor'];
+  if (!it) { console.log('[data] DEXARMOR-FILLIN 找不到 overwhelm_dex_armor,略過'); return; }
+  var already = (it.per3Refine && it.per3Refine.rangedDmgPct) ||
+                (it.condBonus || []).some(function (c) { return c && c.bonus && (c.bonus.defIgnoreRace_brute || c.bonus.raceDmg_brute); });
+  if (already) { console.log('[data] DEXARMOR-FILLIN 已補過,略過'); return; }
+
+  var BOOTS = ['temporal_dex_boots_', 'modify_dex_boots_'];
+  it.per3Refine = it.per3Refine || {};
+  it.per3Refine.rangedDmgPct = 2;
+  it.condBonus = (it.condBonus || []).concat([
+    { when: { refineMin: 7 },  bonus: { defIgnoreRace_brute: 30, defIgnoreRace_demon: 30 } },
+    { when: { refineMin: 9 },  bonus: { raceDmg_brute: 10, raceDmg_demon: 10 } },
+    { when: { refineMin: 11 }, bonus: { eleDmg_wind: 10, eleDmg_earth: 10 } },
+    { when: { withAnyItem: BOOTS }, bonus: { rangedDmgPct: 5 } },
+    { when: { withAnyItem: BOOTS, refineSumMin: 21, refineSumOf: ['overwhelm_dex_armor'].concat(BOOTS) },
+      bonus: { defIgnoreRace_brute: 20, defIgnoreRace_demon: 20 } }
+  ]);
+  var OLD = '另有 15 項條件／機率效果未實作';
+  var NEW = '敘述裡其餘 6 段(精煉每+3 遠距離物理傷害、精煉+7／+9／+11 三階、'
+          + '以及搭配靈巧時空之靴或變異靈巧戰靴的兩段)已於 2026-09-11 全部補上並生效';
+  if (it.desc && it.desc.indexOf(OLD) >= 0) it.desc = it.desc.split(OLD).join(NEW);
+  console.log('[data] DEXARMOR-FILLIN 靈巧湧現鎧甲 [1] 補上 6 段效果');
+})();
+/* ==== DEXARMOR-FILLIN END ==== */
+
+/* ==== LUKSPROUT-SET ====
+   時光幸運天地樹苗：補回官方的三件套裝（天地樹苗＋時光幸運斗篷 [1]＋幸運湧現護甲 [1]）。來源 feedback #343（累累）。
+   原本這件自己的能力（HP/SP、每+3、LUK120 暴傷）都有，唯獨套裝整組沒建，敘述尾巴也註明「本服沒有建這一組」。
+     三件同時裝備 對所有種族物理傷害 +10%     → allTargetDmgPct 10
+       ⚠ 本服沒有「全種族」專用鍵；全庫敘述寫「所有種族…物理傷害」且有實作的 15 件全部用 allTargetDmgPct，照慣例。
+     精煉值總和 ≥14 ATK+80
+     精煉值總和 ≥18 對所有體型物理傷害 +10%、暴擊傷害 +12%   → sizeDmg_small/medium/large（全庫 34 處同寫法）
+     精煉值總和 ≥22 近距離／遠距離物理傷害 +10%              → meleeDmgPct、rangedDmgPct
+   ⚠ 三個門檻都要先湊齊三件（官方原文是「同時裝備時」底下的子句），所以每段都帶 withItems。
+   ⚠ 同系列的時光靈巧天地樹苗已有套裝但把三階壓成一段、數字也不同 —— 那件**沒動**，只回報（改它會讓一部分人變弱）。
+   驗證見 testdexarmor.js。 */
+(function () {
+  var it = ITEMS['tree_of_sprout_luk'];
+  if (!it) { console.log('[data] LUKSPROUT-SET 找不到 tree_of_sprout_luk,略過'); return; }
+  var SET = ['temporal_m_luk', 'overwhelm_luk_armor'];
+  var SUM = ['tree_of_sprout_luk'].concat(SET);
+  var already = (it.condBonus || []).some(function (c) { return c && c.when && c.when.withItems; });
+  if (already) { console.log('[data] LUKSPROUT-SET 已補過,略過'); return; }
+  it.condBonus = (it.condBonus || []).concat([
+    { when: { withItems: SET }, bonus: { allTargetDmgPct: 10 } },
+    { when: { withItems: SET, refineSumMin: 14, refineSumOf: SUM }, bonus: { atk: 80 } },
+    { when: { withItems: SET, refineSumMin: 18, refineSumOf: SUM }, bonus: { sizeDmg_small: 10, sizeDmg_medium: 10, sizeDmg_large: 10, critDmgPct: 12 } },
+    { when: { withItems: SET, refineSumMin: 22, refineSumOf: SUM }, bonus: { meleeDmgPct: 10, rangedDmgPct: 10 } }
+  ]);
+  console.log('[data] LUKSPROUT-SET 時光幸運天地樹苗 補上套裝 4 段');
+})();
+/* ==== LUKSPROUT-SET END ==== */
+
+/* ==== INTARMOR-FIX ====
+   feedback #346（玩家「累累」2026-09-12）問智慧湧現魔甲與時光智慧天地樹苗「精煉和套裝有沒有實作」。
+   ① 智慧湧現魔甲的精煉＋套裝 2026-09-01 就由 GAPFIX2 補好了，但**舊註記「一項都沒有生效」沒拿掉**，
+     跟後面「已全部補上生效」並排 —— 玩家看了只會相信前一句。全庫同樣矛盾的有 84 件。
+   ② GAPFIX2 當時寫「變形的智力靴子全服查無」，其實就是本服的「變異智慧戰靴 [1]」(modify_int_boots_，
+     rAthena Modify_Int_Boots_「變形的智力戰靴」)，譯名沒對上。幸運／靈巧兩件都有綁 modify_*_boots_，這件補上。
+   ③ 時光智慧天地樹苗的套裝整組沒建。補能做的兩段：
+       精煉值總和 ≥18 所有屬性魔法傷害 +10%   → allEleDmg（只吃魔法）
+       精煉值總和 ≥22 對所有體型的魔法傷害 +10% → sizeDmg_*（本服沒有只吃魔法的體型欄位，物理也會吃到，敘述照實寫）
+     不補：變動詠唱 -10%、技能後延遲 -7%（本服沒有這兩個維度）。
+     ⚠ 總和 ≥14 的 MATK+80 **沒補**：這件資料本來就有無條件 matk:80（像是匯入時把條件丟了），
+       再加一次會變兩倍；改成有條件又等於削弱現有玩家 → 只回報，見交辦事項。
+   驗證見 testintarmor.js。 */
+(function () {
+  /* ── ② 智慧湧現魔甲：套裝加上變異智慧戰靴 [1] ── */
+  var A = ITEMS['overwhelm_int_armor'];
+  if (A && ITEMS['modify_int_boots_']) {
+    (A.condBonus || []).forEach(function (c) {
+      var w = c && c.when; if (!w || !w.withAnyItem) return;
+      if (w.withAnyItem.indexOf('modify_int_boots_') < 0) w.withAnyItem = w.withAnyItem.concat(['modify_int_boots_']);
+      if (w.refineSumOf && w.refineSumOf.indexOf('modify_int_boots_') < 0) w.refineSumOf = w.refineSumOf.concat(['modify_int_boots_']);
+    });
+    var OLDN = '與智力時空之靴的搭配加成';
+    if (A.desc && A.desc.indexOf(OLDN) >= 0) A.desc = A.desc.split(OLDN).join('與智力時空之靴／變異智慧戰靴 [1] 的搭配加成');
+  }
+
+  /* ── ③ 時光智慧天地樹苗：套裝兩段 ── */
+  var T = ITEMS['tree_of_sprout_int'];
+  var SET = ['temporal_m_int', 'overwhelm_int_armor'];
+  if (T && !(T.condBonus || []).some(function (c) { return c && c.when && c.when.withItems; })) {
+    var SUM = ['tree_of_sprout_int'].concat(SET);
+    T.condBonus = (T.condBonus || []).concat([
+      { when: { withItems: SET, refineSumMin: 18, refineSumOf: SUM }, bonus: { allEleDmg: 10 } },
+      { when: { withItems: SET, refineSumMin: 22, refineSumOf: SUM }, bonus: { sizeDmg_small: 10, sizeDmg_medium: 10, sizeDmg_large: 10 } }
+    ]);
+    T.desc = String(T.desc || '') + ' （本服實作：套裝「精煉值總和 18 以上 所有屬性魔法傷害+10%」「22 以上 對所有體型傷害+10%」已於 2026-09-12 補上生效。'
+      + '⚠ 本服沒有只吃魔法的體型增傷欄位，後者物理也會吃到。'
+      + '⚠「精煉值總和 14 以上 MATK+80」本服目前是**不需湊套裝就直接給**的 MATK+80，不會再額外加一次）';
+  }
+
+  /* ── ① 全庫：資料裡確實有精煉加成的，拿掉「一項都沒有生效」 ── */
+  var STALE = '（⚠本服未實作：敘述中「精煉每+N／精煉+N 時」那幾段特效目前一項都沒有生效。精煉本身仍會提升這件裝備的基礎攻擊／防禦，但敘述寫的額外效果拿不到，衝高精煉前請把這點算進去）';
+  var NOW = '（本服說明：這件敘述裡的精煉特效不是全部沒做，有一部分已經在本服生效。滑鼠移到裝備上，提示框會逐段列出本服真正計算的精煉加成，以及你目前拿到了沒有；沒列出來的段落才是拿不到的）';
+  var LADDER = ['perRefine', 'per2Refine', 'per2RefineExtra', 'per3Refine', 'per4Refine', 'perRefineSq', 'perRefineCap', 'refineBonus'];
+  var fixed = 0;
+  for (var id in ITEMS) {
+    var d = ITEMS[id];
+    if (!d || !d.desc || String(d.desc).indexOf(STALE) < 0) continue;
+    var has = LADDER.some(function (k) { return d[k] && Object.keys(d[k]).length; })
+      || (d.condBonus || []).some(function (c) { return c && c.when && (c.when.refineMin != null || c.when.refineSumMin != null); });
+    if (!has) continue;
+    d.desc = String(d.desc).split(STALE).join(NOW);
+    fixed++;
+  }
+  if (typeof console !== 'undefined' && typeof window === 'undefined') console.log('[data] INTARMOR-FIX 註記矛盾修正 ' + fixed + ' 件');
+})();
+/* ==== INTARMOR-FIX END ==== */
+
+/* ==== OSWORDLT-FILLIN ====
+   斬魔劍-LT [2]:補回敘述裡官方有、本服漏匯的五段。來源 #3795/#3815/#3866(acc891)。
+
+   補的(欄位全是引擎既有機制,數值照敘述原文):
+     ATK+5% → bonus.atkPct / 每+3 暴擊傷害+5% → per3Refine.critDmgPct
+     +7 音速衝擊波+20%、攻擊後延遲-10% → skillDmg_rk_sonicwave、aspdPct(照塔諾斯遠程頭盔的寫法)
+     +9 音速衝擊波再+20% / +11 近距離/遠距離物理傷害+15% → meleeDmgPct、rangedDmgPct
+     +9 近戰時很高機率觸發音速衝擊波Lv2 → autoSpell(on:attack, lv2, chance 10, useLearnedLv)
+       ⚠ 敘述沒給機率。10 是本服既有慣例:全庫敘述寫「很高/高機率」的兩件都填 10。
+       ⚠ useLearnedLv = 「習得更高等級時以習得等級觸發」(雙發神弓 #138 同一條)。
+
+   不補:POW/P.ATK(本服沒有這兩項)、風暴衝擊(本服沒有這招)、各階級追加能力(沒有階級系統)。
+   CRI+25 本服是無條件給、官方是 +11 才給 —— 那是多給,改掉等於削弱玩家,不在這裡動。
+
+   ⚠ 要放在 SETNOTE / CARDDESCSYNC 之前,讓後面的註記產生器看到補完後的樣子。
+   逐項與實穿驗證見 testoswordlt.js。 */
+(function () {
+  var it = ITEMS['oriental_sword_lt'];
+  if (!it) { console.log('[data] OSWORDLT-FILLIN 找不到 oriental_sword_lt,略過'); return; }
+  if ((it.bonus && it.bonus.atkPct) || (it.per3Refine && it.per3Refine.critDmgPct)) {
+    console.log('[data] OSWORDLT-FILLIN 已補過,略過'); return;
+  }
+
+  it.bonus = it.bonus || {};
+  it.bonus.atkPct = 5;
+
+  it.per3Refine = it.per3Refine || {};
+  it.per3Refine.critDmgPct = 5;
+
+  it.condBonus = (it.condBonus || []).concat([
+    { when: { refineMin: 7 },  bonus: { skillDmg_rk_sonicwave: 20, aspdPct: 10 } },
+    { when: { refineMin: 9 },  bonus: { skillDmg_rk_sonicwave: 20 } },
+    { when: { refineMin: 11 }, bonus: { meleeDmgPct: 15, rangedDmgPct: 15 } }
+  ]);
+
+  it.autoSpell = (it.autoSpell || []).concat([
+    { on: 'attack', skill: 'rk_sonicwave', lv: 2, chance: 10, useLearnedLv: true,
+      when: { refineMin: 9 } }
+  ]);
+
+  var NOTE = ' （本服實作更新 2026-09-11:ATK+5%、精煉每+3 暴擊傷害+5%、'
+           + '+7 音波斬傷害+20%與攻擊後延遲-10%、+9 音波斬傷害再+20%與近戰時觸發音波斬(Lv2,習得更高等級時以習得等級;機率 10%)、'
+           + '+11 近距離/遠距離物理傷害+15% 已補上並生效。'
+           + '尚未實作:POW/P.ATK(本服沒有這兩項能力值)、風暴衝擊傷害(本服沒有這個技能)、各階級追加能力。'
+           + '另:CRI+25 本服目前不需精煉就有。）';
+  it.desc = String(it.desc || '') + NOTE;
+
+  console.log('[data] OSWORDLT-FILLIN 斬魔劍-LT 補上 5 段效果');
+})();
+/* ==== OSWORDLT-FILLIN END ==== */
+
+/* ==== BLUEFIRELT-FILLIN ====
+   紅蓮劍-LT [2]:補回官方有、本服漏匯的效果。來源 feedback #369(莉拉)。
+   官方依據:rAthena 一鍵端 item_db_equip.yml Sword_Of_Bluefire_LT(500039)的 Script,與敘述原文一致:
+     bonus bAtkRate,5                                  → bonus.atkPct 5
+     .@r>=7  bSkillAtk GN_CARTCANNON 10                → skillDmg_gn_cartcannon 10
+     .@r>=9  bAddSize Size_All 15; GN_CARTCANNON 20    → sizeDmg_small/medium/large 15(本服既有 21 件同寫法);skillDmg_gn_cartcannon 20
+     .@r>=11 CR_ACIDDEMONSTRATION 25; GN_CARTCANNON 10 → skillDmg_bc_aciddemonstration 25;skillDmg_gn_cartcannon 10
+   階梯是巢狀 if ⇒ 官方就是累加(+11 時手推車加農砲共 +40%);本服 condBonus 每階各推一條,同樣累加。
+
+   不補:變動詠唱(本作沒有詠唱)、POW/P.ATK(本服沒有)、各階級追加能力(沒有階級系統)。
+   為什麼不走 SKILL-BACKFILL:那塊由 tools/skillfill.js 產生(勿手改),它的文法要求整句吃完,
+   這把的句子都跟「變動詠唱」寫在同一句 ⇒ 整句被放棄。改文法會連動全庫,不在這次範圍。
+
+   ⚠ 放在 SETNOTE / CARDDESCSYNC 之前,讓後面的註記產生器看到補完後的樣子(跟 OSWORDLT-FILLIN 同一位置)。
+   逐項與實穿驗證見 testbluefirelt.js。 */
+(function () {
+  var it = ITEMS['sword_of_bluefire_lt'];
+  if (!it) { console.log('[data] BLUEFIRELT-FILLIN 找不到 sword_of_bluefire_lt,略過'); return; }
+  var already = (it.bonus && it.bonus.atkPct) || (it.condBonus || []).some(function (c) {
+    return c && c.bonus && c.bonus.skillDmg_gn_cartcannon; });
+  if (already) { console.log('[data] BLUEFIRELT-FILLIN 已補過,略過'); return; }
+
+  it.bonus = it.bonus || {};
+  it.bonus.atkPct = 5;
+
+  it.condBonus = (it.condBonus || []).concat([
+    { when: { refineMin: 7 },  bonus: { skillDmg_gn_cartcannon: 10 } },
+    { when: { refineMin: 9 },  bonus: { skillDmg_gn_cartcannon: 20, sizeDmg_small: 15, sizeDmg_medium: 15, sizeDmg_large: 15 } },
+    { when: { refineMin: 11 }, bonus: { skillDmg_gn_cartcannon: 10, skillDmg_bc_aciddemonstration: 25 } }
+  ]);
+
+  var NOTE = ' （本服實作更新 2026-09-15:ATK+5%、+7 手推車加農砲傷害+10%、'
+           + '+9 手推車加農砲傷害再+20%與對全體型物理傷害+15%、+11 手推車加農砲傷害再+10%與強酸火煙瓶投擲傷害+25% 已補上並生效'
+           + '(三階累加,+11 時手推車加農砲共+40%)。'
+           + '⚠ 對全體型+15% 只對有體型資料的魔物有效。'
+           + '⚠ 遠距離物理傷害%(精煉每+3 那段)本服目前只作用在弓的普通攻擊,拿這把劍時沒有效果,技能也吃不到。'
+           + '尚未實作:變動詠唱(本作技能瞬發)、POW/P.ATK(本服沒有這兩項能力值)、各階級追加能力。）';
+  it.desc = String(it.desc || '') + NOTE;
+  console.log('[data] BLUEFIRELT-FILLIN 紅蓮劍-LT 補上 4 段效果');
+})();
+/* ==== BLUEFIRELT-FILLIN END ==== */
+
+/* ==== TIMESPACE-FILLIN ====
+   淡忘的超時空(頭下,lost_timespace_tw):敘述列了六段「搭配超時空頭冠(○○)時」,
+   主定義只匯了四段、而且每段只匯一半。來源 #4192(acc452)。台版限定道具,rAthena 查無,官方依據＝敘述原文。
+
+   補的(全是引擎既有機制):
+     符文騎士  有1%機率將對敵人傷害的5%吸收為HP → lifeStealChance 1、lifeStealPct 5(引擎 chance 以百分比擲骰,塔諾斯系同寫法)
+     皇家衛士  對全階級敵人的物理傷害+3%        → normalDmgPct 3 + bossDmgPct 3(cardTargetDmgMult 的一般/首領兩個桶)
+     基因學者  遠距離物理攻擊+3%                → rangedDmgPct 3
+     十字切割者 Flee+8                          → flee 8(整段原本沒有)
+     逐影      Flee+8、對全階級敵人的物理傷害+3% → flee 8、normalDmgPct 3、bossDmgPct 3(整段原本沒有)
+   既有的四段(HP+3%／冷卻-0.3 秒)一條都不動,新增的效果各自推一條同條件的 condBonus。
+
+   不補:
+     十字切割者「無視一般階級的物理防禦5%」—— 引擎只有 defIgnorePct(連首領也無視)與 defIgnoreRace_,
+       拿前者會比敘述多給,要補得先加「只對一般階級」的 key,另案。
+     機匠「不會消耗魔導戰甲燃料」—— 本服沒有燃料機制。
+
+   ⚠ 放在 SETNOTE 之前,讓 🧩 註記產生器看到補完後的段數。逐項與實穿驗證見 testlosttimespace.js。 */
+(function () {
+  var it = ITEMS['lost_timespace_tw'];
+  if (!it) { console.log('[data] TIMESPACE-FILLIN 找不到 lost_timespace_tw,略過'); return; }
+  var cb = it.condBonus || [];
+  var already = cb.some(function (c) {
+    return c && c.when && c.when.withAnyItem && c.when.withAnyItem.indexOf('s_circlet_of_time_sc') >= 0; });
+  if (already) { console.log('[data] TIMESPACE-FILLIN 已補過,略過'); return; }
+
+  function w(id, bonus) { return { when: { withAnyItem: [id] }, bonus: bonus }; }
+  it.condBonus = cb.concat([
+    w('s_circlet_of_time_rk', { lifeStealChance: 1, lifeStealPct: 5 }),
+    w('s_circlet_of_time_lg', { normalDmgPct: 3, bossDmgPct: 3 }),
+    w('s_circlet_of_time_gn', { rangedDmgPct: 3 }),
+    w('s_circlet_of_time_gc', { flee: 8 }),
+    w('s_circlet_of_time_sc', { flee: 8, normalDmgPct: 3, bossDmgPct: 3 })
+  ]);
+
+  var NOTE = ' （本服實作更新 2026-09-15:搭配超時空頭冠(十字切割者)的 Flee+8、搭配超時空頭冠(逐影)的 Flee+8 與對全階級物理傷害+3%、'
+           + '搭配(皇家衛士)的對全階級物理傷害+3%、搭配(符文騎士)的 1% 機率吸收 5% 傷害為 HP、搭配(基因學者)的遠距離物理攻擊+3% 已補上並生效。'
+           + '尚未實作:搭配(十字切割者)的無視一般階級物理防禦5%、搭配(機匠)的不消耗魔導戰甲燃料(本服沒有燃料機制)。'
+           + '⚠ 遠距離物理攻擊%本服目前只作用在弓的普通攻擊。）';
+  it.desc = String(it.desc || '') + NOTE;
+  console.log('[data] TIMESPACE-FILLIN 淡忘的超時空 補上 5 條搭配效果');
+})();
+/* ==== TIMESPACE-FILLIN END ==== */
+
+/* ==== RECORDMAGE2-SETS ====
+   思念體忿恨因子研究記錄(魔法師)(record_mage2_tw):敘述列了六組「與○○同時裝備時」,本服一組都沒有建。
+   來源 #4195(acc3895 Magic)。台版限定道具,rAthena 查無,官方依據＝敘述原文。
+
+   ⚠ 放在 EQUIP_SETS 而不是這件飾品的 condBonus:
+     effectiveGearBonuses() 對裝備本身的 condBonus 是**逐欄位**合併,兩個飾品欄戴同一件會算兩次;
+     EQUIP_SETS 是整張表各跑一次,成員用 lo.items(Set)判斷 ⇒ 戴一個或兩個都只算一次。
+     卡片條件用 when.withCards(condMet 支援,host 可為 null)。
+
+   補的(卡片／道具 id 逐條人工核對,不是用名稱比對):
+     闇●超魔導師 凱特莉娜卡片(b_katrinn_card)  對boss階級的魔法傷害+30% → bossDmgPct 30
+       (本服沒有「只算魔法」的首領增傷桶;這件是魔法師專用飾品,物理那一半實際上用不到)
+     ⚠ RECORDMAGE2-FIX 2026-09-15(acc3895 #4205 抓到):「闇●智者 西里亞卡片」是官方 4561 Professor_Card「暗●智者 希莉亞卡片」(首領西里亞教授),
+       **不是**本服 ceila_card(官方 4568「暗●智者卡片」,一般怪)。本服沒有 Professor 卡 ⇒ 這一組不建。
+       同一命名規則:b_katrinn_card = 官方 4365「暗●超魔導師 凱特莉娜卡片」(首領版),那一組對的是對的卡。
+     神秘魔力石帽子(old_magic_stone_hat)  毀滅彗星傷害+30% → skillDmg_wl_comet 30
+     神秘徐風之耳語(old_wind_whisper)     INT+20、劇毒猛擊(本服譯名 毒素爆破)冷卻-0.5 秒 → int 20、skillCdFlat_so_poisonbuster -0.5
+
+   不補:固定詠唱-0.2 秒(本作沒有詠唱)、可使用毒耐性弱化5lv(技能授予另案)、
+         「與思念體破壞因子研究記錄(魔法師)」與「與席琳的胸針」—— 本服沒有這兩件道具,條件永遠不成立。
+
+   ⚠ 必須在 SETNOTE 之前:SETNOTE 依 EQUIP_SETS 決定註記是「🧩本服有實作套裝」還是「本服沒有建這一組」。
+   逐項與實穿驗證見 testrecordmage2.js。 */
+(function () {
+  if (typeof EQUIP_SETS === 'undefined' || typeof ITEMS === 'undefined') { console.log('[data] RECORDMAGE2-SETS 找不到 EQUIP_SETS/ITEMS,略過'); return; }
+  var need = ['record_mage2_tw', 'old_magic_stone_hat', 'old_wind_whisper'];
+  for (var i = 0; i < need.length; i++) if (!ITEMS[need[i]]) { console.log('[data] RECORDMAGE2-SETS 缺道具 ' + need[i] + ',略過'); return; }
+  if (typeof CARDS !== 'undefined' && !CARDS['b_katrinn_card']) { console.log('[data] RECORDMAGE2-SETS 缺卡片,略過'); return; }
+  var add = {
+    record_mage2_katrinn: { name: '思念體忿恨因子研究記錄(魔法師)＋闇●超魔導師 凱特莉娜卡片', items: ['record_mage2_tw'], when: { withCards: ['b_katrinn_card'] }, bonus: { bossDmgPct: 30 } },
+    record_mage2_stonehat:{ name: '思念體忿恨因子研究記錄(魔法師)＋神秘魔力石帽子', items: ['record_mage2_tw', 'old_magic_stone_hat'], bonus: { skillDmg_wl_comet: 30 } },
+    record_mage2_whisper: { name: '思念體忿恨因子研究記錄(魔法師)＋神秘徐風之耳語', items: ['record_mage2_tw', 'old_wind_whisper'], bonus: { int: 20, skillCdFlat_so_poisonbuster: -0.5 } }
+  };
+  for (var k in add) if (EQUIP_SETS[k]) { console.log('[data] RECORDMAGE2-SETS 已補過(' + k + '),略過'); return; }
+  for (var k2 in add) EQUIP_SETS[k2] = add[k2];
+
+  var it = ITEMS['record_mage2_tw'];
+  var NOTE = ' （本服實作更新 2026-09-15:與闇●超魔導師 凱特莉娜卡片同時裝備時 對首領傷害+30%、'
+           + '與神秘魔力石帽子同時裝備時 毀滅彗星傷害+30%、與神秘徐風之耳語同時裝備時 INT+20 與毒素爆破冷卻-0.5 秒 已補上並生效;'
+           + '戴兩個這件飾品也只算一次。'
+           + '尚未實作:固定詠唱(本作技能瞬發)、毒耐性弱化技能;「闇●智者 西里亞卡片」(首領西里亞教授的卡,不是本服的「闇●智者卡片」)、「思念體破壞因子研究記錄(魔法師)」與「席琳的胸針」本服沒有這三件。）';
+  it.desc = String(it.desc || '') + NOTE;
+  console.log('[data] RECORDMAGE2-SETS 思念體忿恨因子研究記錄(魔法師) 補上 3 組搭配');
+})();
+/* ==== RECORDMAGE2-SETS END ==== */
+
+/* ==== MAPFIX-LHZ04 ====
+   生體實驗洞穴04(lhz_dun04):本服這張圖放的是礦石魔／礦工魔／廢鐵暖爐／爆鑽傘蜥 —— 跟 lhz_dun_n、lhz_d_n2 同一批礦坑怪,
+   官方的闇●騎士團後段一隻都沒有。來源 feedback #371(「有機會補上原本實驗研究所4樓的怪嗎?」)。
+
+   官方依據:rAthena npc/re 魔物刷新 lhz_dun.txt(比對工具 mapfull.py):
+     celia 81、gertie 57、randel／flamel／chen／alphoccio／trentini 各 42、七種 g_ 首領各 1,合計 355 隻。
+   權重換算照同一地區 lhz_dun03 的既有寫法:官方比例 ×100 取整、g_ 最少 1
+   (lhz_dun03:shecil 26.0%→27、katrinn 18.3%→18、其餘 13.5%→13、g_ 0.3%→1)。
+     celia 22.8%→23、gertie 16.1%→16、其餘五種 11.8%→12、g_ 各 1。
+   14 種怪在 MONSTERS 本來就有完整資料(等級／血量／掉落),只是沒有任何地圖放牠們。
+   礦坑怪在 lhz_dun_n、lhz_d_n2 照樣有,這裡換掉不會讓牠們消失。
+   逐項與實際生怪驗證見 testlhz04.js。 */
+(function () {
+  if (typeof MAPS === 'undefined' || typeof MONSTERS === 'undefined') { console.log('[data] MAPFIX-LHZ04 找不到 MAPS/MONSTERS,略過'); return; }
+  var m = MAPS.find(function (x) { return x && x.id === 'lhz_dun04'; });
+  if (!m) { console.log('[data] MAPFIX-LHZ04 找不到 lhz_dun04,略過'); return; }
+  if ((m.monsters || []).some(function (e) { return e && e.id === 'celia'; })) { console.log('[data] MAPFIX-LHZ04 已補過,略過'); return; }
+  var list = [
+    { id: 'celia', weight: 23 }, { id: 'gertie', weight: 16 },
+    { id: 'randel', weight: 12 }, { id: 'flamel', weight: 12 }, { id: 'chen', weight: 12 }, { id: 'alphoccio', weight: 12 }, { id: 'trentini', weight: 12 },
+    { id: 'g_randel', weight: 1 }, { id: 'g_flamel', weight: 1 }, { id: 'g_celia', weight: 1 }, { id: 'g_chen', weight: 1 },
+    { id: 'g_gertie', weight: 1 }, { id: 'g_alphoccio', weight: 1 }, { id: 'g_trentini', weight: 1 }
+  ];
+  var missing = list.filter(function (e) { return !MONSTERS[e.id]; }).map(function (e) { return e.id; });
+  if (missing.length) { console.log('[data] MAPFIX-LHZ04 缺怪物資料 ' + missing.join(',') + ',略過'); return; }
+  m.monsters = list;
+  /* 放上地圖之後玩家會看到怪名:這兩隻原本是英文(testpetname 抓到)。照官方 mob_db 中文名,
+     用字對齊本服既有的「闇●冷豔舞姬卡片」「特蘭提尼的記憶」;只在仍是英文時改,名字全庫沒有重複。 */
+  if (MONSTERS.trentini && MONSTERS.trentini.name === 'Trentini') MONSTERS.trentini.name = '闇●冷豔舞姬';
+  if (MONSTERS.g_trentini && MONSTERS.g_trentini.name === 'Gypsy Trentini') MONSTERS.g_trentini.name = '冷豔舞姬 特蘭提尼';
+  console.log('[data] MAPFIX-LHZ04 生體實驗洞穴04 還原成官方 14 種怪');
+})();
+/* ==== MAPFIX-LHZ04 END ==== */
+
+/* ==== MAPFIX-LHZ04-MVP ====
+   生體實驗洞穴04 的 MVP 模式名單。來源 acc565 #4216／#4217(「研究所04 是不是漏放 mvp 的闇系列王了」)。
+
+   官方研究所的 b_ 系 MVP 沒有常駐刷怪(spawnq.py:13 隻都「官方也沒有任何地圖刷」),是在研究所裡用召喚方式出現。
+   本服把這種王放進 MVP_MAP_DATA,開 MVP 模式時抽:lhz_dun03 早就放了第一代 6 隻(b_seyren…b_katrinn)。
+   第二代 7 隻(b_randel／b_flamel／b_celia／b_chen／b_gertie／b_alphoccio／b_trentini)資料都在、isMvp=true,
+   但**沒有任何名單放牠們** ⇒ 照 lhz_dun03 的既有寫法補進 lhz_dun04。
+
+   名字:這 7 隻原本是英文(Paladin Randel…),進了名單玩家就會看到(testpetname 把 MVP 名單也算「會出現」)。
+   照官方 mob_db 中文名,用字對齊本服既有寫法:官方「暗」→ 本服「闇●」(b_shecil 闇●神射手 迪文),
+   人名沿用同一隻的 g_ 版本(g_randel 聖殿十字軍 蘭達 → b_randel 闇●聖殿十字軍 蘭達)。只在仍是英文時改;新名字全庫沒有重複。
+   逐項與 MVP 模式實際生怪驗證見 testlhz04mvp.js。 */
+(function () {
+  if (typeof MVP_MAP_DATA === 'undefined' || typeof MONSTERS === 'undefined') { console.log('[data] MAPFIX-LHZ04-MVP 找不到 MVP_MAP_DATA/MONSTERS,略過'); return; }
+  if (MVP_MAP_DATA.lhz_dun04) { console.log('[data] MAPFIX-LHZ04-MVP lhz_dun04 已有名單,略過'); return; }
+  var ids = ['b_randel', 'b_flamel', 'b_celia', 'b_chen', 'b_gertie', 'b_alphoccio', 'b_trentini'];
+  var missing = ids.filter(function (id) { return !MONSTERS[id]; });
+  if (missing.length) { console.log('[data] MAPFIX-LHZ04-MVP 缺怪物資料 ' + missing.join(',') + ',略過'); return; }
+  MVP_MAP_DATA.lhz_dun04 = ids.slice();
+  var NAMES = {
+    b_randel: ['Paladin Randel', '闇●聖殿十字軍 蘭達'], b_flamel: ['Creator Flamel', '闇●創造者 普拉'],
+    b_celia: ['Professor Celia', '闇●智者 西里亞'], b_chen: ['Champion Chen', '闇●武術宗師 陳理歐'],
+    b_gertie: ['Stalker Gertie', '闇●神行太保 科迪'], b_alphoccio: ['Crown Alphoccio', '闇●搞笑藝人 雅歐帕奇爾'],
+    b_trentini: ['Gypsy Trentini', '闇●冷豔舞姬 特蘭提尼']
+  };
+  for (var k in NAMES) if (MONSTERS[k] && MONSTERS[k].name === NAMES[k][0]) MONSTERS[k].name = NAMES[k][1];
+  console.log('[data] MAPFIX-LHZ04-MVP 生體實驗洞穴04 補上第二代 7 隻 MVP');
+})();
+/* ==== MAPFIX-LHZ04-MVP END ==== */
+
+/* ==== FENRIR-CARD-FIX ====
+   潘利爾卡片（官方 Fenrir_Card 4556）。來源 acc3635 #4225（老舊收集冊開到潘利爾卡片，插卡時卻顯示弱化的潘利爾卡片）。
+
+   ITEMS.fenrir_card 是對的（名稱潘利爾卡片、敘述 MATK+50，每精煉+1 MATK再+5），
+   但 CARDS.fenrir_card 被匯入成弱化版（名稱「弱化的潘利爾卡片」、bonus {matk:25}），跟 CARDS.fenrir_card_（官方 4557 虛弱的芬裡爾卡片）完全相同。
+   插卡畫面與實際加成都讀 CARDS ⇒ 玩家拿到的是弱化版的名字和數值。
+
+   改回官方數值：bonus {matk:50}＋perRefine {matk:5}（引擎 CARDS[x].perRefine 依卡片插著的那件裝備精煉倍增，seyren_card 等既有寫法）。
+   「固定詠唱時間減少 70%」本作沒有詠唱維度，照本服慣例標註不生效。只在仍是舊的錯誤資料時才改。驗證見 testfenrircard.js。 */
+(function () {
+  if (typeof CARDS === 'undefined' || !CARDS.fenrir_card) { console.log('[data] FENRIR-CARD-FIX 找不到 CARDS.fenrir_card,略過'); return; }
+  var c = CARDS.fenrir_card;
+  if (c.name !== '弱化的潘利爾卡片' || !c.bonus || c.bonus.matk !== 25 || c.perRefine) { console.log('[data] FENRIR-CARD-FIX 資料已不是舊的錯誤版本,略過'); return; }
+  c.name = '潘利爾卡片';
+  c.bonus = { matk: 50 };
+  c.perRefine = { matk: 5 };
+  // 只換開頭的數值，保留既有的「⚠本服未實作：詠唱」註記（別的區塊加的，不能弄丟也不能加第二份）
+  if (/^MATK\+25/.test(String(c.desc || ''))) c.desc = String(c.desc).replace(/^MATK\+25/, 'MATK+50，每精煉+1時，MATK再+5（精煉看卡片插著的那件頭盔）');
+  else c.desc = 'MATK+50，每精煉+1時，MATK再+5（精煉看卡片插著的那件頭盔）。' + String(c.desc || '');
+  console.log('[data] FENRIR-CARD-FIX 潘利爾卡片改回 MATK+50、每精煉 MATK+5');
+})();
+/* ==== FENRIR-CARD-FIX END ==== */
+
+/* ==== ORCHERO-STUN-FIX ====
+   獸人英雄卡片（官方 Orc_Hero_Card 4143）。來源 acc559 #4247（說明寫防止暈眩，插卡視窗有寫、物品說明卻只列 VIT+3）。
+
+   官方腳本：bonus bVit,3; bonus2 bResEff,Eff_Stun,10000 ⇒ VIT+3、眩暈抗性 100%（完全免疫）。
+   本服 CARDS.orc_hero_card 只匯入了 {vit:3}，防暈眩那一半沒有 ⇒ 物品說明（describeCardBonus 只列引擎吃到的加成）
+   也就只顯示 VIT+3，跟插卡視窗（顯示卡片自己的敘述）對不上。
+   補上 ailResist_stun:100（引擎 recomputeDerived 讀 ailResist_ 前綴，100 以上＝免疫；flame_skull_card 已在用同一個鍵）。
+   只在仍缺這個鍵時才補。驗證見 testorchero.js。 */
+(function () {
+  if (typeof CARDS === 'undefined' || !CARDS.orc_hero_card) { console.log('[data] ORCHERO-STUN-FIX 找不到 CARDS.orc_hero_card,略過'); return; }
+  var c = CARDS.orc_hero_card;
+  if (!c.bonus || c.bonus.vit !== 3 || c.bonus.ailResist_stun !== undefined) { console.log('[data] ORCHERO-STUN-FIX 資料已不是舊的缺漏版本,略過'); return; }
+  c.bonus.ailResist_stun = 100;
+  console.log('[data] ORCHERO-STUN-FIX 獸人英雄卡片補上眩暈抗性 100%');
+})();
+/* ==== ORCHERO-STUN-FIX END ==== */
+
+/* ==== SETNOTE BEGIN ==== */
+/* acc361 #1572／#1573：「敘述沒提到套裝效果是否生效，沒寫就是有生效嗎？」
+   答案是**不是**：448 件裝備的敘述描述了套裝效果，本服只有 134 件真的有對應套裝。
+
+   ⚠ 分兩種寫法，第二種刻意留餘地 —— 他舉的藍龍鎧甲就是反例：
+     它有在「撒旦藍寶石戒指＋藍龍鎧甲＋天龍披風＋天龍戰靴」這組裡（對龍族／天使族的加成），
+     但敘述寫的是「搭配天龍戰靴、天龍披風時 DEF+50、MDEF+8、MATK+7%」——
+     三件式、加成完全不同，那一組本服沒有。
+     所以「有在某個套裝裡」**不等於**「敘述那一組有效」，不能寫死。 */
+{
+  const _inSet = {};
+  const _setMembers = {};        // 套裝名 → 成員 id（同一件有無孔兩版時取第一個）
+  if (typeof EQUIP_SETS !== 'undefined') {
+    for (const _k in EQUIP_SETS) {
+      const _nm = EQUIP_SETS[_k].name || _k;
+      _setMembers[_nm] = (EQUIP_SETS[_k].items || [])
+        .map(_x => (Array.isArray(_x) ? _x[0] : _x));
+      (EQUIP_SETS[_k].items || []).forEach(_x => {
+        (Array.isArray(_x) ? _x : [_x]).forEach(_i => {
+          (_inSet[_i] = _inSet[_i] || []).push(_nm);
+        });
+      });
+    }
+  }
+  /* 官方敘述描述套裝效果的兩種句型，都抽樣核對過：
+       ①「與亮藍色眼影一起裝備」「與熔巖獸皮斗篷、熔巖獸皮長靴同時裝備」   448 件
+       ②「搭配天龍戰靴、天龍披風時」「搭配飛空艇鎧甲、飛空艇斗篷、飛空艇靴子時」 再 +319 件
+     ⚠ 第一版只收 ①，結果**漏掉了玩家 acc361 點名的藍龍鎧甲**（它是 ② 的寫法）。
+     ⚠ ② 裡混了 2 件是**彈藥**搭配（小精靈弓「搭配精靈箭矢時」、獵人之弓「搭配狩獵箭矢時」），
+       那不是套裝，標成「套裝未實作」會是錯的，所以排除彈藥字樣。 */
+  const _RE = /((與|跟)[^。]{2,30}(一起裝備|同時裝備|成套|套裝))|(搭配[^。]{2,40}時)/;
+  const _AMMO = /搭配[^。]{0,20}(箭矢|箭|彈藥|子彈|炮彈|手裏劍|苦無|飛鏢)[^。]{0,20}時/;
+  let _no = 0, _yes = 0;
+  /* 套裝條件指向「不存在的道具 id」的統計。這種條件永遠不會成立＝死條件，
+     值得回報（但不該印給玩家看）。 */
+  const _setnoteMissing = {};
+  for (const _id in ITEMS) {
+    const _it = ITEMS[_id];
+    if (_it.type !== 'weapon' && _it.type !== 'armor') continue;
+    const _d = String(_it.desc || '');
+    if (!_RE.test(_d)) continue;
+    if (_AMMO.test(_d) && !/(與|跟)[^。]{2,30}(一起裝備|同時裝備|成套|套裝)/.test(_d)) continue;
+    if (_d.indexOf('套裝：') >= 0 || _d.indexOf('套裝效果本服') >= 0) continue;   // 冪等
+    /* ⚠ 本服的套裝加成有**兩套**機制，第一版只看了第一套（acc96 #1717 抓到）：
+         ① EQUIP_SETS        —— 湊齊會在裝備欄出現 🧩 標記
+         ② 裝備自己的 condBonus 帶 withItems / withCards
+            —— 沒有 🧩，但引擎確實會判定（engine.js:13667 `when.withItems.every(...)`）
+       只看 ① 的話，**132 件**有實作 ② 的裝備會被標成「本服沒有建這一組」，
+       玩家照著註記就放棄去湊真的有效的套裝。時光超越那組就是這樣被標錯的。 */
+    /* ⚠ 三種寫法都要收（acc361 #2505）：
+         withItems    列出的**全部**都要穿在身上
+         withCards    列出的卡片插在身上任何一件都算
+         withAnyItem  列出的**任一件**即可（同一件裝備的有孔／無孔兩個 id）
+       只收前兩種的話，用 withAnyItem 的 162 件會被誤標成「本服沒有建這一組」，
+       玩家照著註記就放棄去湊真的有效的套裝（超高頻魔法推進翼＋凱旋之耳就是）。 */
+    const _condSet = (_it.condBonus || []).filter(
+      _c => _c.when && (_c.when.withItems || _c.when.withCards || _c.when.withAnyItem));
+    if (!_inSet[_id] && _condSet.length) {
+      /* ② 這一套：把實際要湊的東西列出來，玩家才知道要配什麼。
+         ⚠ 條件裡混著三種東西，混在一起寫會誤導（第一版就寫錯了）：
+           · armor / weapon → 真的要另外穿一件
+           · material       → **附魔**（光速瞬移、無感肌肉…），是附在裝備上的
+           · 查不到的 id    → 條件永遠不會成立，印 raw id 給玩家看更莫名其妙，直接略過 */
+      const _wear = [], _ench = [];
+      /* 🔴 「同時」與「各自」要分開講（acc132 #1911）。
+
+         以前這裡把**所有段落**需要的東西攤平成一個清單，印成
+         「需要同時裝備：A、B」—— 但多數情況是**每一段各要一件、各給各的加成**
+         （古代夢羅克貴族首飾：馬爾杜克→12%、法老王→25%，兩段獨立）。
+         寫成「同時」會跟裝備自己的敘述互相矛盾，玩家不知道該信哪個，
+         而且會以為湊不齊就都拿不到 —— 實測全庫有 21 件被這樣寫錯。
+
+         判準：**一個 when 裡需要多件**才是真的「同時」；
+         段落之間彼此獨立，不是。 */
+      let _anySameTime = false;
+      /* 🔴 有幾段是**永遠不會成立**的（世界頻道 G112 問出來的）。
+
+         `withItems` 判定看的是 buildLoadout() 收集的**裝備欄上的道具**。
+         而「附魔」（光速瞬移、無感肌肉、暴走魔法、犀利鷹眼、幸運之日…）
+         在本服都是 type:'material' —— **材料裝不到任何欄位上**，
+         所以那些條件的 `lo.items.has(...)` 永遠是 false。
+         指向不存在 id 的那幾段同理。
+
+         全庫 546 段搭配條件裡有 25 段是這種，散在 9 件裝備上。
+         不標的話，玩家會為了一段永遠拿不到的加成去找一個本服沒有的系統。 */
+      let _deadSegs = 0;
+      const _isLive = _x => {
+        if (CARDS[_x]) return true;                        // 卡片插在身上任何一件都算
+        const _o = ITEMS[_x];
+        return !!_o && (_o.type === 'armor' || _o.type === 'weapon');
+      };
+      _condSet.forEach(_c => {
+        /* withItems/withCards 是「全部都要」；withAnyItem 是「任一件即可」，
+           兩種的生效判定與「要湊什麼」的列法都不一樣（acc361 #2505）。 */
+        const _all = [].concat(_c.when.withItems || [], _c.when.withCards || []);
+        const _any = _c.when.withAnyItem || [];
+        const _anyPick = _any.find(_isLive) || null;
+        const _live = _all.every(_isLive) && (!_any.length || !!_anyPick);
+        /* 顯示用：withAnyItem 同一組通常是同一件的有孔／無孔兩個 id，只列一個 */
+        const _need = _all.concat(_anyPick ? [_anyPick] : []);
+        if (!_live) _deadSegs++;
+        /* 🔴 「要湊什麼」「要不要同時」只能照**會生效的那幾段**算。
+
+           時光超越者斗篷：戒指只出現在那 6 段永遠不會生效的條件裡，
+           會生效的 7 段只需要靴子。把戒指也列進去，玩家會白跑一趟；
+           而「同時」這兩個字也是被那段死條件帶出來的（它一個 when 裡有兩件）。 */
+        /* ⚠ 只有 withItems/withCards 那一份多於一件才算「同時」——
+           withAnyItem 只要湊到其中一件，不是同時。 */
+        if (_live && _all.length > 1) _anySameTime = true;
+        if (_any.length && !_anyPick) {
+          /* 整組 withAnyItem 都查不到 → 這一段永遠不成立，記一次就好 */
+          _setnoteMissing[_any[0]] = (_setnoteMissing[_any[0]] || 0) + 1;
+        }
+        _need.forEach(_x => {
+          const _o = ITEMS[_x] || CARDS[_x];
+          if (!_o) { _setnoteMissing[_x] = (_setnoteMissing[_x] || 0) + 1; return; }
+          const _nm = _o.name || _x;
+          const _isGear = ITEMS[_x] && (ITEMS[_x].type === 'armor' || ITEMS[_x].type === 'weapon');
+          if (_isGear || CARDS[_x]) {
+            if (_live && _wear.indexOf(_nm) < 0) _wear.push(_nm);   // 死段落需要的不列進「要湊」
+          } else if (_ench.indexOf(_nm) < 0) {
+            _ench.push(_nm);
+          }
+        });
+      });
+      /* 需要的是「卡片」還是「裝備」要分開講（acc132 #1896）。
+         玩家看到「頭中裝備要搭配鎧甲卡片」會以為不可能成立 ——
+         實際上 buildLoadout() 是把**所有裝備欄**的卡片收進同一個 Set，
+         withCards 只看「身上有沒有這張卡」，插在哪一件都算。
+         這句不寫出來，玩家會以為那段套裝加成永遠拿不到。 */
+      const _needCard = _condSet.some(_c => _c.when && _c.when.withCards
+        && _c.when.withCards.length);
+      const _parts = [];
+      if (_wear.length) _parts.push(
+        (_anySameTime ? '需要同時裝備：' : '以下每一項**各自對應一段加成，不必同時湊齊**：')
+        + _wear.slice(0, 8).join('、')
+        + (_wear.length > 8 ? ' 等 ' + _wear.length + ' 件' : '')
+        + (_needCard ? '（⚠ 其中的**卡片插在身上任何一件裝備上都算**，不必插在這一件）' : ''));
+      /* 🔴 「附魔」那一段不可以寫成「去弄到就好」——本服沒有附魔系統。
+         這幾個是材料道具，裝不到裝備上，條件永遠不成立。 */
+      if (_ench.length) _parts.push('⚠ 另外那幾段的條件是「附魔」（'
+        + _ench.slice(0, 8).join('、') + (_ench.length > 8 ? ' 等 ' + _ench.length + ' 種' : '')
+        + '）—— **本服沒有附魔系統**，它們是材料道具、裝不到裝備上，'
+        + '所以那幾段**永遠不會生效**，不必為了它們去湊');
+      const _liveSegs = _condSet.length - _deadSegs;
+      _it.desc = _d.trim() + ' （🧩本服有實作套裝：這件的搭配加成寫在裝備本身，共 '
+        + _condSet.length + ' 段'
+        + (_deadSegs ? '，其中 **' + _deadSegs + ' 段永遠不會生效**（見下），實際會生效的是 '
+            + _liveSegs + ' 段' : '')
+        + '。' + (_parts.length ? _parts.join('；') + '。' : '')
+        + '⚠ 這一類**不會**在裝備欄出現 🧩 標記，但湊齊了就會生效；'
+        + '實際加成以本服資料為準，不一定與敘述所列相同。）';
+      _yes++;
+      continue;
+    }
+    if (_inSet[_id]) {
+      const _names = [...new Set(_inSet[_id])].slice(0, 3).join('、');
+      /* ⚠ 名稱看不出要湊什麼時，把**實際成員**列出來（玩家 acc361 #1598）。
+         480 組裡有 456 組的名稱本身就是成員列表（「A＋B＋C」），那種不必重複；
+         剩下 24 組只有一個名字（「RWC 紀念套裝」…），玩家看了還是不知道要湊什麼。
+         他就是因為敘述沒提到「撒旦藍寶石戒指」才來問的。 */
+      let _members = '';
+      if (_names.indexOf('＋') < 0 && _names.indexOf('+') < 0) {
+        const _first = (_inSet[_id] || [])[0];
+        const _ids = _setMembers[_first] || [];
+        const _mn = _ids.map(_x => (ITEMS[_x] && ITEMS[_x].name) || _x);
+        if (_mn.length) _members = '　需要湊齊：' + _mn.slice(0, 8).join('、')
+          + (_mn.length > 8 ? ' 等 ' + _mn.length + ' 件' : '') + '。';
+      }
+      _it.desc = _d.trim() + ' （🧩本服有實作套裝：這件屬於「' + _names + '」，'
+        + '湊齊後裝備欄會出現 🧩 標記並生效。' + _members
+        + '⚠ 本服的套裝**組合與加成不一定與敘述所列相同**，'
+        + '實際生效的內容以裝備欄上的 🧩 標記為準。）';
+      _yes++;
+    } else {
+      _it.desc = _d.trim() + ' （⚠本服未實作：敘述提到的**套裝效果本服沒有建這一組**，'
+        + '湊齊了也不會有額外加成。這件裝備本身的能力照常生效。）';
+      _no++;
+    }
+  }
+  const _missN = Object.keys(_setnoteMissing).length;
+  console.log('[data] SETNOTE 套裝註記：有實作 ' + _yes + ' 件、未實作 ' + _no + ' 件'
+    + (_missN ? '　⚠ 套裝條件指向不存在的道具 ' + _missN + ' 種（那些條件永遠不成立）：'
+        + Object.keys(_setnoteMissing).slice(0, 6).join('、') : ''));
+}
+/* ==== SETNOTE END ==== */
+/* ==== WEAPONREQ-FIX BEGIN ==== */
+/* feedback #260：驟雨箭官方是「弓／樂器／鞭子」都能發動，本服只允許弓。
+
+   查證走 rAthena 一鍵端的 skill_db.yml（權威資料，不採信任何一方的記憶）：
+     WM_SEVERE_RAINSTORM → Requires: Bow: true, Musical: true, Whip: true
+   玩家是對的。既然要動就一次對完 59 個有武器限定的技能，
+   結果**本服比官方窄的有 11 個，比官方寬的 0 個**。
+
+   這不是調平衡：沒有動任何倍率或加成，只是把官方本來就允許的武器補回去
+   （「官方有、我們沒有」的缺口）。
+
+   ⚠ 敘述一定要跟著改 —— 留著「需裝備樂器」而鞭子其實也能放，
+     就正好變成玩家一直在抱怨的那種「敘述與實作對不上」。 */
+{
+  const _WR = {
+    /* 詩人 4 首：官方 Musical+Whip，本服原本只有 instrument */
+    ba_whistle: 'instrument_whip', ba_assassincross: 'instrument_whip',
+    ba_poembragi: 'instrument_whip', ba_appleidun: 'instrument_whip',
+    /* 舞孃 4 首：官方 Musical+Whip，本服原本只有 whip */
+    dc_humming: 'instrument_whip', dc_dontforgetme: 'instrument_whip',
+    dc_fortunekiss: 'instrument_whip', dc_serviceforyou: 'instrument_whip',
+    /* 官方 Bow+Musical+Whip */
+    wm_severerainstorm: 'bow_instrument_whip',
+    /* 官方 Book+Mace */
+    cd_petitio: 'book_mace', cd_effligo: 'book_mace',
+  };
+  /* 敘述裡的「需裝備X」也要一起換成正確的說法 */
+  const _DESC = [
+    ['需裝備樂器。', '需裝備樂器或鞭子。'],
+    ['需裝備鞭子。', '需裝備樂器或鞭子。'],
+    ['弓專用。', '需裝備弓、樂器或鞭子。'],
+    ['鈍器專用。', '需裝備書本或鈍器。'],
+  ];
+  let _n = 0, _d = 0;
+  for (const _id in _WR) {
+    const _sk = SKILLS[_id];
+    if (!_sk) continue;
+    if (_sk.requiresWeapon === _WR[_id]) continue;          // 冪等
+    _sk.requiresWeapon = _WR[_id];
+    _n++;
+    const _before = String(_sk.desc || '');
+    let _after = _before;
+    _DESC.forEach(([a, b]) => { _after = _after.split(a).join(b); });
+    if (_after !== _before) { _sk.desc = _after; _d++; }
+  }
+  console.log('[data] WEAPONREQ-FIX 放寬武器限定 ' + _n + ' 個技能（敘述同步改 ' + _d + ' 句）');
+}
+/* ==== WEAPONREQ-FIX END ==== */
+/* ==== ALLJOBNOTE BEGIN ==== */
+/* acc558 #1600：「寫所有職業可以裝備，但鍊金術士穿不了」。
+   裝備要過兩道關卡，官方敘述只講第一道：
+     ① 職業限定 reqJob　　　　 ←「裝備: 所有職業」講的是這個
+     ② 武器類型熟練 jobCanUseWeapon ← 官方的鍊金術士本來就不能拿雙手劍
+   行為是對的（equipBlockReason 兩道都查），誤導的是敘述。
+   全庫只有 4 件寫「裝備: 所有職業」，而且 4 件全部都有職業拿不動，所以直接補一句。 */
+{
+  let _aj = 0;
+  for (const _id in ITEMS) {
+    const _it = ITEMS[_id];
+    if (_it.type !== 'weapon') continue;
+    const _d = String(_it.desc || '');
+    if (_d.indexOf('裝備: 所有職業') < 0) continue;
+    if (_d.indexOf('仍要看武器類型') >= 0) continue;          // 冪等
+    _it.desc = _d.trim()
+      + ' （ℹ️ 說明：「所有職業」指的是**沒有職業限定**，但能不能裝還要看'
+      + '**武器類型熟練** —— 例如鍊金術士本來就不能使用雙手劍。'
+      + '仍要看武器類型是否為該職業可用。裝備欄會顯示擋下來的原因。）';
+    _aj++;
+  }
+  console.log('[data] ALLJOBNOTE 補上「所有職業≠武器類型不限」說明 ' + _aj + ' 件');
+}
+/* ==== ALLJOBNOTE END ==== */
+/* ==== SKILLALIAS BEGIN ==== */
+/* acc558 #1620：「大暴雨在技能上被翻譯成了驟雨箭」。
+
+   裝備敘述是從官方資料匯入的，用**官方譯名**；本服技能表用**另一套譯名**。
+   兩邊對不起來，玩家讀了裝備也在技能表查不到。對過官方 skill_db.yml 之後，
+   有 37 個技能符合「名稱不同、而且裝備敘述有引用官方名稱」。
+
+   修在裝備那一側 —— 那才是玩家困惑的當下（讀到「聖槍刺擊傷害+10%」時）。
+   用**附加**不是取代：不動官方原文。
+
+   對照表由 tools 產生後存在 data/skill_alias.json，這裡內嵌一份以免執行期讀檔。 */
+{
+  const _ALIAS = { "音速衝擊波": "音波斬", "致命爆裂": "爆燃劍", "風壓飛刃": "風刃", "十字斬": "十字衝擊", "迴旋刀刃": "迴旋刃", "迴旋十字斬": "十字撕裂者", "瞄準標靶": "瞄準標記", "狼突擊": "戰狼突擊", "審判": "神聖裁決", "謳歌": "聖光讚歌", "高階治癒術": "至高治癒", "碧血隕石": "深紅岩漿", "凍僵術": "傑克霜寒", "連鎖電擊": "連鎖閃電", "地牛翻身": "大地脈動", "虎炮": "虎砲", "修羅身彈": "導氣彈", "噴射飛拳": "推進拳", "火神炮": "火神砲", "加農炮": "臂裝加農砲", "戰斧颶風": "斧刃旋風", "迴旋斧": "迴旋飛斧", "手推車加農炮": "手推車加農砲", "手推車龍捲風": "龍捲手推車", "爆炸孢子": "孢子爆炸", "地獄植物": "地獄之樹", "加農炮攻擊": "加農長矛", "放逐攻擊": "驅逐尖擊", "重壓盾擊": "盾牌重壓", "支配烙印": "騎士烙印", "致命威脅": "致命威嚇", "超自然波": "精神波動", "大地墳場": "大地之牙", "聖槍刺擊": "雷光戰矛", "大暴雨": "驟雨箭", "天龍氣息": "龍炎吐息", "金屬狂怒": "金屬狂想" };
+  /* 🔴 只講名字對應不夠，要講「那是誰的技能」（acc361 #2061）。
+
+     他看到「手推車龍捲風＝龍捲手推車」，就去鐵匠的技能樹找 —— 找不到。
+     因為那是**基因學者／生物學者**的技能（商人→鍊金術士線），
+     鐵匠線的手推車技能是另外三支（衝撞／加速／終結技）。
+     ⚠ JOB_TREE 在 data.js 之前就載入（瀏覽器與 engine-host 的順序都是
+       skills.js → jobs.js → data.js），所以取得到；仍加 typeof 保護。 */
+  const _OWNER = {};
+  if (typeof JOB_TREE !== 'undefined' && typeof SKILLS !== 'undefined') {
+    for (const _j in JOB_TREE) {
+      const _jn = JOB_TREE[_j].name;
+      if (!_jn) continue;
+      (JOB_TREE[_j].skills || []).forEach(_s => {
+        const _full = SKILLS[_s.id] && SKILLS[_s.id].name;
+        if (!_full) return;
+        const _short = String(_full).split(' ')[0];
+        if (!_OWNER[_short]) _OWNER[_short] = [];
+        if (_OWNER[_short].indexOf(_jn) < 0) _OWNER[_short].push(_jn);
+      });
+    }
+  }
+  /* 職業太多就只列最前面幾個（同一支技能整條線都有，列頭兩個就夠指路了）。 */
+  const _ownerOf = _localName => {
+    const _o = _OWNER[_localName];
+    if (!_o || !_o.length) return '';
+    return '（' + _o.slice(0, 2).join('／') + (_o.length > 2 ? ' 等' : '') + '的技能）';
+  };
+  let _sa = 0, _hitNames = 0;
+  for (const _id in ITEMS) {
+    const _it = ITEMS[_id];
+    if (_it.type !== 'weapon' && _it.type !== 'armor') continue;
+    const _d = String(_it.desc || '');
+    if (_d.indexOf('本服的技能名稱') >= 0) continue;          // 冪等
+    const _found = [];
+    for (const _off in _ALIAS) {
+      if (_d.indexOf(_off) >= 0) _found.push(_off + '＝' + _ALIAS[_off] + _ownerOf(_ALIAS[_off]));
+    }
+    if (!_found.length) continue;
+    _hitNames += _found.length;
+    _it.desc = _d.trim()
+      + ' （ℹ️ 譯名對照：這段敘述用的是官方譯名，'
+      + '本服的技能名稱是 ' + _found.slice(0, 4).join('、')
+      + (_found.length > 4 ? ' 等 ' + _found.length + ' 個' : '') + '。）';
+    _sa++;
+  }
+  console.log('[data] SKILLALIAS 補上技能譯名對照 ' + _sa + ' 件裝備（共 ' + _hitNames + ' 處）');
+}
+/* ==== SKILLALIAS END ==== */
+
+
+
+
+
+/* ==== CARDNOTE-STALE BEGIN ==== */
+/* acc111 #1472：這兩張卡的敘述結尾寫著「(效果未實裝)」，但效果其實**有接**。
+   說沒實裝、實際上有用，比不寫更糟 —— 玩家會把有用的卡拆掉。
+   ⚠ 只動這兩張。其餘 84 張寫的是「原版另有 N 項條件效果尚未實作」，
+     那句是對的而且有資訊量（列出的那項有生效、其餘沒有），不要一起洗掉。 */
+{
+  const _CS = {
+    mystcase_card: '每當擊殺魔物時，有一定的機率會掉落禮物箱。（本服實作：**已補上生效**）',
+    cramp_card: '每當擊殺魔物時，有一定的機率得到一定量的金幣；裝備白鼠卡片時，STR+3。'
+      + '（本服實作：**兩項都已補上生效**）',
+  };
+  let _cs = 0;
+  for (const id in _CS) {
+    const cd = (typeof CARDS !== 'undefined') ? CARDS[id] : null;
+    if (!cd) continue;
+    if (!/[（(]效果未實裝[）)]/.test(String(cd.desc || ''))) continue;   // 已經改過就不重複
+    cd.desc = _CS[id];
+    if (typeof ITEMS !== 'undefined' && ITEMS[id]) ITEMS[id].desc = _CS[id];
+    _cs++;
+  }
+  console.log('[data] CARDNOTE-STALE 修正過時的「效果未實裝」 ' + _cs + ' 張');
+}
+/* ==== CARDNOTE-STALE END ==== */
+/* ==== CARDCONDNOTE BEGIN ==== */
+/* acc361 #1845：圖鑑「尚未實裝的效果」列出的若只是一個**條件子句**，
+   玩家會以為整條加成沒實作 —— 實際上加成有，只是條件被忽略（等於人人都吃得到）。
+
+   全庫 718 張卡、24 張有 unimplemented，其中只有這 2 條是純條件子句：
+
+     狂徒卡片　　原文「流氓，神行太保裝備時，」
+                 bonus = { matk:10, allTargetDmgPct:10 } 是**無條件**生效的。
+                 未實作的是「職業限定」→ 所有職業都吃得到，也不會疊成兩倍。
+     紙妖卡片　　原文「和邪骸浪人、狂暴野貓、火忍西怒畢、舞獅卡片一起裝備時，」
+                 這條**過時了**：那組套卡已經用 condBonus.withCards 實作，
+                 留著會讓玩家把有效的套卡拆掉（跟 CARDNOTE-STALE 同一類錯誤）。
+
+   ⚠ 只動 unimplemented 這個**標註陣列**，不動任何 bonus 數值。 */
+{
+  const _CC = {
+    byorgue_card: {
+      drop: '流氓，神行太保裝備時，',
+      add: '⚠ 本服未實作「限流氓／神行太保」這個條件 —— '
+        + '物理傷害+10%、MATK+10% **所有職業裝備都會生效**，也不會因為是這兩個職業就變兩倍。',
+    },
+    the_paper_card: {
+      drop: '和邪骸浪人、狂暴野貓、火忍西怒畢、舞獅卡片一起裝備時，',
+      add: null,   // 這條已經實作了（condBonus.withCards），直接移除，不用補說明
+    },
+  };
+  let _cc = 0;
+  for (const id in _CC) {
+    const cd = (typeof CARDS !== 'undefined') ? CARDS[id] : null;
+    if (!cd || !Array.isArray(cd.unimplemented)) continue;
+    const before = cd.unimplemented.length;
+    cd.unimplemented = cd.unimplemented.filter(u => String(u).trim() !== _CC[id].drop);
+    if (cd.unimplemented.length === before) continue;      // 已經處理過就不重複
+    if (_CC[id].add) cd.unimplemented.push(_CC[id].add);
+    _cc++;
+  }
+  console.log('[data] CARDCONDNOTE 修正「只是條件子句卻寫成未實裝」 ' + _cc + ' 張');
+}
+/* ==== CARDCONDNOTE END ==== */
+
+
+/* ==== CARDPROCNOTE BEGIN ==== */
+/* acc498 #1782：卡片敘述寫著「一定機率…」，但那一段沒有實作，
+   玩家打到卡片後看能力欄只有固定加成，會以為是 bug。
+
+   判準（保守，只標**完全沒有任何觸發實作**的）：
+     ① 敘述含「機率」或「機會」
+     ② 卡片上沒有 autoSpell / ailment / killDrop / grantSkill
+        —— 這三個是引擎唯一會讀的觸發欄位（engine.js:2663 起）
+     ③ 敘述裡還沒有本服實作的註記
+
+   ⚠ 只補說明、不補功能。真的要讓那些機率效果生效是在加卡片能力 ＝ 平衡，要老闆決定。
+   ⚠ 冪等：跑過的不會重複加（看 ③）。 */
+{
+  const _NOTE = '（⚠ 本服實作：這張卡目前只有上面列出的固定加成有效，'
+    + '敘述中「一定機率觸發」的那一段**尚未實作**。）';
+  let _cp = 0;
+  if (typeof CARDS !== 'undefined') {
+    for (const id in CARDS) {
+      const c = CARDS[id];
+      const d = String(c.desc || '');
+      if (!/機率|機會/.test(d)) continue;
+      if (/本服|未實作|未實裝/.test(d)) continue;
+      if (c.autoSpell || c.ailment || c.killDrop || c.grantSkill) continue;
+      /* 🔴 還要看 bonus —— 有一整批機率效果是**用 bonus 鍵實作**的，
+         不在上面那四個欄位裡。漏掉它們會把「完全有效」的卡標成未實作：
+           lifeStealChance/Pct　engine.js:2799-2800 → 13916 真的擲骰回血
+           spStealChance/Pct、magicReflectChance、meltdownAtk/DefChance、reflectPct
+         被誤標的 5 張都是值錢的卡（赤蒼蠅、德古拉伯爵、蟻后、闇●神工匠 哈沃得、
+         闇●神射手 迪文）—— 玩家看到「尚未實作」就不會用，
+         等於我們自己把好卡標成廢卡（acc501 #2319 就是這樣來問的）。 */
+      /* 2026-09-08 世界頻道 #1645（德格「現在邪惡箱卡是有用的嗎」）：
+         補上 boxDropPct。邪惡箱卡片 mimic_card 的 bonus **只有** {boxDropPct:10}，
+         而那就是它的機率效果本身：
+           engine.js:2811  state.cardBoxDropPct = getCardBonus('boxDropPct')
+           engine.js:9088  if (state.cardBoxDropPct && Math.random()*100 < state.cardBoxDropPct)
+           engine.js:16620 離線結算也照算
+         被標成「尚未實作」之後，那句「只有上面列出的固定加成有效」對它還自我矛盾
+         —— 它沒有別的固定加成。玩家因此在世界頻道問「這張卡到底有沒有用」。
+         ⚠ 這份白名單是手寫的，會再漏。要重算跑：
+           node tools/probes/probe_procnote2.js
+         那支從 engine.js 反查「真的出現在 Math.random() 擲骰式裡的 getCardBonus 鍵」，
+         不靠鍵名長相判斷（v1 就是用 /Chance|Steal|Reflect/ 才漏掉 boxDropPct 的）。 */
+      const _LIVE_PROC_KEYS = ['lifeStealChance', 'lifeStealPct',
+        'spStealChance', 'spStealPct', 'magicReflectChance',
+        'meltdownAtkChance', 'meltdownDefChance', 'reflectPct',
+        'boxDropPct'];
+      if (Object.keys(c.bonus || {}).some(k => _LIVE_PROC_KEYS.indexOf(k) >= 0)) continue;
+      /* 🔴 還有第三種實作方式：**引擎裡寫死的專屬旗標**（世界頻道「迷人的危險」回報）。
+
+         黑蛇卡片的二刀連擊是這樣做的：
+           engine.js:2889  state.hasSideWinderDoubleAttack = allEquippedCards().includes('side_winder_card');
+           engine.js:7924  if (daLv > 0 && (daFromCard || daByWeapon)) { ...二刀連擊... }
+         上面那四個欄位與 _LIVE_PROC_KEYS 都認不出這一種，而它的 bonus 又是空的 {}，
+         於是被標成「尚未實作」—— 但它其實**完全有效**，而且那句
+         「只有上面列出的固定加成有效」對它還自我矛盾（根本沒有固定加成）。
+
+         ⚠ 要找出同類：`grep -o "'[a-z0-9_]*_card'" game/engine.js`
+           （2026-09-04 掃過，全引擎只有黑蛇卡片這一張是這種寫法）。 */
+      const _ENGINE_IMPL_CARDS = ['side_winder_card'];
+      if (_ENGINE_IMPL_CARDS.indexOf(id) >= 0) continue;
+      let hasProc = false;
+      for (const k in c) { if (/proc|onAttack|onKill|trigger/i.test(k)) hasProc = true; }
+      if (hasProc) continue;
+      c.desc = d + ' ' + _NOTE;
+      if (typeof ITEMS !== 'undefined' && ITEMS[id]) ITEMS[id].desc = c.desc;
+      _cp++;
+    }
+  }
+  console.log('[data] CARDPROCNOTE 標註「機率效果未實作」的卡片 ' + _cp + ' 張');
+}
+/* ==== CARDPROCNOTE END ==== */
+
+/* ==== CARDCONDGAP BEGIN ==== */
+/* feedback #329：卡片敘述寫了條件式加成（「○○裝備時」「精煉N以上時」「素質N以上時」），
+   但卡片上**既沒有 condBonus、也沒有 unimplemented**——玩家兩邊都看不到警告。
+   這裡把那一段補進 unimplemented，讓圖鑑的「尚未實裝的效果」照常列出來。
+
+   ⚠ 位置要在 CARDPROCNOTE **之後**（那一支會重寫 desc，插在它前面會被蓋掉，
+     見下方 CARDNOTE-STALE 的註解裡記過的同一個坑）。這裡動的是 unimplemented 陣列，
+     不碰 desc，本來就不會互相踩，但順序仍照規矩擺。
+   ⚠ 冪等：已經列過同一句就不重複加。 */
+{
+  const _GAP = {
+    alphoccio_card:    '詩人系列裝備時，MHP+10%、MSP+5%。',
+    trentini_card:     '舞娘系列裝備時，MHP+10%、MSP+5%。',
+    archangeling_card: 'LUK 77 以上時，HP 恢復力與 SP 恢復力上升 100%。',
+    rideword_card:     '服事系列角色裝備時，INT+1、MDEF+1。',
+    apocalips_card:    '精煉 9 以上時，MaxHP+800。',
+    carat_card:        '精煉 9 以上時，MaxSP+150。',
+    neev_agi_1:        '精煉 +7 時，AGI+5。',
+    neev_agi_2:        '精煉 +7 時，AGI+6。',
+    neev_agi_3:        '精煉 +7 時，AGI+7。',
+  };
+  let _cg = 0, _skip = 0;
+  if (typeof CARDS !== 'undefined') {
+    for (const id in _GAP) {
+      const c = CARDS[id];
+      if (!c) continue;
+      /* 之後有人真的補上 condBonus 了就別再標成未實裝 */
+      if (c.condBonus && c.condBonus.length) { _skip++; continue; }
+      if (!Array.isArray(c.unimplemented)) c.unimplemented = [];
+      if (c.unimplemented.indexOf(_GAP[id]) >= 0) { _skip++; continue; }
+      c.unimplemented.push(_GAP[id]);
+      if (typeof ITEMS !== 'undefined' && ITEMS[id]) ITEMS[id].unimplemented = c.unimplemented;
+      _cg++;
+    }
+  }
+  console.log('[data] CARDCONDGAP 補上「條件式加成未實作」的標註 ' + _cg + ' 張（跳過 ' + _skip + '）');
+}
+/* ==== CARDCONDGAP END ==== */
+
+/* ==== CARDPURENEG BEGIN ==== */
+/* acc367 #3571：有一批卡片**實作出來只剩負項**，插上去是純粹的扣，
+   而且插卡不可逆（removeCard 會連裝備一起銷毀），玩家事前完全看不出來。
+
+   兩種成因：
+     (a) 敘述是「X−N，根據精煉的不同 X+」，**只匯入了扣的那一半**（4 張）
+     (b) 敘述講的是「受到某種魔物的傷害減少」，但實作用成了
+         raceDmg_*（那是「你打牠的傷害」）或把 raceDmgReduce_* 寫成負值（4 張）
+         —— 兩種寫法在引擎裡的意思見 engine.js:2820-2821
+
+   ⚠ **只加警語、不動任何數值**。改成正的＝加能力加成（規則④要老闆決定），
+     而且 (a) 那四張的官方數值本機沒有權威來源可查，我不猜。
+   ⚠ 措辭只陳述「本服現在實際上做了什麼」，不宣稱官方原意，避免把猜測寫成事實。
+   ⚠ 冪等：同一句已經在 unimplemented 裡就不重複加。 */
+{
+  const _NEG = {
+    seyren_card:      '⚠ 本服現況：這張卡目前**只有 STR−6 生效**，敘述後半「根據精煉的不同 STR+」沒有實作，插上去是純扣。已回報。',
+    dimik_card:       '⚠ 本服現況：這張卡目前**只有 VIT−5 生效**，敘述後半「根據精煉的不同 VIT+」沒有實作，插上去是純扣。已回報。',
+    tha_odium_card:   '⚠ 本服現況：這張卡目前**只有 AGI−5 生效**，敘述後半「根據精煉的不同 AGI+」沒有實作，插上去是純扣。已回報。',
+    tha_despero_card: '⚠ 本服現況：這張卡目前**只有 INT−6 生效**，敘述後半「根據精煉的不同 INT+」沒有實作，插上去是純扣。已回報。',
+    penomena_card:    '⚠ 本服現況：目前實作成「**你打無型系魔物的傷害 −30%**」，不是減傷。敘述可能是誤譯，已回報待確認——在確認之前，插上去對你是不利的。',
+    teddy_bear_card:  '⚠ 本服現況：目前實作成「**你打不死系魔物的傷害 −30%**」，不是減傷。敘述可能是誤譯，已回報待確認——在確認之前，插上去對你是不利的。',
+    ep18_schulang_card:   '⚠ 本服現況：目前實作成「**受天使系傷害 +25%**」（減傷欄位被寫成負值），跟敘述相反。已回報待確認。',
+    ep18_demi_freyja_card: '⚠ 本服現況：目前實作成「**受惡魔系傷害 +25%**」（減傷欄位被寫成負值），跟敘述相反。已回報待確認。',
+  };
+  let _pn = 0, _skip = 0;
+  if (typeof CARDS !== 'undefined') {
+    for (const id in _NEG) {
+      const c = CARDS[id];
+      if (!c) continue;
+      /* 哪天有人把數值修好了，就別再掛這條警語 */
+      const b = c.bonus || {};
+      const anyPos = Object.keys(b).some(k => typeof b[k] === 'number' && b[k] > 0);
+      const condPos = (c.condBonus || []).some(cb =>
+        Object.keys(cb.bonus || {}).some(k => cb.bonus[k] > 0));
+      if (anyPos || condPos) { _skip++; continue; }
+      if (!Array.isArray(c.unimplemented)) c.unimplemented = [];
+      if (c.unimplemented.indexOf(_NEG[id]) >= 0) { _skip++; continue; }
+      c.unimplemented.push(_NEG[id]);
+      if (typeof ITEMS !== 'undefined' && ITEMS[id]) ITEMS[id].unimplemented = c.unimplemented;
+      _pn++;
+    }
+  }
+  console.log('[data] CARDPURENEG 標註「實作只剩負項」的卡片 ' + _pn + ' 張（跳過 ' + _skip + '）');
+}
+/* ==== CARDPURENEG END ==== */
+
+/* ==== DEATHNOTE BEGIN ==== */
+/* acc145 #1490：死亡相關的兩種證書，敘述寫得很明確但本作沒有實作。
+   ⚠ 兩種要用**不同**的說法：
+     原地復活之證 → 本作死亡是「被抬回安全區」，沒有原地復活這個維度
+     免掉啪證書　 → 本作死亡**根本不扣經驗**，它保護的東西不存在
+   只加註記不加效果 —— 加效果等於改死亡懲罰，那是平衡。
+   冪等：由 tools/gen_deathnote.js 產生，重跑會先砍舊的。 */
+{
+  const _DR = ["e_token_of_siegfried","token_of_siegfried","df_token_of_siegfried","f_token_of_siegfried"];
+  const _DI = ["insurance","comp_insurance"];
+  const _NR = "（⚠本服未實作：死亡時會**自動被抬回最近的安全區**，沒有「原地復活」這個維度，所以這張證書目前不會有任何作用。已回報。）";
+  const _NI = "（⚠本服未實作：**本作死亡不會扣經驗值**，所以這張證書保護的東西本來就不存在。就算實作也不會有效果。已回報。）";
+  let _dn = 0;
+  const _put = (ids, note) => ids.forEach(id => {
+    const it = ITEMS[id];
+    if (!it) return;
+    if (/（\s*(?:⚠\s*)?本服/.test(String(it.desc || ""))) return;
+    it.desc = String(it.desc || "").trim() + " " + note;
+    _dn++;
+  });
+  _put(_DR, _NR);
+  _put(_DI, _NI);
+  console.log('[data] DEATHNOTE 補上復活/保險證書的註記 ' + _dn + ' 件');
+}
+/* ==== DEATHNOTE END ==== */
+
+/* ==== POISONNOTE BEGIN ==== */
+/* acc431 #1493：毒性反彈的敘述說「目前遊戲中沒有毒屬性怪物」——**那是錯的**。
+   實際掃描：毒屬性怪 131 隻，其中 29 隻真的會在地圖上出現
+   （毒魔菇 Lv26、波波利 Lv30、大斧哥布靈 Lv44、艾斯蜘蛛 Lv47、麥斯特 Lv49、
+     弓箭哥布靈 Lv55、黑蛇 Lv70、艾吉歐蜈蚣 Lv75、藍鼠 Lv82、梅納海葵 Lv85、
+     毒液魔 Lv87、天邪鬼 Lv91…）。
+   技能本身也早就接上了（engine.js #8036）。敘述停在還沒有毒怪的年代，
+   照著它讀的人會以為這個技能是廢的。 */
+{
+  const _S = (typeof SKILLS !== 'undefined') ? SKILLS.poisonreact : null;
+  if (_S && /目前遊戲中沒有毒屬性怪物/.test(String(_S.desc || ''))) {
+    _S.desc = '被動技能，被毒屬性怪物攻擊時觸發反擊，造成ATK 100%~280%傷害'
+      + '（依等級，內部冷卻10秒）。'
+      + '（本服實作：**已生效**。全服有 29 隻毒屬性怪會實際出現在地圖上，'
+      + '例如毒魔菇Lv26、波波利Lv30、艾斯蜘蛛Lv47、黑蛇Lv70、藍鼠Lv82、天邪鬼Lv91。'
+      + '反擊要「被牠打到」才會觸發，站著挨打才有輸出，不是主動技。）';
+    console.log('[data] POISONNOTE 更正毒性反彈的敘述');
+  }
+}
+/* ==== POISONNOTE END ==== */
+
+/* ==== BOXDUP BEGIN ==== */
+/* acc111 #1518：兩個道具都叫「神秘箱子」，開箱獎池一模一樣，
+   但售價差 5,000 倍（5,000z vs 1z）。玩家分不出手上哪一疊值錢。
+   ⚠ 只在敘述裡講清楚，不動售價 —— 1z 那個是邪惡箱卡片（每殺一隻 10%）給的，
+     給它 5,000z 等於印鈔機，那是刻意的設定，改它是平衡。 */
+{
+  const _B = {
+    old_blue_box: '（本服說明：本服有**兩種**都叫「神秘箱子」的道具，開出來的獎池完全相同，'
+      + '但售價差很多。**這一種賣 5,000z**，主要由怪物掉落。'
+      + '另一種（邪惡箱卡片等卡片給的）只賣 1z。整理背包時注意別賣錯。）',
+    old_blue_box_f: '（本服說明：本服有**兩種**都叫「神秘箱子」的道具，開出來的獎池完全相同，'
+      + '但售價差很多。**這一種只賣 1z**，是邪惡箱卡片那類「擊殺時額外掉落」給的。'
+      + '另一種由怪物掉落的可以賣 5,000z。開箱效果兩種一樣，賣錢請留意是哪一疊。）',
+  };
+  let _bd = 0;
+  for (const id in _B) {
+    const it = ITEMS[id];
+    if (!it) continue;
+    if (String(it.desc || '').indexOf('本服有**兩種**') >= 0) continue;   // 別重複加
+    it.desc = String(it.desc || '').trim() + ' ' + _B[id];
+    _bd++;
+  }
+  console.log('[data] BOXDUP 標註同名的兩種神秘箱子 ' + _bd + ' 件');
+}
+/* ==== BOXDUP END ==== */
+
+/* ==== SKILLNOTE BEGIN ==== */
+/* acc516 #1523：玩家以為四轉有很多技能「未實作」。
+   實際上 597 支四轉技能**沒有一支是未實作的**，他看到的是移植調整的說明：
+     「（官方是…，本作沒有…，改成…）」
+   技能本身完全可用，只是某個子效果換了形式。但玩家掃過去只看到
+   「本作沒有」「不實作」，就以為整支是廢的。文案讓人誤會就是文案的問題。
+
+   全服只有 24 支是這個寫法。統一加「⚙ 本服調整：」前綴，
+   一眼分得出「調整過」而不是「沒做」。
+   ⚠ 只加前綴，一個字都不改原本的說明 —— 那些說明本身是正確且有資訊量的。 */
+{
+  const _PAT = /未實作|未實裝|尚未|不實作|本作沒有|暫擱置|沒有實作|不做/;
+  let _sn = 0;
+  if (typeof SKILLS !== 'undefined') {
+    for (const k in SKILLS) {
+      const sk = SKILLS[k];
+      const d = String(sk.desc || '');
+      if (!_PAT.test(d)) continue;
+      if (d.indexOf('⚙ 本服調整') >= 0) continue;          // 已經加過
+      /* 只動**最後一個**括號（那是移植說明所在的位置），
+         不要動敘述本文裡的括號（例：「（依等級）」「（STR120時+100%）」）。 */
+      const m = d.match(/（(?:官方|對不死)[^）]*）\s*$/);
+      if (!m) continue;
+      sk.desc = d.slice(0, m.index) + '（⚙ 本服調整：' + m[0].slice(1);
+      _sn++;
+    }
+  }
+  console.log('[data] SKILLNOTE 標明「調整」而非「未實作」 ' + _sn + ' 支技能');
+}
+/* ==== SKILLNOTE END ==== */
+
+/* ==== PETEQNOTE BEGIN ==== */
+/* acc392 #1639「當前的寵物裝備有用嗎?」——答案是沒有用。
+   這 20 件的「種類」寫著可愛寵物裝備，敘述讀起來就是裝備，
+   但它們全部是 type=material、bonus=null，引擎裡也沒有任何 petEquip 處理。
+   而且它們進得了神秘箱子的道具池，玩家開到就會問「這要怎麼裝」。
+   敘述不說清楚等於誤導，所以補一句註記。**沒有加任何能力**——
+   要不要真的做寵物裝備欄位是平衡問題，留給老闆決定。
+   ⚠ 由 tools/gen_peteqnote.js 產生，冪等，改資料後重跑即可。 */
+{
+  const _PE = ["transparent_headgear","pacifier","wig","silk_ribbon","punisher","battered_pot","tiny_egg_shell","green_lace","golden_bell","bark_shorts","monkey_circlet","red_muffler","sword_of_grave_keeper","skull_helm","monster_oxygen_mask","wild_flower","stellar_hairpin","backpack","rocker_glasses","tw_backpack"];
+  const _PENOTE = "（⚠本服未實作：本服**沒有寵物裝備欄位**，這件東西目前穿不上、也不會有任何加成，只能當收藏或賣掉。寵物本身的「親密／忠誠」加成是正常生效的。）";
+  let _pen = 0;
+  for (const id of _PE) {
+    const it = ITEMS[id];
+    if (!it || typeof it.desc !== 'string') continue;
+    if (it.desc.indexOf('沒有寵物裝備欄位') >= 0) continue;   // 已經有了就不重複加
+    it.desc += ' ' + _PENOTE;
+    _pen++;
+  }
+  if (typeof console !== 'undefined' && console.log) console.log('[data] 寵物裝備未實作註記 ' + _pen + ' 件');
+}
+/* ==== PETEQNOTE END ==== */
+
+/* ==== EXCHNOTE BEGIN ==== */
+/* acc111 #1659 順帶查到的：31 件「要找 NPC 兌換」的券／幣／徽章／代幣。
+   本服沒有 NPC 兌換系統，這些拿到了用不了，但敘述讀起來像有東西可以換
+   （「網吧遊戲上線優惠券」寫著可以換神秘紫箱，玩家就是看到這句來問的）。
+   ⚠ 這批是收緊過的範圍：只取敘述明確寫「可兌換」的，而且逐件確認過
+     id 沒出現在 engine/ui/net/skills 裡。第一版用「沒有效果欄位」抓，
+     會把**天地樹葉子**（有實作，走專用程式碼）也標進去。
+   ⚠ 由 tools/gen_exchnote.js 產生，冪等，改資料後重跑即可。 */
+{
+  const _EX = ["s_hammer_cn","jelly_coin_cn","succu_pet_coupon","imp_pet_coupon","chung_e_pet_coupon","ticket_loli_ruri","thanks_invest_ticket","royal_certificate","poring_badge","geffen_magic_coin","daily_coin","elephant_ticket","gorilla_ticket","lion_ticket","rhino_ticket","evt_cos_coin","trade_coupon","lotto19","lotto20","lotto21","ipod_ticker","ro_party_ticket","c_wing_of_fly_1day_box","golden_key_cn","illusion_module_mix","silvervine_coin_cn","booster_w_ticket","zhe_pet_coupon","scat_pet_coupon","2017rtccoin","item_2017rtccoin"];
+  const _EXNOTE = "（⚠本服未實作：這張券／幣要找 NPC 兌換，而**本服沒有 NPC 兌換系統**，所以目前拿到了用不了，也沒有地方可以換。留著或賣掉都可以。）";
+  let _exn = 0;
+  for (const id of _EX) {
+    const it = ITEMS[id];
+    if (!it || typeof it.desc !== 'string') continue;
+    if (it.desc.indexOf('沒有 NPC 兌換系統') >= 0) continue;   // 已經有了就不重複加
+    it.desc += ' ' + _EXNOTE;
+    _exn++;
+  }
+  if (typeof console !== 'undefined' && console.log) console.log('[data] 兌換券未實作註記 ' + _exn + ' 件');
+}
+/* ==== EXCHNOTE END ==== */
+/* ==== IMPLNOTE-ZH BEGIN ==== */
+/* 把「（本服實作:xxx）」裡的**內部欄位名**翻成中文（feedback #269 卡冊啦）。
+
+   🔴 問題：那些註記直接印欄位名給玩家看，而 `atk+5`（固定 +5）與
+   `atkPct+5`（+5%）長得幾乎一樣 —— 玩家問「是只有+5嗎還是5%」。
+   光是這一對就有 249 件（atk 164 ／ atkPct 85），另外 hp/hpPct、sp/spPct 也同樣。
+
+   ⚠ 只改文字，一個數值都沒動。
+   ⚠ **沒有對照的鍵一律原樣保留** —— 寧可讓玩家看到英文，也不要翻錯。
+   ⚠ 百分比類的鍵翻譯時要把 `%` 補上去，那正是這則回報的重點。 */
+{
+  const _ZH = {
+    /* 固定值 */
+    atk: '攻擊力', matk: '魔法攻擊力', def: '防禦力', mdef: '魔法防禦力',
+    hp: '最大 HP', sp: '最大 SP', hit: '命中', flee: '迴避',
+    critRate: '暴擊率', perfectDodge: '完全迴避', healPower: '治癒量',
+    str: 'STR', agi: 'AGI', vit: 'VIT', int: 'INT', dex: 'DEX', luk: 'LUK',
+    allStat: '全素質',
+    /* 百分比（一定要帶 %，這就是 #269 問的重點） */
+    atkPct: ['攻擊力', '%'], matkPct: ['魔法攻擊力', '%'],
+    hpPct: ['最大 HP', '%'], spPct: ['最大 SP', '%'],
+    aspdPct: ['攻擊速度', '%'], critDmgPct: ['暴擊傷害', '%'],
+    rangedDmgPct: ['遠距離傷害', '%'], meleeDmgPct: ['近距離傷害', '%'],
+    allTargetDmgPct: ['對所有目標傷害', '%'],
+  };
+  const _one = (seg) => {
+    const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*([+\-])\s*([0-9.]+)\s*$/.exec(seg);
+    if (!m) return seg;                       /* 認不出來就原樣保留 */
+    const zh = _ZH[m[1]];
+    if (!zh) return seg;                      /* 沒有對照也原樣保留 */
+    const name = Array.isArray(zh) ? zh[0] : zh;
+    const unit = Array.isArray(zh) ? zh[1] : '';
+    return name + ' ' + m[2] + m[3] + unit;
+  };
+  let _n = 0;
+  const _fix = (d) => d.replace(/（本服實作[:：]([^）]*)）/g, (all, body) => {
+    /* 「，另有 N 項…」那截是說明文字，不要動它 */
+    const cut = body.indexOf('，');
+    const head = cut >= 0 ? body.slice(0, cut) : body;
+    const tail = cut >= 0 ? body.slice(cut) : '';
+    const conv = head.split('、').map(_one).join('、');
+    if (conv === head) return all;            /* 沒有任何一段翻得動就別改 */
+    return '（本服實作：' + conv + tail + '）';
+  });
+  for (const id in ITEMS) {
+    const it = ITEMS[id];
+    const d = String((it && it.desc) || '');
+    if (d.indexOf('本服實作') < 0) continue;
+    const nd = _fix(d);
+    if (nd !== d) { it.desc = nd; _n++; }
+  }
+  if (typeof CARDS !== 'undefined') {
+    for (const id in CARDS) {
+      const cd = CARDS[id];
+      const d = String((cd && cd.desc) || '');
+      if (d.indexOf('本服實作') < 0) continue;
+      const nd = _fix(d);
+      if (nd !== d) { cd.desc = nd; }
+    }
+  }
+  console.log('[data] IMPLNOTE-ZH 把「本服實作」的欄位名翻成中文 ' + _n + ' 件');
+}
+/* ==== IMPLNOTE-ZH END ==== */
+/* ==== CASTNOTE2 BEGIN ==== */
+/* 補既有 CASTNOTE 沒涵蓋到的那一批。
+
+   既有的 CASTNOTE（本檔上方）只標「**有 fixedCast 欄位**」的道具（20 件）。
+   但敘述裡寫著詠唱效果、資料上**連欄位都沒有**的還有 449 件：
+     「變動詠唱-10%」「詠唱不會中斷」「搖擺舞時詠唱-2秒」「固定詠唱-3%」…
+   那些連死欄位都稱不上 —— 資料裡根本沒有那個效果，玩家卻看得到承諾。
+   本作技能瞬發，沒有詠唱／變動施法時間這個維度，所以一律不會生效。
+
+   🔴 **這個區塊必須放在所有註記區塊的最後面。**
+     第一版插在 CARDCONDNOTE 前面，結果後面的 CARDPROCNOTE 會**重寫** desc
+     （不是附加），把這裡加的字整個蓋掉 —— 拉塔卡片就是這樣掉的
+     （預期 449 件、實際只標到 448）。是測試抓出來的。
+
+   🔴 **ITEMS 與 CARDS 要各自獨立判斷。**
+     第一版寫成「ITEMS 沒被略過時才順便改 CARDS」，
+     結果 8 張卡（潘利爾／劍魚／血蝴蝶／闇●超魔導師／阿克坦／依斯拉／小雪怪／熔巖魔）
+     ITEMS 側早就有說明、CARDS 側沒有，圖鑑兩邊講的不一樣。
+
+   ⚠ 只補文字，不動任何數值。
+   ⚠ 已經講過詠唱的一律略過，避免同一件事講兩遍或互相矛盾 ——
+     例如迷幻之王卡片寫的是「官方的變動施法時間一律改以冷卻秒數實作」，
+     再加一句「詠唱不會生效」會讓玩家以為那張卡沒用。 */
+{
+  const _C2_TEXT = '（⚠本服說明：敘述中與「詠唱／施法時間」有關的效果**不會生效**——'
+    + '本作技能瞬發，沒有詠唱這個維度。同一段裡的其他效果不受影響）';
+  /* ⚠ 「已經講過了」的寫法不只一種，漏一種就會重複標註。
+     這份清單是實測補出來的：第一版漏了「本服無詠唱機制」，
+     結果 Disguiser／Blue Moon Loli Ruri 那類卡片被標了兩次。 */
+  const _C2_DONE = ['固定詠唱」', '詠唱這個維度', '詠唱時間這個維度', '沒有詠唱',
+    '無詠唱', '不支援詠唱', '技能瞬發', '變動施法時間」'];
+  const _c2need = d => (d.indexOf('詠唱') >= 0 || d.indexOf('施法時間') >= 0)
+    && !_C2_DONE.some(p => d.indexOf(p) >= 0);
+  let _c2 = 0, _c2c = 0;
+  for (const id in ITEMS) {
+    const it = ITEMS[id];
+    const d = String((it && it.desc) || '');
+    if (!_c2need(d)) continue;
+    it.desc = d + ' ' + _C2_TEXT;
+    _c2++;
+  }
+  if (typeof CARDS !== 'undefined') {
+    for (const id in CARDS) {
+      const cd = CARDS[id];
+      const d = String((cd && cd.desc) || '');
+      if (!_c2need(d)) continue;
+      cd.desc = d + ' ' + _C2_TEXT;
+      _c2c++;
+    }
+  }
+  console.log('[data] CASTNOTE2 標註「詠唱效果不會生效」 道具 ' + _c2 + ' 件、卡片 ' + _c2c + ' 張');
+}
+/* ==== CASTNOTE2 END ==== */
+/* ⚠ 這一段必須排在**所有會重寫 desc 的產生器之後**。
+   放在前面的話，後面那些會整段重寫 desc，把這裡加的字洗掉 ——
+   實測就發生過：產生器數到 2 張，實際只有 1 張留著。
+   （CASTNOTE2 當初也是因為同一個原因才搬到最後。） */
+/* ==== COSTUMESTONE BEGIN ==== */
+/* 時裝附魔石在本服**沒有任何用途**，敘述要講清楚。
+
+   玩家 acc620 #3348：「附魔石是當卡片插卡用的，可是我身上有附魔石，
+   但選擇插卡時卻沒有顯示?」
+   —— 他是對的。名字裡有「石」的東西其實是兩家人：
+
+     ① 真的能插的（108 種）：名字是「STR+1」「INT+7」這種，登記在 CARDS 且 slot='any'。
+        上面那個 STONENOTE 區塊處理的就是這一批。acc620 六隻角色＋倉庫**一顆都沒有**。
+     ② 時裝附魔石（619 種）：「星帝石(頭上)」「大主教石(披肩)」這種，
+        type='material'、不在 CARDS、官方是裝在**時裝欄位**上的。
+        本服沒有時裝欄位（先前回覆 acc64 #3345 也確認過），所以它們插不了、穿不了。
+
+   已實測：這 619 件裡 0 件在 CARDS、0 件被 FORGE_RECIPES 當材料、0 件出現在 NPC_SHOPS。
+   其中 130 件甚至已經寫好了 bonus 數值，只是沒有任何欄位可以掛上去（已回報）。
+   排除 type='consumable' 的「恢復石」三件（那是真的能用的補品）。 */
+{
+  let _cs = 0;
+  if (typeof ITEMS !== 'undefined') {
+    const RE = /\u77f3(II|III|IV)?[\uff08(](\u982d\u4e0a|\u982d\u4e2d|\u982d\u4e0b|\u62ab\u80a9)[\uff09)]$/;
+    for (const id in ITEMS) {
+      const it = ITEMS[id];
+      if (!it || !it.desc) continue;
+      if (it.type !== 'material') continue;
+      if (!RE.test(it.name || '')) continue;
+      if (it.desc.indexOf('\u26a0\ufe0f \u672c\u670d\u73fe\u6cc1') >= 0) continue;   // 避免重複附加
+      it.desc += ' \uff08\u26a0\ufe0f \u672c\u670d\u73fe\u6cc1\uff1a\u9019\u662f\u300c\u6642\u88dd\u9644\u9b54\u77f3\u300d\uff0c'
+        + '\u5b98\u65b9\u662f\u88dd\u5728\u6642\u88dd\u6b04\u4f4d\u4e0a\u7684\u3002'
+        + '\u672c\u670d\u76ee\u524d\u6c92\u6709\u6642\u88dd\u6b04\u4f4d\uff0c'
+        + '\u6240\u4ee5\u9019\u9846\u77f3\u982d\u66ab\u6642\u6c92\u6709\u7528\u9014\uff1a'
+        + '\u4e0d\u80fd\u63d2\u5728\u88dd\u5099\u4e0a\uff0c\u4e5f\u6c92\u6709\u9644\u9b54\u4ecb\u9762\u3002'
+        + '\u53ef\u4ee5\u63d2\u5361\u7684\u90a3\u7a2e\u540d\u5b57\u9577\u5f97\u50cf\u300cSTR+5\u300d\u300cINT+7\u300d\uff0c'
+        + '\u8ddf\u9019\u9846\u4e0d\u540c\u3002\u5df2\u56de\u5831\u3002\uff09';
+      _cs++;
+    }
+  }
+  console.log('[data] COSTUMESTONE \u6a19\u660e\u6642\u88dd\u9644\u9b54\u77f3\u7121\u7528\u9014 ' + _cs + ' \u9846');
+}
+/* ==== COSTUMESTONE END ==== */
+
+/* ==== STONENOTE BEGIN ==== */
+/* 附魔石（職業石／之石／輔助附魔／魔神精髓…）在本服是**當卡片插**的。
+
+   玩家回報（feedback #322、世界頻道 1574）：「職業石頭有用嗎？我也找不到可以附魔的地方」
+   —— 找不到是對的，本服沒有附魔介面。那些石頭同時登記在 CARDS 裡而且 slot='any'，
+   所以任何有空孔的裝備都插得進去（已實測：鎧甲、鞋子皆成功）。
+
+   判斷條件刻意寬鬆但精確：
+     · 在 CARDS 裡
+     · slot === 'any'（'any' 才是「哪裡都能插」的那一類）
+     · 名稱**不是**以「卡片」結尾（真正的卡片不需要這段說明）
+   這樣以後新增的附魔石會自動涵蓋，不必回來改清單。 */
+{
+  let _sn = 0;
+  if (typeof CARDS !== 'undefined' && typeof ITEMS !== 'undefined') {
+    for (const id in CARDS) {
+      const c = CARDS[id];
+      const it = ITEMS[id];
+      if (!c || !it || !it.desc) continue;
+      if (c.slot !== 'any') continue;
+      if (/卡片$/.test(c.name || '')) continue;
+      if (it.desc.indexOf('🧩 本服用法') >= 0) continue;      // 避免重複附加
+      it.desc += ' （🧩 本服用法：這顆石頭當成「卡片」插在裝備上即可 ——'
+        + '本服沒有另外的附魔介面。它的插槽是「任意部位」，'
+        + '任何還有空卡片孔的裝備都插得進去。'
+        /* acc124 #3464：只講「怎麼用」不講「拿不到」，玩家會一直找。
+           五條管道全查過：商店 0、箱子 0、鍛造 0、卡冊 0
+           （卡冊的過濾是名稱以「卡片」結尾，附魔石叫「STR+1」全被排除）；
+           有掉落來源的 12 顆，來源怪也不在任何地圖的配怪表或王名單上。 */
+        /* ⚠ 這裡刻意**不用**「本服目前沒有取得管道」那串字 ——
+           那是 SRCNOTE 產生器的機器標記，testsrcnote 靠它做比對，
+           在這裡寫會讓 108 顆附魔石全被誤認為已標記。 */
+        + '⚠ 不過實際上弄不到：商店、箱子、鍛造、卡冊都沒有；'
+        + '少數幾顆雖然登記了掉落來源，但那些怪不會出現在任何地圖上。'
+        + '所以手上沒有的話，目前是拿不到的。）';
+      _sn++;
+    }
+  }
+  console.log('[data] STONENOTE 標明附魔石當卡片插 ' + _sn + ' 顆');
+}
+/* ==== STONENOTE END ==== */
+/* ==== CARDSLOTNOTE BEGIN ==== */
+/* 卡片敘述寫的部位跟**實際能插的欄位**不一致時，補一句說明（acc498 #2014）。
+
+   全庫掃描：424 張一致、**1 張不一致**（法老王卡片：敘述寫「頭盔」、實際只能插鎧甲）、
+   272 張敘述沒寫部位。
+
+   ⚠ 官方的法老王卡片確實是頭飾卡，所以是**本服的資料**把它放到鎧甲。
+     改 slot 會動到玩家已經插好的卡與可插位置 —— 那是規則變動，只回報，不自己改。
+     這裡只把敘述講清楚，讓玩家不會照著錯的部位去規劃。
+
+   ⚠ 寫成掃描而不是寫死一張：以後若有新的不一致會自動被涵蓋，
+     不必再等玩家一張一張來問。 */
+{
+  const _D2S = {
+    '頭盔': 'headgear', '頭飾': 'headgear',
+    '鎧甲': 'armor', '衣服': 'armor', '盔甲': 'armor',
+    '盾牌': 'shield', '肩部飾品': 'garment', '披肩': 'garment', '披風': 'garment',
+    '鞋子': 'footgear', '飾品': 'accessory', '裝飾品': 'accessory', '武器': 'weapon',
+  };
+  const _ZH = { headgear: '頭飾', armor: '鎧甲', shield: '盾牌', garment: '披肩',
+                footgear: '鞋子', accessory: '飾品', weapon: '武器', any: '任意欄位' };
+  const _RE = /裝備\s*[:：]\s*([^\s。，]{1,10})/;
+  let _n = 0;
+  if (typeof CARDS !== 'undefined' && typeof ITEMS !== 'undefined') {
+    for (const id in CARDS) {
+      const it = ITEMS[id];
+      if (!it || !it.desc) continue;
+      const m = _RE.exec(it.desc);
+      if (!m) continue;
+      const want = _D2S[m[1]];
+      if (!want) continue;
+      const raw = CARDS[id].slot;
+      const real = raw === 'head' ? 'headgear' : raw;      // 同一部位的兩種寫法
+      if (!real || real === 'any' || real === want) continue;
+      it.desc += ' （⚠ 本服實際插槽：這張卡**只能插在' + (_ZH[real] || real)
+        + '**，上面敘述寫的「' + m[1] + '」是官方原文，本服不同。'
+        + '插卡位置不影響加成判定，但你必須有一件' + (_ZH[real] || real) + '才插得下。）';
+      _n++;
+    }
+  }
+  console.log('[data] CARDSLOTNOTE 標明實際插槽與敘述不符 ' + _n + ' 張');
+}
+/* ==== CARDSLOTNOTE END ==== */
+
+/* ==== SPLASHNOTE BEGIN ==== */
+/* 世界頻道 1307：「賭徒之印+紅心王牌且 LUK120 普通攻擊打全體嗎?」
+
+   會。實測（場上 5 隻怪、普攻 12 次取最多打到幾隻）：
+     只有一件 ／ 兩件但 LUK 119　　　　　→ 都只打到 1 隻
+     兩件都戴 ＋ **點出來的** LUK 120　→ **5 隻全打到**
+     點 119、靠裝備墊到 124　　　　　　　→ 只打到 1 隻（門檻不看裝備加的）
+   而 applySplashDamage() 是 `mon.hp -= dmg`：**每一隻吃到的傷害一樣，不打折**。
+
+   🔴 但敘述寫的是「一般攻擊擴散 9 格」—— **本作沒有格子這個概念**，
+   玩家看不出那是「打到場上每一隻」還是「只打附近幾隻」。
+   巴風特卡片（同樣給 splashAttack）早就有這段說明，紅心王牌沒有。
+
+   ⚠ 這裡不寫死道具 id：以後任何給 splashAttack 的裝備／卡片都會自動標到。 */
+{
+  let _n = 0;
+  const _hasSplash = (o) => !!((o.bonus && o.bonus.splashAttack)
+    || (o.condBonus || []).some(c => c && c.bonus && c.bonus.splashAttack));
+  /* 濺射是不是綁在「素質門檻」的條件上 —— 是的話要多講一句「看點出來的」 */
+  const _statGated = (o) => (o.condBonus || []).some(c =>
+    c && c.bonus && c.bonus.splashAttack && c.when && c.when.statMin);
+  const _mark = (o) => {
+    if (!o || !_hasSplash(o)) return;
+    const _d = String(o.desc || '');
+    if (_d.indexOf('沒有格子') >= 0 || _d.indexOf('場上每一隻') >= 0) return;   // 冪等＋已寫過的不重複
+    o.desc = _d.trim() + ' （\u2139\uFE0F本服實作：敘述說的「擴散／範圍 N 格」——'
+      + '**本作沒有格子的概念**，實際效果是**普通攻擊同時打到場上每一隻怪**，'
+      + '而且每一隻吃到的傷害跟主目標一樣、不打折。⚠ 只有普通攻擊，技能不受影響。'
+      + (_statGated(o) ? '⚠ 素質門檻看的是**你自己點出來的**點數，裝備加上去的不算。' : '')
+      + '）';
+    _n++;
+  };
+  for (const _id in ITEMS) _mark(ITEMS[_id]);
+  if (typeof CARDS !== 'undefined') for (const _id in CARDS) _mark(CARDS[_id]);
+  console.log('[data] SPLASHNOTE 普攻濺射說明 ' + _n + ' 件');
+}
+/* ==== SPLASHNOTE END ==== */
+
+/* ==== CARDPCTNOTE BEGIN ==== */
+/* acc370 #2101：官方寫「MATK+10%」，本服資料卻是固定值 +10。
+
+   掃過全庫 718 張卡，這種「百分比被匯入成固定值」的只有 3 張
+   （阿加波、狂徒、墮落的大神官），另有 1 張的代價沒實作
+   （墮落的大神官的「MaxSP 減少 50%」）—— 四筆全部沒有註記。
+
+   🔴 差別很大：MATK+10% 對一個 MATK 2000 的角色是 +200，
+   固定值 +10 只有 +10。不標的話玩家會照官方敘述去評估這張卡的價值。
+
+   ⚠ 只改敘述。要不要改成真正的百分比、或補上代價＝改卡片強度，回報給老闆。
+   ⚠ 用規則自動掃，不寫死卡片 id：以後資料改了註記會跟著對。 */
+{
+  let _n = 0;
+  const _PAIRS = [['MATK', 'matk', 'matkPct'], ['ATK', 'atk', 'atkPct']];
+  for (const _cid in CARDS) {
+    const _it = ITEMS[_cid];
+    if (!_it || typeof _it.desc !== 'string') continue;
+    if (_it.desc.indexOf('固定值，不是') >= 0) continue;        // 冪等
+    const _b = CARDS[_cid].bonus || {};
+    const _notes = [];
+    _PAIRS.forEach(([_zh, _flat, _pct]) => {
+      const _m = new RegExp(_zh + '\\s*\\+\\s*(\\d+)\\s*%').exec(_it.desc);
+      if (!_m) return;
+      const _v = Number(_m[1]);
+      if (_b[_pct]) return;                                   // 有正確實作成 %
+      if (_b[_flat] !== _v) return;
+      _notes.push(_zh + ' 是 **+' + _v + ' 固定值，不是 +' + _v + '%**');
+    });
+    /* 敘述有「MaxSP/MaxHP 減少 N%」但資料沒有那個代價 */
+    const _pen = /(MaxSP|MaxHP)\s*減少\s*(\d+)\s*%/.exec(_it.desc);
+    if (_pen && !((_b.spPct || 0) < 0 || (_b.hpPct || 0) < 0)) {
+      _notes.push('敘述的「' + _pen[1] + ' 減少 ' + _pen[2] + '%」**本服沒有實作**（這個代價不會發生）');
+    }
+    if (!_notes.length) continue;
+    _it.desc = _it.desc.trim() + ' （\u26a0本服實作與敘述不同：' + _notes.join('；')
+      + '。其餘各段照敘述生效。）';
+    _n++;
+  }
+  console.log('[data] CARDPCTNOTE 標註「百分比變成固定值／代價沒實作」的卡片 ' + _n + ' 張');
+}
+/* ==== CARDPCTNOTE END ==== */
+
+/* ==== CASTCDNOTE BEGIN ==== */
+/* acc201 #2144：血蝴蝶卡片敘述說「詠唱那段不生效」，
+   但資料裡的 skillCdFlat +1 是**生效中的代價** —— 敘述在騙人。
+
+   本作技能瞬發，官方的「詠唱時間 ±N%」這類項目被折算成
+   「全技能冷卻 ±N 秒」（skillCdFlat）。折算過的**就是有生效**，
+   可是卡片掛的還是通用那句「與詠唱有關的段落一律不會生效」。
+
+   🔴 三張是代價（劍魚 +1、血蝴蝶 +1、阿克坦 +2 秒）——
+   玩家照敘述以為沒事，插上去就白吃冷卻。
+   一張是好處（闇●超魔導師 -1 秒），不講的話玩家反而不知道它有多強。
+
+   ⚠ 只補敘述，數值一個都不動。
+   ⚠ 用規則自動掃，不寫死卡片 id：以後資料改了註記會跟著對。
+   ⚠ 裝備那邊本來就有「已經折算」的版本（奧爾里昂的鐵盤），這裡補的是卡片。 */
+{
+  let _n = 0;
+  const _MARK = '本服其實有折算成冷卻';
+  const _cdOf = (o) => (o && typeof o.skillCdFlat === 'number' && o.skillCdFlat !== 0)
+    ? o.skillCdFlat : null;
+  /* 指名單一技能的冷卻（skillCdFlat_<技能id>）也算 —— 第一版只看全技能的那個，
+     漏掉了熔巖魔卡片（火箭術 -1 秒）與小雪怪卡片（冰箭術 -1 秒）。
+     回傳 [秒數, 技能中文名]，敘述要講清楚是**哪一招**。 */
+  const _cdSkillOf = (o) => {
+    if (!o) return null;
+    for (const k in o) {
+      if (k.indexOf('skillCdFlat_') !== 0) continue;
+      const v = o[k];
+      if (typeof v !== 'number' || !v) continue;
+      const sid = k.slice('skillCdFlat_'.length);
+      const nm = (typeof SKILLS !== 'undefined' && SKILLS[sid] && SKILLS[sid].name)
+        ? String(SKILLS[sid].name).split(' ')[0] : sid;
+      return [v, nm];
+    }
+    return null;
+  };
+  for (const _cid in CARDS) {
+    const _c = CARDS[_cid], _it = ITEMS[_cid];
+    if (!_it || typeof _it.desc !== 'string') continue;
+    if (_it.desc.indexOf(_MARK) >= 0) continue;                 // 冪等
+    if (_it.desc.indexOf('不會生效') < 0) continue;              // 沒掛那句就不關它的事
+    let _cd = _cdOf(_c.bonus);
+    const _tiers = [];
+    (_c.condBonus || []).forEach((_x) => {
+      const _v = _cdOf(_x.bonus);
+      if (_v === null) return;
+      if (_cd === null) _cd = _v;
+      const _rf = _x.when && _x.when.refineMin;
+      _tiers.push((_rf ? '精煉 +' + _rf + ' 起 ' : '') + (_v > 0 ? '+' : '') + _v + ' 秒');
+    });
+    /* 全技能的沒有，就看有沒有指名單一技能的 */
+    let _one = null;
+    if (_cd === null) {
+      _one = _cdSkillOf(_c.bonus);
+      (_c.condBonus || []).forEach((_x) => { if (!_one) _one = _cdSkillOf(_x.bonus); });
+      if (_one) _cd = _one[0];
+    }
+    if (_cd === null) continue;
+    const _good = _cd < 0;
+    const _tierTxt = _tiers.length > 1 ? '（分段：' + _tiers.join('、') + '，會疊加）' : '';
+    const _what = _one ? ('**' + _one[1] + '的冷卻 ') : '**全技能冷卻 ';
+    _it.desc = _it.desc.trim() + ' （\u26a0' + _MARK + '：官方那段詠唱效果在本服折算成「' + _what
+      + (_cd > 0 ? '+' : '') + _cd + ' 秒**」' + _tierTxt + '，而且**確實生效中** —— '
+      + (_good ? '這是好處，別漏掉。' : '這是**代價**，插之前請把它算進去。')
+      + '上面那句「與詠唱有關的段落不會生效」指的是純詠唱項目。）';
+    _n++;
+  }
+  console.log('[data] CASTCDNOTE 標註「詠唱已折算成冷卻、確實生效」的卡片 ' + _n + ' 張');
+}
+/* ==== CASTCDNOTE END ==== */
+
+/* ==== SRCNOTE BEGIN ==== */
+/* 🔴 標出「本服目前拿不到」的裝備與卡片。
+
+   同一天兩位玩家踩到同一個坑：
+     · feedback #278 找不到「奧爾里昂的手套」，以為沒實裝
+       （其實有，只是要開箱子 —— 所以它**不在**這份清單裡）
+     · acc352 問左手插什麼卡，全庫最佳是 DEX+8（+2.9%），
+       但 DEX 那一批**沒有任何取得管道**，我差點推薦出去
+
+   掃過八條管道（會出現的怪會掉／箱子／NPC 商店／官方配方／材料合成／
+   遺物券／寵物馴服／不會出現的怪），裝備與卡片 4,734 件裡：
+     完全沒管道　　　　　107 件
+     只有不出現的怪會掉　12 件
+
+   ⚠ 清單是**離線算好烘進來的**，不是每次載入現算 ——
+     判斷需要 BOX_POOLS / NPC_SHOPS（都在 engine.js，比這裡晚載），
+     而且把所有箱子的池子 build 起來（神秘箱子光自己 24,270 筆）會拖慢開頁。
+     `testsrcnote.js` 每次會重算一遍比對，資料改了就會紅。
+   ⚠ 只改敘述。要不要補掉落／補商店給這批東西＝改玩法，只回報。
+   ⚠ 有幾件是**別人加成的條件**（例：條紋帽 [1] 的「全技能冷卻 -1 秒」
+     要同時裝備 AC-B44-OS [2]，而那把就在這份清單裡）—— 那些加成等於也是死的。 */
+{
+  const _SRC_MARK = '本服目前沒有取得管道';
+  const _NO_SOURCE = [
+    'ac_b44_ad', 'ac_b44_os', 'agi1_j', 'agility1', 'agility10', 'agility2',
+    'agility3', 'agility4', 'agility7', 'agility8', 'agility9', 'artful3',
+    'atk5', 'critical1', 'critical2', 'critical3', 'critical4', 'def12',
+    'def15', 'def18', 'def20', 'def21', 'def3', 'def6',
+    'def9', 'dex1_j', 'dexterity1', 'dexterity10', 'dexterity2', 'dexterity3',
+    'dexterity4', 'dexterity5', 'dexterity6', 'dexterity7', 'dexterity8', 'dexterity9',
+    'dodge1', 'dodge1_j', 'dodge2', 'dodge2_j', 'dodge3', 'force3',
+    'fortune3', 'hit1', 'hr_s55_os', 'int1_j', 'inteligence1', 'inteligence10',
+    'inteligence2', 'inteligence3', 'inteligence4', 'inteligence5', 'inteligence6', 'inteligence7',
+    'inteligence8', 'inteligence9', 'intellect3', 'lab_passport', 'lovecap_china', 'luck1',
+    'luck10', 'luck2', 'luck3', 'luck4', 'luck5', 'luck6',
+    'luck7', 'luck8', 'luck9', 'luk1_j', 'matk5', 'mh_p89_ad',
+    'mh_p89_os', 'msp1', 'muslim_hat_f', 'muslim_hat_m', 'neev_agi_1', 'neev_agi_2',
+    'neev_agi_3', 'rag203', 'rag203_', 'reactor_a_avoi', 'sp10', 'str1_j',
+    'strength1', 'strength10', 'strength2', 'strength3', 'strength4', 'strength5',
+    'strength6', 'strength7', 'strength8', 'strength9', 'swiftness3', 'tough3',
+    'vit1_j', 'vitality1', 'vitality10', 'vitality2', 'vitality3', 'vitality4',
+    'vitality5', 'vitality6', 'vitality7', 'vitality8', 'vitality9',
+  ];
+  /* 只有「不會出現在任何地圖上的怪」會掉 → 實際上一樣拿不到 */
+  const _DEAD_ONLY = {
+    'artful1': 'Morroc\'s Ghoul',
+    'artful2': 'Morroc\'s Osiris、Morroc\'s Archer Skeleton、Morroc\'s Verit',
+    'force1': 'Morroc\'s Ghoul',
+    'force2': 'Morroc\'s Osiris、Morroc\'s Archer Skeleton、Morroc\'s Verit',
+    'fortune1': 'Morroc\'s Ghoul',
+    'fortune2': 'Morroc\'s Osiris、Morroc\'s Archer Skeleton、Morroc\'s Verit',
+    'intellect1': 'Morroc\'s Ghoul',
+    'intellect2': 'Morroc\'s Osiris、Morroc\'s Archer Skeleton、Morroc\'s Verit',
+    'swiftness1': 'Morroc\'s Ghoul',
+    'swiftness2': 'Morroc\'s Osiris、Morroc\'s Archer Skeleton、Morroc\'s Verit',
+    'tough1': 'Morroc\'s Ghoul',
+    'tough2': 'Morroc\'s Osiris、Morroc\'s Archer Skeleton、Morroc\'s Verit',
+  };
+  let _n = 0;
+  _NO_SOURCE.forEach((id) => {
+    const it = ITEMS[id];
+    if (!it || typeof it.desc !== 'string') return;
+    if (it.desc.indexOf(_SRC_MARK) >= 0) return;                 // 冪等
+    it.desc = it.desc.trim() + ' （\u26a0' + _SRC_MARK
+      + '：沒有任何會出現的怪會掉，箱子開不出來，商店也沒有販售。'
+      + '能力數值照樣有效，但這件東西目前弄不到手 —— 配裝時不用把它算進去。）';
+    _n++;
+  });
+  Object.keys(_DEAD_ONLY).forEach((id) => {
+    const it = ITEMS[id];
+    if (!it || typeof it.desc !== 'string') return;
+    if (it.desc.indexOf('這幾隻怪目前不會出現') >= 0) return;      // 冪等
+    it.desc = it.desc.trim() + ' （\u26a0實際上拿不到：只有「' + _DEAD_ONLY[id]
+      + '」會掉，而這幾隻怪目前不會出現在任何地圖上。）';
+    _n++;
+  });
+  console.log('[data] SRCNOTE 標註「本服拿不到」的裝備與卡片 ' + _n + ' 件');
+}
+/* ==== SRCNOTE END ==== */
+
+/* ==== PETNAME BEGIN ==== */
+/* 補上三隻寵物漏掉的中文名（acc78 #2183）。
+
+   73 隻寵物裡只有這 3 隻沒有中文名，其中一隻還是**韓文**（디아볼릭）。
+   ⚠ 譯名沿用本服**既有**的，不自己另編：
+       MONSTERS.teddy_bear = 玩偶熊　→ Abandoned Teddy Bear = 被遺棄的玩偶熊
+       MONSTERS.dr_eggring = 蛋黃波利（怪物早就有中文，寵物那邊沒跟上）
+       MONSTERS.diabolic  = 赤焰小惡魔 → 디아볼릭（Diabolic）
+   ⚠ 用 pet.id 對應，不用陣列索引 —— 索引會隨資料增刪而位移。
+   ⚠ 順帶查過：會出現在地圖上的 598 隻怪只有 1 隻沒中文名（RSX-0806，官方原名），
+     所以這不是普遍問題，是這 3 隻漏網。 */
+{
+  const _PET_ZH = {
+    /* ⚠ 用字要跟道具一致：xm_teddybear_egg 叫「遺棄玩偶熊寵物蛋」。
+       名稱是 petIdForEgg() 的比對鍵之一，寫成「被遺棄的玩偶熊」那顆蛋就對不到。 */
+    xm_teddy_bear: '遺棄玩偶熊',
+    dr_eggring: '蛋黃波利',
+    /* ⚠ 不能跟 diabolic 同名：圖鑑會出現兩列一模一樣的「赤焰小惡魔」，
+       一列已收服但加成空白（diabolic，玩家孵得到的那隻）、
+       一列沒收服卻有加成（diabolic2，沒有任何蛋對得到它）——
+       feedback #280 看到的就是這個。標出來才分得清楚。 */
+    /* ⚠ 別寫「未實裝」：牠**進化拿得到**（小惡魔 deviruchi 的 evo.to 就是牠）。
+       只是沒有任何蛋直接對得到，所以要跟 diabolic 分開，但不能講成拿不到。 */
+    diabolic2: '赤焰小惡魔（小惡魔進化）',
+  };
+  let _n = 0;
+  (PETS || []).forEach((p) => {
+    if (!p || !_PET_ZH[p.id]) return;
+    if (p.name === _PET_ZH[p.id]) return;                 // 冪等
+    p.name = _PET_ZH[p.id];
+    _n++;
+  });
+  /* 怪物那一邊也順手補（玩家在圖鑑／掉落來源看到的是這個名字） */
+  const _MON_ZH = { xm_teddy_bear: '遺棄玩偶熊', diabolic2: '赤焰小惡魔（小惡魔進化）' };
+  Object.keys(_MON_ZH).forEach((mid) => {
+    if (typeof MONSTERS === 'undefined' || !MONSTERS[mid]) return;
+    if (MONSTERS[mid].name === _MON_ZH[mid]) return;
+    MONSTERS[mid].name = _MON_ZH[mid];
+    _n++;
+  });
+  console.log('[data] PETNAME 補上中文名 ' + _n + ' 筆');
+}
+/* ==== PETNAME END ==== */
+
+/* ==== SUMSTATNOTE BEGIN ==== */
+/* 敘述寫「淨STR、LUK 的總和每+80，…」這種**兩項素質相加**的條件（玩家 acc78 #2621）。
+
+   引擎只有 `perStat_<單一素質>_<每N點>_<目標>` 這一種機制（解析在 engine.js 的
+   getCardBonus），**吃的是一個素質**，沒有「兩項相加」這個維度。
+   所以這一類敘述的條件永遠不會成立，全庫 16 件一件都沒生效。
+
+   ⚠ 但不能寫成「整段沒實作」——有幾件把那幾段的部分數值**攤平成無條件加成**
+     放進欄位了（例：暴徒領巾的 critRate 5 / hp 5 / matk 120）。
+     那些是真的有生效的，只是不再跟素質門檻綁在一起。
+     所以這裡只講「**條件**不會成立，實際生效的數值請看能力欄」。
+
+   ⚠ 這一段必須排在所有會重寫 desc 的產生器之後（同 CASTNOTE2 的理由）。
+   ⚠ 已經講過同一件事的一律略過，避免同一件裝備講兩遍。
+   ⚠ 只補文字，不動任何數值。 */
+{
+  const _SS_TEXT = '（⚠本服未實作：敘述中「淨○○、○○的總和每+N」這種**兩項素質相加**的條件，'
+    + '本作只支援「單一素質每 N 點」，兩項相加的門檻**不會成立**，那幾段的條件式加成拿不到。'
+    + '這件裝備實際生效的數值請看上方的能力欄——其中有一部分已經改成無條件生效。）';
+  const _SS_DONE = ['兩項素質相加', '總和每'];
+  const _SS_RE = /總和每[+\uFF0B]\s*[0-9]+/;
+  let _ss = 0;
+  for (const id in ITEMS) {
+    const it = ITEMS[id];
+    if (!it || typeof it.desc !== 'string') continue;
+    if (!_SS_RE.test(it.desc)) continue;
+    if (it.desc.indexOf(_SS_DONE[0]) >= 0) continue;
+    it.desc += _SS_TEXT;
+    _ss++;
+  }
+  console.log('[data] SUMSTATNOTE 標註「兩項素質相加的門檻不會成立」 ' + _ss + ' 件');
+}
+/* ==== SUMSTATNOTE END ==== */
+
+/* ==== REFINE9GAP BEGIN ==== */
+/* 「精煉+N以上時」這一段沒有被匯入（acc361 #3652「時光超越者斗篷精煉好像沒生效」）。
+
+   時光超越者斗篷的敘述有三段精煉階梯，本服的實作狀況是：
+     精煉每+2 → per2Refine + per2RefineExtra　共 6 項　✅ 已實作
+     精煉每+4 → per4Refine　共 14 項　　　　　　　　　✅ 已實作
+     精煉+9以上 → ATK+7%、MATK+7%　　　　　　　　　　🔴 一項都沒有
+
+   ⚠ 這是「同一件的相鄰階梯都做完了、只有這一段漏掉」的半匯入，不是新增機制：
+     值是官方敘述裡寫死的、無條件的，key 也都是現成的（atkPct / matkPct），
+     而且同系列的時光超越湧現鎧甲早就用 {when:{refineMin:N}} 這個寫法了。
+   ⚠ 只補「敘述有寫、程式沒有」的，既有的一律不動、不刪、不改數值。 */
+(function () {
+  var REFINE9 = {
+    /* id: [[精煉門檻, 加成], ...] */
+    'temporal_cape_tw': [[9, { atkPct: 7, matkPct: 7 }]]
+  };
+  var _r9 = 0, _skip = 0;
+  for (var id in REFINE9) {
+    var it = ITEMS[id];
+    if (!it) { _skip++; continue; }
+    it.condBonus = it.condBonus || [];
+    REFINE9[id].forEach(function (pair) {
+      var rmin = pair[0], bonus = pair[1];
+      /* 已經有同門檻同 key 的就不要重複加（重跑本檔不會疊加） */
+      var dup = it.condBonus.some(function (c) {
+        if (!c || !c.when || c.when.refineMin !== rmin) return false;
+        if (c.when.withItems || c.when.withAnyItem || c.when.withCards || c.when.statMin) return false;
+        return Object.keys(bonus).every(function (k) { return c.bonus && c.bonus[k] != null; });
+      });
+      if (dup) { _skip++; return; }
+      it.condBonus.push({ when: { refineMin: rmin }, bonus: bonus });
+      _r9++;
+    });
+  }
+  console.log('[data] REFINE9GAP 補上「精煉+N以上」漏掉的階梯 ' + _r9 + ' 條（跳過 ' + _skip + '）');
+})();
+/* ==== REFINE9GAP END ==== */
+
+/* ==== HEROPENDANT BEGIN ==== */
+/* 英雄吊墜的 ATK+10% 漏掉了（acc219 #3738「英雄吊墜功能沒有顯示出來」）。
+
+   12 件職業吊墜的敘述**全部**寫著「ATK+10%，MATK+10%」，但資料裡：
+     英雄吊墜(風鷹)   { matkPct:10, atkPct:10 }   ← 只有這件兩半都有
+     其餘 11 件        { matkPct:10 }             ← atkPct 整個漏掉
+
+   於是龍騎士、十字影刃、機械大師、聖裁者、帝國衛士、生物學家…這些**純物理職業**
+   戴上去等於什麼都沒有 —— 這就是玩家說「功能沒有顯示出來」的原因。
+
+   ⚠ 這是典型的半匯入，符合可以直接補的三個條件：
+     ① 無條件（ATK+10% 是本體加成，沒有任何前提）
+     ② 同一族已經有一件做對（風鷹那件證明了原本該長什麼樣）
+     ③ 數字對得上（敘述與已實作的那件都是 10%）
+   ⚠ 只補「敘述有寫、而且已經有 matkPct:10 但缺 atkPct」的那幾件。
+     其餘欄位（變動詠唱、搭配武器的那一大串）**不動** —— 那些是另一回事。 */
+(function () {
+  var _hp = 0, _skip = 0, _names = [];
+  for (var id in ITEMS) {
+    var it = ITEMS[id];
+    if (!it || !it.name) continue;
+    if (String(it.name).indexOf('英雄吊墜') < 0) continue;
+    var b = it.bonus;
+    if (!b) { _skip++; continue; }
+    /* 敘述真的有寫 ATK+10% 才補（不要憑名字猜） */
+    if (String(it.desc || '').indexOf('ATK+10%') < 0) { _skip++; continue; }
+    if (b.atkPct) { _skip++; continue; }              // 已經有了（風鷹那件）
+    if (b.matkPct !== 10) { _skip++; continue; }      // 形狀跟預期不同就別動
+    b.atkPct = 10;
+    _hp++; _names.push(it.name);
+  }
+  console.log('[data] HEROPENDANT 補上漏掉的 atkPct ' + _hp + ' 件（跳過 ' + _skip + '）');
+})();
+/* ==== HEROPENDANT END ==== */
+
+/* ==== ZEROIMPLNOTE BEGIN ==== */
+/* 敘述承諾了數值、但**一個數值欄位都沒接上**的裝備（feedback #336）。
+
+   玩家（角色 NENe）回報「深淵之耳的數值加成是否沒實裝」——正確。
+   `ear_of_abyss` 的 bonus / condBonus / perNRefine 全是空的，
+   敘述卻寫著「淨 INT+AGI 每15 SPL+1／每30 全種族魔法+1%／250時 再+15%」。
+
+   📌 它的**物理版鏡像「怨靈之耳」`ear_of_spirit` 是完整實作的**
+   （statSumMin 120/240/250 + statSumOf[vit,str] → meleeDmgPct 4/4/15）。
+   同一組道具，物理版有、魔法版整個空白。
+
+   ⚠ 為什麼不照著鏡像補：「對全種族**魔法**攻擊傷害」在本服**沒有對應欄位** ——
+     `raceDmg_*` 與 `allTargetDmgPct` 走 cardTargetDmgMult()，物理與魔法都會乘；
+     `magicEleDmg_*` 是魔法專用但分屬性。要嘛新增欄位、要嘛用九個屬性湊、
+     要嘛接受它同時加物理。**那是設計決定，不是把漏掉的數字填回去** → 規則④只回報。
+
+   這一段只把「這件目前沒有接上任何數值」講出來，讓玩家不要白穿。
+   ⚠ 措辭保守：說的是「資料裡沒有接上數值欄位」，不是「完全沒用」——
+     少數幾件（喵徽章那類）靠的是 NPC／事件機制而不是數值欄位。
+   ⚠ 冪等；只改 desc，數值一個都沒動。 */
+{
+  const _NOTE = '\uff08\u26a0\u672c\u670d\u672a\u5be6\u4f5c\uff1a\u9019\u4ef6\u88dd\u5099\u7684'
+    + '\u6558\u8ff0\u5beb\u4e86\u6578\u503c\uff0c\u4f46\u672c\u670d\u7684\u8cc7\u6599\u88e1'
+    + '**\u4e00\u500b\u6578\u503c\u6b04\u4f4d\u90fd\u6c92\u6709\u63a5\u4e0a**\uff0c'
+    + '\u7a7f\u4e0a\u53bb\u4e0d\u6703\u7522\u751f\u6558\u8ff0\u5beb\u7684\u52a0\u6210'
+    + '\uff08\u9632\u79a6\u3001\u91cd\u91cf\u9019\u4e9b\u57fa\u672c\u6b04\u4f4d\u9664\u5916\uff09\u3002'
+    + '\u5df2\u56de\u5831\u3002\uff09';
+  const _NUM = /[+\uff0b]\s*\d+\s*%|ATK\s*[+\uff0b]\s*\d+|MATK\s*[+\uff0b]\s*\d+|DEF\s*[+\uff0b]\s*\d+|\u50b7\u5bb3\s*[+\uff0b]\s*\d+/;
+  const _TOPNUM = ['atk','matk','def','mdef','str','agi','vit','int','dex','luk',
+    'hp','sp','flee','hit','critRate','aspdFlat'];
+  let _n = 0;
+  for (const _id in ITEMS) {
+    const _it = ITEMS[_id];
+    if (!_it || !_it.name || _id === 'null') continue;
+    if (typeof _it.desc !== 'string' || !_it.desc) continue;
+    const _isGear = _it.type === 'weapon' || (_it.type === 'armor' && _it.armorType);
+    if (!_isGear) continue;
+    if (!_NUM.test(_it.desc)) continue;
+    if (_it.desc.indexOf('\u4e00\u500b\u6578\u503c\u6b04\u4f4d\u90fd\u6c92\u6709\u63a5\u4e0a') >= 0) continue;  // \u5188\u7b49
+    let _has = false;
+    (function _dig(o) {
+      if (_has || !o || typeof o !== 'object') return;
+      for (const k in o) {
+        const v = o[k];
+        if (typeof v === 'number' && v !== 0) { _has = true; return; }
+        if (v && typeof v === 'object') _dig(v);
+      }
+    })({ b: _it.bonus, c: _it.condBonus, p1: _it.perRefine, p2: _it.per2Refine,
+         p3: _it.per3Refine, p4: _it.per4Refine, pe: _it.per2RefineExtra, ps: _it.perRefineSquare });
+    _TOPNUM.forEach(k => { if (typeof _it[k] === 'number' && _it[k] !== 0) _has = true; });
+    if (_has) continue;
+    _it.desc = _it.desc.trim() + ' ' + _NOTE;
+    if (typeof CARDS !== 'undefined' && CARDS[_id]) CARDS[_id].desc = _it.desc;
+    _n++;
+  }
+  console.log('[data] ZEROIMPLNOTE \u6a19\u8a3b\u300c\u4e00\u500b\u6578\u503c\u90fd\u6c92\u63a5\u4e0a\u300d' + _n + ' \u4ef6');
+}
+/* ==== ZEROIMPLNOTE END ==== */
+
+/* ==== WEPREFNOTE BEGIN ==== */
+/* 敘述寫「武器精煉每+N 時…」的段落，本服一律不生效（acc687 #3788）。
+
+   玩家回報「塔諾斯遠程頭盔LT 搭配塔諾斯弓AD，每+2 銳利+12% 好像沒有實裝」——正確。
+   `thanos_helm2_lt` 搭配 `thanos_bow_ad` 的 condBonus 只給了
+   sizeDmg_small/medium/large 各 +15，**「武器精煉每+2 銳利射擊+12%」那半根本沒有欄位**。
+
+   而且這不是漏填一個值，是**引擎沒有這個機制**：
+     · 欄位側 perRefine / per2Refine / per3Refine / per4Refine 吃的是**自己那件**的精煉
+     · condBonus.when 只有 refineMin / refineMax / refineSumMin / refineSumOf，全是門檻
+   要讓「頭盔上的加成隨武器精煉遞增」得新做一套跨裝備的精煉讀取。
+   ⚠ 那是新增機制 → 規則④只回報，這裡只把敘述講成實話。
+
+   ⚠ 同一句裡**不含**「武器精煉」的部分（例如「搭配塔諾斯弓-AD 時對全體型+15%」）
+     是有實作的，所以註記要講清楚只有遞增那半拿不到，不要讓玩家以為整條都沒用。
+   ⚠ 冪等；只改 desc，數值一個都沒動。 */
+{
+  const _NOTE = '\uff08\u26a0\u672c\u670d\u672a\u5be6\u4f5c\uff1a\u6558\u8ff0\u4e2d'
+    + '\u300c\u6b66\u5668\u7cbe\u7149\u6bcf+N \u6642\u2026\u300d'
+    + '\u9019\u7a2e**\u4f9d\u6b66\u5668\u7cbe\u7149\u905e\u589e**\u7684\u6bb5\u843d\uff0c'
+    + '\u672c\u670d\u6c92\u6709\u9019\u500b\u6a5f\u5236\uff08\u52a0\u6210\u53ea\u80fd\u5403'
+    + '\u81ea\u5df1\u90a3\u4ef6\u7684\u7cbe\u7149\uff09\uff0c\u4e00\u5f8b\u4e0d\u751f\u6548\u3002'
+    + '\u540c\u4e00\u53e5\u88e1**\u4e0d\u542b**\u300c\u6b66\u5668\u7cbe\u7149\u300d\u7684'
+    + '\u5176\u4ed6\u6548\u679c\u7167\u5e38\u751f\u6548\u3002\uff09';
+  let _n = 0;
+  for (const _id in ITEMS) {
+    const _it = ITEMS[_id];
+    if (!_it || typeof _it.desc !== 'string') continue;
+    if (_it.desc.indexOf('\u6b66\u5668\u7cbe\u7149\u6bcf') < 0) continue;
+    if (/\u672c\u670d[^\uff09]*\u6b66\u5668\u7cbe\u7149/.test(_it.desc)) continue;   // \u5df2\u7d93\u8b1b\u904e\u4e86
+    _it.desc = _it.desc.trim() + ' ' + _NOTE;
+    if (typeof CARDS !== 'undefined' && CARDS[_id]) CARDS[_id].desc = _it.desc;
+    _n++;
+  }
+  console.log('[data] WEPREFNOTE \u6a19\u8a3b\u300c\u6b66\u5668\u7cbe\u7149\u6bcf+N \u672a\u5be6\u4f5c\u300d' + _n + ' \u4ef6');
+}
+/* ==== WEPREFNOTE END ==== */
+
+/* ==== AUGERNOTE ====
+   破甲短錐 / 破甲短錐 [1]:敘述寫的「對方防禦力越高、攻擊越強」本服沒有實作。
+
+   2026-09-11 同一天兩個管道各問一次:
+     來信 #3852(acc3478)「請問破錐的武器效果好像沒有實裝嗎?(魔劍效果)」
+     世界頻道 #1763(羽翼咖啡)「請問破錐的功效(魔劍效果)有實裝嗎?」
+   查證:這兩件整筆資料攤開來看,除了基礎攻擊力/重量/可裝備職業之外
+   **一個加成欄位都沒有**(沒有 bonus、沒有 perNRefine、沒有 condBonus),
+   也就是說「依對方防禦力遞增傷害」這個機制本服根本不存在,
+   它們實際上就是一把普通短劍。
+
+   照既有體例把事實寫進敘述,免得下一個玩家再花時間問一次。
+   ⚠ 要放在 CARDDESCSYNC 之前 —— 那支會把「本服」註記同步一份到 CARDS.desc。
+   ⚠ 只加註記,**不改任何數值**。要不要真的實作這個機制是另一件事。 */
+(function () {
+  var NOTE = ' （⚠本服未實作:敘述中「對方的防禦力越高、攻擊就越強」這個機制本服沒有。'
+           + '這件除了基礎攻擊力之外沒有任何加成欄位,實際效果就是一把普通短劍。'
+           + '要靠無視防禦請改用有 defIgnorePct／defIgnoreRace_ 的裝備或卡片。）';
+  var IDS = ['house_auger', 'house_auger_'];
+  var _n = 0;
+  IDS.forEach(function (id) {
+    var it = ITEMS[id];
+    if (!it) return;
+    if (String(it.desc || '').indexOf('本服未實作') >= 0) return;   /* 冪等 */
+    it.desc = String(it.desc || '') + NOTE;
+    _n++;
+  });
+  console.log('[data] AUGERNOTE 破甲短錐系列標註 ' + _n + ' 件');
+})();
+/* ==== AUGERNOTE END ==== */
+
+/* ==== THANOSREFORM-NOTE ====
+   塔諾斯武器改造箱(下級/中級)、塔諾斯高級武器精煉寶箱:本服沒有這套功能。
+   feedback #342(累累,附官方公告 2022-06-20「裝備改造-塔諾斯系列」)。
+
+   查證(2026-09-11):
+     ・engine/ui/net 三支都沒有這三件的處理,也沒有通用的改造/升級箱機制 → 拿到用不了
+     ・三件都在 神秘箱子/神秘紫箱 的開箱池 → 全服 1,292 隻角色持有
+     ・17 件塔諾斯 -AD/-LT 也在同樣兩個開箱池 → 本服不用改造就能直接拿到
+   說明完全沒寫,玩家只會以為是自己不會用。
+
+   ⚠ 只加註記、不做改造系統(會改變裝備養成路線,要老闆決定)。 */
+(function () {
+  var NOTE_REFORM = ' （⚠本服未實作:本服沒有裝備改造系統,這個改造箱**目前沒有任何用途**。'
+                  + '塔諾斯 -AD／-LT 系列在本服可以直接從「神秘箱子」「神秘紫箱」開出來,不需要改造。）';
+  var NOTE_CUBE   = ' （⚠本服未實作:本服沒有這種精煉寶箱的功能,這個道具**目前沒有任何用途**。'
+                  + '-AD 武器的精煉值請用一般的精煉提升。）';
+  var MAP = { thanos_w_reform_1: NOTE_REFORM, thanos_w_reform_2: NOTE_REFORM, thanos_refine_cube_cn: NOTE_CUBE };
+  var _n = 0;
+  Object.keys(MAP).forEach(function (id) {
+    var it = ITEMS[id];
+    if (!it) return;
+    if (String(it.desc || '').indexOf('本服未實作') >= 0) return;   /* 冪等 */
+    it.desc = String(it.desc || '') + MAP[id];
+    _n++;
+  });
+  console.log('[data] THANOSREFORM-NOTE 塔諾斯改造箱/精煉寶箱標註 ' + _n + ' 件');
+})();
+/* ==== THANOSREFORM-NOTE END ==== */
+
+/* ==== CARDDESCSYNC BEGIN ==== */
+/* 插卡畫面看到的是 CARDS[id].desc，但所有「本服實作」更正註記都寫在 ITEMS[id].desc 上
+   （acc470 #3771：「墮落大神官插卡是寫 matk+10% 但我插了沒效果啊」）。
+
+   CARDPCTNOTE 早就替那張卡標了「MATK 是 +10 固定值，不是 +10%」——
+   但它只改 ITEMS，而 ui.js 的 showCardSelect() 顯示的是 `CARDS[id].desc`：
+
+     ui.js:11957  <span class="card-desc">${c.desc}</span>        // c = CARDS[id]
+     ui.js:11983  <span class="card-desc">${c.card.desc}</span>
+     ui.js:12249  bits.length ? bits.join('、') : (card.desc || '') // 提示框
+     ui.js:5915   (card && card.desc) || d.desc                     // 圖鑑
+
+   → **玩家正要決定插哪張卡的那一刻，看到的永遠是沒更正過的官方原文。**
+   註記寫得再好也到不了他眼前。
+
+   這一段把 ITEMS.desc 裡的「（…本服…）」註記補回 CARDS.desc。
+   ⚠ 只搬註記，不搬 ITEMS.desc 那串「系列: 卡片 裝備: 鞋子 重量: 1」後綴
+     （卡片說明本來就短，塞那些只會變吵）。
+   ⚠ **位置必須在所有會寫註記的區塊之後**（CARDPCTNOTE／CARDPROCNOTE／STONENOTE／
+     SRCNOTE／CASTNOTE… 都是），所以放在 data.js 最後面。插在中間會漏掉後面才加的。
+   ⚠ 冪等：已經有同一段就不重複補。
+   ⚠ 只改說明，一個數值都沒動。 */
+{
+  /* ⚠ 註記裡面會有**巢狀括號**（例：「…本服沒有實作（這個代價不會發生）。…」）。
+     第一版寫 `[^）]*` 會在第一個 `）` 就停住，把註記剪成半句
+     （實際踩過：墮落的大神官卡的註記少了「。其餘各段照敘述生效。）」）。
+     這一版允許一層巢狀。 */
+  const _RE = /（(?:[^（）]|（[^（）]*）)*本服(?:[^（）]|（[^（）]*）)*）/g;
+  let _n = 0, _add = 0;
+  for (const _cid in CARDS) {
+    const _it = ITEMS[_cid], _cd = CARDS[_cid];
+    if (!_it || typeof _it.desc !== 'string') continue;
+    if (!_cd || typeof _cd.desc !== 'string') continue;
+    const _notes = _it.desc.match(_RE) || [];
+    if (!_notes.length) continue;
+    const _missing = _notes.filter(_x => _cd.desc.indexOf(_x) < 0);
+    if (!_missing.length) continue;
+    _cd.desc = _cd.desc.trim() + ' ' + _missing.join(' ');
+    _n++; _add += _missing.length;
+  }
+  console.log('[data] CARDDESCSYNC 把 ' + _add + ' 段「本服實作」註記補到 ' + _n + ' 張卡的卡片說明');
+}
+/* ==== CARDDESCSYNC END ==== */
+
+/* ==== PENITENTIA-ATKPCT BEGIN ==== */
+/* 懺悔覺醒系列武器的 ATK+N% 沒匯入（acc1497 #3778「懺悔覺醒神劍 [2] ATK+10%沒有實裝」）。
+
+   全系列 33 把（都是 Lv230 的畢業武器）。實際狀況：
+
+     敘述有**無條件**的「ATK+N%」　　　　　21 把
+     其中真的有 atkPct 的　　　　　　　　  1 把（懺悔覺醒槍矛 bonus.atkPct=10）
+     🔴 缺 atkPct 的　　　　　　　　　　  20 把
+
+   而同系列的**法系武器 matkPct 全部都在**（古書/法杖/聖杖/魔杖…都是 10、魔書 5、斬魂劍 7）。
+   也就是說匯入時把 matkPct 那半做完了、atkPct 那半漏掉 ——
+   物理職的畢業武器等於少了一整條無條件加成，法系卻是完整的。
+
+   ⚠ 符合「半匯入可以直接補」的三個條件：
+     ① **無條件**：那句就寫在敘述開頭（「蘊含著生離死別傷痛的劍。 _ ATK+10%。」），
+        前面沒有「精煉+N 時」「搭配…時」「[X階級]」這些前提。
+        （條件式的另外算，本區塊不碰。）
+     ② **同族已有一件做對**：懺悔覺醒槍矛 `bonus.atkPct = 10` 證明了原本該長的樣子，
+        而且它就放在 `bonus` 裡，所以補的位置照抄它。
+     ③ **數字對得上**：照各自敘述寫的數字補，不是統一 10
+        （單手劍/魔書是 5%、鎖魂劍是 7%）。
+
+   ⚠ 只補 atkPct 這一欄。敘述裡其餘各段（各階級追加能力、精煉階梯的技能增傷…）
+     **一律不動** —— 那些是另一回事，而且本來就有註記說明沒實作。
+   ⚠ 冪等：已經有 atkPct 的（槍矛）跳過。 */
+(function () {
+  var _n = 0, _skip = 0, _names = [];
+  var COND = /時，|以上|搭配|階級|同時裝備|精煉/;
+  var RE_ATK = /ATK\+(\d+)%/;
+  for (var id in ITEMS) {
+    var it = ITEMS[id];
+    if (!it || !it.name) continue;
+    if (String(it.name).indexOf('懺悔覺醒') !== 0) continue;
+    if (it.type !== 'weapon') { _skip++; continue; }
+    /* 先把 MATK 遮掉，否則「MATK+10%」會被當成「ATK+10%」 */
+    var desc = String(it.desc || '').replace(/MATK/g, '#M#');
+    var m = RE_ATK.exec(desc);
+    if (!m) { _skip++; continue; }
+    /* 前 30 字出現條件詞就不是無條件那一句 */
+    if (COND.test(desc.slice(Math.max(0, m.index - 30), m.index))) { _skip++; continue; }
+    /* 任何地方已經有 atkPct 就跳過（含 condBonus／perNRefine） */
+    var has = false;
+    (function dig(o) {
+      if (has || !o || typeof o !== 'object') return;
+      for (var k in o) {
+        if (k === 'atkPct' && o[k]) { has = true; return; }
+        if (o[k] && typeof o[k] === 'object') dig(o[k]);
+      }
+    })({ b: it.bonus, c: it.condBonus, p1: it.perRefine, p2: it.per2Refine, p3: it.per3Refine, p4: it.per4Refine });
+    if (has || it.atkPct) { _skip++; continue; }
+    if (!it.bonus) it.bonus = {};
+    it.bonus.atkPct = Number(m[1]);
+    _n++; _names.push(it.name + '(+' + m[1] + '%)');
+  }
+  console.log('[data] PENITENTIA-ATKPCT 補上漏掉的 atkPct ' + _n + ' 把（跳過 ' + _skip + '）');
+})();
+/* ==== PENITENTIA-ATKPCT END ==== */
+
+/* 匯入的套裝若和既有套裝是同一組搭配，兩邊會各算一次。已有的那組留著。 */
+(function dropCoveredEquipSets() {
+  function combos(items) {
+    let acc = [[]];
+    (items || []).forEach(function (entry) {
+      const opts = Array.isArray(entry) ? entry : [entry];
+      const next = [];
+      acc.forEach(function (base) {
+        opts.forEach(function (o) { next.push(base.concat(String(o))); });
+      });
+      acc = next;
+    });
+    return acc.map(function (c) { return c.slice().sort().join('\0'); });
+  }
+  const owned = {};
+  Object.keys(EQUIP_SETS).forEach(function (id) {
+    if (String(id).indexOf('ec_') === 0) return;
+    combos(EQUIP_SETS[id].items).forEach(function (s) { owned[s] = true; });
+  });
+  Object.keys(EQUIP_SETS).forEach(function (id) {
+    if (String(id).indexOf('ec_') !== 0) return;
+    const cs = combos(EQUIP_SETS[id].items);
+    if (cs.length && cs.every(function (s) { return owned[s]; })) delete EQUIP_SETS[id];
+  });
+})();
+
+/* 新卡的部位寫成 head，插槽認的是 headgear。
+   裝備＋卡片的搭配若標了套裝名、卻不是「卡片湊齊」，標籤會在單張時就亮。效果留著，拿掉標籤。 */
+(function normalizeImportedCards() {
+  Object.keys(CARDS).forEach(function (id) {
+    const c = CARDS[id];
+    if (!c) return;
+    if (c.slot === 'head') c.slot = 'headgear';
+    (c.condBonus || []).forEach(function (cb) {
+      if (cb && cb.setName && !(cb.when && cb.when.withCards)) delete cb.setName;
+    });
+  });
+})();
+
 

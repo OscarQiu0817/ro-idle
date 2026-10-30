@@ -27,16 +27,40 @@ let slotPage = 0;
 const SLOTS_PER_PAGE = 3;
 
 function initApp() {
+  installTabLock();
   renderCreationStats();
   bindSearchComposition();
   renderDisclaimers();          // 免責聲明（#118）：四個位置一次填好
   showScreen('screen-title');
   maybeShowConsent();           // 首次開啟才出現的一次性確認（#121）
 }
+/* 後開的分頁寫一筆鎖，先開的分頁收到 storage 事件就停手。
+   同一個分頁自己寫入不會觸發 storage，所以後開的那個留著。 */
+function installTabLock() {
+  const KEY = 'ro_idle_tab_lock_v1';
+  const myId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const write = () => {
+    if (typeof tabSessionBlocked === 'function' && tabSessionBlocked()) return;
+    try { localStorage.setItem(KEY, myId + '|' + Date.now()); } catch (e) { /* 沒有存檔空間就算了 */ }
+  };
+  window.addEventListener('storage', e => {
+    if (e.key !== KEY || !e.newValue) return;
+    if (String(e.newValue).split('|')[0] !== myId) showTabBlocked();
+  });
+  write();
+  setInterval(write, 2000);
+}
+function showTabBlocked() {
+  if (typeof setTabSessionBlocked === 'function') setTabSessionBlocked(true);
+  try { stopLoop(); } catch (e) { /* 還沒進場 */ }
+  try { stopMusic(); } catch (e) { /* 同上 */ }
+  const el = document.getElementById('tab-lock-modal');
+  if (el) el.classList.remove('hidden');
+}
 
 /* ---------------- 免責聲明（#118）----------------
-   文字全部來自 js/about.js，這裡只負責放到畫面上的四個位置：
-   標題畫面、創角畫面、遊戲中的常駐頁尾、「關於本作」視窗。
+   文字全部來自 js/about.js，這裡只負責放到畫面上的三個位置：
+   標題畫面、創角畫面、「關於本作」視窗（漢堡選單）。
 
    在 DOMContentLoaded 時填一次就好——內容是固定的，不必每個 tick 重畫。
 ------------------------------------------------- */
@@ -49,9 +73,6 @@ function renderDisclaimers() {
 
   const create = document.getElementById('create-disclaimer');
   if (create) create.textContent = DISCLAIMER_SHORT;
-
-  const foot = document.getElementById('game-disclaimer');
-  if (foot) foot.textContent = DISCLAIMER_SHORT + `　${LICENSE_NAME}　（點此看完整聲明）`;
 }
 
 /* 鳴謝的連結。開新分頁並加上 noopener——這是外部網站 */
@@ -325,6 +346,7 @@ function goCreateNew() {
 }
 
 function continueGame() {
+  if (typeof tabSessionBlocked === 'function' && tabSessionBlocked()) { showTabBlocked(); return; }
   try {
     if (loadGame()) {
       const off = computeOfflineProgress();
@@ -391,7 +413,7 @@ function enterGame() {
      新角色與讀檔走的都是這一支，所以只掛這裡就夠。 */
   playEventSfx('login');
   const muteBtn = document.getElementById('btn-mute');
-  if (muteBtn) muteBtn.textContent = state.muted ? '🔇' : '🔊';
+  if (muteBtn) muteBtn.textContent = state.muted ? '🔇 取消靜音' : '🔊 靜音';
   /* 掛機收益面板每次進場都要收起來重置（#135）：換存檔格時面板若留在開啟狀態，
      裡面會是上一格的紀錄。勾選框則要讀這一格自己的設定。 */
   idleReportOpen = false;
@@ -420,6 +442,7 @@ function onTickUI() {
       updateMonsterHp();
     }
     updateSkillAura();
+    updateBuffCountdown();
     updatePlayerSprite();   // 換武器要即時換騎乘圖；key 沒變時這個函式會直接 return
     renderGmPanel();
     applyFarmModeTheme();     // 打寶模式的介面染色（#111）
@@ -428,8 +451,16 @@ function onTickUI() {
     syncSkillScaleSlider();   // 換職業時滑桿要跳到那個職業記住的值
     renderAllySprites();
     updateAllyPanelLive();   // 只改數字，整個重畫會把展開中的下拉選單刪掉
-    // 即時更新角色分頁的 BUFF 倒數
-    if (activeTab === 'character') updateBuffCountdown();
+    if (activeTab === 'quests' && huntTabSig() !== _huntSig
+        && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#tab-quests'))) {
+      renderQuestsTab();
+    }
+    if (document.getElementById('attendance-modal') && !document.getElementById('attendance-modal').classList.contains('hidden')
+        && attendanceSig() !== _attendanceSig) renderAttendanceModal();
+    if (activeTab === 'pets' && petsSig() !== _petsSig
+        && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#tab-pets .pet-release'))) {
+      renderPetsTab();
+    }
   }
 }
 
@@ -470,11 +501,17 @@ function spriteFolderFor(jobId, gender) {
 
 function allySpriteHtml(a) {
   const jd = JOB_TREE[a.jobId] || {};
-  const key = spriteFolderFor(a.jobId, a.gender || 'male');
-  if (key) loadAnimFrames(key);       // 有快取，重複呼叫直接 return
-  const first = key ? `images/frames/${key}/frame_000.png` : `images/player_${a.jobId}.svg`;
-  return `<div class="ally-figure" data-key="${key || ''}" title="${a._allyName}（${jd.name || a.jobId}）Lv.${a.baseLevel}">
-    <img class="ally-img" src="${first}" alt="${a._allyName}" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">
+  const parts = (typeof paperdollLookParts === 'function') ? paperdollLookParts(a) : null;
+  let body;
+  if (parts) body = '<canvas class="ally-paper"></canvas>';
+  else {
+    const key = spriteFolderFor(a.jobId, a.gender || 'male');
+    if (key) loadAnimFrames(key);
+    const first = key ? `images/frames/${key}/frame_000.png` : `images/player_${a.jobId}.svg`;
+    body = `<img class="ally-img" data-key="${key || ''}" src="${first}" alt="${a._allyName}" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">`;
+  }
+  return `<div class="ally-figure" data-key="${parts ? '' : (spriteFolderFor(a.jobId, a.gender || 'male') || '')}" title="${a._allyName}（${jd.name || a.jobId}）Lv.${a.baseLevel}">
+    ${body}
     <div class="ally-tag"></div>
     <div class="ally-hp"><div class="ally-hp-fill"></div></div>
   </div>`;
@@ -484,11 +521,23 @@ function allySpriteHtml(a) {
    每次都重建 innerHTML 的話 <img> 會一直換新的，反而永遠停在第一格。 */
 let allySpriteSig = '';
 const allyAnimIdx = [0, 0];
+const allyDolls = [
+  { key: '', parts: null, act: '', rest: 'idle', t0: 0, once: 0, atkFrom: 0, atkDelay: 0, swing: 0 },
+  { key: '', parts: null, act: '', rest: 'idle', t0: 0, once: 0, atkFrom: 0, atkDelay: 0, swing: 0 }
+];
+function allyLookKey(a) {
+  if (!a) return '-';
+  const bits = [a._slot, a.jobId, a.gender || 'male', a.hairStyle || 9, a.hairColor != null ? a.hairColor : 5];
+  const slots = ['weapon', 'head_top', 'head_mid', 'head_bottom'];
+  for (let i = 0; i < slots.length; i++) bits.push(equipRefItem(a, slots[i]) || '');
+  return bits.join(':');
+}
 function renderAllySprites() {
   const list = (state && state.allies) || [];
-  const sig = list.map(a => a ? a._slot + ':' + a.jobId + ':' + (a.gender || 'male') : '-').join('|');
+  const sig = [0, 1].map(i => allyLookKey(list[i])).join('|');
   if (sig !== allySpriteSig) {
     allySpriteSig = sig;
+    allyDolls.forEach(d => { d.key = ''; });
     for (let i = 0; i < 2; i++) {
       const el = document.getElementById('ally-sprite-' + i);
       if (el) el.innerHTML = list[i] ? allySpriteHtml(list[i]) : '';
@@ -500,13 +549,17 @@ function renderAllySprites() {
     if (!a || !el) continue;
     const fig = el.querySelector('.ally-figure');
     if (!fig) continue;
-    fig.classList.toggle('downed', !!a._downed);
+    const away = !allyOnThisMap(a);
+    fig.classList.toggle('away', away);
+    fig.classList.toggle('downed', !!a._downed && !away);
     const tag = fig.querySelector('.ally-tag');
-    const txt = (a._downed ? '💀 ' : '') + a._allyName;
+    const txt = (away ? '' : (a._downed ? '💀 ' : '')) + a._allyName
+      + (away ? (' · ' + mapNameOf(allyHomeMap(a))) : '');
     if (tag && tag.textContent !== txt) tag.textContent = txt;
     const bar = fig.querySelector('.ally-hp-fill');
     if (bar) bar.style.width = Math.max(0, Math.min(100, (a.hp / Math.max(1, a.maxHp)) * 100)) + '%';
-    stepAllyAnim(i, a, fig);
+    if (!away && fig.querySelector('.ally-paper')) syncAllyDoll(i, a, fig);
+    else if (!away) stepAllyAnim(i, a, fig);
   }
 }
 
@@ -530,6 +583,101 @@ function stepAllyAnim(i, ally, fig) {
   }
   const f = frames[Math.min(allyAnimIdx[i], frames.length - 1)];
   if (f && img.src !== f.src) img.src = f.src;
+}
+
+const ALLY_CHAR_H = Math.round(150 * 0.75 * 0.75 * 0.82);
+function syncAllyDoll(i, ally, fig) {
+  const canvas = fig.querySelector('.ally-paper');
+  const doll = allyDolls[i];
+  if (!canvas || !doll) return;
+  const parts = paperdollLookParts(ally);
+  if (!parts) { canvas.style.display = 'none'; return; }
+  if (doll.key !== parts.join('|')) {
+    doll.key = parts.join('|');
+    doll.parts = parts;
+    doll.act = '';
+    doll.once = 0;
+    doll.t0 = Date.now();
+    layoutPaperdoll(canvas, parts, ALLY_CHAR_H, 16);
+    canvas.style.display = '';
+    canvas._plFrame = -1;
+    if (!mobAnimTimer) mobAnimTimer = setInterval(mobAnimTick, 33);
+  }
+  const fighting = state.monsters && state.monsters.length && !ally._downed;
+  const fieldSide = typeof inSafeZone === 'function' ? !inSafeZone() : !!fighting;
+  if (fieldSide && paperdollFrameCount(parts[0], 'ready_s')) doll.rest = 'ready_s';
+  else if (fieldSide && paperdollFrameCount(parts[0], 'idle_s')) doll.rest = 'idle_s';
+  else doll.rest = 'idle';
+  if (doll.once && (Date.now() - doll.t0) < doll.once) return;
+  doll.once = 0;
+  doll.atkFrom = 0;
+  doll.atkDelay = 0;
+  if (ally._swingAt && ally._swingAt !== doll.swing && !ally._downed) {
+    doll.swing = ally._swingAt;
+    const act = allyAttackAct(parts);
+    const n = paperdollFrameCount(parts[0], act);
+    if (n) {
+      const swing = paperdollSwingTiming(act, n, ally.attackInterval);
+      doll.act = act;
+      doll.t0 = Date.now();
+      doll.atkFrom = swing.from;
+      doll.atkDelay = swing.delay;
+      doll.once = swing.once;
+      canvas._plFrame = -1;
+      return;
+    }
+  }
+  if (doll.act !== doll.rest) {
+    doll.act = doll.rest;
+    doll.t0 = Date.now();
+    canvas._plFrame = -1;
+  }
+}
+function allyAttackAct(parts) {
+  const weapon = parts.filter(p => p.indexOf('weapon/') === 0).pop();
+  const named = weapon && window.PAPERDOLL.atk && window.PAPERDOLL.atk[weapon];
+  if (named && paperdollFrameCount(parts[0], named)) return named;
+  if (weapon && paperdollFrameCount(parts[0], 'slash')) return 'slash';
+  return 'attack';
+}
+function drawAllyDolls() {
+  for (let i = 0; i < allyDolls.length; i++) {
+    const doll = allyDolls[i];
+    const canvas = document.querySelector('#ally-sprite-' + i + ' .ally-paper');
+    if (!doll || !doll.parts || !canvas || canvas.style.display === 'none') continue;
+    const swinging = doll.once > 0 && doll.atkDelay > 0 && (Date.now() - doll.t0) < doll.once;
+    const act = swinging ? (doll.act || 'attack') : (doll.rest || 'idle');
+    const parts = doll.parts;
+    const nFrames = paperdollFrameCount(parts[0], act) || 1;
+    const delay = swinging ? doll.atkDelay : ((window.PAPERDOLL.delay && window.PAPERDOLL.delay[act]) || 100);
+    const n0 = ((Date.now() - doll.t0) / delay) | 0;
+    const from = swinging ? (doll.atkFrom || 0) : 0;
+    const n = swinging ? Math.min(from + n0, nFrames - 1) : (n0 % nFrames);
+    const body = paperdollFrame(parts[0], act, n);
+    if (!body) continue;
+    let ready = true;
+    for (let p = 0; p < parts.length; p++) {
+      const im = paperdollImage(parts[p]);
+      if (!im.complete || !im.naturalWidth) ready = false;
+    }
+    if (ready && canvas._plFrame === n && canvas._plAct === act) continue;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const ox = canvas._ox || 0, oy = canvas._oy || 0;
+    if (!drawPaperdollLayers(ctx, parts[0], body, ox, oy)) continue;
+    for (let p = 1; p < parts.length; p++) {
+      const fr = paperdollFrame(parts[p], act, n);
+      if (!fr) continue;
+      const aligned = paperdollAlign(parts[p], body, fr);
+      drawPaperdollLayers(ctx, parts[p], fr, ox + aligned[0], oy + aligned[1]);
+    }
+    if (ready) {
+      canvas._plFrame = n;
+      canvas._plAct = act;
+      applyPaperTransform(canvas, facingFlip(act, true));
+    }
+  }
 }
 
 /* 浮動面板，不是 modal——使用者 2026-08-15 指定「到戰鬥地圖改為浮動式視窗、
@@ -563,9 +711,9 @@ function renderAllyPanel() {
   const leaf = ITEMS[ALLY_REVIVE_ITEM];
   const safe = inSafeZone();
 
-  let html = `<div class="ally-note">最多 ${ALLY_MAX} 名。雇傭價 = 對方基礎等級 × ${ALLY_HIRE_PRICE_PER_LEVEL.toLocaleString()}，
-    更新快照只要 ${ALLY_REFRESH_DIVISOR} 分之一。隊友額外累積 ${ALLY_MERC_EXP_PCT}% 經驗，退隊後由他本人上線時領取。
-    ${safe ? '' : '<b>雇傭與更新要回安全區</b>，喝水設定與復活在這裡就能改。'}</div>`;
+  let html = `<div class="ally-note" id="ally-exp-status"></div>
+    <div class="ally-note">隊伍最多 3 人（自己＋${ALLY_MAX} 名自己的角色）。組隊不扣錢。
+    ${safe ? '' : '<b>組隊要回安全區</b>，同步與喝水在這裡就能改。'}</div>`;
 
   html += '<div class="ally-sec">目前隊伍</div>';
   if (!list.length) {
@@ -573,15 +721,16 @@ function renderAllyPanel() {
   } else {
     html += list.map(a => {
       const jd = JOB_TREE[a.jobId] || {};
-      const refresh = Math.ceil(allyHirePrice(a.baseLevel || 1) / ALLY_REFRESH_DIVISOR);
-      return `<div class="ally-row" data-ally="${a._slot}">
-        <span class="ally-row-name">${jd.icon || '🧍'} ${a._allyName}</span>
-        <span class="ally-row-job">${jd.name || a.jobId} Lv.${a.baseLevel}</span>
-        <span class="ally-row-hp"></span>
-        <span class="ally-row-exp" title="退隊時結算給本人"></span>
+      const away = !allyOnThisMap(a);
+      return `<div class="ally-row${away ? ' away' : ''}" data-ally="${a._slot}">
+        <span class="ally-row-name">${a._allyName}</span>
+        ${allyJobLvHtml(jd.name || a.jobId, a.baseLevel)}
+        <span class="ally-kill-exp"></span>
+        <div class="ally-row-actions">
         <button class="btn-small ally-revive" onclick="allyAction(reviveAllyBySlot,'${a._slot}')">🍃 扶起</button>
-        <button class="btn-small" ${safe ? '' : 'disabled'} onclick="allyAction(refreshAlly,'${a._slot}')">🔄 更新 ${refresh.toLocaleString()}z</button>
+        <button class="btn-small" onclick="allyAction(refreshAlly,'${a._slot}')">同步</button>
         <button class="btn-small danger" onclick="allyAction(dismissAlly,'${a._slot}')">退隊</button>
+        </div>
       </div>`;
     }).join('');
   }
@@ -592,18 +741,19 @@ function renderAllyPanel() {
   const open = allyHireListOpen === null ? safe : allyHireListOpen;
   html += `<div class="ally-sec ally-sec-toggle" onclick="toggleAllyHireList()">
     <span>${open ? '▾' : '▸'} 其他存檔的角色（${free.length}）</span>
-    ${safe ? '' : '<span class="codex-sec-hint">回安全區才能雇傭</span>'}
+    ${safe ? '' : '<span class="codex-sec-hint">回安全區才能組隊</span>'}
   </div>`;
   if (open) {
     html += !free.length
-      ? '<div class="ally-empty">沒有其他存檔的角色可以雇傭。</div>'
+      ? '<div class="ally-empty">沒有其他存檔的角色可以組隊。</div>'
       : free.map(c => `<div class="ally-row">
           <span class="ally-row-name">${c.jobIcon} ${c.name}</span>
-          <span class="ally-row-job">${c.jobName} Lv.${c.baseLevel}</span>
+          ${allyJobLvHtml(c.jobName, c.baseLevel)}
           <span class="ally-row-hp">存檔 ${Number(c.slot) + 1}</span>
-          <span class="ally-row-exp"></span>
-          <button class="btn-small" ${!safe || list.length >= ALLY_MAX || state.gold < c.price ? 'disabled' : ''}
-            onclick="allyAction(hireAlly,'${c.slot}')">🤝 雇傭 ${c.price.toLocaleString()}z</button>
+          <div class="ally-row-actions">
+          <button class="btn-small" ${!safe || list.length >= ALLY_MAX ? 'disabled' : ''}
+            onclick="allyAction(hireAlly,'${c.slot}')">組隊</button>
+          </div>
         </div>`).join('');
   }
 
@@ -701,7 +851,6 @@ let allyAutoOpen = {};   // { slot: true } 哪幾位展開著
 function toggleAllyAuto(slot) { allyAutoOpen[slot] = !allyAutoOpen[slot]; renderAllyPanel(); }
 
 function renderAllyAutoBattle(a) {
-  const jd = JOB_TREE[a.jobId] || {};
   const open = !!allyAutoOpen[a._slot];
   const cfg = a.autoSkillConfig || { skillId: null, skillId2: null, spThreshold: 30, spThreshold2: 50, monsterCount2: 2 };
   let atk = [], sup = [];
@@ -714,7 +863,7 @@ function renderAllyAutoBattle(a) {
   const on = sup.filter(e => (a.autoSupportSkills || {})[e.sk.id]).length;
   const cur = atk.find(e => e.sk.id === cfg.skillId);
   const head = `<div class="ally-sec ally-sec-toggle" onclick="toggleAllyAuto('${a._slot}')">
-      <span>${open ? '▾' : '▸'} ${jd.icon || '🧍'} ${a._allyName}</span>
+      <span>${open ? '▾' : '▸'} ${a._allyName}</span>
       <span class="codex-sec-hint">${cur ? cur.sk.name : '沒設攻擊技'}・輔助 ${on}</span>
     </div>`;
   if (!open) return head;
@@ -773,21 +922,86 @@ function toggleAllyHireList() {
 }
 
 // 每秒只改這幾個會變的數字，不動任何 input／select
+function killExpPctLabel(gained, need, capped) {
+  if (capped) return '已滿';
+  if (!(need > 0)) return '--';
+  const pct = (gained || 0) / need * 100;
+  if (pct > 0 && pct < 0.01) return '<0.01%';
+  return pct.toFixed(2) + '%';
+}
+function allyJobLvHtml(jobName, baseLevel) {
+  const nm = jobName || '—';
+  const lv = Number(baseLevel) || 1;
+  return `<span class="ally-row-job-lv"><span class="ally-job-name">${nm}</span><span class="ally-job-lvtxt">Lv.${lv}</span></span>`;
+}
+function emptyKillExpPairHtml() {
+  return '<span class="exp-pair"><i>Lv\u00a0</i><b>--</b><i>Job\u00a0</i><b>--</b></span>';
+}
+function memberKillExpPairHtml(member, quoted) {
+  if (!quoted) return emptyKillExpPairHtml();
+  const bl = member.baseLevel || 1;
+  const jl = member.jobLevel || 1;
+  const jd = JOB_TREE[member.jobId] || {};
+  const baseCap = typeof baseLevelCapOf === 'function' ? baseLevelCapOf(member.jobId) : 250;
+  const lv = killExpPctLabel(quoted.base, expToNextBaseLevel(bl), bl >= baseCap);
+  const job = killExpPctLabel(quoted.job, expToNextJobLevel(jl, jd.tier || 0), !!(jd.jobLevelMax && jl >= jd.jobLevelMax));
+  const lvTxt = lv === '已滿' ? lv : ('+ ' + lv);
+  const jobTxt = job === '已滿' ? job : ('+ ' + job);
+  return `<span class="exp-pair"><i>Lv\u00a0</i><b>${lvTxt}</b><i>Job\u00a0</i><b>${jobTxt}</b></span>`;
+}
+let _partyExpPairHold = '';
+let _partyExpHoldMap = '';
+/* 城裡、沒開遇怪：固定 --。野外兩隻怪中間的空檔沿用上一隻，避免每殺一隻閃一次。 */
+function killExpHtmlFor(member) {
+  const mapId = (state && state.mapId) || '';
+  if (_partyExpHoldMap !== mapId) {
+    _partyExpHoldMap = mapId;
+    _partyExpPairHold = '';
+  }
+  const q = previewMemberKill(member);
+  if (q) {
+    const html = memberKillExpPairHtml(member, q);
+    _partyExpPairHold = html;
+    return html;
+  }
+  const hunting = state && state.encounterMode !== 'off' && !(typeof isInTown === 'function' && isInTown());
+  if (hunting && _partyExpPairHold) return null;
+  return emptyKillExpPairHtml();
+}
+function writeHtml(el, html) {
+  if (!el) return;
+  if (html == null) html = el._html || emptyKillExpPairHtml();
+  if (el._html === html) return;
+  el._html = html;
+  el.innerHTML = html;
+}
+function partyExpHeadHtml() {
+  let pair = killExpHtmlFor(state);
+  if (pair == null) pair = _partyExpPairHold || emptyKillExpPairHtml();
+  return `<div>${partyExpStatusText()}</div>${pair}`;
+}
 function updateAllyPanelLive() {
   if (!allyPanelOpen) return;
   (state.allies || []).forEach(a => {
     const row = document.querySelector(`#ally-panel-body .ally-row[data-ally="${a._slot}"]`);
     if (!row) return;
-    row.classList.toggle('downed', !!a._downed);
-    const hp = row.querySelector('.ally-row-hp');
-    const txt = a._downed ? '💀 倒地' : `HP ${Math.round(a.hp)}/${a.maxHp}`;
-    if (hp && hp.textContent !== txt) hp.textContent = txt;
-    const ex = row.querySelector('.ally-row-exp');
-    const et = '累積 ' + Math.round(a._pendingExp || 0).toLocaleString();
-    if (ex && ex.textContent !== et) ex.textContent = et;
+    const away = !allyOnThisMap(a);
+    row.classList.toggle('away', away);
+    row.classList.toggle('downed', !!a._downed && !away);
+    const ex = row.querySelector('.ally-kill-exp');
+    if (ex && ex._map !== state.mapId) { ex._map = state.mapId; ex._html = ''; }
+    const et = away
+      ? `<span class="ally-away-map">${mapNameOf(allyHomeMap(a))}</span>`
+      : killExpHtmlFor(a);
+    writeHtml(ex, et);
     const rv = row.querySelector('.ally-revive');
-    if (rv) rv.style.display = a._downed ? '' : 'none';
+    if (rv) rv.style.display = a._downed && !away ? '' : 'none';
   });
+  const status = document.getElementById('ally-exp-status');
+  if (status) {
+    const t = partyExpHeadHtml();
+    writeHtml(status, t);
+  }
   const stock = document.getElementById('ally-leaf-stock');
   if (stock) {
     const t = `目前持有 ${getItemQty(ALLY_REVIVE_ITEM)} 個　·　回安全區全隊免費滿血復活`;
@@ -807,29 +1021,147 @@ function updateAllyPanelLive() {
   }
 }
 
-// 輕量級：只更新 BUFF 倒數顯示
+const BATTLE_BUFF_NAMES = {
+  aspd: '攻速', atk: '攻擊', def: '防禦', flee: '迴避', gold: '金錢', crit: '暴擊', hit: '命中',
+  statpct: '素質', blessing: '祝福', flatstat: '素質', agiflat: 'AGI', lukflat: 'LUK',
+  sprate: 'SP回復', poison: '毒', maxroll: '最大傷害', holyweapon: '聖屬', shield: '護盾', magnumfire: '火屬',
+  block: '格擋', auraflat: '靈氣', weaponatk: '武器ATK', eledmg_poison: '毒傷',
+  meltdown: '凶砍', spawnspeed: '生怪', reflect: '反射', providence: '神祐',
+  perfectdodge: '閃避', critdmg: '暴傷', maxhppct: 'HP', maxsppct: 'SP',
+  skillcd: '冷卻', exp: '經驗', atkflat: 'ATK', defflat: 'DEF', spcost: '耗SP',
+  songelereduce: '耐性', songailresist: '抗性', gemfree: '礦石', dontforgetme: '勿忘我',
+  dmgtaken: '減傷', eleweapon: '屬性', eledmg_fire: '火傷', eledmg_water: '水傷',
+  eledmg_wind: '風傷', eledmg_earth: '地傷', eleresist: '抗屬'
+};
+function buffEffectLine(b) {
+  const name = BATTLE_BUFF_NAMES[b.type] || b.type;
+  let bonus = '啟動中';
+  if (b.type === 'blessing') bonus = '+' + (b.strBonus || 0);
+  else if (b.flatBonus) bonus = '+' + b.flatBonus;
+  else if (typeof b.mult === 'number' && b.mult !== 1) bonus = '×' + b.mult.toFixed(2);
+  const remain = Math.max(0, Math.ceil((b.msRemaining || 0) / 1000));
+  return name + ' ' + bonus + '　' + remain + ' 秒';
+}
+/* 同一個技能給的多個效果收成一格。沒有 skillId 的（藥水之類）仍各佔一格。 */
+function buffChipGroups(list) {
+  const order = [];
+  const map = new Map();
+  list.forEach(b => {
+    const key = b.skillId ? ('s:' + b.skillId) : ('t:' + (b.type || ''));
+    if (!map.has(key)) { map.set(key, []); order.push(key); }
+    map.get(key).push(b);
+  });
+  return order.map(k => map.get(k));
+}
+function buffChipKey(group) {
+  const b = group[0];
+  return b.skillId ? ('s:' + b.skillId) : ('t:' + (b.type || ''));
+}
+function buffChipRemain(group) {
+  return group.reduce((m, b) => Math.max(m, Math.ceil((b.msRemaining || 0) / 1000)), 0);
+}
+function buffChipLabel(group) {
+  const b = group[0];
+  if (b.skillId && typeof buffSourceLabel === 'function') return buffSourceLabel(b);
+  return BATTLE_BUFF_NAMES[b.type] || b.type || '';
+}
+function pdebuffChipRemain(key) {
+  const b = state.pdebuff && state.pdebuff[key];
+  if (!b) return 0;
+  return Math.max(0, Math.ceil((b.until - Date.now()) / 1000));
+}
+function pdebuffChipLabel(key) {
+  return (PLAYER_DEBUFF_META[key] && PLAYER_DEBUFF_META[key].name) || key;
+}
+function pdebuffChipTip(key) {
+  const v = typeof pDebuff === 'function' ? pDebuff(key) : 0;
+  const unit = key === 'fleeFlat' ? '' : '%';
+  const remain = pdebuffChipRemain(key);
+  return `${pdebuffChipLabel(key)} ${v > 0 ? '+' : ''}${v}${unit}\n${remain} 秒`;
+}
+function pdebuffChipIcon(key) {
+  return (PLAYER_DEBUFF_META[key] && PLAYER_DEBUFF_META[key].icon) || '🔻';
+}
+function buffChipTip(group) {
+  const head = (group[0].skillId && typeof buffSourceLabel === 'function') ? buffSourceLabel(group[0]) : '';
+  const body = group.map(buffEffectLine).join('\n');
+  return head ? head + '\n' + body : body;
+}
+/* 狀態圖示釘在戰鬥畫面右上，先往下排，排滿再往左開一欄。
+   一欄能放幾個看戰鬥區高度，沒有寫死個數。 */
+let buffTipKey = '';
+let buffTipText = '';
+let buffTipSticky = false;
+let buffTipTimer = 0;
+function paintBuffTip() {
+  const host = document.getElementById('battle-buffs');
+  if (!host) return;
+  host.querySelectorAll('.buff-chip.on').forEach(n => n.classList.remove('on'));
+  let tip = host.querySelector('.buff-tip');
+  if (!buffTipText) { if (tip) tip.remove(); return; }
+  const btn = buffTipKey && host.querySelector('.buff-chip[data-key="' + buffTipKey + '"]');
+  if (btn) btn.classList.add('on');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.className = 'buff-tip';
+    host.appendChild(tip);
+  }
+  tip.textContent = buffTipText;
+}
+function openBuffTip(btn, sticky) {
+  buffTipText = btn.getAttribute('data-tip') || '';
+  buffTipKey = btn.getAttribute('data-key') || '';
+  if (sticky) {
+    buffTipSticky = true;
+    clearTimeout(buffTipTimer);
+    buffTipTimer = setTimeout(() => {
+      buffTipSticky = false;
+      buffTipText = '';
+      buffTipKey = '';
+      paintBuffTip();
+    }, 3200);
+  }
+  paintBuffTip();
+}
+function leaveBuffTip() {
+  if (buffTipSticky) return;
+  buffTipText = '';
+  buffTipKey = '';
+  paintBuffTip();
+}
 function updateBuffCountdown() {
-  const el = document.getElementById('active-buffs');
-  if (!el) return;
-  if (!state.buffs || state.buffs.length === 0) {
-    el.innerHTML = '';
+  const el = document.getElementById('battle-buffs');
+  if (!el || !state) return;
+  const list = state.buffs || [];
+  const debKeys = typeof pDebuffList === 'function' ? pDebuffList() : [];
+  if (!list.length && !debKeys.length) {
+    if (el.childElementCount) el.innerHTML = '';
+    buffTipText = '';
     return;
   }
-  const buffNames = { aspd: '攻速', atk: '攻擊', def: '防禦', flee: '迴避', gold: '金錢', crit: '暴擊', hit: '命中', block: '格擋',
-    weaponatk: '裝備ATK', eledmg_poison: '毒傷害', meltdown: '野蠻凶砍', spawnspeed: '生怪加速',
-    reflect: '反射', providence: '神祐之光',
-    perfectdodge: '完全迴避', critdmg: '暴擊傷害', maxhppct: '最大HP', maxsppct: '最大SP',
-    skillcd: '技能冷卻', exp: '經驗值', atkflat: 'ATK', defflat: 'DEF', spcost: '技能SP消耗',
-    songelereduce: '四屬性耐性', songailresist: '異常狀態抗性', gemfree: '魔力礦石',
-    dontforgetme: '勿忘我', dmgtaken: '受傷減免',
-    eleweapon: '武器屬性', eledmg_fire: '火傷害', eledmg_water: '水傷害',
-    eledmg_wind: '風傷害', eledmg_earth: '地傷害', eleresist: '屬性抵抗' };
-  el.innerHTML = state.buffs.map(b => {
-    const name = buffNames[b.type] || b.type;
-    const remain = Math.ceil(b.msRemaining / 1000);
-    const bonus = b.flatBonus ? `+${b.flatBonus}` : `×${b.mult.toFixed(2)}`;
-    return `<span class="buff-tag">${name} ${bonus} (${remain}s)</span>`;
+  const groups = buffChipGroups(list);
+  const sig = groups.map(g => {
+    const key = buffChipKey(g);
+    const remain = buffChipRemain(g);
+    return key + ':' + remain + ':' + g.map(b => b.type).join(',');
+  }).join('|') + '|D:' + debKeys.map(k => k + ':' + pdebuffChipRemain(k)).join(',');
+  if (el.dataset.sig === sig) return;
+  el.dataset.sig = sig;
+  let html = groups.map(g => {
+    const label = buffChipLabel(g);
+    const remain = buffChipRemain(g);
+    const tip = buffChipTip(g).replace(/&/g, '＆').replace(/"/g, '＂').replace(/</g, '＜').replace(/\n/g, '&#10;');
+    const key = buffChipKey(g).replace(/"/g, '');
+    return `<button type="button" class="buff-chip" data-key="${key}" data-tip="${tip}" onclick="openBuffTip(this, true)" onmouseenter="openBuffTip(this, false)" onmouseleave="leaveBuffTip()">${label.slice(0, 1)}<span class="buff-chip-t">${remain}</span></button>`;
   }).join('');
+  html += debKeys.map(k => {
+    const remain = pdebuffChipRemain(k);
+    const tip = pdebuffChipTip(k).replace(/&/g, '＆').replace(/"/g, '＂').replace(/</g, '＜').replace(/\n/g, '&#10;');
+    const key = ('d:' + k).replace(/"/g, '');
+    return `<button type="button" class="buff-chip debuff" data-key="${key}" data-tip="${tip}" onclick="openBuffTip(this, true)" onmouseenter="openBuffTip(this, false)" onmouseleave="leaveBuffTip()">${pdebuffChipIcon(k)}<span class="buff-chip-t">${remain}</span></button>`;
+  }).join('');
+  el.innerHTML = html;
+  paintBuffTip();
 }
 
 function renderAll() {
@@ -839,8 +1171,42 @@ function renderAll() {
   renderLog();
 }
 
+const TAB_GROUP = {
+  map: 'fight', autobattle: 'fight', quests: 'fight',
+  character: 'grow', skills: 'grow', jobtree: 'grow',
+  inventory: 'gear', equip: 'gear',
+  codex: 'social', achievements: 'social', pets: 'social'
+};
+const TAB_GROUP_FIRST = { fight: 'map', grow: 'character', gear: 'inventory', social: 'codex' };
+function setTabGroup(g) {
+  const nav = document.querySelector('.tab-nav');
+  if (nav) {
+    nav.classList.remove('group-fight', 'group-grow', 'group-gear', 'group-social');
+    nav.classList.add('group-' + g);
+  }
+  document.querySelectorAll('.tab-group-btn').forEach(b => b.classList.toggle('active', b.dataset.group === g));
+}
+function openTabGroup(g) {
+  const first = TAB_GROUP_FIRST[g];
+  if (first) switchTab(first);
+  else setTabGroup(g);
+}
+function closeHudMenu() {
+  const m = document.getElementById('hud-menu');
+  if (m) m.classList.add('hidden');
+}
+function toggleHudMenu(ev) {
+  if (ev) ev.stopPropagation();
+  const m = document.getElementById('hud-menu');
+  if (!m) return;
+  m.classList.toggle('hidden');
+}
+document.addEventListener('click', closeHudMenu);
 function switchTab(name) {
   activeTab = name;
+  if (TAB_GROUP[name]) setTabGroup(TAB_GROUP[name]);
+  bagTipPinned = false;
+  hideEquipTooltip();
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
   if (name === 'map') renderMapTab();
@@ -852,24 +1218,29 @@ function switchTab(name) {
   if (name === 'character') renderCharacterTab();
   if (name === 'codex') renderCodexTab();
   if (name === 'achievements') renderAchievementsTab();
+  if (name === 'attendance') renderAttendanceTab();
+  if (name === 'quests') renderQuestsTab();
+  if (name === 'pets') renderPetsTab();
 }
 
 function pct(a, b) { return Math.max(0, Math.min(100, (a / b) * 100)); }
+function expPctLabel(cur, need) {
+  if (!(need > 0)) return '100.00';
+  const p = Math.max(0, Math.min(100, (cur || 0) / need * 100));
+  return p.toFixed(2);
+}
 
 function renderTopBar() {
   const job = currentJob();
+  const bCap = state.baseLevel >= baseLevelCapOf();
+  const jCap = state.jobLevel >= job.jobLevelMax;
+  const bPct = bCap ? '100.00' : expPctLabel(state.baseExp, expToNextBaseLevel(state.baseLevel));
+  const jPct = jCap ? '100.00' : expPctLabel(state.jobExp, expToNextJobLevel(state.jobLevel, job.tier));
   document.getElementById('hud-name').textContent = state.name;
-  document.getElementById('hud-job').textContent = `${job.icon} ${job.name}`;
-  document.getElementById('hud-lv').textContent = `Lv.${state.baseLevel} / 職業Lv.${state.jobLevel}`;
-  document.getElementById('hud-gold').textContent = `${state.gold} 鋅幣`;
-
-  setBar('hud-hp-bar', 'hud-hp-text', state.hp, state.maxHp, 'HP');
-  setBar('hud-sp-bar', 'hud-sp-text', state.sp, state.maxSp, 'SP');
-  const bexpNeed = expToNextBaseLevel(state.baseLevel);
-  setBar('hud-bexp-bar', 'hud-bexp-text', state.baseExp, bexpNeed, 'EXP');
-  const jexpNeed = expToNextJobLevel(state.jobLevel, job.tier);
-  const jobCapped = state.jobLevel >= job.jobLevelMax;
-  setBar('hud-jexp-bar', 'hud-jexp-text', jobCapped ? 1 : state.jobExp, jobCapped ? 1 : jexpNeed, jobCapped ? '職業已滿' : 'JOB EXP');
+  document.getElementById('hud-job').textContent = `${job.name} Lv. ${state.baseLevel} ( ${bPct}% ) / JLv. ${state.jobLevel} (${jPct}%)`;
+  document.getElementById('hud-gold').textContent = `Zeny : ${Number(state.gold || 0).toLocaleString()}`;
+  paintHudBar('hud-hp-bar', 'hud-hp-text', 'hud-hp-pct', state.hp, state.maxHp);
+  paintHudBar('hud-sp-bar', 'hud-sp-text', 'hud-sp-pct', state.sp, state.maxSp);
 
   const jobBtn = document.getElementById('btn-jobchange-alert');
   const canAny = job.next.some(canJobChange);
@@ -900,6 +1271,20 @@ function renderTopBar() {
   }
 }
 
+function paintHudBar(barId, textId, pctId, val, max) {
+  const m = Math.max(0, max || 0);
+  const v = Math.max(0, Math.floor(val || 0));
+  const p = m > 0 ? Math.max(0, Math.min(100, v / m * 100)) : 0;
+  const bar = document.getElementById(barId);
+  const text = document.getElementById(textId);
+  const pctEl = document.getElementById(pctId);
+  if (bar) {
+    bar.style.width = p + '%';
+    bar.classList.toggle('low', p < 25);
+  }
+  if (text) text.textContent = `${v} / ${Math.floor(m)}`;
+  if (pctEl) pctEl.textContent = `${Math.round(p)}%`;
+}
 function setBar(barId, textId, val, max, label) {
   document.getElementById(barId).style.width = pct(val, max) + '%';
   document.getElementById(textId).textContent = `${label} ${Math.max(0, Math.floor(val))}/${Math.floor(max)}`;
@@ -969,6 +1354,14 @@ function getAnimKey() {
 function updatePlayerSprite() {
   const img = document.getElementById('player-img');
   if (!img) return;
+  /* 紙娃娃在場時這張靜圖必須保持隱藏。
+     載圖的 Promise 若在紙娃娃起來之後才回來，會把 display 清掉，
+     player_swordsman.svg 就疊在紙娃娃後面。 */
+  if (bfPaper || bfPlayerSheet) {
+    img.style.display = 'none';
+    if (animCanvas) animCanvas.style.display = 'none';
+    return;
+  }
   const key = getAnimKey();
 
   /* 已經在播這一組就什麼都不做。
@@ -976,6 +1369,7 @@ function updatePlayerSprite() {
      tick 呼叫（見 onTickUI），不然得在每一個會動到裝備的地方各補一次呼叫，
      而自動裝備、賣掉身上的裝備那些路徑遲早會漏掉一條。 */
   if (key === baseAnimKey && animCanvas && animCanvas.style.display !== 'none') return;
+  if (bfPlayerSheet) return;
 
   if (animFramesLoaded[key]) {
     showAnimCanvas(key);
@@ -988,6 +1382,11 @@ function updatePlayerSprite() {
     return;
   }
   loadAnimFrames(key).then(() => {
+    if (bfPaper || bfPlayerSheet) {
+      img.style.display = 'none';
+      if (animCanvas) animCanvas.style.display = 'none';
+      return;
+    }
     if (animFrameImages[key] && animFrameImages[key].length) {
       showAnimCanvas(key);
     } else {
@@ -1020,6 +1419,8 @@ const SPRITE_BOX_W = 120;
    拉出來變成一支滑桿，玩家自己拉到順眼為止。改動時要清掉 spriteMetrics
    讓每個 key 重新量一次，不然舊的倍率會留著。 */
 const SPRITE_CHAR_H_BASE = 84;
+/* 戰場上的紙娃娃。跟隊友同一身高，避免主角特別大。 */
+const BATTLE_CHAR_H = Math.round(150 * 0.75 * 0.75 * 0.82);
 function spriteScalePct() {
   const s = (typeof allyOwnerState === 'function') ? allyOwnerState() : state;
   return (s && s.spriteScalePct != null) ? s.spriteScalePct : 100;
@@ -1233,7 +1634,8 @@ async function loadAnimFrames(key) {
 }
 
 function playAttackAnim() {
-  if (castingAnim) return;   // 施放姿勢優先：兩組動作共用同一張 canvas，不讓路會互相蓋掉
+  if (castingAnim) return;
+  if (playPlayerSheetAttack()) return;
   if (!currentAnimKey || !animFrameImages[currentAnimKey] || !animFrameImages[currentAnimKey].length) return;
   stopAnim();
   animating = true;
@@ -1594,61 +1996,44 @@ let lastMonsterDefId = null; // 追蹤目前顯示的怪物，避免重複渲染
 function renderMonster() {
   const wrap = document.getElementById('monster-area');
   if (!wrap) return;
+  const graves = takeMonsterGraves(wrap);
   if (!state.monsters || state.monsters.length === 0) {
     lastMonsterDefId = null;
     const map = currentMap();
     if (map && map.monsters.length === 0) {
-      wrap.innerHTML = '<div class="monster-empty monster-safe">🏠 安全城鎮</div>';
+      wrap.innerHTML = '';
     } else {
       wrap.innerHTML = '<div class="monster-empty">搜尋中…</div>';
     }
+    putMonsterGraves(wrap, graves);
+    layoutBattlefield();
     return;
   }
 
-  // 站位配置：左玩家 | 中1號目標 | 右側2~5號錯落
-  const count = state.monsters.length;
   let html = '<div class="monster-semi-circle">';
-
-  // 右側怪物站位（前後錯落）
-  const rightPositions = [
-    { x: 72, y: 15, front: true },   // ② 上方，稍靠左（前）
-    { x: 82, y: 35, front: false },  // ③ 中上，稍靠右（後）
-    { x: 72, y: 55, front: true },   // ④ 中下，稍靠左（前）
-    { x: 82, y: 75, front: false },  // ⑤ 下方，稍靠右（後）
-  ];
 
   state.monsters.forEach((mon, idx) => {
     const def = MONSTERS[mon.defId];
     const elemIcon = ELEMENT_ICONS[def.element] || '⚪';
     const isTarget = idx === 0;
-
-    let x, y, size;
-    if (isTarget) {
-      // 中間：1號目標
-      x = 50;
-      y = 50;
-      size = 100;
-    } else {
-      // 右側：2~5號錯落
-      const rightIdx = Math.min(idx - 1, rightPositions.length - 1);
-      const pos = rightPositions[rightIdx];
-      x = pos.x;
-      y = pos.y;
-      size = 65;
-    }
+    const big = !!(def && (def.isMvp || def.isBoss));
+    const size = big ? 100 : (isTarget ? 70 : 56);
 
     html += `
-      <div class="monster-slot ${isTarget ? 'target' : ''}" id="monster-slot-${mon.id}" style="left:${x}%;top:${y}%;transform:translate(-50%,-50%);">
-        <img src="${monsterImgSrc(mon.defId)}" alt="${def.name}" style="width:${size}px;height:${size}px;" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">
+      <div class="monster-slot ${isTarget ? 'target' : ''}" id="monster-slot-${mon.id}" style="transform:translate(-50%,-50%);">
+        <img src="${monsterImgSrc(mon.defId)}" data-def="${mon.defId}" alt="${def.name}" style="width:${size}px;height:${size}px;" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">
         <div class="monster-name" style="font-size:${isTarget ? '12' : '10'}px;">${def.name} Lv.${def.level} <span class="monster-element elem-${def.element}">${elemIcon}</span></div>
-        <div class="monster-hp-bar" style="width:${isTarget ? 80 : 56}px;"><div id="monster-hp-bar-${mon.id}" class="monster-hp-fill" style="width:${pct(mon.hp, mon.maxHp)}%"></div></div>
+        <div class="monster-hp-bar" style="width:${big ? 80 : (isTarget ? 60 : 48)}px;"><div id="monster-hp-bar-${mon.id}" class="monster-hp-fill" style="width:${pct(mon.hp, mon.maxHp)}%"></div></div>
         <div id="monster-hp-text-${mon.id}" style="font-size:10px;color:var(--ink-dim);">${Math.floor(mon.hp)}/${mon.maxHp}</div>
         <div id="monster-ail-${mon.id}" class="monster-ail"></div>
       </div>`;
   });
   html += '</div>';
   wrap.innerHTML = html;
+  putMonsterGraves(wrap, graves);
+  wrap.querySelectorAll('.monster-slot:not(.dying) img[data-def]').forEach(img => mobAnimBind(img));
   lastMonsterDefId = state.monsters.map(m => m.id).join(',');
+  layoutBattlefield();
 }
 
 // 只更新 HP 條
@@ -1692,6 +2077,7 @@ let _floatDelayMs = 0; // 累積延遲，讓連續飄字錯開
    而且另外兩處乾脆自己 createElement 拼一顆飄字出來——等於同一件事有三份實作，
    偏移錯開、暴擊特效、存活時間都對不上。統一走這支。 */
 function showDamageFloatAt(monsterInstanceId, dmg, type, element) {
+  if (type !== 'heal' && type !== 'miss') playMonsterHit(monsterInstanceId);
   const prev = pendingFloatTargetId;
   pendingFloatTargetId = monsterInstanceId;
   try { showDamageFloat(dmg, type, element); }
@@ -1808,6 +2194,31 @@ function showElementFloat(monsterInstanceId, element, mult) {
 const MAX_LIVE_FLOATS = 48;
 let _liveFloats = 0;
 
+function showSkillNameFloat(name, lv) {
+  if (!name) return;
+  if (typeof skillDisplayName === 'function') name = skillDisplayName(name);
+  const ally = (typeof _allyActing !== 'undefined') ? _allyActing : null;
+  let host = null;
+  if (ally) {
+    const owner = (typeof _allyOwnerState !== 'undefined' && _allyOwnerState) || state;
+    const list = (owner && owner.allies) || [];
+    const i = list.indexOf(ally);
+    if (i >= 0) host = document.getElementById('ally-sprite-' + i);
+  }
+  if (!host) host = document.getElementById('player-sprite');
+  if (!host) return;
+  const paper = host.querySelector('canvas');
+  if (paper && paper.offsetWidth) host = paper;
+  const rect = host.getBoundingClientRect();
+  if (!rect.width && !rect.height) return;
+  const el = document.createElement('div');
+  el.className = 'skill-name-float';
+  el.textContent = lv ? (name + ' Lv' + lv) : name;
+  el.style.left = (rect.left + rect.width / 2) + 'px';
+  el.style.top = rect.top + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 950);
+}
 function showDamageFloat(dmg, type, element) {
   if (_liveFloats >= MAX_LIVE_FLOATS && type !== 'crit') return;
   // 找到目標怪物 DOM 元素來取得座標
@@ -1839,11 +2250,11 @@ function showDamageFloat(dmg, type, element) {
   if (targetEl) {
     const rect = targetEl.getBoundingClientRect();
     // 每次呼叫自動遞增偏移，讓連續傷害數字錯開
-    const offsetX = (_floatDelayMs % 5) * 18 - 36 + (Math.random() - 0.5) * 10;
-    const offsetY = -(_floatDelayMs % 5) * 14;
+    const offsetX = (Math.random() - 0.5) * 8;
     el.style.position = 'fixed';
-    el.style.left = (rect.left + rect.width / 2 + offsetX) + 'px';
-    el.style.top = (rect.top - 10 + offsetY) + 'px';
+    el.style.left = (rect.left + rect.width * 0.55 + offsetX) + 'px';
+    el.style.top = (rect.top + rect.height * 0.28) + 'px';
+    _lastFloatAnchor = { left: parseFloat(el.style.left), top: parseFloat(el.style.top), at: Date.now() };
     el.style.animationDelay = (_floatDelayMs * 30) + 'ms';
     document.body.appendChild(el);
     _floatDelayMs++;
@@ -1863,8 +2274,885 @@ function showDamageFloat(dmg, type, element) {
   setTimeout(() => { el.remove(); _liveFloats--; }, 1500);
 }
 
+/* 白字出生點。黃字要接在它往上淡出的那段，不另找一個位置。 */
+let _lastFloatAnchor = null;
+
+/* 畫面上同時只留一顆黃字。新的要出來時，舊的立刻拿掉。 */
+let _comboTotalEl = null;
+let _comboTotalTimer = 0;
+
+/* 多段攻擊的黃字合計。停在白字淡出的高度，不淡出，時間到直接消失。 */
+/* 黃字釘在那一隻怪的頭上。白字各自往右下拋，不帶著黃字一起走。 */
+function pinComboTotal(el) {
+  const node = el || _comboTotalEl;
+  if (!node) return;
+  let target = node._monId != null ? document.getElementById('monster-slot-' + node._monId) : null;
+  if (!target) target = document.querySelector('.monster-slot.target');
+  if (!target) return;
+  const rect = target.getBoundingClientRect();
+  node.style.left = (rect.left + rect.width / 2) + 'px';
+  node.style.top = (rect.top - 4) + 'px';
+}
+function showComboTotal(monsterId, total) {
+  const n = Math.round(total);
+  if (!(n > 0)) return;
+  clearTimeout(_comboTotalTimer);
+  _comboTotalTimer = setTimeout(() => {
+    if (_comboTotalEl) { _comboTotalEl.remove(); _comboTotalEl = null; }
+    let targetEl = monsterId != null ? document.getElementById('monster-slot-' + monsterId) : null;
+    if (!targetEl) targetEl = document.querySelector('.monster-slot.target');
+    if (!targetEl) return;
+    const el = document.createElement('div');
+    el.className = 'damage-float combo-total';
+    el.textContent = String(n);
+    el._monId = monsterId;
+    el.style.position = 'fixed';
+    pinComboTotal(el);
+    document.body.appendChild(el);
+    _comboTotalEl = el;
+    const mine = el;
+    _comboTotalTimer = setTimeout(() => {
+      if (_comboTotalEl !== mine) return;
+      mine.remove();
+      _comboTotalEl = null;
+    }, 700);
+  }, 320);
+}
+
+/* 一發技能拆成多段數字（二連矢、火箭術）。實際扣血仍是呼叫端算好的 total，這裡只拆顯示。 */
+function showSkillHitNumbers(monsterId, total, hits, element, crit) {
+  const sum = Math.round(total);
+  let n = hits | 0;
+  if (n < 1) n = 1;
+  if (sum > 0 && sum < n) n = sum;
+  if (n <= 1 || typeof showDamageFloatAt !== 'function') {
+    if (typeof showDamageFloatAt === 'function') showDamageFloatAt(monsterId, '-' + sum, crit ? 'crit' : 'normal', element);
+    return;
+  }
+  const each = Math.floor(sum / n);
+  let rest = sum;
+  for (let i = 0; i < n; i++) {
+    const part = i === n - 1 ? rest : each;
+    rest -= part;
+    if (part > 0) showDamageFloatAt(monsterId, '-' + part, crit ? 'crit' : 'normal', element);
+  }
+  showComboTotal(monsterId, sum);
+}
+
+/* 怪物圖集。images/mob_anim/<imgId>.png 一格一幀，index.json 標 idle／walk／hit／die。
+   沒有圖檔的怪維持原本的靜態圖。
+   場上還沒有真正的位移，走路幀是上下跳的，站著播會狂跳。活著先循環待機。
+   被打播一次受擊，死掉停在最後一幀。 */
+const MOB_ANIM_DIR = 'images/mob_anim/';
+const MOB_ANIM_BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const MOB_ANIM_ONCE = { hit: 1, die: 1 };
+let MOB_ANIM = null;
+let mobAnimTimer = null;
+const mobAnimMiss = {};
+
+function applyMobAnimTable(j) {
+  if (!j) return;
+  MOB_ANIM = j;
+  document.querySelectorAll('.monster-slot:not(.dying) img[data-def]').forEach(mobAnimBind);
+}
+function loadMobAnim() {
+  /* 直接點開 index.html 時瀏覽器不允許 fetch 讀本機 json，改吃 script 掛上的表。 */
+  if (window.MOB_ANIM_TABLE) applyMobAnimTable(window.MOB_ANIM_TABLE);
+  if (location.protocol === 'file:') return;
+  fetch(MOB_ANIM_DIR + 'index.json').then(r => r.ok ? r.json() : null).then(j => {
+    if (j) applyMobAnimTable(j);
+  }).catch(() => {});
+}
+function mobLoopAct(d) {
+  if (d.actions.idle) return 'idle';
+  if (d.actions.walk) return 'walk';
+  return null;
+}
+function mobAnimEnsureRows(d) {
+  if (d._rows) return;
+  let n = 0;
+  Object.keys(d.actions).forEach(k => { n += d.actions[k].frames; });
+  d._total = n;
+  d._rows = Math.ceil(n / d.cols);
+}
+function mobAnimBind(img) {
+  if (!MOB_ANIM || !img || img._maDef || img._maProbe) return;
+  const defId = img.getAttribute('data-def');
+  const mon = defId && MONSTERS[defId];
+  const id = mon && mon.imgId;
+  if (!id || mobAnimMiss[id]) return;
+  const d = MOB_ANIM[String(id)];
+  if (!d || !d.actions) return;
+  img._maProbe = true;
+  const im = new Image();
+  im.onload = () => {
+    if (!img.isConnected) return;
+    mobAnimApply(img, d, id);
+    const slot = img.closest('.monster-slot');
+    mobAnimPlay(img, slot && slot.classList.contains('dying') ? 'die' : mobLoopAct(d), true);
+  };
+  im.onerror = () => { mobAnimMiss[id] = 1; };
+  im.src = MOB_ANIM_DIR + id + '.png';
+}
+function mobAnimApply(img, d, id) {
+  mobAnimEnsureRows(d);
+  img._maDef = d;
+  if (!img._maBox0) img._maBox0 = [img.clientWidth || 80, img.clientHeight || img.clientWidth || 80];
+  const bw = img._maBox0[0], bh = img._maBox0[1];
+  let k = Math.min(bw / d.fit[0], bh / d.fit[1]);
+  const over = Math.max(d.cell[0] * k / (bw * 2.2), d.cell[1] * k / (bh * 2.2), 1);
+  k /= over;
+  img._maK = k;
+  img.src = MOB_ANIM_BLANK;
+  img.style.backgroundImage = 'url("' + MOB_ANIM_DIR + id + '.png")';
+  img.style.backgroundRepeat = 'no-repeat';
+  img.style.width = Math.round(d.cell[0] * k) + 'px';
+  img.style.height = Math.round(d.cell[1] * k) + 'px';
+  img.style.marginBottom = Math.round((bh - d.cell[1] * k) / 2) + 'px';
+  img._maAct = '';
+  img._maFrame = -1;
+  if (!mobAnimTimer) mobAnimTimer = setInterval(mobAnimTick, 33);
+}
+function mobAnimPlay(img, act, force) {
+  const d = img && img._maDef;
+  if (!d || !act) return;
+  let a = d.actions[act];
+  if (!a) {
+    act = mobLoopAct(d);
+    a = act && d.actions[act];
+    if (!a) return;
+  }
+  if (!force && img._maAct === act) return;
+  img._maAct = act;
+  img._maT0 = Date.now();
+  img._maFrame = -1;
+}
+function mobAnimDraw(img, d, idx) {
+  if (img._maFrame === idx) return;
+  img._maFrame = idx;
+  const k = img._maK || 1, cw = d.cell[0] * k, ch = d.cell[1] * k;
+  const col = idx % d.cols, row = (idx / d.cols) | 0;
+  img.style.backgroundSize = (d.cols * cw).toFixed(1) + 'px ' + (d._rows * ch).toFixed(1) + 'px';
+  img.style.backgroundPosition = (-(col * cw)).toFixed(1) + 'px ' + (-(row * ch)).toFixed(1) + 'px';
+}
+function mobAnimTickSprites() {
+  const now = Date.now();
+  document.querySelectorAll('.monster-slot img').forEach(img => {
+    const d = img._maDef;
+    if (!d) return;
+    const a = d.actions[img._maAct];
+    if (!a) return;
+    const delay = a.delay * (img._maAct === 'walk' ? 2.4 : 1);
+    let n = ((now - img._maT0) / delay) | 0;
+    if (n >= a.frames) {
+      if (img._maAct === 'die') n = a.frames - 1;
+      else if (MOB_ANIM_ONCE[img._maAct]) {
+        mobAnimPlay(img, mobLoopAct(d), true);
+        return;
+      } else n = n % a.frames;
+    }
+    mobAnimDraw(img, d, a.start + n);
+  });
+}
+function playMonsterHit(id) {
+  const slot = document.getElementById('monster-slot-' + id);
+  const img = slot && slot.querySelector('img');
+  if (!img || !img._maDef || slot.classList.contains('dying')) return;
+  mobAnimPlay(img, 'hit', true);
+}
+function playMonsterDie(id) {
+  const slot = document.getElementById('monster-slot-' + id);
+  if (!slot || slot.classList.contains('dying')) return;
+  slot.classList.add('dying');
+  const bar = document.getElementById('monster-hp-bar-' + id);
+  const text = document.getElementById('monster-hp-text-' + id);
+  if (bar) bar.style.width = '0%';
+  if (text) {
+    const max = String(text.textContent || '').split('/')[1];
+    text.textContent = max ? ('0/' + max) : '0';
+  }
+  const img = slot.querySelector('img');
+  const die = img && img._maDef && img._maDef.actions.die;
+  const ms = die ? die.frames * die.delay : 280;
+  if (img && img._maDef) mobAnimPlay(img, 'die', true);
+  setTimeout(() => {
+    slot.style.opacity = '0';
+    setTimeout(() => slot.remove(), 280);
+  }, Math.max(0, ms - 80));
+}
+function takeMonsterGraves(wrap) {
+  const graves = [];
+  wrap.querySelectorAll('.monster-slot.dying').forEach(el => {
+    el.remove();
+    graves.push(el);
+  });
+  return graves;
+}
+function putMonsterGraves(wrap, graves) {
+  if (!graves || !graves.length) return;
+  let host = wrap.querySelector('.monster-semi-circle');
+  if (!host) {
+    host = document.createElement('div');
+    host.className = 'monster-semi-circle';
+    wrap.appendChild(host);
+  }
+  graves.forEach(el => { if (el.isConnected === false) host.appendChild(el); });
+}
+loadMobAnim();
+
+/* 戰場移動。座標是整張戰鬥場景的百分比。
+   怪沿自己到玩家的方向走近，停在攻擊距離。人在怪的左邊就朝右，在右邊就朝左。
+   近戰的人也朝怪走近。弓、樂器、鞭、槍、法杖、書，或正在自動放的魔法，人留在左側。
+   還有距離播走路，貼近後怪播攻擊。 */
+const BF_HOME = { x: 20, y: 64 };
+const BF_SPEED = 20;
+let bfPlayer = { x: BF_HOME.x, y: BF_HOME.y };
+let bfFaceRight = true;
+let bfLast = 0;
+let bfTimer = null;
+let bfPlayerSheet = false;
+let bfPl = null;
+
+function playerKeepsDistance() {
+  try {
+    const wid = getEquipBaseItemId('weapon');
+    if (typeof isBowWeapon === 'function' && isBowWeapon(wid)) return true;
+    const cat = typeof aspdCategoryOf === 'function' ? aspdCategoryOf(wid) : '';
+    if (cat === 'rod1' || cat === 'rod2' || cat === 'book' || cat === 'pistol' || cat === 'rifle' || cat === 'shotgun' || cat === 'gatling' || cat === 'grenade') return true;
+    const cfg = state.autoSkillConfig || {};
+    return [cfg.skillId, cfg.skillId2].some(id => {
+      const sk = id && typeof SKILLS !== 'undefined' && SKILLS[id];
+      return sk && (sk.type === 'magic' || sk.type === 'magic_aoe');
+    });
+  } catch (e) { return false; }
+}
+function bfClamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function sceneToLocal(parent, sx, sy) {
+  const scene = document.getElementById('battle-scene');
+  if (!scene || !parent) return null;
+  const s = scene.getBoundingClientRect();
+  const p = parent.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  return {
+    x: s.left + s.width * sx / 100 - p.left,
+    y: s.top + s.height * sy / 100 - p.top
+  };
+}
+function bfStep(cur, goal, dt) {
+  const dx = goal.x - cur.x, dy = goal.y - cur.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 0.35) return { x: goal.x, y: goal.y, moved: false };
+  const m = Math.min(dist, BF_SPEED * dt);
+  return { x: cur.x + dx / dist * m, y: cur.y + dy / dist * m, moved: true };
+}
+/* 沿著自己到對方的連線走近，停在 gap 外。每次目標只取剩餘距離的一半，
+   雙方同時走會在中間相遇，不會穿過去，也不會被拉到玩家的固定一側。 */
+function approachPoint(self, other, gap) {
+  const dx = other.x - self.x, dy = other.y - self.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist <= gap + 0.4) return { x: self.x, y: self.y };
+  const surplus = (dist - gap) * 0.5;
+  const ux = dx / dist, uy = dy / dist;
+  return {
+    x: bfClamp(self.x + ux * surplus, 6, 94),
+    y: bfClamp(self.y + uy * surplus, 10, 90)
+  };
+}
+function layoutBattlefield() {
+  if (typeof state === 'undefined' || !state) return;
+  const now = Date.now();
+  const dt = bfLast ? Math.min(0.12, (now - bfLast) / 1000) : 0;
+  bfLast = now;
+  const ps = document.getElementById('player-sprite');
+  const mons = (state && state.monsters) || [];
+  let town = false;
+  try { town = typeof isInTown === 'function' && isInTown(); } catch (e) { town = false; }
+  const close = !town && mons.length > 0 && !playerKeepsDistance();
+  const lead = mons[0];
+  let goal = BF_HOME;
+  if (close && lead && Number.isFinite(lead.bx) && Number.isFinite(lead.by)) {
+    goal = approachPoint(bfPlayer, { x: lead.bx, y: lead.by }, 16);
+  }
+  const stepped = dt ? bfStep(bfPlayer, goal, dt) : { x: bfPlayer.x, y: bfPlayer.y, moved: false };
+  bfPlayer = { x: stepped.x, y: stepped.y };
+  if (ps && ps.offsetParent) {
+    const local = sceneToLocal(ps.offsetParent, bfPlayer.x, bfPlayer.y);
+    if (local) {
+      ps.classList.add('bf-on');
+      ps.style.position = 'absolute';
+      ps.style.margin = '0';
+      ps.style.left = (local.x - ps.offsetWidth / 2) + 'px';
+      ps.style.top = (local.y - ps.offsetHeight) + 'px';
+    }
+  }
+  const faceRight = !lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x;
+  syncPlayerBattleAnim(stepped.moved && !town);
+  pinComboTotal();
+  faceBattlePlayer(faceRight);
+  mons.forEach((mon, i) => {
+    if (!Number.isFinite(mon.bx) || !Number.isFinite(mon.by)) {
+      mon.bx = 36 + Math.random() * 54;
+      mon.by = 18 + Math.random() * 64;
+    }
+    const slot = document.getElementById('monster-slot-' + mon.id);
+    if (!slot || slot.classList.contains('dying')) return;
+    const gap = 16 + (i % 3) * 6;
+    const meet = approachPoint({ x: mon.bx, y: mon.by }, bfPlayer, gap);
+    const mv = dt ? bfStep({ x: mon.bx, y: mon.by }, meet, dt) : { x: mon.bx, y: mon.by, moved: false };
+    const dx = mv.x - mon.bx;
+    mon.bx = mv.x; mon.by = mv.y;
+    const parent = slot.offsetParent || slot.parentElement;
+    const local = sceneToLocal(parent, mon.bx, mon.by);
+    if (local) {
+      slot.style.transition = 'none';
+      slot.style.left = local.x + 'px';
+      slot.style.top = local.y + 'px';
+    }
+    const img = slot.querySelector('img');
+    if (!img) return;
+    const faceLeft = Math.abs(dx) > 0.08 ? dx < 0 : bfPlayer.x <= mon.bx;
+    const nativeLeft = !!img._maDef;
+    img.style.transform = (faceLeft !== nativeLeft) ? 'scaleX(-1)' : '';
+    if (img._maDef && img._maAct !== 'hit' && img._maAct !== 'die') {
+      const arrived = Math.hypot(bfPlayer.x - mon.bx, bfPlayer.y - mon.by) <= gap + 0.6;
+      mobAnimPlay(img, mv.moved ? 'walk' : (arrived ? 'attack' : 'idle'), false);
+    }
+  });
+}
+function facingFlip(act, faceRight) {
+  // 待機原圖就用，不因朝右再翻一次。
+  if (act === 'idle') return false;
+  const side = /_s$/.test(act || '');
+  return side ? !faceRight : !!faceRight;
+}
+function applyPaperTransform(paper, flip) {
+  const bw = paper.width || 1;
+  const cssW = parseFloat(paper.style.width) || bw;
+  const ax = Math.round((paper._ox || 0) * cssW / bw);
+  paper.style.transformOrigin = ax + 'px 50%';
+  paper.style.transform = 'translateX(' + (-ax) + 'px)' + (flip ? ' scaleX(-1)' : '');
+}
+function faceBattlePlayer(faceRight) {
+  bfFaceRight = !!faceRight;
+  if (bfPaper) {
+    const paper = document.getElementById('player-paper');
+    if (paper) {
+      /* 用畫面上那一格的動作。攻擊剛換動作時，下一格還沒畫上去，先不要翻。 */
+      const act = paper._plAct || _pd.act || '';
+      applyPaperTransform(paper, facingFlip(act, bfFaceRight));
+    }
+    return;
+  }
+  const img = document.getElementById('player-img');
+  if (bfPlayerSheet && img) {
+    /* 側面圖（_s）朝右，正面站立朝左。翻面跟已經畫出來的那一格同一個動作。 */
+    const act = img._plShown || img._plAct || '';
+    const flip = facingFlip(act, bfFaceRight);
+    img.style.transform = (img._bfBaseTf || '') + (flip ? ' scaleX(-1)' : '');
+    return;
+  }
+  const canvas = (typeof animCanvas !== 'undefined') ? animCanvas : null;
+  if (canvas) canvas.style.transform = faceRight ? '' : 'scaleX(-1)';
+}
+const PAPERDOLL_HEAD_SLOTS = ['head_bottom', 'head_mid', 'head_top'];
+const _pd = { act: '', t0: 0, frame: -1, once: 0, key: '', parts: null };
+const _pdImg = {};
+let bfPaper = false;
+
+function paperdollImage(id) {
+  let im = _pdImg[id];
+  if (im) return im;
+  im = new Image();
+  im.src = window.PAPERDOLL.img[id].src;
+  _pdImg[id] = im;
+  return im;
+}
+function paperdollFrame(part, act, fi) {
+  const seq = window.PAPERDOLL.clip[part] && window.PAPERDOLL.clip[part][act];
+  if (!seq || !seq.length) return null;
+  return seq[Math.min(fi, seq.length - 1)];
+}
+function paperdollFrameCount(part, act) {
+  const seq = window.PAPERDOLL.clip[part] && window.PAPERDOLL.clip[part][act];
+  return seq ? seq.length : 0;
+}
+function paperdollJobGender() {
+  const job = (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[state.jobId]) || state.jobId || 'novice';
+  const gender = state.gender === 'female' ? 'female' : 'male';
+  return { job: job, gender: gender };
+}
+// 這個職業自己沒有這種武器的紙娃娃時，外觀改播短劍。頭盔照常疊。
+function visualWeaponCat(job, gender, cat) {
+  const pd = window.PAPERDOLL;
+  if (!pd || !pd.clip || !cat || cat === 'bare') return cat || 'bare';
+  // 女劍士的雙手劍圖層是空的，外觀改用同一職業的單手劍。
+  if (job === 'swordsman' && gender === 'female' && cat === 'sword2') cat = 'sword1';
+  if (pd.clip['weapon/' + job + '/' + gender + '/' + cat]) return cat;
+  if (pd.clip['weapon/' + job + '/' + gender + '/dagger']) return 'dagger';
+  return cat;
+}
+function hairNow() {
+  const style = (state && state.hairStyle) || 9;
+  const color = (state && state.hairColor != null) ? state.hairColor : 5;
+  return { style: style | 0, color: color | 0 };
+}
+function paperdollHeadId(gender) {
+  const pd = window.PAPERDOLL;
+  if (!pd || !pd.clip) return null;
+  const h = hairNow();
+  const keyed = 'head/' + gender + '/' + h.style + '/' + h.color;
+  if (pd.clip[keyed]) return keyed;
+  const plain = 'head/' + gender;
+  return pd.clip[plain] ? plain : null;
+}
+function paperdollWeaponPart(job, gender) {
+  const pd = window.PAPERDOLL;
+  if (!pd || !pd.clip || typeof getEquipBaseItemId !== 'function' || typeof aspdCategoryOf !== 'function') return null;
+  let itemId = null;
+  try { itemId = getEquipBaseItemId('weapon'); } catch (e) { return null; }
+  let cat = 'bare';
+  try { cat = aspdCategoryOf(itemId) || 'bare'; } catch (e) { return null; }
+  cat = visualWeaponCat(job, gender, cat);
+  if (!cat || cat === 'bare') return null;
+  const seen = {};
+  while (job && !seen[job]) {
+    seen[job] = 1;
+    const id = 'weapon/' + job + '/' + gender + '/' + cat;
+    if (pd.clip[id]) return id;
+    const node = (typeof JOB_TREE !== 'undefined') && JOB_TREE[job];
+    job = node && node.parent;
+  }
+  return null;
+}
+function equipRefItem(who, slot) {
+  const ref = who && who.equip && who.equip[slot];
+  if (ref && who.instances && who.instances[ref]) return who.instances[ref].item;
+  return ref || null;
+}
+function paperdollWeaponId(job, gender, itemId) {
+  const pd = window.PAPERDOLL;
+  if (!pd || !pd.clip) return null;
+  let cat = 'bare';
+  try { cat = (typeof aspdCategoryOf === 'function' && aspdCategoryOf(itemId)) || 'bare'; } catch (e) { cat = 'bare'; }
+  cat = visualWeaponCat(job, gender, cat);
+  if (!cat || cat === 'bare') return null;
+  const seen = {};
+  let j = job;
+  while (j && !seen[j]) {
+    seen[j] = 1;
+    const id = 'weapon/' + j + '/' + gender + '/' + cat;
+    if (pd.clip[id]) return id;
+    const node = (typeof JOB_TREE !== 'undefined') && JOB_TREE[j];
+    j = node && node.parent;
+  }
+  return null;
+}
+function paperdollLookParts(who) {
+  const pd = window.PAPERDOLL;
+  if (!pd || !pd.clip || !who) return null;
+  const job = (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[who.jobId]) || who.jobId || 'novice';
+  const gender = who.gender === 'female' ? 'female' : 'male';
+  const body = 'body/' + job + '/' + gender;
+  if (!pd.clip[body]) return null;
+  const parts = [body];
+  const style = who.hairStyle || 9;
+  const color = who.hairColor != null ? who.hairColor : 5;
+  const keyed = 'head/' + gender + '/' + (style | 0) + '/' + (color | 0);
+  const plain = 'head/' + gender;
+  if (pd.clip[keyed]) parts.push(keyed);
+  else if (pd.clip[plain]) parts.push(plain);
+  if (pd.view && typeof ITEMS !== 'undefined') {
+    for (let s = 0; s < PAPERDOLL_HEAD_SLOTS.length; s++) {
+      const itemId = equipRefItem(who, PAPERDOLL_HEAD_SLOTS[s]);
+      const it = itemId && ITEMS[itemId];
+      const view = it && pd.view[String(it.imgId)];
+      if (!view) continue;
+      const hat = 'hat/' + view + '/' + gender;
+      if (pd.clip[hat]) parts.push(hat);
+    }
+  }
+  const weapon = paperdollWeaponId(job, gender, equipRefItem(who, 'weapon'));
+  if (weapon) parts.push(weapon);
+  return parts;
+}
+function paperdollHeadViews() {
+  const pd = window.PAPERDOLL;
+  if (!pd || !pd.view || typeof getEquipBaseItemId !== 'function' || typeof ITEMS === 'undefined') return null;
+  const views = [];
+  for (let i = 0; i < PAPERDOLL_HEAD_SLOTS.length; i++) {
+    let itemId = null;
+    try { itemId = getEquipBaseItemId(PAPERDOLL_HEAD_SLOTS[i]); } catch (e) { itemId = null; }
+    const it = itemId && ITEMS[itemId];
+    const view = it && pd.view[String(it.imgId)];
+    views.push(view || 0);
+  }
+  return views;
+}
+function paperdollParts() {
+  const views = paperdollHeadViews();
+  const pd = window.PAPERDOLL;
+  if (!views || !pd || !pd.clip || !state) return null;
+  const who = paperdollJobGender();
+  const body = 'body/' + who.job + '/' + who.gender;
+  if (!pd.clip[body]) return null;
+  const parts = [body];
+  const head = paperdollHeadId(who.gender);
+  if (head) parts.push(head);
+  for (let i = 0; i < views.length; i++) {
+    if (!views[i]) continue;
+    const hat = 'hat/' + views[i] + '/' + who.gender;
+    if (!pd.clip[hat]) continue;
+    parts.push(hat);
+  }
+  const weapon = paperdollWeaponPart(who.job, who.gender);
+  if (weapon) parts.push(weapon);
+  return parts;
+}
+function paperdollActName(kind) {
+  if (kind !== 'attack') return kind;
+  const parts = _pd.parts;
+  let act = '';
+  try {
+    const who = paperdollJobGender();
+    const weapon = paperdollWeaponPart(who.job, who.gender);
+    act = weapon && window.PAPERDOLL.atk && window.PAPERDOLL.atk[weapon];
+  } catch (e) {}
+  if (act && parts && paperdollFrameCount(parts[0], act)) return act;
+  let cat = 'bare';
+  try { cat = aspdCategoryOf(getEquipBaseItemId('weapon')) || 'bare'; } catch (e) {}
+  if (cat !== 'bare' && parts && paperdollFrameCount(parts[0], 'slash')) return 'slash';
+  return 'attack';
+}
+function ensurePaperCanvas() {
+  let canvas = document.getElementById('player-paper');
+  if (canvas) return canvas;
+  const host = document.getElementById('player-sprite');
+  if (!host) return null;
+  canvas = document.createElement('canvas');
+  canvas.id = 'player-paper';
+  canvas.style.display = 'none';
+  host.appendChild(canvas);
+  return canvas;
+}
+function paperdollAlign(part, body, fr) {
+  // 通用武器檔沒有錨點，圖層座標已經跟身體同一個原點。
+  if (part.indexOf('weapon/') === 0 && !fr[0] && !fr[1]) return [0, 0];
+  return [body[0] - fr[0], body[1] - fr[1]];
+}
+function paperdollExpand(part, fr, ox, oy, box) {
+  const rects = window.PAPERDOLL.img[part].f;
+  const flat = fr[2];
+  for (let i = 0; i < flat.length; i += 4) {
+    const r = rects[flat[i]];
+    const w = r[2], h = r[3];
+    const cx = ox + flat[i + 1], cy = oy + flat[i + 2];
+    box.minX = Math.min(box.minX, cx - w / 2);
+    box.minY = Math.min(box.minY, cy - h / 2);
+    box.maxX = Math.max(box.maxX, cx + w / 2);
+    box.maxY = Math.max(box.maxY, cy + h / 2);
+  }
+}
+function layoutPaperdoll(canvas, parts, charH, footLift) {
+  const empty = () => ({ minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+  const all = empty();
+  const idle = empty();
+  const bodyIdle = empty();
+  const acts = Object.keys(window.PAPERDOLL.delay || {});
+  acts.forEach(act => {
+    const n = paperdollFrameCount(parts[0], act);
+    for (let fi = 0; fi < n; fi++) {
+      const body = paperdollFrame(parts[0], act, fi);
+      if (!body) continue;
+      const boxes = act === 'idle' && fi === 0 ? [all, idle] : [all];
+      boxes.forEach(box => paperdollExpand(parts[0], body, 0, 0, box));
+      if (act === 'idle' && fi === 0) paperdollExpand(parts[0], body, 0, 0, bodyIdle);
+      for (let p = 1; p < parts.length; p++) {
+        const fr = paperdollFrame(parts[p], act, fi);
+        if (!fr) continue;
+        const aligned = paperdollAlign(parts[p], body, fr);
+        const ox = aligned[0], oy = aligned[1];
+        boxes.forEach(box => paperdollExpand(parts[p], fr, ox, oy, box));
+      }
+    }
+  });
+  const pad = 2;
+  const minX = Math.floor(all.minX) - pad;
+  const minY = Math.floor(all.minY) - pad;
+  const bw = Math.max(1, Math.ceil(all.maxX) + pad - minX);
+  const bh = Math.max(1, Math.ceil(all.maxY) + pad - minY);
+  const bodyH = isFinite(bodyIdle.maxY) ? (bodyIdle.maxY - bodyIdle.minY) : (idle.maxY - idle.minY);
+  const idleH = Math.max(1, bodyH);
+  const k = (charH || BATTLE_CHAR_H) / idleH;
+  const feet = idle.maxY - minY;
+  canvas.width = bw;
+  canvas.height = bh;
+  canvas.style.width = Math.round(bw * k) + 'px';
+  canvas.style.height = Math.round(bh * k) + 'px';
+  canvas.style.left = '50%';
+  canvas.style.bottom = ((footLift || 0) - Math.round((bh - feet) * k)) + 'px';
+  canvas._ox = -minX;
+  canvas._oy = -minY;
+  canvas._plFrame = -1;
+  canvas._plAct = '';
+}
+function hidePaperdoll() {
+  bfPaper = false;
+  _pd.key = '';
+  _pd.parts = null;
+  _pd.once = 0;
+  _pd.act = '';
+  const canvas = document.getElementById('player-paper');
+  if (canvas) canvas.style.display = 'none';
+  const img = document.getElementById('player-img');
+  if (img) img.style.display = '';
+  bfPl = null;
+  bfPlayerSheet = false;
+}
+function syncPaperdoll(img, parts, moving) {
+  const key = parts.join('|');
+  const canvas = ensurePaperCanvas();
+  if (!canvas) return;
+  img.style.display = 'none';
+  if (typeof animCanvas !== 'undefined' && animCanvas) animCanvas.style.display = 'none';
+  if (!bfPaper || _pd.key !== key) {
+    bfPaper = true;
+    bfPlayerSheet = true;
+    _pd.key = key;
+    _pd.parts = parts;
+    _pd.act = '';
+    _pd.once = 0;
+    _pd.frame = -1;
+    _pd.t0 = Date.now();
+    layoutPaperdoll(canvas, parts);
+    if (typeof animCanvas !== 'undefined' && animCanvas) animCanvas.style.display = 'none';
+    img.style.display = 'none';
+    canvas.style.display = '';
+    applyPaperTransform(canvas, false);
+    if (!mobAnimTimer) mobAnimTimer = setInterval(mobAnimTick, 33);
+  }
+  if (_pd.once && (Date.now() - _pd.t0) < _pd.once) return;
+  _pd.once = 0;
+  _pd.atkFrom = 0;
+  _pd.atkDelay = 0;
+  const fighting = state.monsters && state.monsters.length;
+  const side = fighting || moving;
+  let act = moving ? 'walk' : 'idle';
+  if (!moving && fighting && paperdollFrameCount(parts[0], 'ready_s')) act = 'ready_s';
+  else if (side && paperdollFrameCount(parts[0], act + '_s')) act += '_s';
+  if (_pd.act !== act) {
+    _pd.act = act;
+    _pd.t0 = Date.now();
+    _pd.frame = -1;
+  }
+}
+function drawPaperdollLayers(ctx, part, fr, ox, oy) {
+  const meta = window.PAPERDOLL.img[part];
+  const im = paperdollImage(part);
+  if (!im.complete || !im.naturalWidth || !meta) return false;
+  const rects = meta.f;
+  const flat = fr[2];
+  for (let i = 0; i < flat.length; i += 4) {
+    const r = rects[flat[i]];
+    const w = r[2], h = r[3];
+    ctx.save();
+    ctx.translate(ox + flat[i + 1], oy + flat[i + 2]);
+    if (flat[i + 3]) ctx.scale(-1, 1);
+    ctx.drawImage(im, r[0], r[1], w, h, -w / 2, -h / 2, w, h);
+    ctx.restore();
+  }
+  return true;
+}
+function drawPaperdoll() {
+  const canvas = document.getElementById('player-paper');
+  const parts = _pd.parts;
+  if (!canvas || !parts) return;
+  const act = _pd.act || 'idle';
+  const nFrames = paperdollFrameCount(parts[0], act) || 1;
+  const swinging = _pd.once > 0 && _pd.atkDelay > 0;
+  const delay = swinging ? _pd.atkDelay : ((window.PAPERDOLL.delay && window.PAPERDOLL.delay[act]) || 100);
+  const n0 = ((Date.now() - _pd.t0) / delay) | 0;
+  const from = swinging ? (_pd.atkFrom || 0) : 0;
+  const n = _pd.once ? Math.min(from + n0, nFrames - 1) : (n0 % nFrames);
+  const body = paperdollFrame(parts[0], act, n);
+  if (!body) return;
+  let ready = true;
+  for (let p = 0; p < parts.length; p++) {
+    const im = paperdollImage(parts[p]);
+    if (!im.complete || !im.naturalWidth) ready = false;
+  }
+  if (ready && canvas._plFrame === n && canvas._plAct === act) return;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const ox = canvas._ox || 0, oy = canvas._oy || 0;
+  if (!drawPaperdollLayers(ctx, parts[0], body, ox, oy)) return;
+  for (let p = 1; p < parts.length; p++) {
+    const fr = paperdollFrame(parts[p], act, n);
+    if (!fr) continue;
+    const aligned = paperdollAlign(parts[p], body, fr);
+    drawPaperdollLayers(ctx, parts[p], fr, ox + aligned[0], oy + aligned[1]);
+  }
+  if (ready) {
+    canvas._plFrame = n;
+    canvas._plAct = act;
+    applyPaperTransform(canvas, facingFlip(act, bfFaceRight));
+  }
+}
+function playerAnimKey() {
+  const table = window.PLAYER_ANIM_TABLE;
+  if (!table || !state) return null;
+  const who = paperdollJobGender();
+  const base = who.job + '_' + who.gender;
+  let cat = '';
+  try { cat = aspdCategoryOf(getEquipBaseItemId('weapon')); } catch (e) {}
+  cat = visualWeaponCat(who.job, who.gender, cat);
+  if (cat && cat !== 'bare' && table[base + '_' + cat]) return base + '_' + cat;
+  if (table[base]) return base;
+  return null;
+}
+function syncPlayerBattleAnim(moving) {
+  const img = document.getElementById('player-img');
+  const parts = paperdollParts();
+  if (parts && img) {
+    syncPaperdoll(img, parts, moving);
+    return;
+  }
+  if (!bfPaper && !bfPlayerSheet) return;
+  if (bfPaper) hidePaperdoll();
+  if (bfPlayerSheet && img) {
+    bfPlayerSheet = false;
+    bfPl = null;
+    img.style.cssText = '';
+  }
+  if (typeof updatePlayerSprite === 'function') updatePlayerSprite();
+}
+function bindPlayerSheet(img, d, key) {
+  bfPlayerSheet = true;
+  bfPl = { key, d };
+  if (typeof animCanvas !== 'undefined' && animCanvas) animCanvas.style.display = 'none';
+  img.style.display = '';
+  img.src = MOB_ANIM_BLANK;
+  img.style.position = 'absolute';
+  img.style.left = '50%';
+  img.style.bottom = '0';
+  img.style.objectFit = 'none';
+  img.style.margin = '0';
+  img.style.backgroundImage = 'url("images/player_anim/' + key + '.png")';
+  img.style.backgroundRepeat = 'no-repeat';
+  img.style.imageRendering = 'pixelated';
+  const boxH = BATTLE_CHAR_H;
+  const k = boxH / (d.fit[1] || d.cell[1]);
+  img._plK = k;
+  img.style.width = Math.round(d.cell[0] * k) + 'px';
+  img.style.height = Math.round(d.cell[1] * k) + 'px';
+  const foot = d.anchor ? (d.cell[1] - d.anchor[1]) * k : 0;
+  img.style.bottom = (-Math.round(foot)) + 'px';
+  img._bfBaseTf = 'translateX(-50%)';
+  let maxF = 0;
+  Object.keys(d.actions).forEach(name => {
+    const a = d.actions[name];
+    maxF = Math.max(maxF, (a.start || 0) + (a.frames || 0));
+  });
+  d._rows = Math.max(1, Math.ceil(maxF / d.cols));
+  img._plAct = '';
+  img._plShown = '';
+  img._plFrame = -1;
+  img._plT0 = Date.now();
+  if (!mobAnimTimer) mobAnimTimer = setInterval(mobAnimTick, 33);
+}
+function playPlayerSheet(img, act) {
+  const d = bfPl && bfPl.d;
+  if (!d) return;
+  if (!d.actions[act]) act = d.actions.idle ? 'idle' : act;
+  if (!d.actions[act] || img._plAct === act) return;
+  img._plOnce = 0;
+  img._plAct = act;
+  img._plT0 = Date.now();
+  img._plFrame = -1;
+}
+/* 攻速比整段動作快時，把揮擊壓進這一次的攻擊間隔。
+   一格最快約 16ms，再短就丟掉前面的出手，只留收招那幾格。
+   仍走原本 33ms 的重繪，不另開計時器。 */
+function paperdollSwingTiming(act, n, intervalMs) {
+  const native = (window.PAPERDOLL.delay && window.PAPERDOLL.delay[act]) || 90;
+  const interval = Math.max(1, intervalMs || state.attackInterval || n * native);
+  const full = n * native;
+  if (interval >= full) return { from: 0, delay: native, once: full };
+  const minMs = 16;
+  let count = n;
+  let delay = interval / count;
+  if (delay < minMs) {
+    count = Math.max(1, Math.floor(interval / minMs));
+    delay = interval / count;
+  }
+  return { from: n - count, delay: delay, once: count * delay };
+}
+function playPlayerSheetAttack() {
+  if (bfPaper && _pd.parts) {
+    const act = paperdollActName('attack');
+    const n = paperdollFrameCount(_pd.parts[0], act);
+    if (!n) return false;
+    const swing = paperdollSwingTiming(act, n);
+    _pd.act = act;
+    _pd.t0 = Date.now();
+    _pd.frame = -1;
+    _pd.atkFrom = swing.from;
+    _pd.atkDelay = swing.delay;
+    _pd.once = swing.once;
+    const canvas = document.getElementById('player-paper');
+    if (canvas) canvas._plFrame = -1;
+    return true;
+  }
+  const img = document.getElementById('player-img');
+  const d = bfPl && bfPl.d;
+  if (!bfPlayerSheet || !img || !d) return false;
+  const side = state.monsters && state.monsters.length;
+  const act = (side && d.actions.attack_s) ? 'attack_s' : (d.actions.attack ? 'attack' : '');
+  if (!act) return false;
+  const a = d.actions[act];
+  img._plAct = act;
+  img._plT0 = Date.now();
+  img._plFrame = -1;
+  img._plOnce = a.frames * (a.delay || 100);
+  return true;
+}
+function drawPlayerSheet(img) {
+  const d = bfPl && bfPl.d;
+  const a = d && d.actions[img._plAct];
+  if (!a) return;
+  const n0 = ((Date.now() - img._plT0) / a.delay) | 0;
+  const n = img._plOnce ? Math.min(n0, a.frames - 1) : (n0 % a.frames);
+  const idx = a.start + n;
+  if (img._plFrame === idx) return;
+  img._plFrame = idx;
+  img._plShown = img._plAct;
+  const flip = facingFlip(img._plAct, bfFaceRight);
+  img.style.transform = (img._bfBaseTf || '') + (flip ? ' scaleX(-1)' : '');
+  const k = img._plK || 1, cw = d.cell[0] * k, ch = d.cell[1] * k;
+  const col = idx % d.cols, row = (idx / d.cols) | 0;
+  img.style.backgroundSize = (d.cols * cw).toFixed(1) + 'px ' + (d._rows * ch).toFixed(1) + 'px';
+  img.style.backgroundPosition = (-(col * cw)).toFixed(1) + 'px ' + (-(row * ch)).toFixed(1) + 'px';
+}
+function mobAnimTick() {
+  mobAnimTickSprites();
+  if (bfPaper) drawPaperdoll();
+  else {
+    const img = document.getElementById('player-img');
+    if (img && bfPlayerSheet) drawPlayerSheet(img);
+  }
+  drawAllyDolls();
+}
+
+if (!bfTimer) bfTimer = setInterval(layoutBattlefield, 50);
+
 function triggerMonsterHit(isCrit) {
-  const icon = document.getElementById('monster-icon');
+  const slot = document.querySelector('.monster-slot.target:not(.dying)');
+  const img = slot && slot.querySelector('img');
+  if (img && img._maDef) {
+    mobAnimPlay(img, 'hit', true);
+    return;
+  }
+  const icon = img || document.getElementById('monster-icon');
   if (!icon) return;
   icon.classList.remove('monster-hit', 'crit-flash');
   void icon.offsetWidth;
@@ -1878,13 +3166,15 @@ function triggerMonsterHit(isCrit) {
 ------------------------------------------------- */
 const CRIT_FRAME_COUNT = 15;
 const CRIT_FRAME_MS = 50;
-const CRIT_FLOAT_MS = 900;   // 要跟 CSS 的 critBurstFloat 對齊
+const CRIT_FLOAT_MS = 950;   // 要跟 CSS 的 critBurstArc 對齊
 const CRIT_JITTER_X = 28;    // 起始位置的左右亂數範圍
 /* 觸發點跟一般傷害數字一樣在怪物頭上。一般飄字是以左上角定位、字級 22px，
    星爆這組是以中心定位、字級 26px，所以要往下補半個字高，
    黃色數字才會落在跟白色飄字同一條線上。 */
 const CRIT_HEAD_OFFSET_Y = -10;
 const CRIT_NUM_HALF_H = 13;
+/* 星爆圖高 66。疊太近會糊成一團，56 又拉得太開，取中間。 */
+const CRIT_STACK_Y = 44;
 const CRIT_FRAMES = Array.from({ length: CRIT_FRAME_COUNT },
   (_, i) => `images/effects/crit/msg_frame_${String(i).padStart(3, '0')}.png`);
 // 先預載，否則第一次暴擊會因為還在下載而閃一下空白
@@ -1901,9 +3191,15 @@ function showCritEffect(dmgText, targetEl) {
 
   const wrap = document.createElement('div');
   wrap.className = 'crit-burst';
-  // 左右抖一點，連續暴擊才不會整組疊在同一個位置變成一坨
+  /* 二刀連擊兩段同一個 tick 送出。一般傷害用 _floatDelayMs 把第二顆往上挪，
+     暴擊以前固定在同一點，看起來像只打一下。 */
+  const step = _floatDelayMs % 5;
   wrap.style.left = (cx + (Math.random() - 0.5) * CRIT_JITTER_X) + 'px';
-  wrap.style.top = cy + 'px';
+  wrap.style.top = (cy - step * CRIT_STACK_Y) + 'px';
+  _lastFloatAnchor = { left: parseFloat(wrap.style.left), top: parseFloat(wrap.style.top), at: Date.now() };
+  if (step) wrap.style.animationDelay = (step * 30) + 'ms';
+  _floatDelayMs++;
+  wrap._resetTimer = setTimeout(() => { _floatDelayMs = 0; }, 200);
 
   const img = document.createElement('img');
   img.className = 'crit-burst-img';
@@ -1957,6 +3253,49 @@ function renderLog() {
   if (_logRafId) return;
   _logRafId = requestAnimationFrame(() => { _logRafId = 0; renderLogNow(); });
 }
+/* 往上捲離開底部就暫停這一欄：訊息照樣進緩衝，畫面凍住，避免正在看的行被沖掉。
+   捲回底部或點提示列才補上最新並繼續跟著跑。 */
+const LOG_BOTTOM_SLACK = 24;
+const _logStuck = Object.create(null);
+function _logAtBottom(el) {
+  return (el.scrollHeight - el.scrollTop - el.clientHeight) <= LOG_BOTTOM_SLACK;
+}
+function syncLogPauseBar(lane) {
+  const bar = document.getElementById('log-paused-' + lane);
+  if (bar) bar.classList.toggle('hidden', _logStuck[lane] !== false);
+}
+function switchLogTab(lane) {
+  if (lane !== 'world' && !LOG_PANES[lane]) return;
+  document.querySelectorAll('.log-tab').forEach(b => b.classList.toggle('active', b.dataset.lane === lane));
+  document.querySelectorAll('.log-pane-stack .log-pane, .combat-log .log-pane').forEach(p => {
+    p.classList.toggle('active', p.dataset.lane === lane);
+  });
+  const paneId = LOG_PANES[lane];
+  if (paneId) {
+    const el = document.getElementById(paneId);
+    if (el && _logStuck[lane] !== false) el.scrollTop = el.scrollHeight;
+  }
+  if (lane === 'world' && typeof window._worldChatOnTabShown === 'function') window._worldChatOnTabShown();
+}
+function resumeLogLane(lane) {
+  const el = document.getElementById(LOG_PANES[lane]);
+  _logStuck[lane] = true;
+  _logDirty = true;
+  renderLogNow();
+  if (el) el.scrollTop = el.scrollHeight;
+  syncLogPauseBar(lane);
+}
+function _ensureLogScrollWatch(lane, el) {
+  if (el._roLogWatch) return;
+  el._roLogWatch = true;
+  el.addEventListener('scroll', () => {
+    const atBottom = _logAtBottom(el);
+    const was = _logStuck[lane] !== false;
+    _logStuck[lane] = atBottom;
+    if (atBottom && !was) { _logDirty = true; renderLogNow(); }
+    syncLogPauseBar(lane);
+  }, { passive: true });
+}
 /* 真正動 DOM 的那半。分頁在背景時 rAF 不會跑，所以 onTickUI 也會來敲一次 */
 function renderLogNow() {
   if (!_logDirty) return;
@@ -1964,6 +3303,8 @@ function renderLogNow() {
   Object.keys(LOG_PANES).forEach(lane => {
     const el = document.getElementById(LOG_PANES[lane]);
     if (!el) return;
+    _ensureLogScrollWatch(lane, el);
+    if (_logStuck[lane] === false) return;
     const rows = (combatLogLanes[lane] || []).slice(-30);
     el.innerHTML = rows.map(m => `<div class="log-line">${m}</div>`).join('');
     el.scrollTop = el.scrollHeight;
@@ -2029,8 +3370,387 @@ function renderMapYieldBox(mapObj) {
         ${actRows}
       </div>
     </div>
-    <div class="map-yield-hint">預估以普通攻擊推算，已計入命中率、暴擊、屬性／體型與防禦；技能傷害未計入，實戰通常會更高。</div>
+    <div class="map-yield-hint">預估以普通攻擊推算，已計入命中率、暴擊、屬性／體型、防禦與等級差。同圖可均分時含自己的那一份。技能傷害未計入。</div>
   </div>`;
+}
+
+function mapLvRangeText(m) {
+  if (!m || !m.monsters || !m.monsters.length) return '';
+  let lo = Infinity, hi = -Infinity;
+  m.monsters.forEach(o => {
+    const md = MONSTERS[o.id];
+    if (md && md.level) { lo = Math.min(lo, md.level); hi = Math.max(hi, md.level); }
+  });
+  if (!isFinite(lo)) return '';
+  return lo === hi ? `(Lv.${lo})` : `(Lv.${lo}~${hi})`;
+}
+function monTagText(m) {
+  if (!m) return '';
+  const el = m.element || 'neutral';
+  const parts = [(ELEMENT_ICONS[el] || '') + (ELEMENT_NAMES[el] || el)];
+  if (m.race && RACE_LABELS[m.race]) parts.push(RACE_LABELS[m.race]);
+  else if (m.race) parts.push(m.race);
+  else parts.push('種族未設定');
+  if (m.size && SIZE_LABELS[m.size]) parts.push(SIZE_LABELS[m.size]);
+  else parts.push('體型未設定');
+  return parts.join('・');
+}
+function mapMonsterChip(id, extra) {
+  const m = MONSTERS[id];
+  if (!m) return `<span class="monster-preview-chip">[${shopEsc(id)}]</span>`;
+  return `<span class="monster-preview-chip"><img class="mon-chip-img" src="${monsterImgSrc(id)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'"><span class="mon-chip-text"><b>${shopEsc(m.name)} Lv.${m.level || '?'}</b><small>${monTagText(m)}</small></span>${extra || ''}</span>`;
+}
+function renderMapMonsterChips(mapObj) {
+  const chips = [...mapObj.monsters].sort((a, b) => b.weight - a.weight).map(o => {
+    const m = MONSTERS[o.id];
+    const boss = m && m.isMvp ? '<b class="mon-chip-boss mvp">👑 MVP</b>'
+      : (m && m.isBoss ? '<b class="mon-chip-boss mini">迷你王</b>' : '');
+    return mapMonsterChip(o.id, boss);
+  }).join('');
+  let bosses = '';
+  if (typeof bossListOf === 'function') {
+    bosses = bossListOf(mapObj.id, 'mvp').map(id => mapMonsterChip(id, '<b class="mon-chip-boss mvp">👑 MVP</b>')).join('')
+      + bossListOf(mapObj.id, 'mini').map(id => mapMonsterChip(id, '<b class="mon-chip-boss mini">迷你王</b>')).join('');
+  }
+  const bossRow = bosses
+    ? `<div class="map-boss-preview"><span class="map-boss-preview-hint">這張圖的王（要勾選下方模式才會出現）</span>${bosses}</div>`
+    : '';
+  return chips + bossRow;
+}
+function mapPetCatchLine(mapObj) {
+  if (typeof PETS === 'undefined' || !mapObj || !mapObj.monsters) return '';
+  const norm = id => String(id || '').replace(/_+$/, '');
+  const here = {};
+  mapObj.monsters.forEach(m => { here[norm(m.id)] = 1; });
+  const rows = PETS.filter(p => p.tame && ITEMS[p.tame] && here[norm(p.id)]);
+  if (!rows.length) return '';
+  const ps = (typeof ensurePets === 'function') ? ensurePets() : (state.pets || { list: [] });
+  const owned = {};
+  ((ps && ps.list) || []).forEach(p => { owned[p.id] = 1; });
+  const body = rows.map(p => {
+    if (owned[p.id]) return `<span class="pet-catch-chip owned">${shopEsc(p.name)}（已擁有）</span>`;
+    const have = getItemQty(p.tame);
+    const tameName = (ITEMS[p.tame] || {}).name || p.tame;
+    return `<span class="pet-catch-chip${have > 0 ? ' ready' : ''}">${shopEsc(p.name)}　需要 ${shopEsc(tameName)}${have > 0 ? `（有 ${have}）` : '（沒帶）'}</span>`;
+  }).join('');
+  return `<div class="map-pet-catch"><b>🐾 這張地圖可捕捉</b>${body}</div>`;
+}
+function huntGotoMonsterMap(monId) {
+  const norm = id => String(id || '').replace(/_+$/, '');
+  const want = norm(monId);
+  let cands = MAPS.filter(m => (m.monsters || []).some(x => norm(x.id) === want));
+  let bossOnly = false;
+  if (!cands.length && typeof MVP_MAP_DATA !== 'undefined') {
+    cands = MAPS.filter(m => (MVP_MAP_DATA[m.id] || []).some(id => norm(id) === want));
+    bossOnly = cands.length > 0;
+  }
+  if (!cands.length) { showToast('查不到這隻魔物的出沒地圖'); return; }
+  if (bossOnly) showToast('這是王怪：先打開迷你王或 MVP 模式，牠才會出現');
+  const wOf = m => ((m.monsters || []).find(x => norm(x.id) === want) || {}).weight || 0;
+  const target = cands.slice().sort((a, b) => wOf(b) - wOf(a))[0];
+  const rg = regionOf(target.id);
+  if (rg) {
+    selectedRegionId = rg.id;
+    const kd = KINGDOMS.find(k => k.regions.indexOf(rg.id) >= 0);
+    if (kd) selectedKingdomId = kd.id;
+  }
+  selectMap(target.id);
+  switchTab('map');
+}
+
+let huntBand = null;
+let _huntSig = '';
+let _attendanceSig = '';
+let _petsSig = '';
+function setHuntBand(v) { huntBand = v; renderQuestsTab(); }
+function huntTabSig() {
+  const hb = state && state.huntBoard;
+  if (!hb || !hb.q) return '';
+  return hb.q.map(e => {
+    const p = (typeof huntProgress === 'function' && huntProgress(e)) || [];
+    return e.id + ':' + p.map(x => x.have).join(',');
+  }).join('|') + '#' + (hb.noAuto || 0);
+}
+function attendanceSig() {
+  const at = (state && state.attendance) || { day: 0, n: 0 };
+  return at.day + ':' + at.n;
+}
+function petsSig() {
+  const ps = (state && state.pets) || { list: [] };
+  const foodId = ps.active && typeof PETS_BY_ID !== 'undefined' && PETS_BY_ID[ps.active] && PETS_BY_ID[ps.active].food;
+  const food = foodId ? getItemQty(foodId) : 0;
+  return (ps.active || '') + ':' + food + '|' + (ps.list || []).map(p => p.id + ':' + p.intim).join(',');
+}
+function petBonusText(def, tier) {
+  const b = (def && def[tier]) || {};
+  const bits = Object.keys(b).map(k => formatCardBonus(k, b[k], b)).filter(Boolean);
+  return bits.length ? bits.join('、') : '—';
+}
+function petReleaseClick(btn, id) {
+  if (!btn) return;
+  if (btn.dataset.armed === '1') {
+    clearTimeout(Number(btn.dataset.armTimer) || 0);
+    releasePet(id, true);
+    setTimeout(renderPetsTab, 350);
+    renderTopBar();
+    return;
+  }
+  btn.dataset.armed = '1';
+  btn.classList.add('danger');
+  btn.textContent = '⚠ 再按一次確定';
+  const t = setTimeout(() => {
+    if (!btn.isConnected) return;
+    btn.dataset.armed = '';
+    btn.classList.remove('danger');
+    btn.textContent = '放生';
+    logMsg('ℹ️ 放生取消了（超過 12 秒沒有再按一次）。');
+  }, 12000);
+  btn.dataset.armTimer = String(t);
+}
+function doEvolvePet(id) {
+  const ps = state.pets || { list: [] };
+  const rec = (ps.list || []).find(x => x.id === id);
+  const def = rec && PETS_BY_ID[id];
+  if (!rec || !def || !def.evo) return;
+  const to = (PETS_BY_ID[def.evo.to] || { name: def.evo.to }).name;
+  const mats = def.evo.items.map(([i, n]) => `${(ITEMS[i] || { name: i }).name}×${n}`).join('、');
+  let msg = `要把${def.name}進化成「${to}」嗎？\n\n消耗：${mats}\n\n⚠ 進化後親密度會從 ${rec.intim} 回到 750。\n`;
+  if (petTier(rec) === 'loyal') msg += '⚠ 你現在是「忠誠」，進化後會變回「親密」。\n';
+  msg += '\n這個動作沒辦法還原。';
+  if (!confirm(msg)) return;
+  evolvePet(id);
+  setTimeout(renderPetsTab, 350);
+}
+function renderPetsTab() {
+  const el = document.getElementById('tab-pets');
+  if (!el || !state) return;
+  const ps = ensurePets();
+  const tierLabel = t => t === 'loyal' ? '💖 忠誠' : t === 'cordial' ? '💕 親密' : '🤍 生疏';
+  let html = `<h3 class="panel-title">🐾 寵物</h3>
+    <div class="empty-hint">在寵物出沒的地圖使用捕捉道具。帶著的寵物每 5 分鐘自動吃 1 個飼料，親密度 750／910 解鎖兩段加成。寵物只給素質，不上場打。</div>`;
+  const eggs = (state.inventory || []).filter(r => ITEMS[r.item] && isHatchableEgg(r.item) && !r.instanceId);
+  if (eggs.length) {
+    const hasInc = getItemQty('pet_incubator') > 0;
+    html += `<div class="empty-hint">🥚 <b>孵化寵物蛋</b>${hasInc ? '' : '（需背包放一個攜帶用孵蛋器，孵化不消耗它）'}</div><div class="acv-list">`;
+    eggs.forEach(r => {
+      const pd = PETS_BY_ID[petIdForEgg(r.item)] || { name: r.item };
+      html += `<div class="acv-row"><div class="acv-body"><div class="acv-name">${shopEsc(pd.name)} 蛋 ×${r.qty.toLocaleString()}</div></div>
+        <div class="acv-side"><button class="btn-small${hasInc ? ' active' : ''}" ${hasInc ? '' : 'disabled'} onclick="useItem('${r.item}');setTimeout(renderPetsTab,350);">孵化</button></div></div>`;
+    });
+    html += '</div>';
+  }
+  if (!ps.list.length) {
+    html += '<div class="empty-hint">還沒有寵物。下面是可捕捉一覽，捕捉道具在城鎮的寵物商人。</div>';
+  } else {
+    html += '<div class="acv-list">';
+    ps.list.forEach(rec => {
+      const def = PETS_BY_ID[rec.id];
+      if (!def) return;
+      const mdef = MONSTERS[rec.id] || {};
+      const tier = petTier(rec);
+      const isOn = ps.active === rec.id;
+      const pc = Math.min(100, rec.intim / 1000 * 100);
+      const evoName = def.evo ? (PETS_BY_ID[def.evo.to] || { name: def.evo.to }).name : '';
+      const evoShort = String(evoName).replace(/（[^）]*）\s*$/, '');
+      const evoTxt = def.evo
+        ? `<button class="btn-small" onclick="doEvolvePet('${rec.id}')" title="進化成「${shopEsc(evoName)}」。親密度會回到 750">進化 → ${shopEsc(evoShort)}</button>` : '';
+      html += `<div class="acv-row pet-row ${isOn ? 'done' : ''}">
+        <div class="acv-icon">${mdef.icon || '🐾'}</div>
+        <div class="acv-body">
+          <div class="acv-name">${shopEsc(def.name)}${isOn ? ' <span class="acv-check">跟隨中</span>' : ''}　<span class="acv-desc">${tierLabel(tier)}</span></div>
+          <div class="acv-desc">親密度 ${rec.intim} / 1000　飼料：${shopEsc((ITEMS[def.food] || { name: def.food }).name)}（背包 ${getItemQty(def.food)}）</div>
+          <div class="acv-bar"><div class="acv-bar-fill" style="width:${pc}%"></div></div>
+          <div class="acv-desc">親密：${petBonusText(def, 'cordial')}　|　忠誠：${petBonusText(def, 'loyal')}</div>
+        </div>
+        <div class="acv-side">
+          ${isOn
+            ? `<button class="btn-small" onclick="setActivePet('');setTimeout(renderPetsTab,350);">收回</button>`
+            : `<button class="btn-small active" onclick="setActivePet('${rec.id}');setTimeout(renderPetsTab,350);">帶上</button>`}
+          ${evoTxt}
+          <button class="btn-small pet-release" onclick="petReleaseClick(this,'${rec.id}')">放生</button>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  if (typeof PETS !== 'undefined') {
+    const owned = new Set(ps.list.map(x => x.id));
+    const mvp = (typeof MVP_MAP_DATA !== 'undefined' && MVP_MAP_DATA) || {};
+    const hasSpot = id => MAPS.some(m => (m.monsters || []).some(x => x.id === id))
+      || MAPS.some(m => (mvp[m.id] || []).indexOf(id) >= 0);
+    let nTame = 0, nEvo = 0, nOwnedTame = 0, nOwnedEvo = 0, nReady = 0;
+    PETS.forEach(def => {
+      const isOwned = owned.has(def.id);
+      if (def.tame) {
+        nTame++; if (isOwned) nOwnedTame++;
+        if (!isOwned && getItemQty(def.tame) > 0 && hasSpot(def.id)) nReady++;
+      } else {
+        nEvo++; if (isOwned) nOwnedEvo++;
+      }
+    });
+    const nAll = PETS.length;
+    const pcAll = nAll ? Math.round(owned.size / nAll * 100) : 0;
+    html += `<h3 class="panel-title">📖 收集進度</h3>
+      <div class="pet-progress">
+        <div class="pet-progress-top"><b>${owned.size}</b> / ${nAll} 種　<span>${pcAll}%</span></div>
+        <div class="acv-bar"><div class="acv-bar-fill" style="width:${pcAll}%"></div></div>
+        <div class="pet-progress-sub">可直接捕捉 ${nOwnedTame}/${nTame}　·　只能靠進化 ${nOwnedEvo}/${nEvo}${nReady > 0 ? `　·　<b class="pet-ready">現在就抓得到 ${nReady} 隻</b>` : ''}</div>
+      </div>
+      <h3 class="panel-title">📖 可捕捉一覽（${nAll} 種）</h3><div class="acv-list">`;
+    PETS.forEach(def => {
+      const mdef = MONSTERS[def.id] || {};
+      const normalMaps = MAPS.filter(m => (m.monsters || []).some(x => x.id === def.id));
+      const bossMaps = MAPS.filter(m => (mvp[m.id] || []).indexOf(def.id) >= 0);
+      const spots = normalMaps.length
+        ? normalMaps.slice(0, 2).map(m => m.name).join('、')
+        : (bossMaps.length ? bossMaps.slice(0, 2).map(m => m.name).join('、') + '（要開迷你王／MVP 模式）' : '尚無已知出沒地');
+      const tameQty = def.tame ? getItemQty(def.tame) : 0;
+      const canGo = !owned.has(def.id) && def.tame && (normalMaps.length || bossMaps.length);
+      const catchTxt = def.tame
+        ? `捕捉道具：${shopEsc((ITEMS[def.tame] || { name: def.tame }).name)}（背包 ${tameQty}）　成功率 ${(def.cap / 100).toFixed(1)}%　出沒：${shopEsc(spots)}`
+        : '無法直接捕捉，由前一階段進化取得';
+      const goBtn = canGo
+        ? `<button class="btn-small${tameQty > 0 ? ' active' : ''}" onclick="huntGotoMonsterMap('${def.id}')" title="${tameQty > 0 ? '跳到牠出沒的地圖' : '背包還沒有捕捉道具，可先找寵物商人'}">前往${tameQty > 0 ? '' : '（缺道具）'}</button>`
+        : '';
+      const evoLine = def.evo && PETS_BY_ID[def.evo.to]
+        ? `<div class="acv-desc">可進化成 ${shopEsc(PETS_BY_ID[def.evo.to].name)}</div>` : '';
+      html += `<div class="acv-row ${owned.has(def.id) ? 'done' : ''}">
+        <div class="acv-icon">${mdef.icon || '🐾'}</div>
+        <div class="acv-body">
+          <div class="acv-name">${shopEsc(def.name)}${owned.has(def.id) ? ' <span class="acv-check">✔ 已收服</span>' : (tameQty > 0 ? ' <span class="acv-check">道具已備妥</span>' : '')}</div>
+          <div class="acv-desc">${catchTxt}</div>
+          <div class="acv-desc">親密：${petBonusText(def, 'cordial')}</div>
+          <div class="acv-desc">忠誠：${petBonusText(def, 'loyal')}</div>
+          ${evoLine}
+        </div>
+        <div class="acv-side">${goBtn}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  el.innerHTML = html;
+  _petsSig = petsSig();
+}
+function renderAttendanceCard() {
+  if (typeof ATTENDANCE_REWARDS === 'undefined' || !ATTENDANCE_REWARDS.length || !state) return '';
+  const day = Math.floor((Date.now() + 8 * 3600 * 1000) / 86400000);
+  const at = state.attendance || { day: 0, n: 0 };
+  const len = ATTENDANCE_REWARDS.length;
+  const nextIdx = at.n % len;
+  const claimedToday = at.day === day;
+  const cells = ATTENDANCE_REWARDS.map((r, i) => {
+    const def = ITEMS[r[0]] || {};
+    const got = i < nextIdx;
+    const isNext = i === nextIdx;
+    const nm = def.name || r[0];
+    const tag = got ? '✔ 已領' : (isNext ? (claimedToday ? '明日' : '今日') : '');
+    return `<div class="att-cell ${got ? 'got' : ''} ${isNext ? 'next' : ''}"
+        onmouseenter="showShopItemTooltip(event,'${r[0]}')" onmouseleave="hideEquipTooltip()"
+        onclick="showShopItemTooltip(event,'${r[0]}')">
+        <div class="att-day">第${i + 1}天</div>
+        <img src="${itemImgSrc(r[0])}" alt="${shopEsc(nm)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+        <div class="att-name">${shopEsc(nm)}</div>
+        <div>×${r[1]}</div>
+        <div class="att-tag">${tag || '　'}</div>
+      </div>`;
+  }).join('');
+  const status = claimedToday
+    ? `今日已簽到。累計 <b>${at.n}</b> 天，明日上線自動領下一份。`
+    : `今日還沒簽到。累計 <b>${at.n}</b> 天。掛機後自動發進背包。`;
+  return `<div class="empty-hint">${status} ${len} 天一輪，不用按領取。點格子可看道具說明。</div>
+    <div class="att-grid">${cells}</div>`;
+}
+function openAttendanceModal() {
+  const m = document.getElementById('attendance-modal');
+  if (!m) return;
+  renderAttendanceModal();
+  m.classList.remove('hidden');
+}
+function closeAttendanceModal() {
+  const m = document.getElementById('attendance-modal');
+  if (m) m.classList.add('hidden');
+}
+function renderAttendanceModal() {
+  const el = document.getElementById('attendance-modal-body');
+  if (!el || !state) return;
+  el.innerHTML = renderAttendanceCard();
+  _attendanceSig = attendanceSig();
+}
+function renderAttendanceTab() {
+  renderAttendanceModal();
+}
+function renderQuestsTab() {
+  const el = document.getElementById('tab-quests');
+  if (!el || !state) return;
+  const hb = ensureHuntBoard();
+  let html = `<h3 class="panel-title">📜 討伐佈告欄</h3>
+    <div class="empty-hint">接下之後，擊殺目標會自動計數。完成後回來領。不想做可以放棄換一張。</div>`;
+  if (!hb.q.length) html += '<div class="empty-hint">佈告欄是空的，稍等幾秒會貼上新的。</div>';
+  html += '<div class="acv-list">';
+  hb.q.forEach((entry, i) => {
+    const q = huntQuestById(entry.id);
+    if (!q) return;
+    const prog = huntProgress(entry) || [];
+    const doneAll = prog.length && prog.every(p => p.have >= p.need);
+    const r = huntQuestReward(q);
+    const rows = prog.map(p => {
+      const d = MONSTERS[p.mon] || {};
+      const pc = Math.min(100, p.have / p.need * 100);
+      const go = p.have >= p.need ? '' : `<button class="btn-small" onclick="huntGotoMonsterMap('${p.mon}')">前往</button>`;
+      return `<div class="acv-desc">${d.icon || '👾'} ${shopEsc(d.name || p.mon)}　${p.have} / ${p.need} ${go}</div>
+        <div class="acv-bar"><div class="acv-bar-fill" style="width:${pc}%"></div></div>`;
+    }).join('');
+    html += `<div class="acv-row ${doneAll ? 'done' : ''}">
+      <div class="acv-icon">📜</div>
+      <div class="acv-body">
+        <div class="acv-name">${shopEsc(q.n)}${doneAll ? ' <span class="acv-check">✔</span>' : ''}　<span class="acv-desc">建議 Lv.${q.lv}</span></div>
+        ${rows}
+        <div class="acv-desc">獎勵：EXP ${r.exp.toLocaleString()}　JOB ${r.jexp.toLocaleString()}　${r.zeny.toLocaleString()} 鋅幣</div>
+      </div>
+      <div class="acv-side">
+        ${doneAll
+          ? `<button class="btn-small active" onclick="huntClaim(${i});renderQuestsTab();renderTopBar();">領取獎勵</button><button class="btn-small" onclick="huntClaimRepeat(${i});renderQuestsTab();renderTopBar();">領取並再刷</button>`
+          : `<button class="btn-small" onclick="huntAbandon(${i});renderQuestsTab();">放棄</button>`}
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  const pool = huntEligiblePool(true).slice().sort((a, b) => a.lv - b.lv);
+  const full = hb.q.length >= HUNT_BOARD_SLOTS;
+  const BAND = 10;
+  const bandOf = lv => Math.floor(lv / BAND) * BAND;
+  const bandCount = {};
+  pool.forEach(q2 => { const b = bandOf(q2.lv); bandCount[b] = (bandCount[b] || 0) + 1; });
+  const bands = Object.keys(bandCount).map(Number).sort((a, b) => a - b);
+  const myBand = bandOf(state.baseLevel || 1);
+  let band = huntBand;
+  if (band === null || (band !== 'all' && !bandCount[band])) {
+    if (bandCount[myBand]) band = myBand;
+    else if (bands.length) band = bands.reduce((best, b) => Math.abs(b - myBand) < Math.abs(best - myBand) ? b : best, bands[0]);
+    else band = 'all';
+  }
+  const shown = band === 'all' ? pool : pool.filter(q2 => bandOf(q2.lv) === band);
+  const bandLabel = b => `Lv.${b || 1}～${b + BAND - 1}`;
+  html += `<div class="acv-row">
+    <div class="acv-icon">📋</div>
+    <div class="acv-body">
+      <div class="acv-name">自選討伐令</div>
+      <div class="acv-desc">放棄後 30 秒內不會自動補單。</div>
+      <div class="hunt-pick-row">
+        <select class="ab-select" onchange="setHuntBand(this.value === 'all' ? 'all' : +this.value)">
+          <option value="all" ${band === 'all' ? 'selected' : ''}>全部等級（${pool.length}）</option>
+          ${bands.map(b => `<option value="${b}" ${band === b ? 'selected' : ''}>${bandLabel(b)}（${bandCount[b]}）${b === myBand ? '　目前' : ''}</option>`).join('')}
+        </select>
+        <select id="hunt-pick-sel" class="ab-select">
+          ${shown.map(q2 => `<option value="${q2.id}">Lv.${q2.lv}　${shopEsc(q2.n)}</option>`).join('')}
+        </select>
+        <button class="btn-small" ${full || !shown.length ? 'disabled' : ''} onclick="huntPick(+document.getElementById('hunt-pick-sel').value);renderQuestsTab();">接取</button>
+      </div>
+      ${full ? '<div class="empty-hint">佈告欄已滿，先放棄一張才能自選。</div>' : ''}
+    </div>
+  </div>`;
+  el.innerHTML = html;
+  _huntSig = huntTabSig();
 }
 
 function renderMapTab() {
@@ -2057,24 +3777,19 @@ function renderMapTab() {
     `<option value="${r.id}" ${r.id === region.id ? 'selected' : ''}>${r.icon} ${r.name}</option>`
   ).join('');
 
-  const mapOptions = region.maps.map(mapId => {
+  const mapIds = typeof regionMapIds === 'function' ? regionMapIds(region) : region.maps;
+  const mapOptions = mapIds.map(mapId => {
     const m = MAPS.find(x => x.id === mapId);
     if (!m) return '';
     const isCity = m.monsters.length === 0;
-    return `<option value="${m.id}" ${state.mapId === m.id ? 'selected' : ''}>${m.name}${isCity ? '（安全區）' : ''}</option>`;
+    const lv = isCity ? '' : (' ' + mapLvRangeText(m));
+    return `<option value="${m.id}" ${state.mapId === m.id ? 'selected' : ''}>${m.name}${isCity ? '（安全區）' : lv}</option>`;
   }).join('');
 
-  const currentMapObj = MAPS.find(x => x.id === state.mapId) || MAPS.find(x => x.id === region.maps[0]);
+  const currentMapObj = MAPS.find(x => x.id === state.mapId) || MAPS.find(x => x.id === mapIds[0]);
   if (!currentMapObj) { el.innerHTML = '<div class="empty-hint">地圖資料錯誤</div>'; return; }
   const isCity = currentMapObj.monsters.length === 0;
-  const monsterPreview = isCity
-    ? '此地為安全城鎮，沒有怪物出沒。'
-    : [...currentMapObj.monsters].sort((a, b) => b.weight - a.weight).map(o => {
-        const m = MONSTERS[o.id];
-        if (!m) return `[${o.id}]`;
-        const elemIcon = ELEMENT_ICONS[m.element] || '⚪';
-        return `${m.icon} ${m.name} ${elemIcon}`;
-      }).join('　');
+  const monsterPreview = isCity ? '' : renderMapMonsterChips(currentMapObj);
 
   el.innerHTML = `
     <h3 class="panel-title">選擇地區
@@ -2094,11 +3809,12 @@ function renderMapTab() {
       <select class="map-select" onchange="selectMap(this.value)">${mapOptions}</select>
     </div>
     <div class="region-subtitle-detail">${region.subtitle}</div>
-    <div class="map-preview-box">
-      <div class="map-preview-title">${isCity ? '🏠 安全區' : '⚔️ 遇怪列表'}</div>
+    ${isCity ? '' : `<div class="map-preview-box">
+      <div class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvRangeText(currentMapObj)}</div>
       <div class="map-preview-body">${monsterPreview}</div>
-      ${!isCity ? '<div class="map-preview-hint">怪物強度不設限，越級挑戰有風險，也可能有意外的收穫——探索本身就是樂趣！</div>' : ''}
-    </div>
+      ${!isCity ? mapPetCatchLine(currentMapObj) : ''}
+      <div class="map-preview-hint">怪物強度不設限，越級挑戰有風險，也可能有意外的收穫——探索本身就是樂趣！</div>
+    </div>`}
     ${!isCity ? renderMapYieldBox(currentMapObj) : ''}
     ${!isCity ? bossModeBox(currentMapObj) : ''}
     ${/* 轉生祭壇只開在安全區。放在這裡而不是轉職樹，是因為轉生是「回到城裡辦一件大事」，
@@ -2128,7 +3844,7 @@ function onKingdomSelectChange(kingdomId) {
   if (kingdom && kingdom.regions.length > 0) {
     selectedRegionId = kingdom.regions[0];
     const region = REGIONS.find(r => r.id === selectedRegionId);
-    if (region) selectMap(region.maps[0]);
+    if (region) selectMap(typeof regionDefaultMapId === 'function' ? regionDefaultMapId(region) : region.maps[0]);
   }
   renderMapTab();
 }
@@ -2139,7 +3855,7 @@ function onRegionSelectChange(regionId) {
   const k = KINGDOMS.find(k => k.regions.includes(regionId));
   if (k) selectedKingdomId = k.id;
   const region = REGIONS.find(r => r.id === regionId);
-  selectMap(region.maps[0]); // 切換地區時，預設進入該地區的第一張地圖（城鎮）
+  selectMap(typeof regionDefaultMapId === 'function' ? regionDefaultMapId(region) : region.maps[0]);
 }
 
 /* 打寶模式（#110）。放在自動戰鬥分頁而不是地圖分頁——它是全域的模式，
@@ -2291,7 +4007,7 @@ function renderAutoBattleTab() {
       <label class="support-skill-toggle">
         <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleAutoSupportSkill('${sk.id}', this.checked);">
         <span class="support-skill-info">
-          <span class="support-skill-name">${sk.name} Lv${sk.lv}</span>
+          <span class="support-skill-name">${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} Lv${sk.lv}</span>
           <span class="support-skill-desc">${sk.desc}</span>
           <span class="support-skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</span>
           ${healCfgHtml}
@@ -2327,9 +4043,14 @@ function renderAutoBattleTab() {
       <div class="ab-mode-btns">
         <button class="btn-small ${(state.encounterMode || 'melee') === 'melee' ? 'active' : ''}" onclick="setEncounterMode('melee')">近戰模式（最多5隻）</button>
         <button class="btn-small ${state.encounterMode === 'ranged' ? 'active' : ''}" onclick="setEncounterMode('ranged')">遠攻模式（1隻）</button>
+        <button class="btn-small ${state.encounterMode === 'off' ? 'active' : ''}" onclick="setEncounterMode('off')">不遇怪(無離線收益)</button>
       </div>
       <div class="ab-info-text">
-        ${state.encounterMode === 'ranged' ? '遠攻：怪物死後才會再生下一隻。' : '近戰：0隻時0.5秒補一批、1隻以上時3秒補一批，每批隨機 1~3 隻，場上最多5隻。'}
+        ${state.encounterMode === 'off'
+          ? '不遇怪：不會生成怪物，場上的也會清掉。'
+          : state.encounterMode === 'ranged'
+            ? '遠攻：怪物死後才會再生下一隻。'
+            : '近戰：0隻時0.5秒補一批、1隻以上時3秒補一批，每批隨機 1~3 隻，場上最多5隻。'}
       </div>
     </div>
 
@@ -2564,16 +4285,22 @@ function doToggleMvpMode(checked) {
 function setEncounterMode(mode) {
   state.encounterMode = mode;
   state.lastSpawnTime = 0; // 重置生怪計時
-  /* 切到遠攻就把 MVP 模式關掉：遠攻場上只有 1 隻，MVP 的手下一隻都放不下。
-     留著開啟只會變成「勾了卻沒有隨從」，跟召喚小弟的設計意圖對不上。
-     **迷你王模式不用關**（#147）：牠不帶小弟，遠攻放得下。 */
+  if (mode === 'off') {
+    state.monsters = [];
+    state.monster = null;
+  }
+  /* 切離近戰就把 MVP 模式關掉：遠攻場上只有 1 隻，不遇怪則完全沒有位置，
+     MVP 的手下一隻都放不下。迷你王不帶小弟，遠攻放得下，但沒有怪可出時也沒意義。 */
   if (mode !== 'melee' && state.mvpMode) {
     state.mvpMode = false;
-    logMsg('🎯 切換到遠攻模式，MVP 模式已自動關閉。');
+    logMsg(mode === 'off'
+      ? '🎯 停止遇怪，MVP 模式已自動關閉。'
+      : '🎯 切換到遠攻模式，MVP 模式已自動關閉。');
   }
   recomputeDerived(false);  // maxMonsters 由遇怪模式推導，改完要重算
   saveGame();
   renderAutoBattleTab();
+  if (typeof renderMonster === 'function') renderMonster();
   if (typeof renderMapTab === 'function') renderMapTab();
 }
 /* ---------------- 技能分頁（可縮放、按職業分組） ---------------- */
@@ -2694,7 +4421,7 @@ function renderSkillsTab() {
 
         html += `<div class="skill-row ${lv > 0 ? 'learned' : ''}">
           <div class="skill-info">
-            <div class="skill-name">${sk.name} ${statusTag} ${typeTag} ${elemTag}</div>
+            <div class="skill-name">${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} ${statusTag} ${typeTag} ${elemTag}</div>
             <div class="skill-desc">${sk.desc}</div>
             <div class="skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</div>
           </div>
@@ -2728,7 +4455,7 @@ function renderSkillsTab() {
       const typeTag = sk.type === 'passive' ? '<span class="skill-type passive">被動</span>' : '';
       html += `<div class="skill-row learned">
         <div class="skill-info">
-          <div class="skill-name">${sk.name} <span class="skill-tag">Lv${lv}</span> ${typeTag}</div>
+          <div class="skill-name">${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} <span class="skill-tag">Lv${lv}</span> ${typeTag}</div>
           <div class="skill-desc">${sk.desc}</div>
           <div class="skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</div>
         </div>
@@ -2968,11 +4695,13 @@ const RACE_LABELS = {
 };
 const SIZE_LABELS = { small: '小型', medium: '中型', large: '大型' };
 const ITEM_TYPE_LABELS = {
-  weapon: '武器', armor: '防具', consumable: '消耗品', material: '素材', etc: '雜物', card: '卡片'
+  weapon: '武器', armor: '防具', consumable: '消耗品', ammo: '箭矢',
+  material: '素材', etc: '雜物', card: '卡片', relic: '遺物'
 };
 let codexView = 'mon';      // mon | card | item
 let codexFilter = 'all';    // all | found | missing
 let codexSearch = '';
+let codexSearchRaw = '';
 let codexPage = 0;
 let codexOpenId = null;
 let codexJobFilter = false;  // 只顯示本職業裝得上的裝備
@@ -3031,7 +4760,7 @@ let codexCat = { mon: 'all', card: 'all', item: 'all', hidden: 'all' };
 function setCodexView(v) {
   codexView = v; codexPage = 0; codexOpenId = null;
   /* 進隱藏圖鑑時重置篩選，避免殘留的「已發現」把未開出的卡藏起來 */
-  if (v === 'hidden') { codexFilter = 'all'; codexSearch = ''; }
+  if (v === 'hidden') { codexFilter = 'all'; codexSearch = ''; codexSearchRaw = ''; }
   renderCodexTab();
 }
 function setCodexFilter(f) { codexFilter = f; codexPage = 0; renderCodexTab(); }
@@ -3123,7 +4852,9 @@ function refocusSearch(id) {
 
 function onCodexSearch(v, ev) {
   if (imeComposing(ev)) return;
-  codexSearch = (v || '').trim().toLowerCase();
+  /* 畫面留玩家打的大小寫；比對才轉小寫。以前直接把小寫寫回輸入框，英文大寫一打就消失。 */
+  codexSearchRaw = String(v || '');
+  codexSearch = codexSearchRaw.trim().toLowerCase();
   codexPage = 0;
   renderCodexTab();
   refocusSearch('codex-search');
@@ -3210,6 +4941,30 @@ function renderCodexTab() {
   if (codexPage >= totalPages) codexPage = totalPages - 1;
   const pageRows = rows.slice(codexPage * CODEX_PAGE_SIZE, (codexPage + 1) * CODEX_PAGE_SIZE);
 
+  /* 箱子限定裝（例如英雄魔杖-LT）沒有怪掉、商店也不賣，不進收集進度的分母。
+     有打搜尋字時才另外列出，最多 240 筆，避免把兩萬件雜物算進進度條。 */
+  let outRows = [];
+  if (codexSearch && (codexView === 'card' || codexView === 'item')) {
+    const inPool = new Set(allIds);
+    for (const id in ITEMS) {
+      if (inPool.has(id)) continue;
+      const isCard = !!CARDS[id];
+      if (codexView === 'card' ? !isCard : isCard) continue;
+      if (!(ITEMS[id].name || '').toLowerCase().includes(codexSearch)) continue;
+      const f = !!book.item[id];
+      if (codexFilter === 'found' && !f) continue;
+      if (codexFilter === 'missing' && f) continue;
+      outRows.push({ id: id, name: ITEMS[id].name, found: f });
+    }
+    outRows.sort((a, b) => {
+      const aLt = /-lt/i.test(a.name || '') ? 0 : 1;
+      const bLt = /-lt/i.test(b.name || '') ? 0 : 1;
+      if (aLt !== bLt) return aLt - bLt;
+      return (a.name || '').localeCompare(b.name || '', 'zh-Hant');
+    });
+    if (outRows.length > 240) outRows.length = 240;
+  }
+
   let html = `<h3 class="panel-title">📕 圖鑑</h3>
     <div class="codex-progress">
       ${codexBar('👾 怪物', prog.monsters.found, prog.monsters.total)}
@@ -3227,7 +4982,7 @@ function renderCodexTab() {
       : ``) + `
     <div class="codex-controls">
       <input id="codex-search" class="codex-search" type="text" placeholder="搜尋名稱，找到就能看到去哪裡打…"
-        value="${codexSearch.replace(/"/g, '&quot;')}" oninput="onCodexSearch(this.value, event)">
+        value="${codexSearchRaw.replace(/"/g, '&quot;')}" oninput="onCodexSearch(this.value, event)">
       ${codexView === 'item' ? `<label style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;cursor:pointer;">
         <input type="checkbox" ${codexJobFilter ? 'checked' : ''} onchange="setCodexJobFilter(this.checked);" style="accent-color:var(--gold);">
         只顯示本職業
@@ -3242,9 +4997,9 @@ function renderCodexTab() {
 
   if (codexOpenId) html += renderCodexDetail(codexOpenId);
 
-  if (!pageRows.length) {
+  if (!pageRows.length && !outRows.length) {
     html += '<div class="empty-hint">沒有符合條件的項目。</div>';
-  } else {
+  } else if (pageRows.length) {
     html += '<div class="codex-grid">';
     pageRows.forEach(r => {
       html += (codexView === 'mon') ? codexMonCell(r, book)
@@ -3252,6 +5007,16 @@ function renderCodexTab() {
         : codexItemCell(r, book);
     });
     html += '</div>';
+  }
+
+  if (outRows.length) {
+    html += `<div class="codex-detail-sec">🔍 圖鑑收集範圍外 ${outRows.length >= 240 ? '240+' : outRows.length} 件`
+      + `<span class="codex-sec-hint">沒有怪會掉、商店也沒賣，只能開箱子；不列入上面的收集進度</span></div>`;
+    const shown = outRows.length <= 120 ? outRows : outRows.slice(0, 60);
+    html += '<div class="codex-grid">';
+    shown.forEach(r => { html += codexItemCell(r, book); });
+    html += '</div>';
+    if (shown.length < outRows.length) html += '<div class="empty-hint">只列出前 60 件，再打細一點可以縮小範圍。</div>';
   }
 
   if (totalPages > 1) {
@@ -3550,7 +5315,11 @@ function renderCodexDetail(id) {
     ${(card && card.desc) || d.desc ? `<div class="codex-detail-desc">${(card && card.desc) || d.desc}</div>` : ''}
     ${unimpl}
     <div class="codex-detail-sec">去哪裡打<span class="codex-sec-hint">照出現率排序，點「前往」直接過去</span></div>
-    <div class="codex-spots">${relicRows}${shopRows}${srcRows || (relicRows || shopRows ? '' : '<div class="dim">沒有怪物會掉，也不在商店販售</div>')}</div>
+    <div class="codex-spots">${relicRows}${shopRows}${srcRows || (relicRows || shopRows ? '' : (
+      (typeof boxEligible === 'function' && boxEligible(id))
+        ? '<div class="dim">沒有怪物會掉、商店也沒賣。神秘箱子與神秘紫箱有機會開到。</div>'
+        : '<div class="dim">沒有怪物會掉，也不在商店販售</div>'
+    ))}</div>
   </div>`;
 }
 
@@ -3657,6 +5426,17 @@ function describeCardBonus(card) {
   });
   return out;
 }
+
+/* 已插上的卡片。名字下面接跟背包同一套效果字：引擎吃到的加成，沒有就退回敘述。 */
+function socketedCardsHtml(cardIds) {
+  return (cardIds || []).map(id => {
+    const c = CARDS[id];
+    if (!c) return `<div class="socket-card"><div class="socket-card-name">🃏 ${id}</div></div>`;
+    const bits = describeCardBonus(c);
+    const fx = bits.length ? bits.join('、') : (c.desc || '');
+    return `<div class="socket-card"><div class="socket-card-name">🃏 ${c.name}</div>${fx ? `<div class="socket-card-fx">${fx}</div>` : ''}</div>`;
+  }).join('');
+}
 function formatCardBonus(k, v, all) {
   if (CARD_BONUS_LABELS[k]) return `${CARD_BONUS_LABELS[k]} ${signed(v, CARD_PCT_KEYS.includes(k))}`;
   if (k === 'ignoreSizePenalty') return '無視體型修正（一律100%傷害）';
@@ -3746,7 +5526,180 @@ function formatCardBonus(k, v, all) {
   return `${k} ${signed(v)}`;
 }
 
-/* ---------------- NPC 商店分頁 ---------------- */
+/* 商店圖檔載不到時，把 <img> 換成原本的符號，不要留一張破圖。 */
+function shopEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function shopIconFallback(img) {
+  const s = document.createElement('span');
+  s.className = 'shop-item-icon';
+  s.textContent = img.getAttribute('data-fb') || '📦';
+  img.replaceWith(s);
+}
+/* 敘述尾巴的「系列／重量／裝備」跟前面的句子拆開，跟裝備說明同一種排法。 */
+function itemDescParts(desc) {
+  const s = String(desc || '').trim();
+  if (!s) return { flavor: '', meta: '' };
+  const idx = s.indexOf('系列:');
+  if (idx >= 0) return { flavor: s.slice(0, idx).trim(), meta: s.slice(idx).trim() };
+  const u = s.indexOf('_');
+  if (u >= 0) {
+    const tail = s.slice(u + 1).trim();
+    if (/^(重量|系列|裝備|攻擊|防禦|武器等級)/.test(tail)) {
+      return { flavor: s.slice(0, u).trim(), meta: tail };
+    }
+  }
+  return { flavor: s, meta: '' };
+}
+/* 浮層敘述：一句一行，本服註記拆到下方。註記裡的 ** 是粗體，不印星號。 */
+function tooltipDescHtml(desc) {
+  let t = String(desc || '').replace(/<\/?(?:ITEM|URL|TIPBOX|ele|a)>/gi, '').trim();
+  if (!t) return '';
+  let note = '';
+  const ni = t.search(/（\s*(?:⚠\s*)?本服/);
+  if (ni >= 0) { note = t.slice(ni).trim(); t = t.slice(0, ni).trim(); }
+  let spec = '';
+  const si = t.search(/系列[:：]/);
+  if (si >= 0) { spec = t.slice(si).trim(); t = t.slice(0, si).trim(); }
+  const lines = t.split(/(?<=。)/).map(s => s.trim()).filter(Boolean);
+  let html = '';
+  if (lines.length) html += `<div class="tt-desc">${lines.map(shopEsc).join('<br>')}</div>`;
+  if (spec) html += `<div class="tt-meta">${shopEsc(spec)}</div>`;
+  if (note) {
+    const cls = /未實作/.test(note) ? 'tt-note unimpl' : 'tt-note';
+    const body = shopEsc(note).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    html += `<div class="${cls}">${body}</div>`;
+  }
+  return html;
+}
+/* 裝備欄與商店共用這一塊。opts.cards／refine 只有身上那件帶得走；
+   opts.compare 是商店在看「換上去差多少」。 */
+function itemTooltipHtml(itemId, opts) {
+  opts = opts || {};
+  const item = ITEMS[itemId];
+  if (!item) return '';
+  const refLevel = opts.refine || 0;
+  let html = `<div class="tt-name">${shopEsc(getItemDisplayName(itemId))}${refLevel > 0 ? ` <span class="tt-refine">+${refLevel}</span>` : ''}</div>`;
+  let type = ITEM_TYPE_LABELS[item.type] || '道具';
+  if (item.element && item.element !== 'none' && ELEMENT_NAMES[item.element]) {
+    type += ' · ' + (ELEMENT_ICONS[item.element] || '') + ELEMENT_NAMES[item.element];
+  }
+  html += `<div class="tt-type">${type}</div>`;
+  html += opts.descHtml != null ? opts.descHtml : tooltipDescHtml(item.desc);
+  const stats = [];
+  const atk = statWithRefine(itemId, 'atk', refLevel);
+  const def = statWithRefine(itemId, 'def', refLevel);
+  if (atk) stats.push(`<span>ATK +${atk}</span>`);
+  if (def) stats.push(`<span>DEF +${def}</span>`);
+  if (item.matk) stats.push(`<span>MATK +${item.matk}</span>`);
+  if (item.mdef) stats.push(`<span>MDEF +${item.mdef}</span>`);
+  if (item.hit) stats.push(`<span>HIT +${item.hit}</span>`);
+  if (item.flee) stats.push(`<span>FLEE +${item.flee}</span>`);
+  if (item.aspd) stats.push(`<span>ASPD +${item.aspd}</span>`);
+  if (item.crit) stats.push(`<span>CRIT +${item.crit}</span>`);
+  if (item.hp) stats.push(`<span>HP +${item.hp}</span>`);
+  if (item.sp) stats.push(`<span>SP +${item.sp}</span>`);
+  if (item.str) stats.push(`<span>STR +${item.str}</span>`);
+  if (item.agi) stats.push(`<span>AGI +${item.agi}</span>`);
+  if (item.vit) stats.push(`<span>VIT +${item.vit}</span>`);
+  if (item.int) stats.push(`<span>INT +${item.int}</span>`);
+  if (item.dex) stats.push(`<span>DEX +${item.dex}</span>`);
+  if (item.luk) stats.push(`<span>LUK +${item.luk}</span>`);
+  if (item.heal) stats.push(`<span>回復 ${item.heal} HP</span>`);
+  if (item.healPct) stats.push(`<span>回復 ${item.healPct}% HP</span>`);
+  if (item.restoreSp) stats.push(`<span>回復 ${item.restoreSp} SP</span>`);
+  if (item.restoreSpPct) stats.push(`<span>回復 ${item.restoreSpPct}% SP</span>`);
+  if (item.aspdPct) stats.push(`<span>攻擊速度 ${item.aspdPct > 0 ? '+' : ''}${item.aspdPct}%</span>`);
+  if (stats.length) html += `<div class="tt-stats">${stats.join('')}</div>`;
+  const maxSlots = opts.maxSlots || 0;
+  const cards = opts.cards || [];
+  if (maxSlots > 0) {
+    html += `<div class="tt-slots">插槽 ${cards.length}/${maxSlots}</div>`;
+    if (cards.length && typeof socketedCardsHtml === 'function') html += socketedCardsHtml(cards);
+  }
+  if (opts.compare) html += renderCompareBadge(itemId, refLevel);
+  if (opts.hint) html += `<div class="tt-hint">${shopEsc(opts.hint)}</div>`;
+  return html;
+}
+function placeEquipTooltip(tt, anchor) {
+  tt.classList.add('show');
+  const rect = anchor && anchor.getBoundingClientRect
+    ? anchor.getBoundingClientRect()
+    : { right: 0, left: 0, top: 0 };
+  const tipW = tt.offsetWidth || 280;
+  const tipH = tt.offsetHeight || 200;
+  let left = rect.right + 8;
+  let top = rect.top;
+  if (left + tipW > window.innerWidth) left = rect.left - tipW - 8;
+  if (left < 4) left = 4;
+  if (top + tipH > window.innerHeight - 4) top = Math.max(4, window.innerHeight - tipH - 4);
+  if (top < 4) top = 4;
+  tt.style.left = left + 'px';
+  tt.style.top = top + 'px';
+}
+function showShopItemTooltip(event, itemId) {
+  const item = ITEMS[itemId];
+  const tt = document.getElementById('ro-equip-tooltip');
+  if (!item || !tt) return;
+  const gear = item.type === 'weapon' || item.type === 'armor';
+  tt.innerHTML = itemTooltipHtml(itemId, { maxSlots: item.slots || 0, compare: gear });
+  placeEquipTooltip(tt, event.currentTarget || event.target);
+}
+/* 背包列只留一行縮寫，完整說明跟裝備欄共用同一顆浮層。
+   ⓘ 點開的要釘住：手機沒有懸停，點一下還會補送 mouseleave，不釘住說明會瞬間關掉。 */
+let bagTipPinned = false;
+function showBagInfo(event, itemId, instanceId) {
+  if (event) { event.stopPropagation(); event.preventDefault(); }
+  bagTipPinned = true;
+  showBagTooltip(event, itemId, instanceId);
+}
+function showBagTooltip(event, itemId, instanceId) {
+  if (bagTipPinned && (!event || event.type !== 'click')) return;
+  const item = ITEMS[itemId];
+  const tt = document.getElementById('ro-equip-tooltip');
+  if (!item || !tt) return;
+  const inst = instanceId && state.instances ? state.instances[instanceId] : null;
+  const card = typeof CARDS !== 'undefined' ? CARDS[itemId] : null;
+  const opts = {
+    refine: inst ? (inst.refine || 0) : 0,
+    cards: inst && inst.cards ? inst.cards : [],
+    maxSlots: item.slots || 0,
+    compare: item.type === 'weapon' || item.type === 'armor',
+  };
+  if (card) {
+    const bits = describeCardBonus(card);
+    const line = bits.length ? bits.join('、') : (card.desc || '');
+    opts.descHtml = `<div class="tt-desc">${shopEsc(line)}</div>`
+      + `<div class="tt-meta">插槽：${shopEsc(cardSlotLabel(card))}</div>`;
+  }
+  tt.innerHTML = itemTooltipHtml(itemId, opts);
+  const row = (event.currentTarget && event.currentTarget.classList && event.currentTarget.classList.contains('inv-row'))
+    ? event.currentTarget
+    : (event.target && event.target.closest ? event.target.closest('.inv-row') : null);
+  placeEquipTooltip(tt, row || event.currentTarget);
+}
+function hideBagTooltip() {
+  if (bagTipPinned) return;
+  hideEquipTooltip();
+}
+function dismissBagTip(ev) {
+  const t = ev && ev.target;
+  if (!t || !t.closest) return;
+  if (t.closest('.wh-info-btn')) return;
+  if (t.closest('#ro-equip-tooltip')) return;
+  const slot = t.closest('.equipwin-slot');
+  if (slot && !t.closest('button, a, input, select')) return;
+  bagTipPinned = false;
+  equipSlotTipPinned = false;
+  const tt = document.getElementById('ro-equip-tooltip');
+  if (tt) tt.classList.remove('show', 'interactive');
+}
+if (typeof document !== 'undefined' && !window.__bagTipDismiss) {
+  window.__bagTipDismiss = true;
+  document.addEventListener('touchstart', dismissBagTip, { passive: true });
+  document.addEventListener('mousedown', dismissBagTip);
+}
+
 /* ---------------- 背包分頁 ----------------
    背包分成 武器／防具／卡片／道具 四類。卡片獨立成一類是因為它在資料上
    type 是 material，跟 900 多個素材混在一起會完全找不到。
@@ -3897,51 +5850,88 @@ function onInvSearch(v, ev) {
   refocusSearch('inv-search');
 }
 
-/* 10 格裝備視窗的 HTML；背包分頁已不再顯示它，改由「裝備」分頁使用 */
-/* ---------------- 裝備視窗外觀（可切換，仿 RO 換 UI 皮膚） ----------------
-   grid    = 現在這套格狀排版
-   ro      = RO 原版底圖（淺色，basic_equipwin_bg 原色）
-   ro_dark = 同一張底圖 CSS 反轉成深色，配合本作深色主題
-   底圖上的 10 個橢圓位置是直接從圖檔量出來的百分比座標。
-------------------------------------------------- */
-const EQUIP_SKINS = [
-  { key: 'grid',    name: '格狀（預設）' },
-  { key: 'ro',      name: 'RO 原版（淺色）' },
-  { key: 'ro_dark', name: 'RO 原版（深色）' },
-];
-// 圖檔 280×130，左欄橢圓中心 x=6.1%、右欄 93.6%，五列 y=13.1/32.3/52.3/72.3/92.3%
+/* 裝備視窗：RO 原版底圖（深色反轉），10 格座標見 EQUIPWIN_POS */
 const EQUIPWIN_POS = {
   head_top:    { x: 6.1,  y: 13.1, name: '頭上' },
-  head_mid:    { x: 6.1,  y: 32.3, name: '頭中' },
+  head_bottom: { x: 6.1,  y: 32.3, name: '頭下' },
   weapon:      { x: 6.1,  y: 52.3, name: '武器' },
   garment:     { x: 6.1,  y: 72.3, name: '披風' },
   accessory1:  { x: 6.1,  y: 92.3, name: '飾品1' },
-  head_bottom: { x: 93.6, y: 13.1, name: '頭下' },
+  head_mid:    { x: 93.6, y: 13.1, name: '頭中' },
   armor:       { x: 93.6, y: 32.3, name: '身體' },
   shield:      { x: 93.6, y: 52.3, name: '左手' },
   footgear:    { x: 93.6, y: 72.3, name: '鞋子' },
   accessory2:  { x: 93.6, y: 92.3, name: '飾品2' },
   ammo:        { x: 50.4, y: 88.5, name: '箭矢' },   // 中間那顆大橢圓（原本是角色影子）
 };
-function getEquipSkin() { return (state && state.equipSkin) || 'grid'; }
-function setEquipSkin(v) { state.equipSkin = v; saveGame(); renderEquipTab(); }
 /* 裝備欄摺疊：釘住的區塊（裝備欄 286px + 切換鈕 46px）在 1280×720 會吃掉分頁高度的 65%，
    下面的清單只剩兩列。摺起來就只剩標題列，換裝備時再展開。預設展開，狀態寫進存檔。 */
 function getEquipPanelCollapsed() { return !!(state && state.equipPanelCollapsed); }
 function toggleEquipPanel() { state.equipPanelCollapsed = !state.equipPanelCollapsed; saveGame(); renderEquipTab(); }
 
 function buildEquipPanelHtml() {
-  return getEquipSkin() === 'grid' ? buildEquipGridHtml() : buildEquipWinHtml();
+  return buildEquipWinHtml();
+}
+/* 裝備欄正中畫一幀待機紙娃娃。跟戰場同一套圖層，不另外做靜圖。 */
+function paintEquipDoll() {
+  const host = document.getElementById('equipwin-doll');
+  if (!host || !window.PAPERDOLL || typeof paperdollParts !== 'function') return;
+  const parts = paperdollParts();
+  if (!parts) { host.replaceChildren(); return; }
+  /* 裝備欄用正面站姿（idle），不用備戰側面圖。 */
+  let act = 'idle';
+  if (!paperdollFrameCount(parts[0], act)) act = 'idle_s';
+  const body = paperdollFrame(parts[0], act, 0);
+  if (!body) return;
+  let canvas = host.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    host.appendChild(canvas);
+  }
+  const box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  paperdollExpand(parts[0], body, 0, 0, box);
+  const layers = [];
+  for (let p = 1; p < parts.length; p++) {
+    const fr = paperdollFrame(parts[p], act, 0);
+    if (!fr) continue;
+    const al = paperdollAlign(parts[p], body, fr);
+    layers.push([parts[p], fr, al[0], al[1]]);
+    paperdollExpand(parts[p], fr, al[0], al[1], box);
+  }
+  if (!isFinite(box.minX)) return;
+  const pad = 2;
+  const minX = Math.floor(box.minX) - pad;
+  const minY = Math.floor(box.minY) - pad;
+  canvas.width = Math.max(1, Math.ceil(box.maxX) + pad - minX);
+  canvas.height = Math.max(1, Math.ceil(box.maxY) + pad - minY);
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const ox = -minX, oy = -minY;
+  let pending = !drawPaperdollLayers(ctx, parts[0], body, ox, oy);
+  layers.forEach(layer => {
+    if (!drawPaperdollLayers(ctx, layer[0], layer[1], ox + layer[2], oy + layer[3])) pending = true;
+  });
+  if (pending) {
+    parts.forEach(part => {
+      const im = paperdollImage(part);
+      if (im && !im.complete) im.addEventListener('load', paintEquipDoll, { once: true });
+    });
+  }
+}
+function equipWinLabel(itemId) {
+  return String(getItemDisplayName(itemId) || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // RO 底圖版：把 10 格（＋箭矢格）用百分比疊在底圖上
 function buildEquipWinHtmlInner() {
   const weaponId = getEquipBaseItemId('weapon');
   const twoHanded = isTwoHanded(weaponId);
-  const dark = getEquipSkin() === 'ro_dark';
 
-  let html = `<div class="equipwin${dark ? ' equipwin--dark' : ''}">
-    <img class="equipwin-bg" src="images/ui/equipwin_bg.png" alt="">`;
+  let html = `<div class="equipwin">
+    <img class="equipwin-bg" src="images/ui/equipwin_bg.png" alt="">
+    <div class="equipwin-doll" id="equipwin-doll"></div>`;
 
   Object.keys(EQUIPWIN_POS).forEach(key => {
     const p = EQUIPWIN_POS[key];
@@ -3961,12 +5951,16 @@ function buildEquipWinHtmlInner() {
     html += `<div class="equipwin-slot${shadow ? ' two-hand-shadow' : ''}" style="${style}"
       title="${p.name}"
       onmouseenter="showEquipTooltip(event,'${srcSlot}')" onmouseleave="hideEquipTooltip()"
-      onclick="showSlotActions('${srcSlot}')">
+      onclick="openEquipSlotPanel(event,'${srcSlot}')">
       <img src="${itemImgSrc(itemId)}" onerror="this.onerror=null;this.src='${placeholderImgSrc(key === 'ammo' ? 'item' : 'armor')}'">
-      ${ref > 0 ? `<span class="equipwin-refine">+${ref}</span>` : ''}
       ${cards.length ? `<span class="equipwin-card">🃏</span>` : ''}
       ${qtyTag}
     </div>`;
+    if (key !== 'ammo') {
+      const side = p.x < 50 ? 'left' : 'right';
+      const plus = ref > 0 ? `+${ref} ` : '';
+      html += `<div class="equipwin-name ${side}" style="top:${p.y}%"><span>${plus}${equipWinLabel(itemId)}</span></div>`;
+    }
   });
 
   html += `</div>`;
@@ -3977,122 +5971,69 @@ function buildEquipWinHtml() {
   return buildEquipWinHtmlInner() + buildAmmoRowHtml();
 }
 
-/* 底圖版的格子太小塞不下按鈕，改成點格子開這個動作面板（卸下／插卡／取出／精煉都在這） */
-function showSlotActions(slotKey) {
-  const el = document.getElementById('tab-equip');
-  if (!el) return;
-  const itemId = getEquipBaseItemId(slotKey);
-  if (!itemId) return;
-  const d = ITEMS[itemId];
-  const ref = getRefinementLevel(slotKey);
+/* 點裝備格：浮層顯示完整說明與卸下／插卡／精煉，不切換分頁。 */
+let equipSlotTipPinned = false;
+
+function equipSlotActionsHtml(slotKey) {
   const cards = getEquippedCards(slotKey);
   const maxSlots = getEquipCardSlots(slotKey);
-
-  let html = `<h3 class="panel-title">${ref > 0 ? `+${ref} ` : ''}${getItemDisplayName(itemId)}</h3>`;
-  html += `<button class="btn-small" onclick="renderEquipTab()">← 返回裝備欄</button>`;
-  html += `<div class="equip-pick-stats" style="margin:8px 0">${
-    [d.atk ? `ATK ${statWithRefine(itemId,'atk',ref)}` : '', d.def ? `DEF ${statWithRefine(itemId,'def',ref)}` : '',
-     d.element ? `${ELEMENT_ICONS[d.element]}${ELEMENT_NAMES[d.element]}` : '',
-     maxSlots ? `插槽 ${cards.length}/${maxSlots}` : ''].filter(Boolean).join('　')}</div>`;
-  if (cards.length) {
-    html += `<div class="equip-pick-cards">🃏 ${cards.map(id => CARDS[id] ? CARDS[id].name : id).join('、')}</div>`;
-  }
-  html += `<div class="equip-pick-head">
-    <button class="btn-small" onclick="unequipItem('${slotKey}');renderEquipTab();renderTopBar();">卸下</button>
-    ${maxSlots > cards.length ? `<button class="btn-small ghost" onclick="showCardSelect('${slotKey}')">插卡</button>` : ''}
-    ${cards.length ? `<button class="btn-small ghost danger" onclick="doRemoveCard('${slotKey}')">取出卡片</button>` : ''}
-    <button class="btn-small ghost" onclick="showRefinePanel('${slotKey}')">精煉</button>
+  return `<div class="tt-actions">
+    <button type="button" class="btn-small" onclick="equipSlotActionUnequip('${slotKey}')">卸下</button>
+    ${maxSlots > cards.length ? `<button type="button" class="btn-small ghost" onclick="equipSlotActionCards('${slotKey}')">插卡</button>` : ''}
+    ${cards.length ? `<button type="button" class="btn-small ghost danger" onclick="equipSlotActionRemoveCard('${slotKey}')">取出卡片</button>` : ''}
+    <button type="button" class="btn-small ghost" onclick="equipSlotActionRefine('${slotKey}')">精煉</button>
   </div>`;
-  el.innerHTML = html;
 }
 
-function buildEquipGridHtml() {
-  {
-    const equipSlotDefs = [
-      { key: 'head_top',   name: '頭上', icon: '👑' },
-      { key: 'head_mid',   name: '頭中', icon: '🎭' },
-      { key: 'head_bottom', name: '頭下', icon: '😷' },
-      { key: 'weapon',     name: '武器', icon: '⚔️' },
-      { key: 'armor',      name: '身體', icon: '🛡️' },
-      { key: 'shield',     name: '左手', icon: '🔰' },
-      { key: 'garment',    name: '披風', icon: '🧣' },
-      { key: 'footgear',   name: '鞋子', icon: '👢' },
-      { key: 'accessory1', name: '飾品1', icon: '💍' },
-      { key: 'accessory2', name: '飾品2', icon: '📿' },
-    ];
+function openEquipSlotPanel(event, slotKey) {
+  if (event) { event.stopPropagation(); event.preventDefault(); }
+  const itemId = getEquipBaseItemId(slotKey);
+  if (!itemId) return;
+  const item = ITEMS[itemId];
+  const tt = document.getElementById('ro-equip-tooltip');
+  if (!item || !tt) return;
+  equipSlotTipPinned = true;
+  bagTipPinned = false;
+  const refLevel = getRefinementLevel(slotKey);
+  const slotCards = getEquippedCards(slotKey);
+  const maxSlots = getEquipCardSlots(slotKey);
+  tt.innerHTML = itemTooltipHtml(itemId, {
+    refine: refLevel,
+    cards: slotCards,
+    maxSlots: maxSlots,
+  }) + equipSlotActionsHtml(slotKey);
+  const slotEl = event && event.target && event.target.closest
+    ? event.target.closest('.equipwin-slot')
+    : null;
+  placeEquipTooltip(tt, slotEl || (event && event.currentTarget));
+  tt.classList.add('interactive');
+}
 
-    // 檢查是否為雙手武器
-    const weaponId = getEquipBaseItemId('weapon');
-    const isWeaponTwoHanded = isTwoHanded(weaponId);
-
-    let equipHtml = '<div class="ro-equip-grid">';
-    equipSlotDefs.forEach(slot => {
-      // 雙手武器佔住左手：左手格直接顯示同一把武器的圖示（淡一點表示是被佔用而非另一件裝備）
-      if (slot.key === 'shield' && isWeaponTwoHanded) {
-        const twoHandRef = getRefinementLevel('weapon');
-        equipHtml += `<div class="ro-equip-slot has-item two-hand-shadow"
-          onmouseenter="showEquipTooltip(event,'weapon')"
-          onmouseleave="hideEquipTooltip()"
-          onclick="onEquipSlotClick('weapon')"
-        >
-          <div class="slot-label">${slot.name}</div>
-          ${twoHandRef > 0 ? `<div class="slot-refine">+${twoHandRef}</div>` : ''}
-          <img class="slot-icon" src="${itemImgSrc(weaponId)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('weapon')}'">
-          <div class="slot-name">${getItemDisplayName(weaponId)}</div>
-        </div>`;
-        return;
-      }
-
-      const itemId = getEquipBaseItemId(slot.key);
-      const item = itemId ? ITEMS[itemId] : null;
-      const refLevel = getRefinementLevel(slot.key);
-      const hasItem = !!item;
-      const iconHtml = item
-        ? `<img class="slot-icon" src="${itemImgSrc(itemId)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('armor')}'">`
-        : `<div class="slot-empty">${slot.icon}</div>`;
-      const nameHtml = hasItem ? `<div class="slot-name">${getItemDisplayName(itemId)}</div>` : '';
-      const refHtml = refLevel > 0 ? `<div class="slot-refine">+${refLevel}</div>` : '';
-
-      // 卡片插槽：顯示 ●（已插）/ ○（空孔），並提供插卡／取出／精煉的入口
-      // （精煉不論有沒有插槽都要有，否則格狀版根本進不去精煉面板）
-      let cardHtml = '';
-      if (hasItem) {
-        const maxSlots = getEquipCardSlots(slot.key);
-        const inserted = maxSlots > 0 ? getEquippedCards(slot.key) : [];
-        const pips = maxSlots > 0
-          ? `<span class="slot-pips">${'●'.repeat(inserted.length)}${'○'.repeat(Math.max(0, maxSlots - inserted.length))}</span>`
-          : '';
-        cardHtml = `<div class="slot-cards" title="${maxSlots > 0 ? `卡片插槽 ${inserted.length}/${maxSlots}` : '無插槽'}">
-          ${pips}
-          ${inserted.length < maxSlots ? `<button class="btn-pip" onclick="event.stopPropagation();showCardSelect('${slot.key}')">插卡</button>` : ''}
-          ${inserted.length ? `<button class="btn-pip danger" onclick="event.stopPropagation();doRemoveCard('${slot.key}')">取出</button>` : ''}
-          <button class="btn-pip" onclick="event.stopPropagation();showRefinePanel('${slot.key}')">精煉</button>
-        </div>`;
-      }
-
-      // 雙手武器讓武器欄看起來更寬
-      const spanStyle = (slot.key === 'weapon' && isWeaponTwoHanded) ? 'grid-column: span 2;' : '';
-
-      equipHtml += `<div class="ro-equip-slot${hasItem ? ' has-item' : ''}"
-        data-slot="${slot.key}"
-        style="${spanStyle}"
-        onmouseenter="showEquipTooltip(event,'${slot.key}')"
-        onmouseleave="hideEquipTooltip()"
-        onclick="onEquipSlotClick('${slot.key}')"
-      >
-        <div class="slot-label">${slot.name}${isWeaponTwoHanded && slot.key === 'weapon' ? ' (雙手)' : ''}</div>
-        ${refHtml}
-        ${iconHtml}
-        ${nameHtml}
-        ${cardHtml}
-      </div>`;
-    });
-    equipHtml += '</div>';
-
-    // 箭矢欄（格狀版沒有中間那顆橢圓，改成底圖版之外的獨立一列）
-    equipHtml += buildAmmoRowHtml();
-    return equipHtml;
+function closeEquipSlotPanel() {
+  equipSlotTipPinned = false;
+  const tt = document.getElementById('ro-equip-tooltip');
+  if (tt) {
+    tt.classList.remove('show', 'interactive');
   }
+}
+
+function equipSlotActionUnequip(slotKey) {
+  closeEquipSlotPanel();
+  unequipItem(slotKey);
+  refreshEquipViews();
+  renderTopBar();
+}
+function equipSlotActionCards(slotKey) {
+  closeEquipSlotPanel();
+  showCardSelect(slotKey);
+}
+function equipSlotActionRemoveCard(slotKey) {
+  closeEquipSlotPanel();
+  doRemoveCard(slotKey);
+}
+function equipSlotActionRefine(slotKey) {
+  closeEquipSlotPanel();
+  showRefinePanel(slotKey);
 }
 
 /* 箭矢狀態列：裝了哪種箭、剩幾支；拿弓卻沒箭時給明顯警告 */
@@ -4357,8 +6298,7 @@ function relicStickyHtml() {
 function renderRelicPageHtml() {
   return relicStickyHtml()
     + relicMerchantHtml()
-    + relicBagHtml()
-    + '<div id="ro-equip-tooltip" class="ro-equip-tooltip"></div>';
+    + relicBagHtml();
 }
 function doEquipRelic(itemId) { equipRelic(itemId); renderEquipTab(); renderTopBar(); }
 function doUnequipRelic(slot) { unequipRelic(slot); renderEquipTab(); renderTopBar(); }
@@ -4435,9 +6375,9 @@ function renderEquipTab() {
       return `<div class="equip-pick-row">
         <img src="${itemImgSrc(r.item)}" onerror="this.onerror=null;this.src='${placeholderImgSrc(itemPlaceholderKind(d))}'">
         <div class="equip-pick-info">
-          <div class="equip-pick-name">${refine > 0 ? `<span class="slot-refine">+${refine}</span> ` : ''}${getItemDisplayName(r.item)}${d.slots ? ` <span class="inv-slots">[${d.slots}]</span>` : ''}</div>
+          <div class="equip-pick-name"><button type="button" class="wh-info-btn" aria-label="看完整說明" onclick="showBagInfo(event,'${r.item}','${r.instanceId || ''}')">ⓘ</button>${refine > 0 ? `<span class="slot-refine">+${refine}</span> ` : ''}${getItemDisplayName(r.item)}${d.slots ? ` <span class="inv-slots">[${d.slots}]</span>` : ''}</div>
           <div class="equip-pick-stats">${bits.join('　')}</div>
-          ${cards.length ? `<div class="equip-pick-cards">🃏 ${cards.map(id => CARDS[id] ? CARDS[id].name : id).join('、')}</div>` : ''}
+          ${cards.length ? `<div class="equip-pick-cards">${socketedCardsHtml(cards)}</div>` : ''}
           ${renderCompareBadge(r.item, refine, r.instanceId)}
         </div>
         <button class="btn-small" onclick="${action};renderEquipTab();renderTopBar();">裝備</button>
@@ -4449,26 +6389,16 @@ function renderEquipTab() {
        清單一長就得先捲回最上面才能換分類。 */
     el.innerHTML = `
       <div class="equip-sticky">
-        <div class="equip-fixed${getEquipPanelCollapsed() ? ' collapsed' : ''}">
-          <div class="equip-fixed-head">
-            <h3 class="panel-title">
-              <button class="btn-small ghost equip-collapse-btn" onclick="toggleEquipPanel()"
-                title="${getEquipPanelCollapsed() ? '展開裝備欄' : '收合裝備欄，讓下面的清單看得更多'}">${getEquipPanelCollapsed() ? '▶' : '▼'}</button>
-              裝備欄
-            </h3>
-            <select class="ab-select equip-skin-select" onchange="setEquipSkin(this.value)" title="切換裝備視窗外觀">
-              ${EQUIP_SKINS.map(s => `<option value="${s.key}" ${getEquipSkin() === s.key ? 'selected' : ''}>${s.name}</option>`).join('')}
-            </select>
-          </div>
-          ${getEquipPanelCollapsed() ? '' : buildEquipPanelHtml()}
+        <div class="equip-fixed">
+          ${buildEquipPanelHtml()}
         </div>
         <div class="equip-pick-head">
           ${equipPickTabsHtml()}
           <span class="equip-pick-stats">${currentJob().name}可裝備 ${rows.length} 件</span>
         </div>
       </div>
-      ${listHtml}
-      <div id="ro-equip-tooltip" class="ro-equip-tooltip"></div>`;
+      ${listHtml}`;
+    paintEquipDoll();
   } catch (e) {
     el.innerHTML = `<div class="empty-hint">裝備分頁載入錯誤：${e.message}</div>`;
     console.error('renderEquipTab error:', e);
@@ -4535,8 +6465,10 @@ function renderInventoryTab() {
       const isCard = !!CARDS[row.item];
       // 消耗品要真的有效果才給「使用」鈕——沒有效果的按下去只會得到一句警告
       const usableConsumable = def.type === 'consumable' &&
-        !!(def.heal || def.restoreSp || def.healPct || def.restoreSpPct || def.boxOpen || def.aspdPct);
-      const canUse = usableConsumable || def.type === 'weapon' || def.type === 'armor';
+        !!(def.heal || def.restoreSp || def.healPct || def.restoreSpPct || def.boxOpen || def.aspdPct || def.hairPick || def.reviveAlly);
+      const effectUse = (typeof TAME_TO_PET !== 'undefined' && TAME_TO_PET[row.item])
+        || (typeof EXP_DROP_CANDY !== 'undefined' && EXP_DROP_CANDY[row.item]);
+      const canUse = usableConsumable || effectUse || def.type === 'weapon' || def.type === 'armor';
       const elemTag = def.element ? ` ${ELEMENT_ICONS[def.element]}${ELEMENT_NAMES[def.element]}` : '';
 
       // ---- 個體裝備（精煉過或插過卡）：獨立一行，狀態跟著這一件走 ----
@@ -4548,14 +6480,14 @@ function renderInventoryTab() {
         const iCards = inst.cards || [];
         const maxSlots = def.slots || 0;
         const cardsHtml = iCards.length
-          ? `<div class="inv-cardslot">🃏 ${iCards.map(id => CARDS[id] ? CARDS[id].name : id).join('、')}（${iCards.length}/${maxSlots}）</div>`
+          ? `<div class="inv-cardslot"><div class="socket-card-count">插槽 ${iCards.length}/${maxSlots}</div>${socketedCardsHtml(iCards)}</div>`
           : '';
-        return `<div class="inv-row${iLocked ? ' locked' : ''}">
+        return `<div class="inv-row${iLocked ? ' locked' : ''}" onmouseenter="showBagTooltip(event,'${row.item}','${row.instanceId}')" onmouseleave="hideBagTooltip()">
           <div class="inv-row-main">
             <div class="inv-icon"><img src="${itemImgSrc(row.item)}" alt="${displayName}" onerror="this.onerror=null;this.src='${placeholderImgSrc(itemPlaceholderKind(def))}'"></div>
             <div class="inv-info">
-              <div class="inv-name">${iLocked ? '<span class="inv-lock-tag">🔒</span> ' : ''}${refTag}${displayName}${def.slots ? ` <span class="inv-slots">[${def.slots}]</span>` : ''}${elemTag}</div>
-              <div class="inv-desc">${def.desc || ''}</div>
+              <div class="inv-name"><button type="button" class="wh-info-btn" aria-label="看完整說明" onclick="showBagInfo(event,'${row.item}','${row.instanceId}')">ⓘ</button>${iLocked ? '<span class="inv-lock-tag">🔒</span> ' : ''}${refTag}${displayName}${def.slots ? ` <span class="inv-slots">[${def.slots}]</span>` : ''}${elemTag}</div>
+              <div class="inv-desc">${shopEsc(def.desc || '')}</div>
               ${cardsHtml}
               ${renderCompareBadge(row.item, inst.refine, row.instanceId)}
             </div>
@@ -4583,12 +6515,12 @@ function renderInventoryTab() {
       const locked = isItemLocked(row.item);
       // 只有能穿的裝備才做比較，素材消耗品沒有比較的意義
       const compareHtml = (def.type === 'weapon' || def.type === 'armor') ? renderCompareBadge(row.item) : '';
-      return `<div class="inv-row${locked ? ' locked' : ''}">
+      return `<div class="inv-row${locked ? ' locked' : ''}" onmouseenter="showBagTooltip(event,'${row.item}')" onmouseleave="hideBagTooltip()">
         <div class="inv-row-main">
           <div class="inv-icon"><img src="${itemImgSrc(row.item)}" alt="${displayName}" onerror="this.onerror=null;this.src='${placeholderImgSrc(itemPlaceholderKind(def))}'"></div>
           <div class="inv-info">
-            <div class="inv-name">${locked ? '<span class="inv-lock-tag">🔒</span> ' : ''}${displayName} x${row.qty}${slotTag}${elemTag}</div>
-            <div class="inv-desc">${cardBonus || def.desc || ''}</div>
+            <div class="inv-name"><button type="button" class="wh-info-btn" aria-label="看完整說明" onclick="showBagInfo(event,'${row.item}')">ⓘ</button>${locked ? '<span class="inv-lock-tag">🔒</span> ' : ''}${displayName} x${row.qty}${slotTag}${elemTag}</div>
+            <div class="inv-desc">${shopEsc(cardBonus || def.desc || '')}</div>
             ${isCard ? `<div class="inv-cardslot">插槽：${cardSlotLabel(CARDS[row.item])}</div>` : ''}
             ${compareHtml}
           </div>
@@ -4609,7 +6541,7 @@ function renderInventoryTab() {
               + (times > 1 ? `<button class="btn-small" onclick="synthesizeOreAll('${k}');renderInventoryTab();renderTopBar();"
                 title="湊得滿的 ${times} 份一次合成完，除不盡的留在背包">全部合成(${times})</button>` : '');
           })()}
-          ${canUse ? `<button class="btn-small" onclick="useItem('${row.item}');renderInventoryTab();">${def.type === 'consumable' ? '使用' : '裝備'}</button>` : ''}
+          ${canUse ? `<button class="btn-small" onclick="useItem('${row.item}');renderInventoryTab();">${(def.type === 'weapon' || def.type === 'armor') ? '裝備' : '使用'}</button>` : ''}
           ${def.boxOpen && row.qty > 1 ? `<button class="btn-small" onclick="openAllBoxesAsync('${row.item}', function(){renderInventoryTab();renderTopBar();});" title="手上這 ${row.qty} 個一次開完（每 100 個一批，不卡畫面）">全部開啟(${row.qty})</button>` : ''}
           ${locked || def.type === 'relic' ? '' : `<button class="btn-small ghost" onclick="sellItem('${row.item}',1);renderInventoryTab();renderTopBar();">賣出(${def.sell})</button>`}
           ${!locked && def.type !== 'relic' && row.qty > 1 ? `<button class="btn-small ghost" onclick="sellItemAll('${row.item}');renderInventoryTab();renderTopBar();">全部賣出</button>` : ''}
@@ -4685,6 +6617,7 @@ function renderInventoryTab() {
 const _equipClickTimers = {};
 
 function showEquipTooltip(event, slotKey) {
+  if (equipSlotTipPinned) return;
   const itemId = getEquipBaseItemId(slotKey);
   if (!itemId) return;
   const item = ITEMS[itemId];
@@ -4696,85 +6629,30 @@ function showEquipTooltip(event, slotKey) {
   const slotCards = getEquippedCards(slotKey);
   const maxSlots = getEquipCardSlots(slotKey);
 
-  let html = `<div class="tt-name">${getItemDisplayName(itemId)}${refLevel > 0 ? ` <span class="tt-refine">+${refLevel}</span>` : ''}</div>`;
-  html += `<div class="tt-type">${item.type === 'weapon' ? '武器' : '防具'}${item.element ? ' · ' + ELEMENT_ICONS[item.element] + ELEMENT_NAMES[item.element] : ''}</div>`;
-  if (item.desc) html += `<div class="tt-desc">${item.desc}</div>`;
-  // 顯示數值
-  const stats = [];
-  if (item.atk) stats.push(`<span>ATK +${item.atk}</span>`);
-  if (item.def) stats.push(`<span>DEF +${item.def}</span>`);
-  if (item.matk) stats.push(`<span>MATK +${item.matk}</span>`);
-  if (item.mdef) stats.push(`<span>MDEF +${item.mdef}</span>`);
-  if (item.hit) stats.push(`<span>HIT +${item.hit}</span>`);
-  if (item.flee) stats.push(`<span>FLEE +${item.flee}</span>`);
-  if (item.aspd) stats.push(`<span>ASPD +${item.aspd}</span>`);
-  if (item.crit) stats.push(`<span>CRIT +${item.crit}</span>`);
-  if (item.hp) stats.push(`<span>HP +${item.hp}</span>`);
-  if (item.sp) stats.push(`<span>SP +${item.sp}</span>`);
-  if (item.str) stats.push(`<span>STR +${item.str}</span>`);
-  if (item.agi) stats.push(`<span>AGI +${item.agi}</span>`);
-  if (item.vit) stats.push(`<span>VIT +${item.vit}</span>`);
-  if (item.int) stats.push(`<span>INT +${item.int}</span>`);
-  if (item.dex) stats.push(`<span>DEX +${item.dex}</span>`);
-  if (item.luk) stats.push(`<span>LUK +${item.luk}</span>`);
-  if (stats.length) html += `<div class="tt-stats">${stats.join('')}</div>`;
-  if (maxSlots > 0) {
-    html += `<div class="tt-slots">插槽 ${slotCards.length}/${maxSlots}</div>`;
-    slotCards.forEach(cid => {
-      if (CARDS[cid]) html += `<div class="tt-card">🃏 ${CARDS[cid].name}</div>`;
-    });
-  }
-  html += `<div class="tt-hint">點擊 2 次卸下裝備</div>`;
-
-  tt.innerHTML = html;
-  tt.classList.add('show');
-
-  // 定位：貼在被指到的那一格旁邊。格狀版是 .ro-equip-slot，底圖版是 .equipwin-slot，
-  // 兩個都要認得，否則底圖版會找不到基準點、提示框停在畫面外看不到。
-  const slotEl = event.target.closest('.ro-equip-slot, .equipwin-slot');
-  const rect = slotEl ? slotEl.getBoundingClientRect()
-                      : { right: event.clientX || 0, left: event.clientX || 0, top: event.clientY || 0 };
-  let left = rect.right + 8;
-  let top = rect.top;
-  // 防止超出右側
-  if (left + 280 > window.innerWidth) left = rect.left - 288;
-  if (left < 4) left = 4;
-  // 防止超出底部
-  if (top + 200 > window.innerHeight) top = window.innerHeight - 210;
-  if (top < 4) top = 4;
-  tt.style.left = left + 'px';
-  tt.style.top = top + 'px';
+  tt.innerHTML = itemTooltipHtml(itemId, {
+    refine: refLevel,
+    cards: slotCards,
+    maxSlots: maxSlots,
+    hint: '點一下看操作'
+  });
+  const slotEl = event.target.closest('.equipwin-slot');
+  placeEquipTooltip(tt, slotEl || event.currentTarget);
 }
 
 function hideEquipTooltip() {
+  if (equipSlotTipPinned || bagTipPinned) return;
   const tt = document.getElementById('ro-equip-tooltip');
-  if (tt) tt.classList.remove('show');
+  if (tt) tt.classList.remove('show', 'interactive');
 }
 
 function onEquipSlotClick(slotKey) {
-  const itemId = state.equip[slotKey];
-  if (!itemId) return;
-
-  // 雙擊確認卸下
-  const now = Date.now();
-  if (_equipClickTimers[slotKey] && now - _equipClickTimers[slotKey] < 500) {
-    // 第二次點擊：卸下
-    clearTimeout(_equipClickTimers[slotKey]);
-    delete _equipClickTimers[slotKey];
-    unequipItem(slotKey);
-    refreshEquipViews();
-    renderTopBar();
-  } else {
-    // 第一次點擊：提示
-    _equipClickTimers[slotKey] = now;
-    const tt = document.getElementById('ro-equip-tooltip');
-    if (tt) {
-      const item = ITEMS[getEquipBaseItemId(slotKey)];
-      const hint = tt.querySelector('.tt-hint');
-      if (hint) hint.textContent = `再點一次卸下 ${item ? item.name : '裝備'}`;
-      tt.classList.add('show');
-    }
-  }
+  const sel = document.querySelector('.equipwin-slot[onclick*="\'' + slotKey + '\'"]');
+  openEquipSlotPanel({
+    target: sel,
+    currentTarget: sel,
+    preventDefault() {},
+    stopPropagation() {},
+  }, slotKey);
 }
 
 /* ---------------- 角色分頁 ---------------- */
@@ -4823,6 +6701,100 @@ function statPctTitle(pctSrc, added) {
     .join('\n').replace(/"/g, '＂');
 }
 
+let charSheetOpen = true;
+function toggleCharSheet() {
+  charSheetOpen = !charSheetOpen;
+  const body = document.getElementById('char-sheet-body');
+  const btn = document.getElementById('char-sheet-toggle');
+  if (body) body.classList.toggle('hidden', !charSheetOpen);
+  if (btn) btn.textContent = charSheetOpen ? '▼ 收起' : '▶ 展開';
+}
+const STAT_HELP = {
+  str: ['ATK：一般武器以 STR 為主，STR+(STR/10)²', '弓、樂器、鞭改看 DEX，STR 只進副屬性 STR/5', '武器傷害浮動看 STR'],
+  agi: ['迴避 FLEE = 100 + 等級 + AGI', 'ASPD、攻擊間隔'],
+  vit: ['最大 HP：基礎 HP × (1 + VIT%)', '軟防：DEF 後面那個數字，(等級+VIT)/2', 'HP 回復'],
+  int: ['最大 SP：基礎 SP × (1 + INT%)', 'MATK：INT+(INT/7)² 到 INT+(INT/5)²，另加 DEX/5', '軟魔防：MDEF 後面那個數字，INT/2', 'SP 回復'],
+  dex: ['命中 HIT = 175 + 等級 + DEX', 'ASPD、攻擊間隔', '弓、樂器、鞭的 ATK 主屬性', 'MATK 固定加 DEX/5'],
+  luk: ['暴擊率 = 4 + LUK/3，基礎上限 50（拳刃再加倍）', '完全迴避 = LUK/10', 'ATK 加 LUK/5，MATK 上限加 LUK/3']
+};
+function openStatInfo(k) {
+  const title = document.getElementById('stat-modal-title');
+  const body = document.getElementById('stat-modal-body');
+  const m = document.getElementById('stat-modal');
+  if (!title || !body || !m) return;
+  const bd = (state._statBreakdown && state._statBreakdown[k]) || { base: 0, job: 0, gear: 0, skill: 0, buff: 0, total: 0 };
+  const rows = [
+    ['基礎', bd.base, '已分配的能力點'],
+    ['職業', bd.job, ''],
+    ['裝備', bd.gear, ''],
+    ['技能', bd.skill, ''],
+    ['增益', bd.buff, '']
+  ];
+  title.textContent = (STAT_NAMES[k] || k) + ' 說明';
+  body.innerHTML = `<div class="stat-src-head">來源明細　合計 ${bd.total}</div>
+    <div class="stat-src-table">${rows.map(r =>
+      `<div class="stat-src-row"><span>${r[0]}</span><b>${r[1] > 0 ? '+' : ''}${r[1]}</b><span class="dim">${r[2]}</span></div>`
+    ).join('')}</div>
+    <ul class="stat-help">${(STAT_HELP[k] || []).map(t => `<li>${t}</li>`).join('')}</ul>`;
+  m.classList.remove('hidden');
+}
+function closeStatInfo() {
+  const m = document.getElementById('stat-modal');
+  if (m) m.classList.add('hidden');
+}
+let hairPickItem = null;
+function openHairPick(itemId) {
+  const def = ITEMS[itemId];
+  const m = document.getElementById('hair-modal');
+  const title = document.getElementById('hair-modal-title');
+  const body = document.getElementById('hair-modal-body');
+  if (!def || !def.hairPick || !m || !title || !body) return;
+  hairPickItem = itemId;
+  const gender = (state && state.gender) || 'male';
+  const now = hairNow();
+  const clip = (window.PAPERDOLL && window.PAPERDOLL.clip) || {};
+  if (def.hairPick === 'color') {
+    title.textContent = '選擇髮色';
+    body.innerHTML = `<div class="hair-grid">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(c => {
+      const has = clip['head/' + gender + '/' + now.style + '/' + c];
+      return `<button type="button" class="hair-cell${c === now.color ? ' on' : ''}" ${has ? '' : 'disabled'} onclick="confirmHairPick(${c})">髮色 ${c}</button>`;
+    }).join('')}</div><p class="empty-hint">目前髮型 ${now.style}。確認後消耗一瓶染髮劑，取消不消耗。</p>`;
+  } else {
+    const styles = [];
+    for (let s = 1; s <= 42; s++) {
+      if (clip['head/' + gender + '/' + s + '/' + now.color]) styles.push(s);
+    }
+    title.textContent = '選擇髮型';
+    body.innerHTML = styles.length
+      ? `<div class="hair-grid">${styles.map(s =>
+          `<button type="button" class="hair-cell${s === now.style ? ' on' : ''}" onclick="confirmHairPick(${s})">髮型 ${s}</button>`
+        ).join('')}</div><p class="empty-hint">目前髮色 ${now.color}。確認後消耗一張美容券，取消不消耗。</p>`
+      : '<p class="empty-hint">這組髮型圖還沒準備好。</p>';
+  }
+  m.classList.remove('hidden');
+}
+function closeHairPick() {
+  hairPickItem = null;
+  const m = document.getElementById('hair-modal');
+  if (m) m.classList.add('hidden');
+}
+function confirmHairPick(n) {
+  const id = hairPickItem;
+  const def = id && ITEMS[id];
+  const row = def && state.inventory.find(r => r.item === id && !r.instanceId && r.qty > 0);
+  if (!row) { closeHairPick(); return; }
+  if (def.hairPick === 'color') state.hairColor = n;
+  else state.hairStyle = n;
+  removeItem(id, 1);
+  saveGame();
+  logMsg(`✂️ 使用了 ${def.name}：${def.hairPick === 'color' ? '髮色 ' + n : '髮型 ' + n}`);
+  closeHairPick();
+  const inv = document.getElementById('tab-inventory');
+  if (inv && inv.classList.contains('active')) renderInventoryTab();
+  const img = document.getElementById('player-img');
+  if (img && typeof paperdollParts === 'function') syncPaperdoll(img, paperdollParts(), false);
+  if (typeof paintEquipDoll === 'function') paintEquipDoll();
+}
 function renderCharacterTab() {
   const job = currentJob();
   const el = document.getElementById('tab-character');
@@ -4832,50 +6804,6 @@ function renderCharacterTab() {
   const hitBuff = buffMult('hit');
   const effectiveCritRate = Math.min(100, Math.round(state.critRate * critBuff.mult + critBuff.flatBonus));
   const effectiveHit = Math.round(state.hit * hitBuff.mult + hitBuff.flatBonus);
-
-  // 顯示目前啟動中的 buffs
-  let buffListHtml = '<div id="active-buffs" class="active-buffs">';
-  if (state.buffs && state.buffs.length > 0) {
-    // 素質類 buff 的 mult 是「比例」（心神凝聚 0.03 = +3%），照 ×0.03 印會看起來像被削弱
-    const buffNames = {
-      aspd: '攻速', atk: '攻擊', def: '防禦', flee: '迴避', gold: '金錢', crit: '暴擊', hit: '命中',
-      statpct: 'DEX/AGI', blessing: 'STR/INT/DEX', flatstat: 'STR/ATK', agiflat: 'AGI', lukflat: 'LUK',
-      sprate: 'SP回復', poison: '毒', maxroll: '傷害固定最大值', holyweapon: '聖屬武器', shield: '護盾', magnumfire: '火屬強化',
-      block: '格擋', auraflat: '靈氣附加傷害',
-      // 致命塗毒（#59）：兩個 buff 一組推出來，一個乘武器 ATK、一個乘毒屬性傷害
-      weaponatk: '裝備ATK', eledmg_poison: '毒屬性傷害',
-      // 神匠（#60）
-      meltdown: '野蠻凶砍', spawnspeed: '生怪加速',
-      // 十字軍（#66）
-      reflect: '反射', providence: '神祐之光',
-      // 詩人／舞孃（#68）
-      perfectdodge: '完全迴避', critdmg: '暴擊傷害', maxhppct: '最大HP', maxsppct: '最大SP',
-      skillcd: '技能冷卻', exp: '經驗值', atkflat: 'ATK', defflat: 'DEF', spcost: '技能SP消耗',
-      songelereduce: '四屬性耐性', songailresist: '異常狀態抗性', gemfree: '魔力礦石',
-      dontforgetme: '勿忘我',
-      // 武僧（#70）：爆氣推 crit + sprate、金剛不壞推 dmgtaken
-      dmgtaken: '受傷減免',
-      // 賢者（#71）：屬性附加推 eleweapon、元素領域推 eledmg_<屬性> 與一組數值 buff
-      eleweapon: '武器屬性', eledmg_fire: '火傷害', eledmg_water: '水傷害',
-      eledmg_wind: '風傷害', eledmg_earth: '地傷害',
-      // 鍊金術士（#72）：屬性抵抗藥水
-      eleresist: '屬性抵抗'
-    };
-    const PCT_BUFFS = ['statpct', 'magnumfire'];
-    buffListHtml += state.buffs.map(b => {
-      const label = (typeof buffSourceLabel === 'function' ? buffSourceLabel(b) : b.type);
-      const stat = buffNames[b.type] || b.type;
-      const remain = Math.ceil(b.msRemaining / 1000);
-      let bonus;
-      if (PCT_BUFFS.includes(b.type)) bonus = `+${Math.round((b.mult || 0) * 100)}%`;
-      else if (b.type === 'blessing') bonus = `+${b.strBonus || 0}`;
-      else if (b.flatBonus) bonus = `+${b.flatBonus}`;
-      else if (typeof b.mult === 'number' && b.mult !== 1) bonus = `×${b.mult.toFixed(2)}`;
-      else bonus = '啟動中';
-      return `<span class="buff-tag" title="${label}">${stat} ${bonus} (${remain}s)</span>`;
-    }).join('');
-  }
-  buffListHtml += '</div>';
 
   /* 生效中的裝備套裝（#20）。EQUIP_SETS 以前是空的，所以這一排從來沒東西可顯示，
      現在有資料了就得讓玩家看得到——不然湊齊了也不知道有沒有生效。 */
@@ -4912,7 +6840,7 @@ function renderCharacterTab() {
         const pctV = bd ? bd.pct : 0;
         return `
         <div class="stat-row">
-          <div class="stat-label">${STAT_NAMES[k]}</div>
+          <div class="stat-label">${STAT_NAMES[k]} <button type="button" class="wh-info-btn" aria-label="看素質說明" onclick="openStatInfo('${k}')">ⓘ</button></div>
           <div class="stat-value"><span class="stat-seg" title="基礎值（已分配的屬性點）">${state.stats[k]}</span>${
             bonus > 0 ? `<span class="stat-seg" style="color:#4fc3f7" title="${statJobSourceTitle(k, bonus)}">+${bonus}</span>` : ''}${
             gear !== 0 ? `<span class="stat-seg" style="color:var(--gold-soft)" title="${statGearSourceTitle(k)}">${gear > 0 ? '+' : ''}${gear}</span>` : ''}${
@@ -4933,16 +6861,35 @@ function renderCharacterTab() {
           >🔄 洗點 ${STAT_RESET_COST_ZENY.toLocaleString()}z</button>`;
       })()}
     </div>
-    ${setListHtml}
-    ${buffListHtml}
-    <div class="derived-grid">
-      <div>物理攻擊 ATK：${state.atk}${(() => { const r = getRefinementLevel('weapon'); const wId = getEquipBaseItemId('weapon'); const wLv = wId ? getRefineWeaponLv(ITEMS[wId]) : 1; return r > 0 ? ` (+${getRefinementAtkBonus(r, wLv)}精煉)` : ''; })()}</div>
-      <div>魔法攻擊 MATK：${state.matkMin}~${state.matkMax}</div>
-      <div title="硬防（裝備）走比例減傷、軟防（等級+VIT）每一擊固定扣血，兩者運算方式不同">防禦 DEF：${state.defHard || 0}+${state.defSoft || 0}${(() => { let refBonus = 0; ['head_top','head_mid','head_bottom','armor','shield','garment','footgear','accessory1','accessory2'].forEach(s => { const lv = getRefinementLevel(s); if (lv > 0) refBonus += getRefinementDefBonus(lv); }); return refBonus > 0 ? ` (+${refBonus}精煉)` : ''; })()}　<span class="dim">硬防減傷 ${Math.round((1 - (4000 + (state.defHard||0)) / (4000 + 10 * (state.defHard||0))) * 100)}%</span></div>
-      <div title="魔防（#17）：怪物的魔法技能看的是這個，不是 DEF。硬魔防（裝備+卡片）走比例減傷、軟魔防（INT/2）每一發固定扣血">魔防 MDEF：${state.mdefHard || 0}+${state.mdefSoft || 0}　<span class="dim">硬魔防減傷 ${Math.round((1 - (4000 + Math.max(0, state.mdefHard || 0)) / (4000 + 10 * Math.max(0, state.mdefHard || 0))) * 100)}%</span></div>
+    <div class="char-sheet">
+      <div class="char-sheet-head">
+        <span>人物數值</span>
+        <button type="button" class="btn-small" id="char-sheet-toggle" onclick="toggleCharSheet()">${charSheetOpen ? '▼ 收起' : '▶ 展開'}</button>
+      </div>
+      <div id="char-sheet-body" class="${charSheetOpen ? '' : 'hidden'}">
+    <div class="char-sec-title">攻擊</div>
+    <div class="char-grid">
+      <div><span>ATK</span><b>${state.atk}${(() => { const r = getRefinementLevel('weapon'); const wId = getEquipBaseItemId('weapon'); const wLv = wId ? getRefineWeaponLv(ITEMS[wId]) : 1; return r > 0 ? ` (+${getRefinementAtkBonus(r, wLv)}精煉)` : ''; })()}</b></div>
+      <div><span>MATK</span><b>${state.matkMin}～${state.matkMax}</b></div>
+      <div><span>ASPD</span><b>${state.aspd}${state.buffs.some(b => b.type === 'aspd') ? ' <span class="buff-active">BUFF</span>' : ''}</b></div>
+      <div><span>攻擊間隔</span><b>${(state.attackInterval / 1000).toFixed(2)} 秒</b></div>
+      <div><span>HIT</span><b>${effectiveHit}${effectiveHit > state.hit ? ` <span class="buff-active">(+${effectiveHit - state.hit})</span>` : ''}</b></div>
+      <div><span>暴擊</span><b>${effectiveCritRate}%${effectiveCritRate > state.critRate ? ` <span class="buff-active">(+${effectiveCritRate - state.critRate})</span>` : ''}</b></div>
+      <div><span>武器屬性</span><b>${(() => { const wId = getEquipBaseItemId('weapon'); const w = wId ? ITEMS[wId] : null; const el = w && w.element ? w.element : 'none'; return ELEMENT_ICONS[el] + ' ' + ELEMENT_NAMES[el]; })()}</b></div>
+    </div>
+    <div class="char-sec-title">防禦</div>
+    <div class="char-grid">
+      <div title="硬防（裝備）走比例減傷、軟防（等級+VIT）每一擊固定扣血"><span>DEF</span><b>${state.defHard || 0}+${state.defSoft || 0}${(() => { let refBonus = 0; ['head_top','head_mid','head_bottom','armor','shield','garment','footgear','accessory1','accessory2'].forEach(s => { const lv = getRefinementLevel(s); if (lv > 0) refBonus += getRefinementDefBonus(lv); }); return refBonus > 0 ? ` (+${refBonus}精煉)` : ''; })()}</b><span class="dim">硬防減傷 ${Math.round((1 - (4000 + (state.defHard||0)) / (4000 + 10 * (state.defHard||0))) * 100)}%</span></div>
+      <div title="怪物的魔法技能看魔防。硬魔防走比例減傷、軟魔防（INT/2）每一發固定扣血"><span>MDEF</span><b>${state.mdefHard || 0}+${state.mdefSoft || 0}</b><span class="dim">硬魔防減傷 ${Math.round((1 - (4000 + Math.max(0, state.mdefHard || 0)) / (4000 + 10 * Math.max(0, state.mdefHard || 0))) * 100)}%</span></div>
       ${state.playerElement && state.playerElement !== 'none'
-        ? `<div title="鎧甲屬性（#17）：被攻擊時吃屬性相剋。免疫同屬性，但也會被剋星打雙倍">鎧甲屬性：<span class="set-tag">${ELEMENT_ICONS[state.playerElement] || ''}${ELEMENT_NAMES[state.playerElement] || state.playerElement}屬性</span></div>` : ''}
-      ${state.cardMagicReflectChance ? `<div title="成功時完全不受傷，法術原樣彈回施法者">魔法反射：${state.cardMagicReflectChance}%</div>` : ''}
+        ? `<div title="被攻擊時吃屬性相剋"><span>鎧甲屬性</span><b><span class="set-tag">${ELEMENT_ICONS[state.playerElement] || ''}${ELEMENT_NAMES[state.playerElement] || state.playerElement}</span></b></div>` : ''}
+      ${state.cardMagicReflectChance ? `<div title="成功時完全不受傷，法術原樣彈回施法者"><span>魔法反射</span><b>${state.cardMagicReflectChance}%</b></div>` : ''}
+      <div title="場上怪愈多，迴避上限愈低：1隻95%／2隻90%／3隻85%／4隻80%／5隻75%"><span>FLEE</span><b>${state.flee}</b>${typeof fleeCapPct === 'function'
+        ? `<span class="dim">上限 ${fleeCapPct()}%（場上 ${Math.max(1, (state.monsters || []).length)} 隻）</span>` : ''}</div>
+      <div><span>完全迴避</span><b>${state.perfectDodge}%</b></div>
+    </div>
+    <div class="char-sec-title">生存</div>
+    <div class="char-grid">
       ${(() => {
         /* 自然回復（#102）。禪心／快速恢復／運氣調息／聖母之頌歌只動這個數字，
            不動 HP/SP 上限——畫面上沒有這一行的話，點下去看起來就像沒有效果。
@@ -4960,10 +6907,8 @@ function renderCharacterTab() {
           const pctAmt = Math.round(state.maxSp * (state.zenSpPctBonus || 0) / 100 * 10) / 10;
           zen = `\n禪心：每次恢復 +${state.zenSpFlatBonus} 與 +${state.zenSpPctBonus}% 最大SP（${pctAmt} 點）`;
         }
-        return `<div title="每秒回復量。禪心、快速恢復、運氣調息等被動加的是這個，不是 HP/SP 上限。${zen}">自然回復：${r.hp} HP／${r.sp} SP 每秒${tag}</div>`;
+        return `<div title="每秒回復量。禪心、快速恢復、運氣調息等被動加的是這個，不是 HP/SP 上限。${zen}"><span>自然回復</span><b>${r.hp} HP／${r.sp} SP 每秒</b>${tag}</div>`;
       })()}
-      <div>攻擊速度 ASPD：${state.aspd}${state.buffs.some(b => b.type === 'aspd') ? ' <span class="buff-active">BUFF</span>' : ''}</div>
-      <div>攻擊間隔：${(state.attackInterval / 1000).toFixed(2)} 秒</div>
       ${/* 生怪速度（#146）。本作沒有「移動」，官方所有「移動速度上升」的效果
            一律換算成生怪加速——但畫面上以前沒有任何地方看得到，
            玩家點了騎乘術／裝了月夜貓卡也不知道到底有沒有生效。
@@ -4979,19 +6924,42 @@ function renderCharacterTab() {
           ? `　<span class="dim">${src.map(x => x.name + ' +' + x.pct + '%').join('、')}</span>`
           : '　<span class="dim">目前沒有加速來源</span>';
         return `<div title="本作沒有移動，所以官方「移動速度上升」的效果一律換算成生怪加速。場上清空時補第一批比較快。">`
-          + `生怪間隔：${(gap / 1000).toFixed(2)} 秒（清場後 ${(first / 1000).toFixed(2)} 秒）${tag}${list}</div>`;
+          + `<span>生怪間隔</span><b>${(gap / 1000).toFixed(2)} 秒</b><span class="dim">清場後 ${(first / 1000).toFixed(2)} 秒</span>${tag}${list}</div>`;
       })()}
-      <div>命中 HIT：${effectiveHit}${effectiveHit > state.hit ? ` <span class="buff-active">(+${effectiveHit - state.hit})</span>` : ''}</div>
-      <div title="場上怪愈多，迴避上限愈低：1隻95%／2隻90%／3隻85%／4隻80%／5隻75%。夾的是上限，FLEE 還沒堆到頂的話不受影響">迴避 FLEE：${state.flee}${typeof fleeCapPct === 'function'
-        ? `　<span class="dim">上限 ${fleeCapPct()}%（場上 ${Math.max(1, (state.monsters || []).length)} 隻）</span>` : ''}</div>
-      <div>暴擊率：${effectiveCritRate}%${effectiveCritRate > state.critRate ? ` <span class="buff-active">(+${effectiveCritRate - state.critRate})</span>` : ''}</div>
-      <div>完全迴避：${state.perfectDodge}%</div>
-      <div>武器屬性：${(() => { const wId = getEquipBaseItemId('weapon'); const w = wId ? ITEMS[wId] : null; const el = w && w.element ? w.element : 'none'; return ELEMENT_ICONS[el] + ' ' + ELEMENT_NAMES[el]; })()}</div>
+      <div><span>套裝</span><b>${setListHtml || '—'}</b></div>
+    </div>
+      </div>
     </div>
     <p class="stat-formula-hint">數值公式參考 RO 正式版邏輯調整：ATK=${state._atkUsesDex ? 'DEX+(DEX/10)²+STR/5+LUK/5（弓／樂器／鞭以 DEX 為主屬性）' : 'STR+(STR/10)²+DEX/5+LUK/5'}；HIT=175+等級+DEX；FLEE=100+等級+AGI；DEF 採比例減傷而非直接相減。屬性點數規則對齊官方對照表：每級獲得 floor((等級-1)/5)+3 點；加點消耗隨數值升高而增加（1~10 花2點、11~20花3點...以此類推）。</p>`;
 }
 
 /* ---------------- 轉職樹（簽名視覺元素） ---------------- */
+/* 轉職樹的職業圖示：站立格 frame_000，不播普攻、也不換成騎乘。
+   性別先看 genderLock（詩人只有男版、舞孃只有女版）。
+   載不到就換另一個性別，再不行才退回 emoji。 */
+function jobTreeIconHtml(jobId, jd) {
+  const key = (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[jobId]) || jobId;
+  const g = jd.genderLock || ((state && state.gender === 'female') ? 'female' : 'male');
+  const alt = g === 'female' ? 'male' : 'female';
+  return `<span class="tree-icon">
+        <img class="tree-icon-img" alt="${jd.name}"
+             src="images/frames/${key}_${g}/frame_000.png"
+             data-fb="images/frames/${key}_${alt}/frame_000.png"
+             onerror="jobTreeIconErr(this)">
+        <span class="tree-icon-emoji" hidden>${jd.icon}</span>
+      </span>`;
+}
+function jobTreeIconErr(img) {
+  const fb = img.getAttribute('data-fb');
+  if (fb) { img.removeAttribute('data-fb'); img.src = fb; return; }
+  img.style.display = 'none';
+  const em = img.parentNode && img.parentNode.querySelector('.tree-icon-emoji');
+  if (em) em.hidden = false;
+}
+function jobTreeAttr(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
 function renderJobTree() {
   const el = document.getElementById('tab-jobtree');
   /* 第四層是進階二轉（轉生後才走得到）。**沒轉生過的角色不畫這一層**——
@@ -5052,71 +7020,39 @@ function renderJobTree() {
       .filter(row => row.length);
   }
 
-  const nodeW = 108, nodeH = 64, gapX = 20, tierGapY = 130;
-  // 轉生後只剩單欄，寬度要看最寬的那一層（原本寫死 tiers[1]，單欄時會擠成一條）
-  const widest = Math.max(...tiers.map(t => t.length));
-  const svgW = Math.max(3, widest) * (nodeW + gapX);
-  const svgH = tierGapY * (tiers.length - 1) + nodeH + 40;
-
-  function xOf(tierIdx, i, count) {
-    const rowW = count * (nodeW + gapX) - gapX;
-    const startX = (svgW - rowW) / 2;
-    return startX + i * (nodeW + gapX);
-  }
-
-  let lines = '';
-  let nodes = '';
+  let rows = '';
   tiers.forEach((tier, tIdx) => {
-    const y = 20 + tIdx * tierGapY;
-    tier.forEach((jobId, i) => {
-      const x = xOf(tIdx, i, tier.length);
-      const cx = x + nodeW / 2;
+    let cards = '';
+    tier.forEach(jobId => {
       const jd = JOB_TREE[jobId];
+      if (!jd) return;
       const isCurrent = state.jobId === jobId;
       const unlocked = isCurrent || isJobUnlocked(jobId);
       const canChange = tIdx > 0 && canJobChange(jobId);
-
-      if (jd.parent && tIdx > 0) {
-        const pTierIdx = tIdx - 1;
-        const pTier = tiers[pTierIdx];
-        /* 轉生後的路線是「劍士 → 領主騎士」，而領主騎士的 `parent` 是騎士——
-           騎士那一格根本不在畫面上，`indexOf` 會回 -1、座標算出 NaN、整條線消失。
-           單欄時上一層只有一格，直接連它。 */
-        let pi = pTier.indexOf(jd.parent);
-        if (pi < 0 && pTier.length === 1) pi = 0;
-        if (pi >= 0) {
-          const px = xOf(pTierIdx, pi, pTier.length) + nodeW / 2;
-          const py = 20 + pTierIdx * tierGapY + nodeH;
-          lines += `<line x1="${px}" y1="${py}" x2="${cx}" y2="${y}" class="tree-line ${unlocked ? 'tree-line-active' : ''}" />`;
+      /* 格子上只留兩種狀態。具體差在哪（等級、技能點）放 title。 */
+      let foot = '';
+      let full = jd.name;
+      if (tIdx > 0 && !isCurrent) {
+        if (canChange) {
+          foot = '可轉職';
+          full = '可轉職';
+        } else {
+          foot = '未達轉職條件';
+          full = (typeof jobChangeBlockReason === 'function' ? jobChangeBlockReason(jobId) : '') || foot;
         }
       }
-
-      /* 腳註優先序：能轉 → 轉不了的**具體理由** → 技能還沒做。
-         以前不能轉的時候整格是空的，玩家看到的是「按了沒反應」（#61）。 */
-      const noSkills = jd.tier === 2.5 && (jd.skills || []).length === 0;
-      let foot = '';
-      if (canChange) foot = '點擊轉職';
-      else if (tIdx > 0 && !isCurrent) {
-        foot = (typeof jobChangeBlockReason === 'function' ? jobChangeBlockReason(jobId) : '') || '';
-      }
-      if (!foot && noSkills) foot = '技能製作中';
-      // 節點只有 108px 寬，理由放得下才畫在格子裡，放不下的用 <title> 掛成滑鼠提示
-      const full = foot;
-      if (foot.length > 11) foot = foot.slice(0, 10) + '…';
-      nodes += `<g class="tree-node ${isCurrent ? 'tree-node-current' : ''} ${unlocked ? 'tree-node-unlocked' : 'tree-node-locked'}"
-                   transform="translate(${x},${y})" ${canChange ? `onclick="confirmJobChange('${jobId}')"` : ''} style="${canChange ? 'cursor:pointer' : ''}">
-          ${full ? `<title>${full}</title>` : ''}
-          <rect width="${nodeW}" height="${nodeH}" rx="10" class="tree-rect"/>
-          <text x="${nodeW / 2}" y="24" class="tree-icon" text-anchor="middle">${jd.icon}</text>
-          <text x="${nodeW / 2}" y="46" class="tree-label" text-anchor="middle">${jd.name}</text>
-          ${foot ? `<text x="${nodeW / 2}" y="58" class="${canChange ? 'tree-cta' : 'tree-wip'}" text-anchor="middle">${foot}</text>` : ''}
-        </g>`;
+      cards += `<button type="button" class="tree-card ${isCurrent ? 'tree-node-current' : ''} ${unlocked ? 'tree-node-unlocked' : 'tree-node-locked'}" ${canChange ? `onclick="confirmJobChange('${jobId}')"` : 'disabled'} title="${jobTreeAttr(full || jd.name)}">
+          ${jobTreeIconHtml(jobId, jd)}
+          <span class="tree-label">${jd.name}</span>
+          ${foot ? `<span class="${canChange ? 'tree-cta' : 'tree-wip'}">${foot}</span>` : '<span class="tree-wip">&nbsp;</span>'}
+        </button>`;
     });
+    rows += `<div class="job-tree-tier ${tIdx ? 'job-tree-tier-linked' : ''}" style="--tier-count:${tier.length}">${cards}</div>`;
   });
 
   el.innerHTML = `<h3 class="panel-title">轉職之路</h3>
     <div class="job-tree-wrap">
-      <svg viewBox="0 0 ${svgW} ${svgH}" class="job-tree-svg">${lines}${nodes}</svg>
+      <div class="job-tree-board">${rows}</div>
     </div>
     <p class="tree-hint">金色代表你已走過或正在的道路。二轉需職業等級滿級並達到基礎等級門檻。
       <b>職業一旦選定就走到底</b>，轉職只保留本系路線，其他路線的技能會被清除。</p>
@@ -5284,7 +7220,7 @@ function stopMusic() {
 function toggleMute() {
   state.muted = !state.muted;
   const btn = document.getElementById('btn-mute');
-  if (btn) btn.textContent = state.muted ? '🔇' : '🔊';
+  if (btn) btn.textContent = state.muted ? '🔇 取消靜音' : '🔊 靜音';
   if (state.muted) stopMusic(); else playMapMusic();
   saveGame();
 }
@@ -5349,6 +7285,10 @@ function showOfflineModal(off) {
   const levelUpHtml = (off.baseLevelUps > 0 || off.jobLevelUps > 0)
     ? `<div class="offline-levelup">🎉 基礎等級 +${off.baseLevelUps}　職業等級 +${off.jobLevelUps}</div>`
     : '';
+  const prepaid = off.expPrepaid;
+  const prepaidHtml = (prepaid && ((prepaid.base || 0) > 0 || (prepaid.job || 0) > 0))
+    ? `<p class="offline-duration">隊友回到這張地圖時，已先結算經驗 ${(prepaid.base || 0).toLocaleString()}、職業經驗 ${(prepaid.job || 0).toLocaleString()}。</p>`
+    : '';
   // 隊友有出力的話寫出來——#135 之前隊友的傷害根本沒算進離線收益
   const partyHtml = off.allyCount
     ? `<p class="offline-duration">🤝 ${off.allyCount} 位隊友一起參戰。</p>` : '';
@@ -5358,6 +7298,7 @@ function showOfflineModal(off) {
 
   document.getElementById('offline-modal-body').innerHTML = `
     <p class="offline-duration">離開了 <strong>${formatDuration(off.elapsedMs)}</strong>，你的角色在原地持續戰鬥了 ${off.kills} 場戰鬥：</p>
+    ${prepaidHtml}
     ${partyHtml}
     ${bossHtml}
     ${levelUpHtml}
@@ -5401,15 +7342,20 @@ function setShowOfflineModal(on) {
 const IDLE_SETTLE_MIN_MS = 5000;    // 切分頁：超過 5 秒就結算，收益不蒸發
 function deliverOfflineResult(off) {
   if (!off) return;
+  if (typeof takeExpPrepaidNote === 'function') {
+    const n = takeExpPrepaidNote();
+    if (n) off.expPrepaid = n;
+  }
   /* 收益已經在 computeOfflineProgress() 裡發出去了，這裡只決定「要不要留痕跡」。
      太短的（快速切一下分頁）不記也不彈：不然頻繁切換的人三筆紀錄全是
      「離開 0 分鐘」，那顆按鈕就變成裝飾品，剛好跟使用者要的相反。 */
-  if (off.elapsedMs < OFFLINE_MIN_MS) { saveGame(); return; }
+  if (off.elapsedMs < OFFLINE_MIN_MS && !off.expPrepaid) { saveGame(); return; }
   pushOfflineLog(off);
   if (showOfflineReport()) showOfflineModal(off);
   else {
     _idleReportUnseen = true;
-    showToast(`📈 掛機收益已記錄：經驗 +${(off.expGained || 0).toLocaleString()}`);
+    const extra = off.expPrepaid ? `（已先結算經驗 ${(off.expPrepaid.base || 0).toLocaleString()}）` : '';
+    showToast(`📈 掛機收益已記錄：經驗 +${(off.expGained || 0).toLocaleString()}${extra}`);
   }
   refreshIdleReportBtn();
   if (idleReportOpen) renderIdleReport();
@@ -5434,8 +7380,11 @@ function toggleIdleReport() {
   refreshIdleReportBtn();
 }
 function refreshIdleReportBtn() {
+  const on = _idleReportUnseen && !idleReportOpen;
   const btn = document.getElementById('btn-idle-report');
-  if (btn) btn.classList.toggle('has-new', _idleReportUnseen && !idleReportOpen);
+  if (btn) btn.classList.toggle('has-new', on);
+  const menu = document.getElementById('btn-menu');
+  if (menu) menu.classList.toggle('has-new', on);
 }
 function formatStamp(ms) {
   const d = new Date(ms);
@@ -5463,6 +7412,9 @@ function renderIdleReport() {
           ? `<span class="offline-item">${ITEMS[x.item].icon} ${ITEMS[x.item].name} x${x.qty}</span>` : '').join('')
         + (r.itemsMore ? `<span class="offline-item">…還有 ${r.itemsMore} 種</span>` : '')
       : '<span class="offline-item-empty">（沒有掉落物）</span>';
+    const prepaid = (r.expPrepaid && ((r.expPrepaid.base || 0) > 0 || (r.expPrepaid.job || 0) > 0))
+      ? `<div class="idle-rec-lv">隊友回到地圖時已先結算經驗 ${(r.expPrepaid.base || 0).toLocaleString()}、職業 ${(r.expPrepaid.job || 0).toLocaleString()}</div>`
+      : '';
     const lv = (r.baseLevelUps > 0 || r.jobLevelUps > 0)
       ? `<div class="idle-rec-lv">🎉 等級 +${r.baseLevelUps}　職業 +${r.jobLevelUps}</div>` : '';
     const party = r.allyCount ? `　🤝 ${r.allyCount} 位隊友` : '';
@@ -5478,6 +7430,7 @@ function renderIdleReport() {
         <div>職業 +${(r.jobExpGained || 0).toLocaleString()}</div>
       </div>
       ${boss}
+      ${prepaid}
       ${lv}
       <div class="idle-rec-items">${items}</div>
     </div>`;
@@ -5487,12 +7440,14 @@ function renderIdleReport() {
 /* 分頁可見度。**只有真的在遊戲畫面裡才處理**：還在標題／創角畫面時
    state 是 null 或還沒進場，停迴圈與結算都沒有意義。 */
 document.addEventListener('visibilitychange', () => {
+  if (typeof tabSessionBlocked === 'function' && tabSessionBlocked()) return;
   if (!state || typeof stopLoop !== 'function') return;
   const inGame = document.getElementById('screen-game').classList.contains('active');
   if (!inGame) return;
   if (document.hidden) {
     stopLoop();
-    state.lastActiveAt = Date.now();
+    if (typeof stampPlayedClocks === 'function') stampPlayedClocks();
+    else state.lastActiveAt = Date.now();
     saveGame();
   } else if (!loopRunning()) {
     let off = null;
@@ -5513,6 +7468,14 @@ document.addEventListener('visibilitychange', () => {
     deliverOfflineResult(off);
     renderAll();
   }
+});
+
+window.addEventListener('focus', () => {
+  if (!state || (typeof tabSessionBlocked === 'function' && tabSessionBlocked())) return;
+  const screen = document.getElementById('screen-game');
+  if (!screen || !screen.classList.contains('active')) return;
+  if (typeof resyncPartyAllies === 'function') resyncPartyAllies();
+  if (allyPanelOpen) renderAllyPanel();
 });
 
 /* ---------------- 手動存檔 ---------------- */
@@ -5587,6 +7550,7 @@ function setRefineMat(slotKey, key) {
 function showRefinePanel(slotKey) {
   const el = document.getElementById('tab-equip');
   if (!el) return;
+  hideEquipTooltip();
   const ctx = refineContext(slotKey);
   if (!ctx) { renderEquipTab(); return; }
 
@@ -5901,14 +7865,18 @@ function forgeAvailable() {
   return typeof isBlacksmithLine === 'function' && isBlacksmithLine(state.jobId);
 }
 
-// 分頁列上那顆「🔨 鍛造」：學會鍛造技能就出現（原料共用、武器限鐵匠系）
+// 分頁列上那顆「🔨 鍛造」一直占著格子。沒學會相關技能就停用，不能點開。
 function syncForgeTabBtn() {
   const btn = document.getElementById('tab-btn-forge');
   if (!btn) return;
-  btn.classList.toggle('hidden', !forgeAvailable());
+  const ok = forgeAvailable();
+  btn.disabled = !ok;
+  btn.title = ok ? '開啟鍛造' : '需先學會鍛造相關技能';
+  if (!ok && forgeIsOpen()) closeForge();
 }
 
 function openForge() {
+  if (!forgeAvailable()) return;
   let win = document.getElementById('forge-window');
   if (!win) {
     win = document.createElement('div');
@@ -6665,6 +8633,7 @@ function doDestroyInstance(instanceId) {
 function showCardSelect(slotKey) {
   const el = document.getElementById('tab-equip');
   if (!el) return;
+  hideEquipTooltip();
 
   const equipId = getEquipBaseItemId(slotKey);
   const equipName = equipId && ITEMS[equipId] ? getItemDisplayName(equipId) : '（無裝備）';

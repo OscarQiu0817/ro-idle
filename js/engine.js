@@ -280,6 +280,8 @@ function createCharacter(name, statAlloc, gender) {
   state = {
     name: name || '無名冒險者',
     gender: gender || 'male',
+    hairStyle: 1,
+    hairColor: 5,
     jobId: 'novice',
     baseLevel: 1, baseExp: 0,
     jobLevel: 1, jobExp: 0,
@@ -297,7 +299,6 @@ function createCharacter(name, statAlloc, gender) {
     relicReviveReadyAt: 0,
     relicMonkReadyAt: 0,         // 武僧遺物的加特林冷卻
     relicShieldReadyAt: 0,       // 鐵匠遺物的護盾冷卻
-    equipSkin: 'grid',  // 裝備視窗外觀：grid / ro / ro_dark
     refinement: {},   // 舊版精煉資料（按itemId），僅供遷移讀取，新邏輯一律用 instances
     equippedCards: {}, // 舊版插卡資料（按欄位），僅供遷移讀取，新邏輯一律用 instances
     instances: {},     // { instanceId: {item, refine, cards:[cardId,...]} } 精煉或插卡過的裝備會變成獨立個體，跟著那一件走
@@ -351,7 +352,9 @@ function createCharacter(name, statAlloc, gender) {
     lastAttackTime: Date.now(),
     attackAccumulator: 0,
     createdAt: Date.now(),
-    lastActiveAt: Date.now()
+    lastActiveAt: Date.now(),
+    lastExpAt: Date.now(),
+    lastLootAt: Date.now()
   };
   recomputeDerived(true);
   addItem('red_potion', 100);
@@ -372,6 +375,7 @@ function renameCharacter(newName) {
   state.name = n;
   logMsg(`已更名為「${n}」！`);
   saveGame();
+  if (typeof syncWorldChatPlayer === 'function') syncWorldChatPlayer();
   return true;
 }
 
@@ -561,16 +565,20 @@ function equippedAtk() {
     if (ammo && ammo.atk) mainAtk += ammo.atk;
   }
 
-  // 雙持：左手欄位裝備的是單手武器而非盾牌時，套用右手/左手修練的傷害修正
+  /* 雙持：面板後 ATK 是兩把武器的帳面 ATK 相加（含精煉），修練%不在這裡折。
+     未修練 50%/30%、點滿 100%/80% 只在出手時拆成兩段（見 weaponChainDamage）。
+     單持不套修練%，否則沒點技能的短劍會被砍半。 */
+  state._mainHandAtk = mainAtk;
+  state._offHandAtk = 0;
+  state._dualWield = false;
   const offId = getEquipBaseItemId('shield');
   const offItem = offId ? ITEMS[offId] : null;
   if (offItem && offItem.type === 'weapon' && canDualWield(state.jobId)) {
     const offRefLevel = getRefinementLevel('shield');
     const offWeaponLv = getRefineWeaponLv(offItem);
-    const offAtk = (offItem.atk || 0) + getRefinementAtkBonus(offRefLevel, offWeaponLv);
-    const rightPct = (state.rightHandPct != null ? state.rightHandPct : 50) / 100;
-    const leftPct = (state.leftHandPct != null ? state.leftHandPct : 30) / 100;
-    mainAtk = mainAtk * rightPct + offAtk * leftPct;
+    state._offHandAtk = (offItem.atk || 0) + getRefinementAtkBonus(offRefLevel, offWeaponLv);
+    state._dualWield = true;
+    mainAtk += state._offHandAtk;
   }
   return mainAtk;
 }
@@ -614,10 +622,19 @@ const BUFF_TYPE_LABELS = {
   blessing: '天使之賜福', flatstat: '大聲吶喊', agiflat: '加速術',
   lukflat: '幸運之頌歌', statpct: '心神凝聚'
 };
+function skillDisplayName(nameOrSkill) {
+  const raw = typeof nameOrSkill === 'string' ? nameOrSkill : (nameOrSkill && nameOrSkill.name) || '';
+  const i = raw.search(/\s+[A-Za-z][A-Za-z0-9 .'-]*$/);
+  return i > 0 ? raw.slice(0, i).trim() : raw;
+}
 function buffSourceLabel(b) {
   if (b.skillId && typeof findSkillById === 'function') {
     const sk = findSkillById(b.skillId);
-    if (sk) return sk.name;
+    if (sk) {
+      const lv = b.skillLv || skillLv(b.skillId) || 0;
+      const nm = skillDisplayName(sk);
+      return lv > 0 ? `${nm} Lv${lv}` : nm;
+    }
   }
   return BUFF_TYPE_LABELS[b.type] || b.type;
 }
@@ -917,7 +934,7 @@ function recomputeDerived(fullHeal) {
     passiveSourceSkills().forEach(sk => {
       const lv = skillLv(sk.id);
       if (!lv || sk.type !== 'passive') return;
-      const label = `${sk.name} Lv${lv}`;
+      const label = `${skillDisplayName(sk)} Lv${lv}`;
       if (sk.passiveStat === 'dexFlat') {
         const val = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
         addSrc(skillSrc, skillFlat, 'dex', Math.round(val), label);
@@ -1066,7 +1083,9 @@ function recomputeDerived(fullHeal) {
      spawnMonster 的遠攻分支自己有「場上有怪就不生」的判斷，所以平常看不出來，
      但衝鋒攻擊（spawnExtraMonster）與召喚小弟（#65）都是照 maxMonsters 補的，
      那兩條路在遠攻模式下會補出第 2~5 隻。 */
-  state.maxMonsters = state.encounterMode === 'ranged' ? 1 : MELEE_MAX_MONSTERS;
+  state.maxMonsters = state.encounterMode === 'off' ? 0
+    : state.encounterMode === 'ranged' ? 1
+    : MELEE_MAX_MONSTERS;
 
   // HIT / FLEE：經典 RO 常數公式
   state.hit = 175 + bl + cDex;
@@ -2343,6 +2362,8 @@ function recomputeDerived(fullHeal) {
   if (atkPctBonus !== 0) {
     const m = 1 + atkPctBonus;
     state._atkWeapon = Math.round(state._atkWeapon * m);
+    state._mainHandAtk = Math.round((state._mainHandAtk || 0) * m);
+    state._offHandAtk = Math.round((state._offHandAtk || 0) * m);
     state._atkStatus = Math.round(state._atkStatus * m);
     state._atkMastery = Math.round(state._atkMastery * m);
     state.atk = state._atkStatus + state._atkWeapon + state._atkMastery;
@@ -2993,8 +3014,9 @@ function estimateMapYield(mapObj) {
     const critPer = Math.max(1, Math.round(critRaw)) + raceFlatBonus(mon);
     dmg += (normalPer * (1 - critRate) * hitPct + critPer * critRate) * share;
     hp += (mon.hp || 1) * share;
-    exp += (mon.exp || 0) * share;
-    jobExp += (mon.jobExp || 0) * share;
+    const gapRate = levelGapExpRate(mon.level || 1, state.baseLevel || 1);
+    exp += (mon.exp || 0) * share * gapRate;
+    jobExp += (mon.jobExp || 0) * share * gapRate;
     gold += Math.round(3 + (mon.level || 1) * 1.4) * share;
   });
 
@@ -3019,6 +3041,15 @@ function estimateMapYield(mapObj) {
   const killsPerSec = secPerKill === Infinity
     ? 0
     : 1 / (secPerKill + (throttled ? emptyGapSec : 0));
+  /* 人在這張圖、而且隊內等級差還均分得了：預估改成自己那一份。
+     等差超過 15 時傷害比例要等真的打起來才知道，這裡仍照單人。 */
+  if (mapObj && mapObj.id === state.mapId && typeof partyExpContext === 'function') {
+    const ctx = partyExpContext(state);
+    if (ctx.even && ctx.n > 1) {
+      exp *= ctx.evenShare;
+      jobExp *= ctx.evenShare;
+    }
+  }
   return {
     dps, hpAvg: hp, spawnCapped: throttled,
     killsPer10m: killsPerSec * 600,
@@ -3107,6 +3138,7 @@ function applyPoisonDot(mon, monDef, rawDmgPerTick) {
   const wasPoisoned = mon.poisonDotEnd && Date.now() < mon.poisonDotEnd;
   mon.poisonDotPerTick = Math.round(rawDmgPerTick * elemMult);
   mon.poisonDotEnd = Date.now() + 3000;
+  mon._dotCredit = monsterDamageKey();
   // 只有從沒中毒變成中毒才出聲，續毒不重放
   if (!wasPoisoned && typeof playStatusSound === 'function') playStatusSound('poison');
 }
@@ -3123,7 +3155,10 @@ function tickPoisonDot() {
     }
     const monDef = MONSTERS[mon.defId];
     const dmg = mitigateDamage(mon.poisonDotPerTick, ...defOf(monDef, 0.6));
+    _hurtCredit = mon._dotCredit || 'self';
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
+    _hurtCredit = null;
     logMsg(`☠️ 中毒對 ${monDef.name} 造成 ${dmg} 點傷害！`);
     if (mon.hp <= 0) killMonster(monDef, mon);
   }
@@ -3245,6 +3280,7 @@ function tickBleed() {
     mon.bleedNextTick = now + 1000;
     const monDef = MONSTERS[mon.defId];
     const dmg = Math.max(1, Math.round(mon.maxHp * MON_AILMENTS.bleed.dotPctMaxHp / 100));
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     if (!_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += dmg;
     logMsg(`🩸 出血對 ${monDef.name} 造成 ${dmg} 點傷害！`);
@@ -3640,6 +3676,7 @@ function rejectSwordAbsorb(dmg, mon, monDef) {
   /* 反射打的是**怪物**。不要用 takeReflectDamage()——那支是反過來的
      （怪物的反射盾把傷害彈回玩家身上），拿來用會變成自己扣血。 */
   if (mon && reflected > 0) {
+    noteMonsterDamage(mon, reflected);
     mon.hp -= reflected;
     if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + reflected, 'normal');
     if (mon.hp <= 0 && monDef) killMonster(monDef, mon);
@@ -3751,6 +3788,7 @@ function applyPlayerReflect(mon, monDef, dmgTaken) {
   const pct = (state.cardReflectPct || 0) + buffMult('reflect').flatBonus;
   if (!pct || !mon || dmgTaken <= 0) return;
   const back = Math.max(1, Math.round(dmgTaken * pct / 100));
+  noteMonsterDamage(mon, back);
   mon.hp -= back;
   if (!_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += back;
   logMsg(`🔁 反射！對 ${monDef.name} 彈回 ${back} 點傷害。`);
@@ -3920,6 +3958,7 @@ function tryTrapProcs(target, monDef) {
         const mDef = MONSTERS[mon.defId];
         const elemMult = getElementMultiplierVsMonster(sk.element || 'none', mDef, mon);
         const dmg = mitigateDamage(skillBaseDamage(false, mDef, elemMult) * mult, ...defOf(mDef));
+        noteMonsterDamage(mon, dmg);
         mon.hp -= dmg;
         logMsg(`  → 對 ${mDef.name} 造成 ${dmg} 點傷害！`);
         if (mon.hp <= 0) killMonster(mDef, mon);
@@ -3952,6 +3991,7 @@ function tryMagicStunProcs(mon, monDef) {
     const dmgMult = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
     const elemMult = getElementMultiplierVsMonster(sk.element || 'none', monDef, mon);
     const dmg = mitigateDamage(state.matk * dmgMult * elemMult, ...defOf(monDef, 1, true));
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', sk.element || null);
     logMsg(`❄️ 「${sk.name}」觸發！${monDef.name} 暈眩了，並受到 ${dmg} 點魔法傷害！`);
@@ -4145,6 +4185,7 @@ function tryPhysAoeStrikes(monDef) {
       const dmg = mitigateDamage(
         skillBaseDamage(false, md, elemMult) * e.mult * cardTargetDmgMult(md) * ailDmgTakenMult(mon),
         ...defOf(md, 1, false, mon)) + raceFlatBonus(md);
+      noteMonsterDamage(mon, dmg);
       mon.hp -= dmg;
       wakeIfFrozen(mon);
       pushCombatLog(`  → 對 ${md.name} 造成 ${dmg} 點傷害！`);
@@ -4217,6 +4258,7 @@ function trySongProcs(target, monDef) {
       const em = getElementMultiplierVsMonster(p.element, md, mon);
       const dmg = mitigateDamage(skillBaseDamage(true, md, em) * p.mult * (cardTargetDmgMult(md)) * ailDmgTakenMult(mon),
         ...defOf(md, 1, true, mon));
+      noteMonsterDamage(mon, dmg);
       mon.hp -= dmg;
       ailBreakOnDamage(mon, md);
       if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', p.element);
@@ -4307,6 +4349,7 @@ function tryRogueProcs(target, monDef) {
         const dmg = mitigateDamage(
           weaponChainDamage(md, em, false) * p.mult * cardTargetDmgMult(md) * ailDmgTakenMult(mon),
           ...defOf(md, 1, false, mon)) + raceFlatBonus(md);
+        noteMonsterDamage(mon, dmg);
         mon.hp -= dmg;
         ailBreakOnDamage(mon, md);
         if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal');
@@ -5078,6 +5121,7 @@ function drawTarot(mon, monDef, allowDouble) {
     return bits.length ? `${c.name}（${bits.join('、')}）` : c.name;
   }
   if (c.flat) {
+    noteMonsterDamage(mon, c.flat);
     mon.hp -= c.flat;
     ailBreakOnDamage(mon, monDef);
     if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + c.flat, 'normal');
@@ -5221,6 +5265,7 @@ function trySpearCounterProc(mon, monDef) {
   if (Math.random() * 100 >= state.spearCounterChance) return;
   state.spearCounterReadyAt = Date.now() + (state.spearCounterCooldownSec || 10) * 1000;
   const dmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.spearCounterMult, ...defOf(monDef));
+  noteMonsterDamage(mon, dmg);
   mon.hp -= dmg;
   applyStun(mon, state.spearCounterStunSec || 2, true);
   logMsg(`🔱 長矛刺擊發動！對 ${monDef.name} 造成 ${dmg} 點反擊傷害，並使其暈眩了！`);
@@ -5236,6 +5281,7 @@ function trySpearBoomerangProc() {
   const mon = state.monsters[Math.floor(Math.random() * state.monsters.length)];
   const monDef = MONSTERS[mon.defId];
   const dmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.spearBoomerangMult, ...defOf(monDef));
+  noteMonsterDamage(mon, dmg);
   mon.hp -= dmg;
   logMsg(`🔱 投擲長矛發動！對 ${monDef.name} 造成 ${dmg} 點傷害！`);
   if (mon.hp <= 0) killMonster(monDef, mon);
@@ -5250,6 +5296,7 @@ function tryChargeRandomProc() {
   const mon = state.monsters[Math.floor(Math.random() * state.monsters.length)];
   const monDef = MONSTERS[mon.defId];
   const dmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.chargeRandomMult, ...defOf(monDef));
+  noteMonsterDamage(mon, dmg);
   mon.hp -= dmg;
   logMsg(`🐎 衝鋒攻擊發動！對 ${monDef.name} 造成 ${dmg} 點傷害！`);
   if (mon.hp <= 0) killMonster(monDef, mon);
@@ -5267,6 +5314,7 @@ function tryOnHitAoeProc() {
     const monDef = MONSTERS[mon.defId];
     const elemMult = getElementMultiplierVsMonster(state.onHitAoeProcElement, monDef, mon);
     const dmg = mitigateDamage(state.matk * state.onHitAoeProcMult * elemMult, ...defOf(monDef, 1, true));
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     wakeIfFrozen(mon);
     pushCombatLog(`  → 對 ${monDef.name} 造成 ${dmg} 點傷害！`);
@@ -5288,6 +5336,7 @@ function tryOnAttackAoeProc() {
     const monDef = MONSTERS[mon.defId];
     const elemMult = getElementMultiplierVsMonster(state.onAttackAoeElement, monDef, mon);
     const dmg = mitigateDamage((state.onAttackAoeFlatDmg + state.matk * state.onAttackAoeMult) * elemMult, ...defOf(monDef, 1, true));
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     wakeIfFrozen(mon);
     pushCombatLog(`  → 對 ${monDef.name} 造成 ${dmg} 點傷害！`);
@@ -5320,6 +5369,7 @@ function tryOnHitAoeStunProc() {
     const monDef = MONSTERS[mon.defId];
     const elemMult = getElementMultiplierVsMonster(state.onHitAoeStunElement, monDef, mon);
     const dmg = mitigateDamage(state.matk * state.onHitAoeStunMult * elemMult, ...defOf(monDef, 1, true));
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     wakeIfFrozen(mon);
     if (Math.random() * 100 < state.onHitAoeStunStunChance) applyStun(mon, state.onHitAoeStunStunSec, true);
@@ -5342,6 +5392,7 @@ function tryOnHitStunProc2(mon, monDef) {
 
 /* ---------------- 戰鬥主迴圈 ---------------- */
 function startLoop() {
+  if (tabSessionBlocked()) return;
   if (tickTimer) clearInterval(tickTimer);
   tickTimer = setInterval(gameTick, TICK_MS);
   _loopOn = true;
@@ -5413,6 +5464,7 @@ function tickFieldEffects() {
             const monDef = MONSTERS[mon.defId];
             const elemMult = getElementMultiplierVsMonster(f.element || 'holy', monDef, mon);
             const dmg = mitigateDamage(state.matk * f.mult * elemMult, ...defOf(monDef, 1, true)) * (f.ticksThisRound || 1);
+            noteMonsterDamage(mon, dmg);
             mon.hp -= dmg;
             wakeIfFrozen(mon);
             if (f.stunChance && Math.random() * 100 < f.stunChance) applyStun(mon, f.stunSec || 1, true);
@@ -5447,6 +5499,7 @@ function tickFieldEffects() {
             const dmg = (mitigateDamage(
               weaponChainDamage(monDef, em, false) * f.mult * cardTargetDmgMult(monDef) * ailDmgTakenMult(mon),
               ...defOf(monDef, 1, false, mon)) + raceFlatBonus(monDef)) * (f.ticksThisRound || 1);
+            noteMonsterDamage(mon, dmg);
             mon.hp -= dmg;
             wakeIfFrozen(mon);
             pushCombatLog(`  → 「${f.name}」對 ${monDef.name} 造成 ${dmg} 點傷害！`);
@@ -5473,6 +5526,7 @@ function tickFieldEffects() {
             const monDef = MONSTERS[mon.defId];
             const elemMult = getElementMultiplierVsMonster(f.element || 'none', monDef, mon);
             const dmg = mitigateDamage(state.matk * f.mult * elemMult, ...defOf(monDef, 1, true)) * (f.ticksThisRound || 1);
+            noteMonsterDamage(mon, dmg);
             mon.hp -= dmg;
             wakeIfFrozen(mon);
             pushCombatLog(`  → 「${f.name}」對 ${monDef.name} 造成 ${dmg} 點持續傷害！`);
@@ -5490,7 +5544,7 @@ function tickFieldEffects() {
 }
 
 function gameTick() {
-  if (!state) return;
+  if (!state || tabSessionBlocked()) return;
   tickCooldowns();
   tickBuffs();
   /* 隊友身上的全體輔助 buff 也要倒數（#95）。**跟 tickBuffs 同一拍**——
@@ -5514,6 +5568,9 @@ function gameTick() {
     autoUseAspdPotion();
     // 成就一律在這裡集中判定，不在戰鬥流程裡埋觸發點（詳見 achievements.js 開頭說明）
     checkAchievements();
+    tickHuntBoard();
+    tickAttendance();
+    tickPetFeed();
     if (state.autoSkill) {
       tryAutoCastSkill();
     }
@@ -6269,8 +6326,18 @@ function spawnDelayMs(empty) {
   return delay;
 }
 
+function rollMonsterSpot() {
+  const bx = 36 + Math.random() * 54;
+  const by = 18 + Math.random() * 64;
+  return { bx: bx, by: by, sx: bx, sy: by };
+}
 function spawnMonster() {
   const map = currentMap();
+  if (state.encounterMode === 'off') {
+    state.monsters = [];
+    state.monster = null;
+    return;
+  }
   if (!map.monsters.length && !activeBossLists(map.id).length) {
     state.monsters = [];
     return;
@@ -6326,7 +6393,8 @@ function spawnMonster() {
        量「出現到死」而不是「第一刀到死」是刻意的——中間被雜魚分掉的攻擊、
        喝水停頓、隊友放輔助的空檔，全部算進去才是真實的產出速度，
        而離線結算要的正是那個速度。 */
-    state.monsters.push({ defId, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode() });
+    const spot = rollMonsterSpot();
+    state.monsters.push({ defId, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy });
     applyDontForgetMe(state.monsters[state.monsters.length - 1]);
     codexRecordSeen(defId);
     /* 只有**正牌 MVP** 才帶小弟（#147）。以前是「在 MVP_MAP_DATA 裡就帶」，
@@ -6358,6 +6426,7 @@ function spawnMonster() {
    所以 BOSS 模式本身就擋在近戰模式（見 toggleMvpMode）。 */
 function summonBossSlaves(bossDef) {
   const map = currentMap();
+  if (state.encounterMode === 'off') return;
   if (!map || !(map.monsters || []).length) return;
   const max = state.maxMonsters || MELEE_MAX_MONSTERS;
   const slots = max - state.monsters.length;
@@ -6368,7 +6437,8 @@ function summonBossSlaves(bossDef) {
     const sdef = MONSTERS[sid];
     if (!sdef) continue;
     state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
-    state.monsters.push({ defId: sid, hp: sdef.hp, maxHp: sdef.hp, id: state.monsterIdCounter, spawnedAt: Date.now() });
+    const spot = rollMonsterSpot();
+    state.monsters.push({ defId: sid, hp: sdef.hp, maxHp: sdef.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy });
     applyDontForgetMe(state.monsters[state.monsters.length - 1]);
     codexRecordSeen(sid);
     names.push(sdef.icon + sdef.name);
@@ -6381,6 +6451,7 @@ function summonBossSlaves(bossDef) {
 // 衝鋒攻擊：額外生成一隻怪
 function spawnExtraMonster() {
   const map = currentMap();
+  if (state.encounterMode === 'off') return;
   if (!map.monsters.length) return;
   if (!state.monsters) state.monsters = [];
   if (state.monsters.length >= state.maxMonsters) return;
@@ -6388,7 +6459,8 @@ function spawnExtraMonster() {
   const def = MONSTERS[defId];
   if (!def) return;
   state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
-  state.monsters.push({ defId, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: Date.now() });
+  const spot = rollMonsterSpot();
+  state.monsters.push({ defId, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy });
   applyDontForgetMe(state.monsters[state.monsters.length - 1]);
   logMsg(`一隻 ${def.icon} ${def.name} 被衝鋒攻擊召喚了！`);
 }
@@ -6411,15 +6483,41 @@ function spawnExtraMonster() {
    總 STR 含裝備／卡片／職業加成（`state._totalStr`，在 recomputeDerived 算好）。
 
    回傳「還沒套 buff／暴擊／卡片增傷／DEF」的基礎傷害。 */
-function weaponChainDamage(monDef, elemMult, roll, sk) {
+/* 雙持的武器桶。
+   技能（applyMastery 為 false）：只用右手帳面 ATK，不乘修練%、不加左手。
+   普攻右手（applyMastery 為 true）：右手帳面 × 右手修練%。
+   裝備／卡片加進 _atkWeapon 的 ATK 留在右手，不跟著左手再算一次。 */
+function dualWieldRightWeaponAtk(applyMastery) {
+  if (!state._dualWield) return null;
+  const listed = (state._mainHandAtk || 0) + (state._offHandAtk || 0);
+  const gear = (state._atkWeapon || 0) - listed;
+  const pct = applyMastery ? ((state.rightHandPct != null ? state.rightHandPct : 50) / 100) : 1;
+  return (state._mainHandAtk || 0) * pct + gear;
+}
+
+/* 面板 ATK 含兩把武器。技能若直接讀 state.atk，要扣掉左手那一把。 */
+function rightHandPanelAtk() {
+  if (!state._dualWield) return state.atk || 0;
+  return (state.atk || 0) - (state._offHandAtk || 0);
+}
+
+function weaponChainDamage(monDef, elemMult, roll, sk, hand) {
   const wId = getEquipBaseItemId('weapon');
   const w = wId ? ITEMS[wId] : null;
+  const left = hand === 'left';
 
   /* 技能可以往「武器 ATK」那一桶追加東西（#58 螺旋擊刺的武器重量），
      加在這裡而不是外掛一份固定傷害，是因為官方是把重量算進 ATK——
      所以它會跟武器 ATK 一起吃屬性、體型與武器浮動。 */
-  let wpn = state._atkWeapon || 0;
-  if (sk && sk.weaponWeightMult && w) {
+  let wpn;
+  if (left) {
+    const leftPct = (state.leftHandPct != null ? state.leftHandPct : 30) / 100;
+    wpn = (state._offHandAtk || 0) * leftPct;
+  } else {
+    const rightOnly = dualWieldRightWeaponAtk(hand === 'right');
+    wpn = rightOnly != null ? rightOnly : (state._atkWeapon || 0);
+  }
+  if (!left && sk && sk.weaponWeightMult && w) {
     const k = Array.isArray(sk.weaponWeightMult) ? sk.weaponWeightMult[0] : sk.weaponWeightMult;
     /* **`ITEMS[*].weight` 存的是官方 item_db 的原始值，那是顯示值的 10 倍**
        （短劍 40＝遊戲內 4.0、騎士長矛 250＝25.0、紅藥水 7＝0.7）。
@@ -6430,7 +6528,7 @@ function weaponChainDamage(monDef, elemMult, roll, sk) {
   /* 迴旋盾擊（#66）：官方「傷害會根據盾牌的精煉值和重量而增加」。
      跟上面的武器重量走同一桶、同一個 /10 換算（ITEMS 的 weight 是顯示值的 10 倍）。
      精煉是每階固定值，不吃 /10。 */
-  if (sk && (sk.shieldWeightMult || sk.shieldRefineMult)) {
+  if (!left && sk && (sk.shieldWeightMult || sk.shieldRefineMult)) {
     const shId = getEquipBaseItemId('shield');
     const sh = shId ? ITEMS[shId] : null;
     if (sh) {
@@ -6444,7 +6542,7 @@ function weaponChainDamage(monDef, elemMult, roll, sk) {
      刺客想吃滿這個技能就得去堆武器——官方的意圖正是如此。 */
   wpn *= buffMult('weaponatk').mult;
 
-  const nonWpn = (state._atkStatus || 0) + (state._atkMastery || 0);
+  const nonWpn = left ? 0 : ((state._atkStatus || 0) + (state._atkMastery || 0));
 
   const wLv = w ? (typeof getRefineWeaponLv === 'function' ? getRefineWeaponLv(w) : (w.weaponLv || 1)) : 1;
 
@@ -6599,7 +6697,7 @@ function playerAttackInner() {
 
   const hasMaxRoll = state.buffs.some(b => b.type === 'maxroll');
   // ATK 類 buff 已經在 weaponChainDamage() 裡套過了（#58），這裡不能再乘一次
-  let raw = weaponChainDamage(monDef, elemMult, hasMaxRoll);
+  let raw = weaponChainDamage(monDef, elemMult, hasMaxRoll, null, 'right');
 
   // 狂暴狀態：HP < 25% 時 ATK +32%
   if (state.hasBerserk && state.hp < state.maxHp * 0.25) {
@@ -6756,16 +6854,45 @@ function playerAttackInner() {
     if (Math.random() * 100 < daChance) {
       const daMult = daSkill && daSkill.mult ? daSkill.mult[daLv - 1] : 1.0;
       const daRaw = raw * daMult;
-      const daDmg = mitigateDamage(daRaw, monDefVal, monSoftVal);
+      /* 暴擊與二刀連擊同一擲。第一段已經把 ×1.5 乘進 raw，
+         第二段以前仍走 mitigateDamage，高防怪物會把暴擊吃掉。
+         暴擊時第二段跟第一段一樣無視防禦。 */
+      const daDmg = isCrit ? Math.max(1, Math.round(daRaw)) : mitigateDamage(daRaw, monDefVal, monSoftVal);
+      if (isCrit && !_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += daDmg;
       target.hp -= daDmg;
-      // 第二段跟第一段是同一次暴擊判定（daRaw 由 raw 推導，已含 ×1.5）
       logMsg(`⚔️ 二刀連擊！對 ${monDef.name} 造成 ${daDmg} 點傷害！${isCrit ? '（暴擊）' : ''}`);
       showExtraHitFloat(daDmg, isCrit);
       playExtraHitSound(isCrit);
+      if (typeof showComboTotal === 'function') showComboTotal(target.id, dmg + daDmg);
       if (target.hp <= 0) {
         killMonster(monDef, target);
       }
     }
+  }
+
+  /* 左手是另一段普攻，不吃二刀連擊（二刀只加倍上面的右手 raw）。
+     素質 ATK 留在右手；左手只有武器帳面 × 左手修練%。 */
+  if (state._dualWield && (state._offHandAtk || 0) > 0 && target.hp > 0 && state.monsters.includes(target)) {
+    let leftRaw = weaponChainDamage(monDef, elemMult, hasMaxRoll, null, 'left');
+    if (state.hasBerserk && state.hp < state.maxHp * 0.25) leftRaw *= 1.32;
+    if (isCrit) leftRaw *= 1.5 * (1 + (state.cardCritDmgPct || 0) / 100);
+    if (state.cardRangedDmgPct && isBowWeapon(atkWeaponId)) leftRaw *= 1 + state.cardRangedDmgPct / 100;
+    leftRaw *= cardTargetDmgMult(monDef);
+    leftRaw *= elementDmgMult(atkElement);
+    leftRaw *= ailDmgTakenMult(target);
+    const leftDmg = isCrit ? Math.max(1, Math.round(leftRaw)) : mitigateDamage(leftRaw, monDefVal, monSoftVal);
+    if (isCrit && !_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += leftDmg;
+    target.hp -= leftDmg;
+    logMsg(`🗡️ 左手攻擊對 ${monDef.name} 造成 ${leftDmg} 點傷害！${isCrit ? '（暴擊）' : ''}`);
+    const leftShown = leftDmg;
+    const leftCrit = isCrit;
+    const leftId = target.id;
+    setTimeout(() => {
+      if (typeof showDamageFloatAt === 'function') showDamageFloatAt(leftId, '-' + leftShown, leftCrit ? 'crit' : 'normal');
+      else showExtraHitFloat(leftShown, leftCrit);
+      playExtraHitSound(leftCrit);
+    }, 240);
+    if (target.hp <= 0) killMonster(monDef, target);
   }
 
   // 噴砂被動：攻擊時機率使敵人命中下降
@@ -6801,7 +6928,7 @@ function playerAttackInner() {
     const ewChance = ewSkill.procChance != null ? ewSkill.procChance : 20;
     if (Math.random() * 100 < ewChance) {
       const ewDmgPct = ewSkill.mult[ewLv - 1];
-      applyPoisonDot(target, monDef, state.atk * ewDmgPct);
+      applyPoisonDot(target, monDef, rightHandPanelAtk() * ewDmgPct);
       logMsg(`☠️ 塗毒發動！${monDef.name} 中毒了！`);
     }
   }
@@ -6812,7 +6939,7 @@ function playerAttackInner() {
     logMsg(`🦠 病毒散播發動！全場敵人陷入中毒！`);
     state.monsters.forEach(mon => {
       const mDef = MONSTERS[mon.defId];
-      applyPoisonDot(mon, mDef, state.atk * state.venomdustDmgPct);
+      applyPoisonDot(mon, mDef, rightHandPanelAtk() * state.venomdustDmgPct);
     });
   }
 
@@ -6825,6 +6952,7 @@ function playerAttackInner() {
       const mDef = MONSTERS[mon.defId];
       const elemMult = getElementMultiplierVsMonster('poison', mDef, mon) * elementDmgMult('poison');
       const dmg = mitigateDamage(skillBaseDamage(false, mDef, elemMult) * state.venominfusionDmgMult, ...defOf(mDef));
+      noteMonsterDamage(mon, dmg);
       mon.hp -= dmg;
       logMsg(`  → 對 ${mDef.name} 造成 ${dmg} 點傷害！`);
       if (mon.hp <= 0) killMonster(mDef, mon);
@@ -6975,6 +7103,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
         && Math.random() * 100 < state.cardMagicReflectChance) {
       const back = Math.max(1, Math.round(monsterBaseAtk(monDef, undefined, mon) * sk.mult * 1.2
         * getElementMultiplierVsMonster(el, monDef, mon)));
+      noteMonsterDamage(mon, back);
       mon.hp -= back;
       if (!_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += back;
       logMsg(`🪞 魔法反射！${nameOf()} 被自己的法術打了 ${back} 點傷害。`);
@@ -7197,6 +7326,7 @@ function monsterAttackSingle(mon) {
   if (state.hasPoisonReact && monDef.element === 'poison' && Date.now() >= (state.poisonReactReadyAt || 0)) {
     logMsg(`🛡️ 毒性反彈發動！完全迴避了 ${monDef.name} 的攻擊！`);
     const counterDmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.poisonReactMult * elementDmgMult('poison'), ...defOf(monDef));
+    noteMonsterDamage(mon, counterDmg);
     mon.hp -= counterDmg;
     logMsg(`⚔️ 反擊造成 ${counterDmg} 點傷害！`);
     state.poisonReactReadyAt = Date.now() + state.poisonReactCooldownSec * 1000;
@@ -7212,6 +7342,7 @@ function monsterAttackSingle(mon) {
     if (Math.random() * 100 < counterChance) {
       logMsg(`🛡️ 反擊發動！完全迴避了 ${monDef.name} 的攻擊！`);
       const counterDmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * 1.5, ...defOf(monDef));
+      noteMonsterDamage(mon, counterDmg);
       mon.hp -= counterDmg;
       logMsg(`⚔️ 反擊造成 ${counterDmg} 點傷害（暴擊）！`);
       if (mon.hp <= 0) {
@@ -7667,6 +7798,139 @@ function recordBossKillTime(owner, monKey, def, monObj) {
 }
 const BOSS_KILL_MIN_MS = 1000;
 
+/* 等級差 = 怪物等級 − 自己的 Base 等級。只乘經驗，不乘掉落。
+   16 以上 40%；10 等是 140%，往上每等少 5% 直到 15 等 115%；
+   3 等 105% 到 9 等 135%；−5～2 是 100%；再往下照表遞減，−31 以下 10%。 */
+function levelGapExpRate(monsterLevel, baseLevel) {
+  const gap = (monsterLevel || 1) - (baseLevel || 1);
+  if (gap >= 16) return 0.4;
+  if (gap >= 10) return 1.4 - (gap - 10) * 0.05;
+  if (gap >= 3) return 1 + (gap - 2) * 0.05;
+  if (gap >= -5) return 1;
+  if (gap >= -10) return 0.95;
+  if (gap >= -15) return 0.9;
+  if (gap >= -20) return 0.85;
+  if (gap >= -25) return 0.6;
+  if (gap >= -30) return 0.35;
+  return 0.1;
+}
+let _hurtCredit = null;
+let _offlineSampling = false;
+let _sampleDmgBy = null;
+function monsterDamageKey() {
+  if (_hurtCredit) return _hurtCredit;
+  if (_allyActing && _allyActing._slot != null) return String(_allyActing._slot);
+  return 'self';
+}
+function noteMonsterDamage(mon, dmg) {
+  const n = Number(dmg) || 0;
+  if (!mon || !(n > 0)) return;
+  if (!mon._dmgBy) mon._dmgBy = {};
+  const key = monsterDamageKey();
+  mon._dmgBy[key] = (mon._dmgBy[key] || 0) + n;
+  if (_sampleDmgBy) _sampleDmgBy[key] = (_sampleDmgBy[key] || 0) + n;
+}
+/* 卡片、裝備、經驗 buff 吃「拿到這份經驗的那個人」。打寶倍率吃正在玩的這張圖。 */
+function memberKillExpMult(def) {
+  const race = (def && def.race && state.cardExpRace && state.cardExpRace[def.race]) || 0;
+  return (1 + race)
+    * (1 + ((buffMult('exp').flatBonus) || 0) / 100)
+    * (1 + getCardBonus('expAllPct') / 100);
+}
+function partyMemberKey(member, owner) {
+  return member === owner ? 'self' : String(member._slot);
+}
+function partyExpContext(owner, excludeSlots) {
+  const skip = {};
+  (excludeSlots || []).forEach(s => { skip[String(s)] = true; });
+  const allies = ((owner && owner.allies) || []).filter(a => a && allyOnThisMap(a) && !skip[String(a._slot)]);
+  const roster = [owner].concat(allies);
+  const levels = roster.map(p => p.baseLevel || 1);
+  const spread = levels.length ? Math.max.apply(null, levels) - Math.min.apply(null, levels) : 0;
+  const active = roster.filter(p => p === owner || !p._downed);
+  const n = Math.max(1, active.length);
+  const even = spread <= 15;
+  return { roster, active, n, spread, even, evenShare: (0.8 + n * 0.2) / n };
+}
+function partyMemberShare(ctx, member, owner, dmgBy) {
+  const key = partyMemberKey(member, owner);
+  if (!ctx.active.some(m => partyMemberKey(m, owner) === key)) return 0;
+  if (ctx.even) return ctx.evenShare;
+  const by = dmgBy || {};
+  let total = 0;
+  ctx.active.forEach(m => { total += by[partyMemberKey(m, owner)] || 0; });
+  if (!(total > 0)) return member === owner ? 1 : 0;
+  return (by[key] || 0) / total;
+}
+function quoteMemberKill(member, owner, def, share, farm) {
+  const run = () => {
+    const rate = levelGapExpRate(def.level || 1, state.baseLevel || 1) * memberKillExpMult(def) * farm * share;
+    return {
+      base: Math.round((def.exp || 0) * rate),
+      job: Math.round((def.jobExp || 0) * rate),
+    };
+  };
+  if (member === owner) return withOwner(run);
+  return withAlly(member, run);
+}
+function grantQuotedExp(member, owner, quoted) {
+  const q = quoted || { base: 0, job: 0 };
+  if (member !== owner && (!(q.base > 0) && !(q.job > 0))) {
+    writeAllyProgress(member);
+    return q;
+  }
+  if (!(q.base > 0) && !(q.job > 0)) return q;
+  if (member === owner) withOwner(() => gainExp(q.base, q.job));
+  else {
+    withAlly(member, () => gainExp(q.base, q.job));
+    if (member.hp > member.maxHp) member.hp = member.maxHp;
+    if (member.sp > member.maxSp) member.sp = member.maxSp;
+    writeAllyProgress(member);
+  }
+  return q;
+}
+function distributeKillExp(def, monObj) {
+  if (_offlineSampling || !def) return { base: 0, job: 0 };
+  const owner = _allyActing ? allyOwnerState() : state;
+  const farm = withOwner(() => farmMult('exp'));
+  const ctx = partyExpContext(owner);
+  const dmgBy = (monObj && monObj._dmgBy) || {};
+  let ownerGot = { base: 0, job: 0 };
+  ctx.active.forEach(member => {
+    const share = partyMemberShare(ctx, member, owner, dmgBy);
+    const quoted = quoteMemberKill(member, owner, def, share, farm);
+    grantQuotedExp(member, owner, quoted);
+    if (member === owner) ownerGot = quoted;
+  });
+  ctx.roster.forEach(member => {
+    if (member !== owner && ctx.active.indexOf(member) < 0) writeAllyProgress(member);
+  });
+  return ownerGot;
+}
+function partyExpStatusText() {
+  const ctx = partyExpContext(state);
+  const away = (state.allies || []).filter(a => a && !allyOnThisMap(a)).length;
+  let text;
+  if (ctx.n <= 1) text = '單人：這張圖的經驗先乘自己的等級差。';
+  else if (ctx.even) {
+    const pct = Math.round(ctx.evenShare * 1000) / 10;
+    text = `均分中：在場 ${ctx.n} 人，每人 ${pct}%，再乘自己的等級差。`;
+  } else {
+    text = `不能均分：隊內等級差 ${ctx.spread} 等（超過 15）。依這隻怪的傷害比例，沒打到是 0。`;
+  }
+  if (away) text += ` 另有 ${away} 人不在這張圖，各自打自己的地圖。`;
+  return text;
+}
+function previewMemberKill(member) {
+  const mon = state.monster || (state.monsters && state.monsters[0]);
+  const def = mon && MONSTERS[mon.defId];
+  if (!def) return null;
+  const owner = state;
+  const ctx = partyExpContext(owner);
+  const share = partyMemberShare(ctx, member, owner, mon._dmgBy);
+  return quoteMemberKill(member, owner, def, share, farmMult('exp'));
+}
+
 function killMonster(def, monObj) {
   /* 同一隻只能結算一次。
 
@@ -7677,34 +7941,20 @@ function killMonster(def, monObj) {
   if (monObj) {
     if (monObj._killed) return;
     monObj._killed = true;
+    if (typeof playMonsterDie === 'function') playMonsterDie(monObj.id);
   }
   // 查表一律用 MONSTERS 的 key，不要用 def.id：有 72 隻怪的 def.id 帶著去重時加上的底線
   // 後綴（例如 poring 的 def.id 是 'poring_'），拿 def.id 去查 MONSTER_CARD_DROPS 會落空，
   // 波利/綠棉蟲/小惡魔/耳語的卡片因此一直掉不出來。所有呼叫端都有傳 monObj，用它的 defId 最準。
   const monKey = (monObj && monObj.defId) || def.id;
-  // 卡片的種族經驗加成（狂暴野豬那一組：擊殺該族經驗+10%，代價是被該族打得更痛）
-  // 經驗值倍增（#68）跟卡片的種族經驗加成相乘
-  const expMult = (1 + ((def.race && state.cardExpRace && state.cardExpRace[def.race]) || 0))
-    * (1 + buffMult('exp').flatBonus / 100)
-    /* 裝備的經驗值加成（快樂氣球 EXP+5%、艾咪斯可魯背包每+2 +1%）。過去只進表沒人讀。 */
-    * (1 + getCardBonus('expAllPct') / 100);
-  const gotExp = Math.round(def.exp * expMult * farmMult('exp'));
-  const gotJobExp = Math.round(def.jobExp * expMult * farmMult('exp'));
-  /* **隊友打死的怪，獎勵要記在玩家頭上。** 隊友是靠 withAlly() 換身跑
-     playerAttack() 的，走到這裡時全域的 state 是隊友那份快照——不導回去的話
-     經驗、鋅幣、掉落、圖鑑全部進了快照，玩家一毛都拿不到（實測過）。
-     傭兵自己**額外**累積 20%（不從玩家那邊扣），退隊時進待領帳本。 */
+  /* 隊友打死的怪，鋅幣、掉落、圖鑑仍記在正在玩的這個人身上。
+     經驗改走 distributeKillExp：同圖均分或依傷害比例，各自乘自己的等級差。 */
   const acting = _allyActing;
   const owner = acting ? allyOwnerState() : state;
   recordBossKillTime(owner, monKey, def, monObj);
-  /* 20% 記給**全隊未倒地的隊友**，不是只記給補刀的那一個。
-     照補刀算的話，攻擊力低的隊友（祭司、鐵匠）永遠搶不到最後一擊——
-     實測 300 隻全被鐵匠收走，祭司累積 0。他們是隊友不是承包商。 */
-  (owner.allies || []).forEach(a => {
-    if (!a || a._downed) return;
-    a._pendingExp = (a._pendingExp || 0) + gotExp * ALLY_MERC_EXP_PCT / 100;
-    a._pendingJobExp = (a._pendingJobExp || 0) + gotJobExp * ALLY_MERC_EXP_PCT / 100;
-  });
+  const ownerGot = distributeKillExp(def, monObj);
+  const gotExp = ownerGot.base;
+  const gotJobExp = ownerGot.job;
   /* 擊殺與經驗一律走**戰鬥欄**（#100）。不指定的話會跟著當下的來源跑——
      主動技能打死的進技能欄、被動追擊打死的也進技能欄，同一批經驗訊息散在兩格裡。
      那是戰果不是技能說明，集中在左邊才看得出這一趟賺了多少。 */
@@ -7714,11 +7964,10 @@ function killMonster(def, monObj) {
   /* 打贏 MVP 的音效（#146）。只認正牌 MVP，迷你王不放——
      迷你王在 #147 之後是獨立的一類，出現頻率高得多，每隻都放會變成背景音。 */
   if (def.isMvp && !acting && typeof playEventSfx === 'function') playEventSfx('mvp');
-  withOwner(() => gainExp(gotExp, gotJobExp));
   const goldGain = Math.round((3 + def.level * 1.4) * buffMult('gold').mult * farmMult('gold'));
   owner.gold += goldGain;
-  if (state.dpsTracker) {
-    const t = state.dpsTracker;
+  if (owner.dpsTracker) {
+    const t = owner.dpsTracker;
     t.kills++; t.exp += gotExp; t.jobExp += gotJobExp; t.gold += goldGain;
   }
   // 吸魂術（#63）：擊殺就回固定 SP，不分種族也不分擊殺方式
@@ -7742,7 +7991,7 @@ function killMonster(def, monObj) {
   }
   /* 掉落率的打寶加成（#110）。夾在 1 以下：本來就 100% 的掉落乘上去沒有意義，
      而 >1 的機率會讓「稀有度」在偷竊那類加權計算裡失真。 */
-  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100);   // 裝備掉寶率（快樂氣球+10%）
+  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100) * candyMult('dropboost');   // 裝備掉寶率（快樂氣球+10%）+ 掉寶糖
   (def.drops || []).forEach(d => {
     if (Math.random() < Math.min(1, d.chance * dropMult)) addItem(d.item, 1);
   });
@@ -7899,6 +8148,10 @@ function statCapOf(jobId) {
 }
 
 function gainExp(baseExp, jobExp) {
+  const expM = candyMult('expboost');
+  const jobM = candyMult('jobexpboost');
+  if (expM !== 1) baseExp = Math.round(baseExp * expM);
+  if (expM !== 1 || jobM !== 1) jobExp = Math.round(jobExp * expM * jobM);
   /* 升級音效（#146）**整支只放一次**，不是每升一級放一次：
      離線回來可能一口氣升十幾級，一級一聲會疊成一串爆音。 */
   let leveled = false;
@@ -7986,14 +8239,15 @@ function withAlly(ally, fn) {
   _allyActing = ally;
   // 巢狀時「真正的玩家」還是最外層那個，不是上一層的隊友
   _allyOwnerState = savedOwner || saved;
-  /* 地圖也要跟著玩家（#109）。快照是整份複製過來的，`mapId` 停在**那個角色
-     被存檔時所在的地圖**——通常是城鎮。換身期間 `isInTown()` 讀的就是這個欄位，
-     所以 `wastesResourceInTown()` 會回「在城鎮，別浪費」，把隊友的加速術（吃 15 HP）、
-     治癒術、場域類技能整批擋掉：實測祭司隊友放得出天使之賜福，加速術卻一次都放不出來。
-     隊友本來就跟玩家在同一張圖，直接同步過去。 */
+  /* 換身期間 isInTown() 要看玩家正在打的那張圖（#109），不然快照停在城鎮，
+     加速術這類會被當成「在城裡別浪費」整批擋掉。
+     打完把 mapId 還原成他存檔上的地圖。人在不在這張圖只看 _homeMapId。 */
+  if (!ally._homeMapId) ally._homeMapId = ally.mapId;
+  const homeMap = ally._homeMapId;
   ally.mapId = _allyOwnerState.mapId;
   state = ally;
   try { return fn(); } finally {
+    ally.mapId = homeMap;
     state = saved;
     _allyActing = savedActing;
     _allyOwnerState = savedOwner;
@@ -8019,7 +8273,7 @@ function withOwner(fn) {
 /* 快照要瘦身：完整的 state 帶著背包、倉庫、圖鑑、成就，兩個隊友就會讓存檔爆掉。
    留下來的只有 recomputeDerived() 會讀的東西。 */
 const ALLY_SNAPSHOT_DROP = ['inventory', 'warehouse', 'codex', 'achievements', 'log',
-  'monsters', 'monster', 'dpsTracker', 'allies', 'autoSellItems', 'vendingItems'];
+  'monsters', 'monster', 'dpsTracker', 'allies', 'autoSellItems', 'vendingItems', 'partySlots'];
 function buildAllySnapshot(raw, slot) {
   const ally = JSON.parse(JSON.stringify(raw));
   ALLY_SNAPSHOT_DROP.forEach(k => { delete ally[k]; });
@@ -8028,6 +8282,7 @@ function buildAllySnapshot(raw, slot) {
   ally.monsters = null; ally.monster = null;
   ally.allies = [];
   ally._slot = String(slot);
+  ally._homeMapId = raw.mapId;
   ally._allyName = raw.name || ('存檔' + slot);
   ally._downed = false;
   ally._reviveAt = 0;
@@ -8067,89 +8322,284 @@ function allyHireCandidates() {
 }
 function allyHirePrice(level) { return Math.max(1000, (level || 1) * ALLY_HIRE_PRICE_PER_LEVEL); }
 function allyList() { return state.allies || (state.allies = []); }
-function allyAliveList() { return allyList().filter(a => a && !a._downed); }
+function allyHomeMap(ally) { return ally && (ally._homeMapId || ally.mapId); }
+function allyOnThisMap(ally) {
+  if (!ally) return false;
+  /* 舊快照沒有 _homeMapId，當時的隊友一律跟玩家同一張圖。 */
+  if (ally._homeMapId == null || ally._homeMapId === '') return true;
+  return ally._homeMapId === allyOwnerState().mapId;
+}
+function mapNameOf(id) {
+  const m = MAPS.find(x => x.id === id);
+  return m ? m.name : '未知地圖';
+}
+function allyAliveList() { return allyList().filter(a => a && !a._downed && allyOnThisMap(a)); }
+
+function readSaveSlot(slot) {
+  try { return JSON.parse(localStorage.getItem(getSlotKey(slot)) || 'null'); }
+  catch (e) { return null; }
+}
+function writeSaveSlot(slot, raw) {
+  try { localStorage.setItem(getSlotKey(slot), JSON.stringify(raw)); return true; }
+  catch (e) { return false; }
+}
+function partySlotList(raw) {
+  const xs = raw && raw.partySlots;
+  return Array.isArray(xs) ? xs.map(String) : [];
+}
+function rememberPartySlot(list, slot) {
+  const s = String(slot);
+  if (list.map(String).indexOf(s) < 0) list.push(s);
+  return list;
+}
+/* 只補等級、經驗、屬性點、技能點。不整份覆蓋，避免把他的背包和地圖蓋掉。
+   同圖只推進經驗時鐘。道具時鐘留著，他上線仍領得到這段的掉落與鋅幣。 */
+function writeAllyProgress(ally) {
+  if (!ally || ally._slot == null) return;
+  if (String(ally._slot) === String(currentSlot)) return;
+  const raw = readSaveSlot(ally._slot);
+  if (!raw) return;
+  ['baseLevel', 'baseExp', 'jobLevel', 'jobExp', 'statPoints', 'jobSkillPoints', 'skillPoints'].forEach(k => {
+    if (ally[k] != null) raw[k] = ally[k];
+  });
+  if (ally.expPrepaid && ((ally.expPrepaid.base || 0) > 0 || (ally.expPrepaid.job || 0) > 0)) {
+    raw.expPrepaid = { base: ally.expPrepaid.base || 0, job: ally.expPrepaid.job || 0, at: ally.expPrepaid.at || Date.now() };
+  }
+  if (allyOnThisMap(ally)) raw.lastExpAt = Date.now();
+  writeSaveSlot(ally._slot, raw);
+}
+function noteExpPrepaid(obj, base, job) {
+  if (!obj || (!(base > 0) && !(job > 0))) return;
+  const n = obj.expPrepaid || { base: 0, job: 0 };
+  n.base = (n.base || 0) + base;
+  n.job = (n.job || 0) + job;
+  n.at = Date.now();
+  obj.expPrepaid = n;
+}
+/* 上線說明用過就清掉，避免下次進遊戲又講一次。 */
+function takeExpPrepaidNote() {
+  if (!state || !state.expPrepaid) return null;
+  const n = state.expPrepaid;
+  state.expPrepaid = null;
+  if (!(n.base > 0) && !(n.job > 0)) return null;
+  return { base: n.base || 0, job: n.job || 0 };
+}
+function pullAllyLevels(ally) {
+  if (!ally || ally._slot == null) return;
+  const raw = readSaveSlot(ally._slot);
+  if (!raw) return;
+  ['baseLevel', 'baseExp', 'jobLevel', 'jobExp', 'statPoints', 'jobSkillPoints', 'skillPoints'].forEach(k => {
+    if (raw[k] != null) ally[k] = raw[k];
+  });
+  const saved = state;
+  state = ally;
+  try { recomputeDerived(false); } catch (e) { /* 沿用快照上已經算過的數 */ }
+  state = saved;
+}
+/* A 回到隊友的地圖時，用隊友上線那支結算，只發經驗。
+   這段時間 A 人不在圖上，所以不算進人數。道具時鐘不動，他自己上線仍領掉落。 */
+let _suppressSave = false;
+function prepaidAllyFieldExp(ally) {
+  if (!ally || ally._slot == null || String(ally._slot) === String(currentSlot)) return null;
+  const raw = readSaveSlot(ally._slot);
+  if (!raw || !raw.jobId) return null;
+  const clock = (typeof raw.lastExpAt === 'number' && raw.lastExpAt > 0) ? raw.lastExpAt : (raw.lastActiveAt || Date.now());
+  if (Date.now() - clock < OFFLINE_MIN_MS) return null;
+  const ownerSlot = currentSlot;
+  const saved = state;
+  const savedActing = _allyActing;
+  const savedOwner = _allyOwnerState;
+  const savedSuppress = _suppressSave;
+  let off = null;
+  try {
+    _suppressSave = true;
+    _allyActing = null;
+    _allyOwnerState = null;
+    currentSlot = ally._slot;
+    state = JSON.parse(JSON.stringify(raw));
+    if (!state.lastExpAt) state.lastExpAt = state.lastActiveAt || Date.now();
+    if (!state.lastLootAt) state.lastLootAt = state.lastActiveAt || Date.now();
+    recomputeDerived(false);
+    syncPartyOnLoad();
+    off = computeOfflineProgress(OFFLINE_MIN_MS, { expOnly: true, excludeSlots: [String(ownerSlot)] });
+    if (off && (off.expGained > 0 || off.jobExpGained > 0)) {
+      ['baseLevel', 'baseExp', 'jobLevel', 'jobExp', 'statPoints', 'jobSkillPoints', 'skillPoints', 'lastExpAt', 'expPrepaid'].forEach(k => {
+        if (state[k] != null) raw[k] = state[k];
+      });
+      writeSaveSlot(currentSlot, raw);
+    }
+  } catch (e) {
+    console.error('隊友經驗提前結算失敗', e);
+    off = null;
+  } finally {
+    state = saved;
+    currentSlot = ownerSlot;
+    _allyActing = savedActing;
+    _allyOwnerState = savedOwner;
+    _suppressSave = savedSuppress;
+  }
+  return off;
+}
+function prepaidArrivingAllies(prevMapId) {
+  if (!state) return;
+  const arrived = state.mapId;
+  (state.allies || []).forEach(ally => {
+    if (!ally || ally._downed) return;
+    const home = ally._homeMapId || ally.mapId;
+    if (home !== arrived || home === prevMapId) return;
+    const off = prepaidAllyFieldExp(ally);
+    pullAllyLevels(ally);
+    if (off && (off.expGained > 0 || off.jobExpGained > 0)) {
+      logMsg(`${ally._allyName} 這段不在隊伍裡的經驗已結算，基礎等級 ${ally.baseLevel}。`);
+    }
+  });
+  (state.allies || []).forEach(ally => {
+    if (ally && !ally._downed && allyOnThisMap(ally)) pullAllyLevels(ally);
+  });
+}
+function linkPartySlot(otherSlot) {
+  if (!Array.isArray(state.partySlots)) state.partySlots = [];
+  rememberPartySlot(state.partySlots, otherSlot);
+  const raw = readSaveSlot(otherSlot);
+  if (!raw) return;
+  if (!Array.isArray(raw.partySlots)) raw.partySlots = [];
+  rememberPartySlot(raw.partySlots, currentSlot);
+  writeSaveSlot(otherSlot, raw);
+}
+function unlinkPartySlot(otherSlot) {
+  state.partySlots = partySlotList(state).filter(s => s !== String(otherSlot));
+  const raw = readSaveSlot(otherSlot);
+  if (!raw) return;
+  raw.partySlots = partySlotList(raw).filter(s => s !== String(currentSlot));
+  if (Array.isArray(raw.allies)) {
+    raw.allies = raw.allies.filter(a => !a || String(a._slot) !== String(currentSlot));
+  }
+  writeSaveSlot(otherSlot, raw);
+}
+function keepAllyCombat(fresh, prev) {
+  fresh._downed = !!prev._downed;
+  fresh._reviveAt = prev._reviveAt || 0;
+  fresh.buffs = prev.buffs || [];
+  fresh.cooldowns = prev.cooldowns || {};
+  fresh._atkAccum = prev._atkAccum || 0;
+  fresh._lastAttackAt = prev._lastAttackAt || 0;
+  if (prev.autoSkill != null) fresh.autoSkill = prev.autoSkill;
+  if (prev.autoSkillConfig) fresh.autoSkillConfig = prev.autoSkillConfig;
+  if (prev.autoSupportSkills) fresh.autoSupportSkills = prev.autoSupportSkills;
+  if (prev.autoHealConfig) fresh.autoHealConfig = prev.autoHealConfig;
+  const saved = state;
+  state = fresh;
+  try { recomputeDerived(false); } catch (e) { /* 沿用快照裡已經算過的數 */ }
+  state = saved;
+  fresh.hp = Math.min(fresh.maxHp, fresh._downed ? 0 : Math.max(0, prev.hp || 0));
+  fresh.sp = Math.min(fresh.maxSp, Math.max(0, prev.sp || 0));
+}
+function resyncPartyAllies() {
+  if (!state || !Array.isArray(state.allies)) return;
+  state.allies.forEach((a, i) => {
+    if (!a || a._slot == null) return;
+    const raw = readSaveSlot(a._slot);
+    if (!raw || !raw.jobId) return;
+    const fresh = buildAllySnapshot(raw, a._slot);
+    if (!fresh) return;
+    keepAllyCombat(fresh, a);
+    state.allies[i] = fresh;
+  });
+}
+/* 舊存檔只有 allies 快照、沒有雙向連結。讀檔時補上，對方上線就直接在隊裡。 */
+function syncPartyOnLoad() {
+  if (!Array.isArray(state.partySlots)) state.partySlots = [];
+  (state.allies || []).forEach(a => {
+    if (a && a._slot != null) rememberPartySlot(state.partySlots, a._slot);
+  });
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    if (String(i) === String(currentSlot)) continue;
+    const raw = readSaveSlot(i);
+    if (raw && partySlotList(raw).indexOf(String(currentSlot)) >= 0) rememberPartySlot(state.partySlots, i);
+  }
+  state.partySlots = state.partySlots.filter(s => {
+    const raw = readSaveSlot(s);
+    if (!raw || !raw.jobId) return false;
+    const theirs = partySlotList(raw);
+    if (theirs.indexOf(String(currentSlot)) >= 0) return true;
+    if (theirs.length >= ALLY_MAX) return false;
+    if (!Array.isArray(raw.partySlots)) raw.partySlots = [];
+    raw.partySlots.push(String(currentSlot));
+    writeSaveSlot(s, raw);
+    return true;
+  }).slice(0, ALLY_MAX);
+  const prev = {};
+  (state.allies || []).forEach(a => { if (a && a._slot != null) prev[String(a._slot)] = a; });
+  const next = [];
+  state.partySlots.forEach(s => {
+    const raw = readSaveSlot(s);
+    if (!raw || !raw.jobId) return;
+    const fresh = buildAllySnapshot(raw, s);
+    if (!fresh) return;
+    if (prev[String(s)]) keepAllyCombat(fresh, prev[String(s)]);
+    next.push(fresh);
+  });
+  state.allies = next;
+}
 
 function hireAlly(slot) {
-  if (!inSafeZone()) { logMsg('⚠️ 只能在安全區雇傭隊友。'); return false; }
+  if (!inSafeZone()) { logMsg('⚠️ 只能在安全區組隊。'); return false; }
   const list = allyList();
   if (list.length >= ALLY_MAX) { logMsg(`⚠️ 隊友最多 ${ALLY_MAX} 名，請先讓一位退隊。`); return false; }
   if (list.some(a => a && a._slot === String(slot))) { logMsg('⚠️ 這位已經在隊上了。'); return false; }
-  let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(getSlotKey(slot)) || 'null'); } catch (e) { raw = null; }
+  const raw = readSaveSlot(slot);
   if (!raw || !raw.jobId) { logMsg('⚠️ 那格存檔讀不到角色。'); return false; }
-  const price = allyHirePrice(raw.baseLevel || 1);
-  if (state.gold < price) { logMsg(`⚠️ 鋅幣不足，雇傭需要 ${price.toLocaleString()}。`); return false; }
+  if (partySlotList(raw).length >= ALLY_MAX && partySlotList(raw).indexOf(String(currentSlot)) < 0) {
+    logMsg('⚠️ 對方的隊伍已滿。');
+    return false;
+  }
   const ally = buildAllySnapshot(raw, slot);
-  if (!ally) { logMsg('⚠️ 這個角色的資料算不出戰力，無法雇傭。'); return false; }
-  state.gold -= price;
+  if (!ally) { logMsg('⚠️ 這個角色的資料算不出戰力，無法組隊。'); return false; }
   list.push(ally);
-  logMsg(`🤝 ${ally._allyName} 加入隊伍！（花費 ${price.toLocaleString()} 鋅幣）`);
+  linkPartySlot(slot);
+  logMsg(`🤝 ${ally._allyName} 加入隊伍。`);
   saveGame();
   return true;
 }
 
-/* 更新快照：同一個人，重新讀一次他現在的存檔。價錢三分之一。
-   累積中的傭兵經驗要留著，不然更新一次就歸零。 */
+/* 重新讀他的存檔。不扣錢，戰鬥中的 HP、SP、倒地與冷卻留著。 */
 function refreshAlly(slot) {
-  if (!inSafeZone()) { logMsg('⚠️ 只能在安全區更新隊友。'); return false; }
   const list = allyList();
   const idx = list.findIndex(a => a && a._slot === String(slot));
   if (idx < 0) return false;
-  let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(getSlotKey(slot)) || 'null'); } catch (e) { raw = null; }
+  const raw = readSaveSlot(slot);
   if (!raw || !raw.jobId) { logMsg('⚠️ 那格存檔讀不到角色。'); return false; }
-  const price = Math.ceil(allyHirePrice(raw.baseLevel || 1) / ALLY_REFRESH_DIVISOR);
-  if (state.gold < price) { logMsg(`⚠️ 鋅幣不足，更新需要 ${price.toLocaleString()}。`); return false; }
   const fresh = buildAllySnapshot(raw, slot);
   if (!fresh) { logMsg('⚠️ 這個角色的資料算不出戰力。'); return false; }
-  fresh._pendingExp = list[idx]._pendingExp || 0;
-  fresh._pendingJobExp = list[idx]._pendingJobExp || 0;
-  state.gold -= price;
+  keepAllyCombat(fresh, list[idx]);
   list[idx] = fresh;
-  logMsg(`🔄 ${fresh._allyName} 的戰力已更新到最新狀態。（花費 ${price.toLocaleString()} 鋅幣）`);
+  logMsg(`🔄 ${fresh._allyName} 已同步到最新狀態。`);
   saveGame();
   return true;
 }
 
-// 退隊：把累積的傭兵經驗結進待領帳本，那格角色下次上線自動領取
 function dismissAlly(slot) {
   const list = allyList();
   const idx = list.findIndex(a => a && a._slot === String(slot));
   if (idx < 0) return false;
   const ally = list[idx];
-  mercLedgerAdd(ally._slot, ally._pendingExp || 0, ally._pendingJobExp || 0);
   list.splice(idx, 1);
-  logMsg(`👋 ${ally._allyName} 離開了隊伍。`
-    + ((ally._pendingExp || 0) > 0 ? `累積的 ${Math.round(ally._pendingExp).toLocaleString()} 經驗會在他自己上線時領取。` : ''));
+  unlinkPartySlot(slot);
+  logMsg(`👋 ${ally._allyName} 離開了隊伍。`);
   saveGame();
   return true;
 }
 
-/* ---- 傭兵待領帳本 ----
-   **不直接寫別人的存檔格**。累積的經驗放在獨立的 key，那格角色下次
-   loadGame() 時自己領走。直接改別人的存檔在多開時會互相蓋掉。 */
+/* 舊的傭兵帳本不再發放。讀檔時把這一格清掉，避免以後又領到一份。 */
 function mercLedgerRead() {
   try { return JSON.parse(localStorage.getItem(MERC_LEDGER_KEY) || '{}') || {}; } catch (e) { return {}; }
 }
-function mercLedgerAdd(slot, baseExp, jobExp) {
-  if (!(baseExp > 0) && !(jobExp > 0)) return;
-  const led = mercLedgerRead();
-  const cur = led[String(slot)] || { baseExp: 0, jobExp: 0 };
-  cur.baseExp += Math.round(baseExp);
-  cur.jobExp += Math.round(jobExp);
-  led[String(slot)] = cur;
-  try { localStorage.setItem(MERC_LEDGER_KEY, JSON.stringify(led)); } catch (e) { /* 略過 */ }
-}
-// 載入存檔時呼叫：把這格角色當傭兵賺到的經驗一次領走
 function claimMercLedger() {
   const led = mercLedgerRead();
-  const rec = led[String(currentSlot)];
-  if (!rec || (!(rec.baseExp > 0) && !(rec.jobExp > 0))) return 0;
+  if (!led[String(currentSlot)]) return 0;
   delete led[String(currentSlot)];
   try { localStorage.setItem(MERC_LEDGER_KEY, JSON.stringify(led)); } catch (e) { /* 略過 */ }
-  gainExp(rec.baseExp || 0, rec.jobExp || 0);
-  logMsg(`📜 領取當傭兵期間累積的 ${Math.round(rec.baseExp || 0).toLocaleString()} 經驗與 ${Math.round(rec.jobExp || 0).toLocaleString()} 職業經驗。`);
-  return rec.baseExp || 0;
+  return 0;
 }
 
 /* ---- 隊友心跳 ----
@@ -8160,7 +8610,7 @@ function alliesTick() {
   if (!list.length || !state.monsters || !state.monsters.length) return;
   const now = Date.now();
   list.forEach(ally => {
-    if (!ally) return;
+    if (!ally || !allyOnThisMap(ally)) return;
     if (ally._downed) {
       /* 復活術（#95）優先：那是技能，不吃天地樹葉子也不必等倒地冷卻。
          冷卻中或 SP 不夠才輪到葉子那條路。 */
@@ -8284,7 +8734,9 @@ function shareBuffsWithAllies(fresh, freshShields, sk) {
      隊友放的時候玩家也在收禮名單上，這就是以前少掉的那一半。 */
   const everyone = [];
   if (caster) everyone.push(owner);
-  (owner.allies || []).forEach(a => { if (a && !a._downed && a !== caster) everyone.push(a); });
+  (owner.allies || []).forEach(a => {
+    if (a && !a._downed && a !== caster && allyOnThisMap(a)) everyone.push(a);
+  });
   /* 有些全體技**只對拿對武器的人生效**（#131）：官方的速度激發只讓隊上
      拿斧或鈍器的人加速，拿劍的站在旁邊也沒有用。施術者那邊已經被
      `requiresWeapon` 擋過一次了，這裡擋的是**收禮的人**。 */
@@ -8398,7 +8850,7 @@ function tickAllyCooldowns() {
    冷卻與 SP 記在**各自身上**：兩個祭司就是兩份，這跟官方一樣是兩個人各放各的。 */
 function partySupportCasters() {
   const out = [state];
-  allyList().forEach(a => { if (a && !a._downed) out.push(a); });
+  allyList().forEach(a => { if (a && !a._downed && allyOnThisMap(a)) out.push(a); });
   return out;
 }
 // 施術者的稱呼（玩家沒有 _allyName）
@@ -9457,6 +9909,7 @@ function castSkillInner(skillId, opts) {
      **特效**換身中不播（不該讓玩家的立繪擺出施放姿勢），**音效**照播。 */
   if (typeof playSkillSound === 'function') playSkillSound(sk, lv);
   if (!_allyActing && typeof showSkillCastEffect === 'function') showSkillCastEffect(sk, lv);
+  if (typeof showSkillNameFloat === 'function') showSkillNameFloat(skillDisplayName(sk), lv);
 
   /* 卡片對「特定技能」的傷害加成（火蜥蜴：隕石術+40%、小雪怪：冰箭術+25%…）。
      乘在 mult 上而不是傷害基底上：直接傷害的 case 都是算 基底 × mult，
@@ -9598,7 +10051,10 @@ function castSkillInner(skillId, opts) {
         ...defOf(def, 1, useMag, target)) + raceFlatBonus(def) + faExtraFlat;
       target.hp -= dmg;
       // 單體技能以前完全不飄字（logMsg 的飄字規則只認「你…造成N點傷害」那種普攻句型）
-      if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, skCrit ? 'crit' : 'normal', useMag ? skElement : null);
+      const visHits = (sk.id === 'doublestrafe') ? 2
+        : (sk.id === 'firebolt' || sk.id === 'coldbolt' || sk.id === 'lightningbolt') ? lv : 1;
+      if (typeof showSkillHitNumbers === 'function') showSkillHitNumbers(target.id, dmg, visHits, useMag ? skElement : null, skCrit);
+      else if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, skCrit ? 'crit' : 'normal', useMag ? skElement : null);
       logMsg(`⚡ 「${sk.name}」Lv${lv} 造成 ${dmg} 點傷害！${skCrit ? '（暴擊！）' : ''}`);
       // 物理技能也是拿武器打的，命中一樣放武器的命中音（法術有自己的音效）
       if (sk.type !== 'magic' && typeof playHitSound === 'function') playHitSound();
@@ -9691,6 +10147,7 @@ function castSkillInner(skillId, opts) {
         // 鋼製喙：閃電衝擊額外固定傷害（不受倍率影響）
         if (sk.id === 'blitzbeat' && state.falconFlatBonus) dmg += state.falconFlatBonus;
         if (dmg > aoeTopDmg) aoeTopDmg = dmg;
+        noteMonsterDamage(mon, dmg);
         mon.hp -= dmg;
         ailBreakOnDamage(mon, monDef);   // 睡眠被打就醒
         if (useMag) tryCardAilments('magic', mon);
@@ -9975,6 +10432,7 @@ function castSkillInner(skillId, opts) {
       picked.forEach(mon => {
         const md = MONSTERS[mon.defId];
         if (!md) return;
+        noteMonsterDamage(mon, flat);
         mon.hp -= flat;                 // 官方寫的就是無視防禦，所以不走 mitigateDamage
         ailBreakOnDamage(mon, md);
         if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + flat, 'normal');
@@ -10553,6 +11011,8 @@ function castSkillInner(skillId, opts) {
       target.hp -= dmg1;
       if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg1, 'normal');
       logMsg(`⚡ 「${sk.name}」Lv${lv} 第一段對 ${def.name} 造成 ${dmg1} 點傷害！`);
+      const mhSum = {};
+      mhSum[target.id] = { dmg: dmg1, n: 1 };
       if (target.hp <= 0) killMonster(def, target);
       // 第二段：範圍傷害，打全部怪物
       const mult2 = Array.isArray(sk.mult2) ? sk.mult2[lv - 1] : sk.mult2;
@@ -10563,10 +11023,19 @@ function castSkillInner(skillId, opts) {
         const monElemMult = getElementMultiplierVsMonster(skElement, monDef, mon);
         const mon2EleDmgBonus = cardTargetDmgMult(monDef) - 1;
         const dmg2 = mitigateDamage(skillBaseDamage(useMag, monDef, monElemMult) * mult2 * (1 + mon2EleDmgBonus) * ailDmgTakenMult(mon), ...defOf(monDef, 1, false, mon)) + raceFlatBonus(monDef);
+        noteMonsterDamage(mon, dmg2);
         mon.hp -= dmg2;
         pushCombatLog(`  → 對 ${monDef.name} 造成 ${dmg2} 點範圍傷害！`);
         if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg2, 'normal');
+        const bucket = mhSum[mon.id] || (mhSum[mon.id] = { dmg: 0, n: 0 });
+        bucket.dmg += dmg2;
+        bucket.n += 1;
         if (mon.hp <= 0) killMonster(monDef, mon);
+      }
+      if (typeof showComboTotal === 'function') {
+        Object.keys(mhSum).forEach(id => {
+          if (mhSum[id].n >= 2) showComboTotal(id, mhSum[id].dmg);
+        });
       }
       break;
     }
@@ -10585,12 +11054,16 @@ function castSkillInner(skillId, opts) {
       const multiEleDmgBonus = cardTargetDmgMult(def) - 1;
       const hits = Array.isArray(sk.hits) ? sk.hits[lv - 1] : (sk.hits || 1);
       let totalDmg = 0;
+      let landed = 0;
       for (let i = 0; i < hits; i++) {
         const dmg = mitigateDamage(skillBaseDamage(useMag, def, elemMult) * mult * (1 + multiEleDmgBonus) * ailDmgTakenMult(target), ...defOf(def, 1, false, target)) + raceFlatBonus(def);
         totalDmg += dmg;
+        landed++;
         target.hp -= dmg;
+        if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, 'normal');
         if (target.hp <= 0) break;
       }
+      if (landed >= 2 && typeof showComboTotal === 'function') showComboTotal(target.id, totalDmg);
       logMsg(`⚡ 「${sk.name}」Lv${lv} 造成 ${hits} 段攻擊，共 ${totalDmg} 點傷害！`);
       if (target.hp <= 0) killMonster(def, target);
       break;
@@ -11180,7 +11653,21 @@ function jobChangeBlockReason(targetId) {
   }
   const left = (state.jobSkillPoints || {})[state.jobId] || 0;
   if (left > 0) {
-    return `還有 ${left} 點技能點沒用完。`;
+    const bits = [];
+    const learned = state.learnedSkills || {};
+    (job.skills || []).forEach(entry => {
+      const sk = (entry && typeof entry === 'object') ? entry : ((typeof SKILLS !== 'undefined') ? SKILLS[entry] : null);
+      if (!sk || sk.autoGrant || sk.isQuest) return;
+      const id = sk.id || entry;
+      const room = (sk.maxLv || 1) - (learned[id] || 0);
+      if (room > 0) bits.push((sk.name || id).split(' ')[0] + ' +' + room);
+    });
+    const shown = bits.slice(0, 3).join('、') + (bits.length > 3 ? ` 等 ${bits.length} 個技能` : '');
+    const where = shown ? `：${shown}` : '';
+    const how = shown
+      ? `（「+數字」是那個技能最多還能加幾點，不用點滿；挑哪個點都行，這 ${left} 點用完就能轉職）`
+      : '';
+    return `還有 ${left} 點技能點沒用完${where}。${how}`;
   }
   return null;
 }
@@ -11226,9 +11713,14 @@ function doJobChange(targetId) {
   if (!state.jobLevelHistory) state.jobLevelHistory = {};
   state.jobLevelHistory[state.jobId] = state.jobLevel;
 
+  const prevJobId = state.jobId;
+  const oldBaseCap = baseLevelCapOf(prevJobId);
   state.jobId = targetId;
   state.jobLevel = 1;
   state.jobExp = 0;
+  /* 滿等（99）時 baseExp 會一直堆積但升不上去；轉到解鎖更高 cap 的職業（三轉）
+     若不清零會一口氣連升很多級。 */
+  if (baseLevelCapOf(targetId) > oldBaseCap && state.baseLevel >= oldBaseCap) state.baseExp = 0;
 
   if (!state.jobSkillPoints[targetId]) state.jobSkillPoints[targetId] = 0;
 
@@ -11274,6 +11766,17 @@ function doJobChange(targetId) {
 
 /* ---------------- NPC 商店系統 ---------------- */
 /* 基於 ro_npcshop_data，剔除不存在的物品 */
+ITEMS.hair_dye = {
+  name: '染髮劑', type: 'consumable', hairPick: 'color',
+  buyPrice: 5000, sell: 500, weight: 1,
+  desc: '使用後選擇髮色。不改變髮型。'
+};
+ITEMS.beauty_coupon = {
+  name: '美容券', type: 'consumable', hairPick: 'style',
+  buyPrice: 20000, sell: 2000, weight: 1,
+  desc: '使用後選擇髮型。不改變髮色。'
+};
+
 const NPC_SHOPS = {
   weapon: {
     name: '武器商人',
@@ -11305,7 +11808,8 @@ const NPC_SHOPS = {
             'refine_stone',
             'center_potion', 'awakening_potion', 'berserk_potion',
             // 未解封的卡冊：500 萬一本，開出卡冊再開出卡片。純粹是給後期消耗金錢的玩法
-            'sealed_card_album', 'leaf_of_yggdrasil'],
+            'sealed_card_album', 'leaf_of_yggdrasil',
+            'hair_dye', 'beauty_coupon'],
     getItems() {
       return this.items.filter(id => ITEMS[id]);
     }
@@ -11322,6 +11826,14 @@ const NPC_SHOPS = {
         return true;
       });
     }
+  },
+  pet: {
+    name: '寵物商人',
+    icon: '🐾',
+    /* 原本沒怪掉、也沒人賣的捕捉道具，加上各寵物飼料、孵蛋器、BOSS 寵物料理。
+       愛心、紅寶石、蜂蜜不上架。售價用各道具自己的 buyPrice。 */
+    items: ['horror_of_tribe', 'no_recipient', 'heart_of_her', 'sweet_candy_striper', 'knife_goblin_ring', 'flail_goblin_ring', 'hammer_goblin_ring', 'holy_marble', 'red_burning_stone', 'skull_of_vagabond', 'magical_lithography', 'splendid_mirror', 'fit_pipe', 'staff_of_leader', 'item_12373', 'item_12370', 'hell_contract', 'kuloren', 'oilpalm_coconut', 'luxury_whisky_bottle', 'very_red_juice', 'fan_of_wind', 'very_soft_plant', 'shiny_wing_gown', 'flaming_ice', 'tikbalang_belt', 'juicy_fruit', 'unripe_apple2', 'sap_jelly', 'elixir_bandage', 'little_dall_needle', 'apple_juice', 'yellow_herb', 'green_herb', 'carrot_juice', 'red_herb', 'pet_food', 'iron_ore', 'banana_juice', 'shoot', 'white_potion', 'scell', 'bun_', 'green_apple', 'whole_barbecue', 'meat_veg_skewer', 'spirit_liquor', 'mystic_stone', 'apple_pudding', 'damp_darkness', 'big_cell', 'vital_flower_', 'vital_flower', 'fresh_plant', 'grilled_rice_cake', 'plant_neutrient', 'sunset_on_the_rock', 'pumpkin_pie_', 'flavored_alcohol', 'fish_with_blue_back', 'traditional_cookie', 'flame_gemstone', 'item_528', 'fruit_sundae', 'suspicious_bottle', 'cheap_lubricant', 'mementos', 'wad_of_cotton', 'airship_part', 'violet_dyestuffs', 'pet_incubator', 'high_class_pet_food', 'mightysoul_essence'],
+    getItems() { return this.items.filter(id => ITEMS[id]); }
   }
 };
 
@@ -11344,11 +11856,334 @@ const NPC_SHOPS = {
   });
 })();
 
+/* ---------------- 寵物 ----------------
+   捕捉：在該怪出沒的地圖使用捕捉道具，成功率 cap/10000。
+   親密度：帶著的那隻每 5 分鐘吃 1 個飼料 +30。沒飼料不下降。
+   750 親密、910 忠誠。只給素質，不上場。 */
+const PET_INTIM_CORDIAL = 750, PET_INTIM_LOYAL = 910, PET_INTIM_MAX = 1000;
+const PET_FEED_INTERVAL_MS = 5 * 60 * 1000, PET_FEED_INTIM = 30, PET_START_INTIM = 250;
+function ensurePets() {
+  if (!state.pets) state.pets = { list: [], active: null };
+  if (!Array.isArray(state.pets.list)) state.pets.list = [];
+  return state.pets;
+}
+function petTier(rec) {
+  const v = (rec && rec.intim) || 0;
+  return v >= PET_INTIM_LOYAL ? 'loyal' : v >= PET_INTIM_CORDIAL ? 'cordial' : null;
+}
+function activePetBonus() {
+  const ps = state.pets;
+  if (!ps || !ps.active || typeof PETS_BY_ID === 'undefined') return null;
+  const rec = ps.list.find(x => x.id === ps.active);
+  const def = rec && PETS_BY_ID[rec.id];
+  if (!def) return null;
+  const tier = petTier(rec);
+  return tier ? def[tier] : null;
+}
+function petIdForEgg(eggId) {
+  if (typeof PETS_BY_ID === 'undefined' || !eggId) return null;
+  const base = String(eggId).replace(/_egg$/, '');
+  if (PETS_BY_ID[base]) return base;
+  const nm = String((ITEMS[eggId] || {}).name || '')
+    .replace(/寵物蛋.*$/, '')
+    .replace(/的蛋$/, '')
+    .replace(/蛋$/, '');
+  if (!nm) return null;
+  const norm = base.replace(/_+$/, '');
+  for (const k in PETS_BY_ID) {
+    if (String(k).replace(/_+$/, '') !== norm) continue;
+    if (PETS_BY_ID[k] && PETS_BY_ID[k].name === nm) return k;
+  }
+  for (const k2 in PETS_BY_ID) {
+    if (PETS_BY_ID[k2] && PETS_BY_ID[k2].name === nm) return k2;
+  }
+  return null;
+}
+function isHatchableEgg(itemId) {
+  if (!itemId) return false;
+  const byId = /_egg\d*$/.test(itemId);
+  const nm = String((typeof ITEMS !== 'undefined' && ITEMS[itemId] ? ITEMS[itemId].name : '') || '');
+  const byName = /寵物蛋$/.test(nm);
+  if (!byId && !byName) return false;
+  return !!petIdForEgg(itemId);
+}
+function hatchPetEgg(eggId) {
+  const petId = petIdForEgg(eggId);
+  const def = petId ? PETS_BY_ID[petId] : null;
+  if (!def) { logMsg('⚠️ 這顆蛋沒有對應的寵物。'); return false; }
+  if (getItemQty('pet_incubator') <= 0) {
+    logMsg('⚠️ 需要【攜帶用孵蛋器】才能孵化（背包放一個即可，孵化不會消耗它）。');
+    return false;
+  }
+  const ps = ensurePets();
+  removeItem(eggId, 1);
+  const exist = ps.list.find(x => x.id === petId);
+  if (exist) {
+    exist.intim = Math.min(PET_INTIM_MAX, (exist.intim || 0) + 50);
+    logMsg(`💞 你已經有${def.name}了，親密度 +50（${exist.intim}/${PET_INTIM_MAX}）。`);
+    recomputeDerived(false); saveGame();
+    return true;
+  }
+  ps.list.push({ id: petId, intim: PET_START_INTIM, feedAt: 0 });
+  if (!ps.active) ps.active = petId;
+  logMsg(`🥚→🐾 孵化成功！${def.name}成為你的寵物了！`);
+  recomputeDerived(false); saveGame();
+  return true;
+}
+function tryTamePet(itemId) {
+  if (typeof TAME_TO_PET === 'undefined' || !TAME_TO_PET[itemId]) return false;
+  const petId = TAME_TO_PET[itemId];
+  const def = PETS_BY_ID[petId];
+  const ps = ensurePets();
+  const map = currentMap();
+  const petNorm = String(petId).replace(/_+$/, '');
+  const same = id => String(id).replace(/_+$/, '') === petNorm;
+  const here = map && ((map.monsters || []).some(m => same(m.id))
+    || activeBossLists(map.id).some(l => l.some(same)));
+  if (!here) { logMsg(`⚠️ 這張地圖沒有${def.name}的蹤跡，到牠出沒的地圖再用吧。`); return false; }
+  if (ps.list.some(x => x.id === petId)) {
+    removeItem(itemId, 1);
+    const rec = ps.list.find(x => x.id === petId);
+    const before = petTier(rec);
+    rec.intim = Math.min(PET_INTIM_MAX, (rec.intim || 0) + 50);
+    if (before !== petTier(rec)) recomputeDerived(false);
+    logMsg(`💞 你已經有${def.name}了，親密度 +50（${rec.intim}/${PET_INTIM_MAX}）。`);
+    saveGame();
+    return true;
+  }
+  removeItem(itemId, 1);
+  if (Math.random() * 10000 < def.cap) {
+    ps.list.push({ id: petId, intim: PET_START_INTIM, feedAt: 0 });
+    if (!ps.active) ps.active = petId;
+    logMsg(`🎉🐾 捕捉成功！${def.name}成為你的寵物了！`);
+    recomputeDerived(false);
+  } else {
+    logMsg(`💨 ${def.name}掙脫逃走了…（成功率 ${(def.cap / 100).toFixed(1)}%）`);
+  }
+  saveGame();
+  return true;
+}
+function tickPetFeed() {
+  const ps = state.pets;
+  if (!ps || !ps.active || typeof PETS_BY_ID === 'undefined') return;
+  const rec = ps.list.find(x => x.id === ps.active);
+  const def = rec && PETS_BY_ID[rec.id];
+  if (!def || rec.intim >= PET_INTIM_MAX) return;
+  const now = Date.now();
+  if (now - (rec.feedAt || 0) < PET_FEED_INTERVAL_MS) return;
+  if (getItemQty(def.food) < 1) return;
+  removeItem(def.food, 1);
+  rec.feedAt = now;
+  const before = petTier(rec);
+  rec.intim = Math.min(PET_INTIM_MAX, rec.intim + PET_FEED_INTIM);
+  logMsg(`🍽️ ${def.name}吃了${ITEMS[def.food] ? ITEMS[def.food].name : def.food}，親密度 ${rec.intim}/${PET_INTIM_MAX}。`);
+  if (before !== petTier(rec)) {
+    logMsg(`💖 ${def.name}${petTier(rec) === 'loyal' ? '對你完全忠誠' : '和你越來越親密'}了，能力加成提升！`);
+    recomputeDerived(false);
+  }
+  saveGame();
+}
+function setActivePet(id) {
+  const ps = ensurePets();
+  if (!id) {
+    ps.active = null;
+    logMsg('🐾 把寵物收回去休息了。');
+    recomputeDerived(false); saveGame();
+    return true;
+  }
+  if (!ps.list.some(x => x.id === id)) return false;
+  ps.active = id;
+  logMsg(`🐾 帶上了${(PETS_BY_ID[id] || {}).name || id}。`);
+  recomputeDerived(false); saveGame();
+  return true;
+}
+function releasePet(id, confirmed) {
+  if (confirmed !== true) return false;
+  const ps = ensurePets();
+  const i = ps.list.findIndex(x => x && x.id === id);
+  if (i < 0) return false;
+  const name = (PETS_BY_ID[id] || {}).name || id;
+  ps.list.splice(i, 1);
+  if (ps.active === id) ps.active = null;
+  logMsg(`👋 ${name} 被放生了。`);
+  recomputeDerived(false); saveGame();
+  return true;
+}
+function evolvePet(id) {
+  const ps = ensurePets();
+  const rec = ps.list.find(x => x.id === id);
+  const def = rec && typeof PETS_BY_ID !== 'undefined' && PETS_BY_ID[id];
+  if (!def || !def.evo) return false;
+  if (!PETS_BY_ID[def.evo.to]) {
+    logMsg(`⚠️ 進化目標「${def.evo.to}」還沒實作，材料沒有被扣掉。`);
+    return false;
+  }
+  if (ps.list.some(x => x.id === def.evo.to)) { logMsg('⚠️ 你已經有進化後的那隻寵物了。'); return false; }
+  for (const [it, n] of def.evo.items) {
+    if (getItemQty(it) < n) {
+      logMsg(`⚠️ 進化需要 ${ITEMS[it] ? ITEMS[it].name : it} ×${n}（不足）。`);
+      return false;
+    }
+  }
+  def.evo.items.forEach(([it, n]) => removeItem(it, n));
+  rec.id = def.evo.to;
+  rec.intim = PET_INTIM_CORDIAL;
+  if (ps.active === id) ps.active = rec.id;
+  logMsg(`✨🐾 ${def.name}進化成${(PETS_BY_ID[rec.id] || { name: rec.id }).name}了！`);
+  recomputeDerived(false); saveGame();
+  return true;
+}
+
+/* 每天第一次上線自動發獎，20 天一輪。天數用 UTC+8。 */
+function tickAttendance() {
+  if (!state || typeof ATTENDANCE_REWARDS === 'undefined' || !ATTENDANCE_REWARDS.length) return;
+  const day = Math.floor((Date.now() + 8 * 3600 * 1000) / 86400000);
+  if (!state.attendance) state.attendance = { day: 0, n: 0 };
+  const at = state.attendance;
+  if (at.day === day) return;
+  at.day = day;
+  const idx = at.n % ATTENDANCE_REWARDS.length;
+  at.n++;
+  const r = ATTENDANCE_REWARDS[idx];
+  if (!r || !ITEMS[r[0]]) return;
+  addItem(r[0], r[1]);
+  logMsg(`📅 每日簽到（第 ${idx + 1} 天）：獲得 ${ITEMS[r[0]].name} ×${r[1]}！`);
+  saveGame();
+}
+
+/* 討伐：同時 3 張。進度讀圖鑑擊殺數，接單時記基準。隊友補刀不進圖鑑，所以不算。
+   獎勵：經驗與職業經驗 ×1.5，鋅幣 = 怪等級 × 隻數 × 10。 */
+const HUNT_BOARD_SLOTS = 3;
+function ensureHuntBoard() {
+  if (!state.huntBoard) state.huntBoard = { q: [] };
+  if (!Array.isArray(state.huntBoard.q)) state.huntBoard.q = [];
+  return state.huntBoard;
+}
+function huntQuestById(qid) {
+  if (typeof HUNT_QUESTS === 'undefined') return null;
+  return HUNT_QUESTS.find(q => q.id === qid) || null;
+}
+function huntEligiblePool(forPick) {
+  if (typeof HUNT_QUESTS === 'undefined') return [];
+  const lv = state.baseLevel || 1;
+  const onBoard = new Set(ensureHuntBoard().q.map(e => e.id));
+  const wide = HUNT_QUESTS.filter(q => !onBoard.has(q.id) && q.lv <= lv + 5);
+  if (forPick) return wide.length ? wide : HUNT_QUESTS.filter(q => !onBoard.has(q.id));
+  const fit = HUNT_QUESTS.filter(q => !onBoard.has(q.id) && q.lv <= lv + 5 && q.lv >= lv - 15);
+  if (fit.length >= HUNT_BOARD_SLOTS) return fit;
+  return wide.length ? wide : HUNT_QUESTS.filter(q => !onBoard.has(q.id));
+}
+function tickHuntBoard() {
+  if (!state) return false;
+  const hb = ensureHuntBoard();
+  if (hb.noAuto && Date.now() < hb.noAuto) return false;
+  let filled = false;
+  while (hb.q.length < HUNT_BOARD_SLOTS) {
+    const pool = huntEligiblePool();
+    if (!pool.length) break;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const base = {};
+    const mons = ensureCodex().mon;
+    pick.t.forEach(([g]) => { base[g] = mons[g] || 0; });
+    hb.q.push({ id: pick.id, base });
+    filled = true;
+  }
+  return filled;
+}
+function huntProgress(entry) {
+  const q = huntQuestById(entry.id);
+  if (!q) return null;
+  const mons = ensureCodex().mon;
+  return q.t.map(([g, need]) => ({
+    mon: g, need,
+    have: Math.max(0, Math.min(need, (mons[g] || 0) - ((entry.base && entry.base[g]) || 0))),
+  }));
+}
+function huntQuestReward(q) {
+  let exp = 0, jexp = 0, zeny = 0;
+  q.t.forEach(([g, cnt]) => {
+    const d = MONSTERS[g];
+    if (!d) return;
+    exp += (d.exp || 0) * cnt;
+    jexp += (d.jobExp || 0) * cnt;
+    zeny += (d.level || 1) * cnt * 10;
+  });
+  return { exp: Math.round(exp * 1.5), jexp: Math.round(jexp * 1.5), zeny };
+}
+function huntPick(questId) {
+  const hb = ensureHuntBoard();
+  if (hb.q.length >= HUNT_BOARD_SLOTS) { logMsg('⚠️ 佈告欄已滿，先放棄一張再自選。'); return false; }
+  const qid = Math.floor(Number(questId));
+  const pool = huntEligiblePool(true);
+  const pick = pool.find(q => q.id === qid);
+  if (!pick) { logMsg('⚠️ 這張討伐令不符合你的等級，或已經在佈告欄上。'); return false; }
+  const base = {};
+  const mons = ensureCodex().mon;
+  pick.t.forEach(([g]) => { base[g] = mons[g] || 0; });
+  hb.q.push({ id: pick.id, base });
+  logMsg(`📜 接下了討伐令「${pick.n}」。`);
+  saveGame();
+  return true;
+}
+function huntClaim(idx) {
+  idx = Math.floor(Number(idx));
+  const hb = ensureHuntBoard();
+  const entry = hb.q[idx];
+  if (!entry) return false;
+  const q = huntQuestById(entry.id);
+  if (!q) { hb.q.splice(idx, 1); tickHuntBoard(); saveGame(); return false; }
+  const prog = huntProgress(entry) || [];
+  if (!prog.length || prog.some(p => p.have < p.need)) { logMsg('⚠️ 這張討伐令還沒完成。'); return false; }
+  const r = huntQuestReward(q);
+  hb.q.splice(idx, 1);
+  state.huntDone = (state.huntDone || 0) + 1;
+  state.gold += r.zeny;
+  logMsg(`📜 完成討伐令「${q.n}」！獲得 ${r.exp.toLocaleString()} 經驗、${r.jexp.toLocaleString()} 職業經驗、${r.zeny.toLocaleString()} 鋅幣。`);
+  gainExp(r.exp, r.jexp);
+  tickHuntBoard();
+  saveGame();
+  return true;
+}
+function huntClaimRepeat(idx) {
+  idx = Math.floor(Number(idx));
+  const hb = ensureHuntBoard();
+  const entry = hb.q[idx];
+  if (!entry) return false;
+  const q = huntQuestById(entry.id);
+  if (!q) return false;
+  const prog = huntProgress(entry) || [];
+  if (!prog.length || prog.some(p => p.have < p.need)) { logMsg('⚠️ 這張討伐令還沒完成。'); return false; }
+  const r = huntQuestReward(q);
+  state.huntDone = (state.huntDone || 0) + 1;
+  state.gold += r.zeny;
+  gainExp(r.exp, r.jexp);
+  const base = {};
+  const mons = ensureCodex().mon;
+  q.t.forEach(([g]) => { base[g] = mons[g] || 0; });
+  hb.q[idx] = { id: entry.id, base };
+  logMsg(`📜 完成討伐令「${q.n}」！獲得 ${r.exp.toLocaleString()} 經驗、${r.jexp.toLocaleString()} 職業經驗、${r.zeny.toLocaleString()} 鋅幣，並自動再接一張同樣的。`);
+  saveGame();
+  return true;
+}
+function huntAbandon(idx) {
+  idx = Math.floor(Number(idx));
+  const hb = ensureHuntBoard();
+  if (!hb.q[idx]) return false;
+  const q = huntQuestById(hb.q[idx].id);
+  hb.q.splice(idx, 1);
+  hb.noAuto = Date.now() + 30000;
+  logMsg(`📜 放棄了討伐令${q ? `「${q.n}」` : ''}。30 秒內可以自選接取，逾時佈告欄自動補上。`);
+  tickHuntBoard();
+  saveGame();
+  return true;
+}
+
 // NPC 商店開在地圖分頁裡（只有安全區的地圖才會有入口），不再有獨立的 NPC 分頁
 function openNpcShop(shopId) {
   const shop = NPC_SHOPS[shopId];
   if (!shop) return;
   if (!isInTown()) return;
+  if (typeof hideEquipTooltip === 'function') hideEquipTooltip();
   const items = shop.getItems();
   const el = document.getElementById('tab-map');
   if (!el) return;
@@ -11374,6 +12209,10 @@ function openNpcShop(shopId) {
       category = 'SP 回復';
     } else if (item.heal) {
       category = 'HP 回復';
+    } else if (typeof TAME_TO_PET !== 'undefined' && TAME_TO_PET[id]) {
+      category = '捕捉道具';
+    } else if (id === 'pet_incubator') {
+      category = '寵物用品';
     } else if (REFINEMENT_MATERIALS[id]) {
       category = '精煉材料';
     }
@@ -11395,11 +12234,17 @@ function openNpcShop(shopId) {
       const item = ITEMS[id];
       const qty = getItemQty(id);
       const canAfford = state.gold >= item.buyPrice;
+      /* 有圖檔就用跟裝備欄同一張圖。沒有 imgId，或圖檔載入失敗，才退回原本的符號。 */
+      const fb = String(item.icon || '📦').replace(/"/g, '');
+      const iconHtml = item.imgId
+        ? `<img class="shop-item-icon" src="${itemImgSrc(id)}" alt="" data-fb="${fb}" onerror="shopIconFallback(this)">`
+        : `<span class="shop-item-icon">${item.icon || '📦'}</span>`;
+      const jsId = String(id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       html += `<div class="shop-row ${canAfford ? '' : 'shop-cannot-afford'}">
-        <div class="shop-item-info">
-          <span class="shop-item-icon">${item.icon}</span>
+        <div class="shop-item-info" onmouseenter="showShopItemTooltip(event,'${jsId}')" onmouseleave="hideEquipTooltip()">
+          ${iconHtml}
           <div class="shop-item-details">
-            <span class="shop-item-name">${item.name}${item.element ? ' ' + ELEMENT_ICONS[item.element] : ''}</span>
+            <span class="shop-item-name"><button type="button" class="wh-info-btn" aria-label="看完整說明" onclick="event.stopPropagation();showBagInfo(event,'${jsId}')">ⓘ</button>${item.name}${item.element ? ' ' + ELEMENT_ICONS[item.element] : ''}</span>
             <span class="shop-item-stats">${item.atk ? 'ATK ' + item.atk : ''}${item.matk ? 'MATK ' + item.matk : ''}${item.def ? 'DEF ' + item.def : ''}${item.element ? ' [' + ELEMENT_NAMES[item.element] + ']' : ''}</span>
           </div>
         </div>
@@ -11567,11 +12412,40 @@ function openAllBoxes(itemId) {
   return opened;
 }
 
+/* 經驗書／掉寶糖。倍率與分鐘數照官網；同一種 buff 後用的蓋掉先用的。 */
+const EXP_DROP_CANDY = {
+  battle_manual:      { kind: 'expboost', mult: 1.5, durMin: 30 },
+  he_battle_manual:   { kind: 'expboost', mult: 1.5, durMin: 30 },
+  battle_manual25:    { kind: 'expboost', mult: 1.25, durMin: 30 },
+  battle_manual_x3:   { kind: 'expboost', mult: 3, durMin: 30 },
+  battle_manual100:   { kind: 'expboost', mult: 2, durMin: 60 },
+  battle_manual_tw:   { kind: 'expboost', mult: 1.5, durMin: 30, maxBase: 40 },
+  bubble_gum:         { kind: 'dropboost', mult: 2, durMin: 30 },
+  bubble_gum_green:   { kind: 'dropboost', mult: 2, durMin: 15 },
+  bubble_gum_yellow:  { kind: 'dropboost', mult: 2, durMin: 10 },
+  bubble_gum_red:     { kind: 'dropboost', mult: 2, durMin: 5 },
+  comp_battle_bubble: { kind: 'expboost', mult: 1.5, durMin: 30, also: { kind: 'dropboost', mult: 2 } },
+  comp_bubble_gum:    { kind: 'dropboost', mult: 2, durMin: 15 },
+  job_manual50:       { kind: 'jobexpboost', mult: 1.5, durMin: 30 },
+  job_manual25:       { kind: 'jobexpboost', mult: 1.25, durMin: 30 },
+};
+
+function candyMult(kind) {
+  const b = state && state.buffs && state.buffs.find(x => x.type === kind);
+  return (b && typeof b.mult === 'number') ? b.mult : 1;
+}
+
 function useItem(itemId) {
   const def = ITEMS[itemId];
   const row = state.inventory.find(r => r.item === itemId && !r.instanceId);
   if (!def || !row) return false;
+  if (typeof TAME_TO_PET !== 'undefined' && TAME_TO_PET[itemId]) return tryTamePet(itemId);
+  if (isHatchableEgg(itemId)) return hatchPetEgg(itemId);
   if (def.type === 'consumable' || def.type === 'material') {
+    if (def.hairPick) {
+      if (typeof openHairPick === 'function') openHairPick(itemId);
+      return true;
+    }
     /* 天地樹葉子（#83）：扶起倒地的隊友。沒有人倒地就不消耗——
        這條要放在最前面，因為它沒有 heal/restoreSp 那些欄位，
        走到下面會被當成「沒有可以使用的效果」擋掉。 */
@@ -11581,6 +12455,30 @@ function useItem(itemId) {
       const ok = reviveAlly(down);
       if (ok) saveGame();
       return ok;
+    }
+    const candy = EXP_DROP_CANDY[itemId];
+    if (candy) {
+      if (candy.maxBase && state.baseLevel > candy.maxBase) {
+        logMsg(`⚠️ ${def.name}：基礎等級 ${candy.maxBase} 以下才能使用。`);
+        return false;
+      }
+      const ms = candy.durMin * 60000;
+      const push = (kind, mult, suffix) => {
+        state.buffs = state.buffs.filter(b => b.type !== kind);
+        state.buffs.push({
+          type: kind, mult: mult, msRemaining: ms,
+          skillId: 'candy_' + itemId + suffix,
+        });
+      };
+      push(candy.kind, candy.mult, '');
+      if (candy.also) push(candy.also.kind, candy.also.mult, '_also');
+      removeItem(itemId, 1);
+      recomputeDerived(false);
+      const bits = [`${candy.kind} ×${candy.mult.toFixed(2)}`];
+      if (candy.also) bits.push(`${candy.also.kind} ×${candy.also.mult.toFixed(2)}`);
+      logMsg(`📖 使用了 ${def.name}：${bits.join('、')}，持續 ${candy.durMin} 分鐘。`);
+      saveGame();
+      return true;
     }
     /* 箱子：開出一件隨機道具。裝備一律進背包不自動穿，
        不然抽到武器會把身上那把換掉（而且個體化裝備的插卡會跟著消失）。 */
@@ -12385,7 +13283,10 @@ function effectiveGearBonuses() {
     /* 遺物也要進簽章，否則換遺物不會重算——條件式加成卡在舊值那個坑（見上面）
        在這裡會變成「拔掉整套遺物，加成還在」。 */
     + '#' + (typeof RELIC_SLOTS === 'undefined' ? '' :
-      RELIC_SLOTS.map(s => relicsOf()[s] || '-').join(','));
+      RELIC_SLOTS.map(s => relicsOf()[s] || '-').join(','))
+    + '#' + (state.pets && state.pets.active
+      ? state.pets.active + ':' + (petTier((state.pets.list || []).find(x => x.id === state.pets.active)) || '-')
+      : '-');
   if (_gearBonusCache && _gearBonusKey === key) return _gearBonusCache;
 
   const total = {};
@@ -12523,6 +13424,8 @@ function effectiveGearBonuses() {
     mergeBonus(total, tier.bonus);
     sets.push({ id: 'relic_' + set.id + '_' + tier.need, name: `${set.name} ${tier.need} 件`, bonus: tier.bonus });
   });
+  const petBonus = activePetBonus();
+  if (petBonus) mergeBonus(total, petBonus);
 
   _gearBonusKey = key;
   _activeSets = sets;
@@ -12713,6 +13616,7 @@ function applySplashDamage(dmg, mainTarget) {
     if (mon === mainTarget || mon.hp <= 0) return;
     const md = MONSTERS[mon.defId];
     if (!md) return;
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     ailBreakOnDamage(mon, md);
     n++;
@@ -12825,6 +13729,7 @@ function tryRelicBlacksmithStrike(mainTarget) {
     const md = MONSTERS[mon.defId];
     if (!md || mon.hp <= 0) return;
     const dmg = mitigateDamage(base, ...defOf(md));
+    noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     ailBreakOnDamage(mon, md);
     hit++;
@@ -13352,6 +14257,7 @@ function craftMaterial(kind) {
 function changeMap(mapId) {
   const map = MAPS.find(m => m.id === mapId);
   if (!map) return false;
+  const prevMapId = state.mapId;
   state.mapId = mapId;
   // 回安全區全隊免費滿血復活（#83）——不然倒地的隊友只能靠天地樹葉子
   if ((map.monsters || []).length === 0) reviveAlliesInTown();
@@ -13361,6 +14267,7 @@ function changeMap(mapId) {
   state.monster = null;
   logMsg(`前往「${map.name}」。`);
   spawnMonster();
+  prepaidArrivingAllies(prevMapId);
   saveGame();
   return true;
 }
@@ -13409,8 +14316,23 @@ let lastSaveTs = 0;
 function saveGameThrottled() {
   if (Date.now() - lastSaveTs > 5000) saveGame();
 }
-function saveGame() {
+let _tabSessionBlocked = false;
+function tabSessionBlocked() { return _tabSessionBlocked; }
+function setTabSessionBlocked(v) { _tabSessionBlocked = !!v; }
+/* 正在玩的這個人：經驗和道具都是現場拿到的，兩條時鐘一起推。 */
+function stampPlayedClocks() {
   if (!state) return;
+  const now = Date.now();
+  state.lastActiveAt = now;
+  state.lastExpAt = now;
+  state.lastLootAt = now;
+}
+function activityClock(key) {
+  const v = state && state[key];
+  return (typeof v === 'number' && v > 0) ? v : ((state && state.lastActiveAt) || Date.now());
+}
+function saveGame() {
+  if (!state || _tabSessionBlocked || _suppressSave) return;
   /* 換身期間（withAlly）**絕對不能存**（#105）：那時候的 `state` 是隊友快照，
      存下去等於把玩家的存檔格整個換成隊友——名字、職業、等級、背包全部變成他的。
 
@@ -13423,7 +14345,7 @@ function saveGame() {
      換回玩家之後的任何一次正常存檔都會把它一起寫進去。 */
   if (_allyActing) return;
   try {
-    state.lastActiveAt = Date.now();
+    stampPlayedClocks();
     /* 隊友快照跟主角**共用**同一個 state.monsters 陣列（withAlly 塞的），
        直接序列化會把整場怪重複存兩份，而且讀檔後會變成三份互不相干的場。 */
     (state.allies || []).forEach(a => { if (a) { a.monsters = null; a.monster = null; } });
@@ -13437,6 +14359,8 @@ function loadGame() {
     if (!raw) return false;
     state = JSON.parse(raw);
     if (!state.lastActiveAt) state.lastActiveAt = Date.now();
+    if (!state.lastExpAt) state.lastExpAt = state.lastActiveAt;
+    if (!state.lastLootAt) state.lastLootAt = state.lastActiveAt;
     if (!state.autoPotion) state.autoPotion = { enabled: true, primary: '', fallback: 'red_potion', hpThreshold: 50 };
     if (typeof state.autoPotion.hpThreshold !== 'number') state.autoPotion.hpThreshold = 50;
     // 舊版 tier 欄位遷移
@@ -13536,7 +14460,7 @@ function loadGame() {
     if (!state.equip.accessory1) state.equip.accessory1 = null;
     if (!state.equip.accessory2) state.equip.accessory2 = null;
     if (!state.equip.ammo) state.equip.ammo = null;
-    if (!state.equipSkin) state.equipSkin = 'grid';
+    delete state.equipSkin;
     /* 遺物欄（#113）。舊存檔沒有這個欄位，補成八格空的；
        已經有的話只補缺少的格子，不要整個覆蓋掉玩家穿好的遺物。 */
     if (!state.relics) state.relics = emptyRelicSlots();
@@ -13647,8 +14571,9 @@ function loadGame() {
     // 補回被舊版重置刪掉的任務技能（轉職自帶 1 級，讀檔不會自己補）
     repairQuestSkills();
     recomputeDerived(false);
-    // 這個角色被別人當傭兵帶出去賺的經驗，上線時一次領走（#83）
     claimMercLedger();
+    syncPartyOnLoad();
+    if (typeof syncWorldChatPlayer === 'function') syncWorldChatPlayer();
     return true;
   } catch (e) {
     console.error('loadGame error:', e);
@@ -13664,21 +14589,130 @@ function loadGame() {
    切分頁那條路（#135）會傳一個小很多的值：使用者描述的情境正是「頻繁切換畫面」，
    沿用 30 秒的話每次切走 20 秒就完全沒有收益——主迴圈已經停了，那段時間會憑空蒸發，
    比修之前還糟。彈窗與紀錄另有自己的門檻，在 deliverOfflineResult() 那邊擋。 */
-function computeOfflineProgress(minMs) {
+/* 離線經驗一級一級灌。同一級裡用地圖權重算平均一場，灌到有人升級就重算等級差。
+   頭目照這一段的時間比例，用當下等級。掉落不走這裡。 */
+function pourOfflineGapExp(pool, totalWeight, normalKills, bossList, dmgBy, excludeSlots) {
+  const owner = state;
+  const farm = farmMult('exp');
+  const normals = (pool || []).map(m => ({ def: MONSTERS[m.id], weight: m.weight || 0 })).filter(m => m.def);
+  const weightSum = totalWeight > 0 ? totalWeight : normals.reduce((s, m) => s + m.weight, 0);
+  const bosses = (bossList || []).map(b => ({ def: MONSTERS[b.id], kills: b.kills || 0 })).filter(b => b.def && b.kills > 0);
+  const skip = Array.isArray(excludeSlots) ? excludeSlots : Object.keys(excludeSlots || {});
+  const roster = partyExpContext(owner, skip).roster;
+  const saved = roster.map(m => m.baseLevel);
+  const shadow = roster.map(m => ({
+    member: m,
+    level: m.baseLevel || 1,
+    exp: m.baseExp || 0,
+    cap: baseLevelCapOf(m.jobId),
+    base: 0,
+    job: 0,
+  }));
+  const candyOf = member => (member === owner ? candyMult('expboost') : withAlly(member, () => candyMult('expboost')));
+  shadow.forEach(s => { s.candy = candyOf(s.member); });
+  const sync = () => { shadow.forEach(s => { s.member.baseLevel = s.level; }); };
+  const restore = () => { roster.forEach((m, i) => { m.baseLevel = saved[i]; }); };
+  const climb = s => {
+    let guard = 0;
+    while (s.level < s.cap && s.exp + 1e-6 >= expToNextBaseLevel(s.level) && guard++ < 300) {
+      s.exp = Math.max(0, s.exp - expToNextBaseLevel(s.level));
+      s.level++;
+    }
+  };
+  shadow.forEach(climb);
+  let left = Math.max(0, normalKills || 0);
+  let guard = 0;
+  try {
+    while ((left > 1e-6 || bosses.some(b => b.kills > 1e-6)) && guard++ < 800) {
+      sync();
+      const ctx = partyExpContext(owner, skip);
+      let soonest = Infinity;
+      const rates = shadow.map(s => {
+        const share = partyMemberShare(ctx, s.member, owner, dmgBy);
+        const run = () => {
+          let perBase = 0, perJob = 0, bossBase = 0, bossJob = 0;
+          const add = (def, mult) => {
+            if (!def || !(mult > 0) || !(share > 0)) return;
+            const rate = levelGapExpRate(def.level || 1, state.baseLevel || 1) * memberKillExpMult(def) * farm * share;
+            perBase += (def.exp || 0) * rate * mult;
+            perJob += (def.jobExp || 0) * rate * mult;
+          };
+          if (weightSum > 0) normals.forEach(n => add(n.def, n.weight / weightSum));
+          bosses.forEach(b => add(b.def, b.kills));
+          return { perBase, perJob, bossBase, bossJob };
+        };
+        const got = s.member === owner ? run() : withAlly(s.member, run);
+        const paced = (left > 1e-6 ? got.perBase + got.bossBase / left : got.bossBase) * (s.candy || 1);
+        if (s.level < s.cap && paced > 0) {
+          const need = expToNextBaseLevel(s.level) - s.exp;
+          if (need > 0) soonest = Math.min(soonest, need / paced);
+        }
+        return got;
+      });
+      let take = left;
+      let frac = 1;
+      const dump = !isFinite(soonest);
+      if (!dump && left > 1e-6) {
+        take = Math.min(left, soonest);
+        frac = left > 0 ? take / left : 1;
+      } else if (!dump) {
+        frac = Math.min(1, soonest);
+      }
+      if (dump) { take = left; frac = 1; }
+      shadow.forEach((s, i) => {
+        const r = rates[i];
+        const gain = r.perBase * take + r.bossBase * frac;
+        const gainJob = r.perJob * take + r.bossJob * frac;
+        s.base += gain;
+        s.job += gainJob;
+        s.exp += gain * (s.candy || 1);
+        climb(s);
+      });
+      bosses.forEach(b => { b.kills *= (1 - frac); });
+      left -= take;
+      if (dump) break;
+    }
+  } finally { restore(); }
+  const ownerRow = shadow.find(s => s.member === owner) || { base: 0, job: 0 };
+  return {
+    owner: { base: Math.round(ownerRow.base), job: Math.round(ownerRow.job) },
+    allies: shadow.filter(s => s.member !== owner).map(s => ({
+      member: s.member,
+      q: { base: Math.round(s.base), job: Math.round(s.job) },
+    })),
+  };
+}
+function computeOfflineProgress(minMs, opts) {
   if (!state) return null;
+  opts = opts || {};
+  const expOnly = !!opts.expOnly;
+  const excludeSlots = {};
+  (opts.excludeSlots || []).forEach(s => { excludeSlots[String(s)] = true; });
   const gate = minMs == null ? OFFLINE_MIN_MS : minMs;
-  const rawElapsed = Date.now() - (state.lastActiveAt || Date.now());
-  const elapsedMs = Math.min(rawElapsed, OFFLINE_CAP_MS);
-  if (elapsedMs < gate) { state.lastActiveAt = Date.now(); return null; }
-  const elapsedSec = Math.floor(elapsedMs / 1000);
+  /* 經驗時鐘：同圖組隊時已經領過的那段不再發。
+     道具時鐘：掉落、鋅幣、圖鑑。A 掛機只推了 B 的經驗時鐘，B 上線仍領這段道具。 */
+  const nowMs = Date.now();
+  const expElapsed = Math.min(Math.max(0, nowMs - activityClock('lastExpAt')), OFFLINE_CAP_MS);
+  const lootElapsed = Math.min(Math.max(0, nowMs - activityClock('lastLootAt')), OFFLINE_CAP_MS);
+  const elapsedMs = Math.max(expElapsed, lootElapsed);
+  if (elapsedMs < gate) {
+    if (!expOnly) stampPlayedClocks();
+    return null;
+  }
+  if (state.encounterMode === 'off') {
+    if (!expOnly) { stampPlayedClocks(); saveGame(); }
+    return null;
+  }
+  const expSec = Math.floor(expElapsed / 1000);
+  const lootSec = Math.floor(lootElapsed / 1000);
+  const elapsedSec = Math.max(expSec, lootSec);
 
   const map = currentMap();
   const pool = map.monsters; // [{id, weight}]
 
   if (!pool.length) {
     // 城鎮安全區：沒有怪物可打，離線期間只是安穩休息，沒有戰鬥收穫
-    state.lastActiveAt = Date.now();
-    saveGame();
+    if (!expOnly) { stampPlayedClocks(); saveGame(); }
     return { elapsedMs, elapsedSec, expGained: 0, jobExpGained: 0, goldGained: 0, itemsGained: [], baseLevelUps: 0, jobLevelUps: 0, kills: 0, safeTown: true, allyCount: 0, mapName: map.name, bossKills: 0, bossList: [] };
   }
 
@@ -13713,6 +14747,13 @@ function computeOfflineProgress(minMs) {
      怪物的防禦與攻擊不用管：那兩個是在傷害計算當下乘的，
      抽樣走的是真正的 playerAttack()，本來就吃得到。 */
   const farmHp = avgHp * farmMult('hp');
+
+  const expOnlyKeep = expOnly ? {
+    gold: state.gold,
+    inventory: JSON.parse(JSON.stringify(state.inventory || [])),
+    codex: state.codex ? JSON.parse(JSON.stringify(state.codex)) : null,
+    bossKills: state.bossKills ? JSON.parse(JSON.stringify(state.bossKills)) : null,
+  } : null;
 
   // 離線掛機估算：快照後跑 3 秒真實戰鬥外推（方法A），含 MATK/物攻、技能、冷卻、SP
   const sampleSec = 3;
@@ -13756,7 +14797,7 @@ function computeOfflineProgress(minMs) {
      隊友的攻速跟玩家不同，一輪一刀會把快的算太少、慢的算太多。
 
      倒地的隊友不算：線上 `alliesTick()` 也是直接 return。 */
-  const sampleAllies = (state.allies || []).filter(a => a && !a._downed);
+  const sampleAllies = (state.allies || []).filter(a => a && !a._downed && allyOnThisMap(a) && !excludeSlots[String(a._slot)]);
   const _allySnap = sampleAllies.map(a => ({
     a,
     buffs: (a.buffs || []).map(b => ({ ...b })),
@@ -13790,6 +14831,9 @@ function computeOfflineProgress(minMs) {
     }
   };
 
+  _sampleDmgBy = {};
+  _offlineSampling = true;
+  try {
   for (let i = 0; i < sampleAttacks; i++) {
     // tick buff 3 秒內的到期（每刀按 attackInterval 推進）
     if (state.buffs.length) {
@@ -13840,6 +14884,7 @@ function computeOfflineProgress(minMs) {
       if (nxt) state.equip.ammo = nxt.item;
     }
   }
+  } finally { _offlineSampling = false; }
   // 隊友的抽樣痕跡要還原，否則切一次分頁就把他們的 SP 與冷卻真的扣掉了
   _allySnap.forEach(s => {
     s.a.buffs = s.buffs;
@@ -13925,8 +14970,25 @@ function computeOfflineProgress(minMs) {
     }
   }
   // 頭目佔掉的時間不能同時拿去打雜魚，兩邊的時間預算要加得起來
-  const normalShare = bossKills > 0 ? 1 - MVP_SPAWN_CHANCE_PCT / 100 : 1;
-  const totalKills = killsPerSec * elapsedSec * normalShare;
+  /* 近戰殺得比補怪快時，線上會清場再等 spawnDelayMs(true)。
+     地圖產出已經這樣算，離線以前是怪一死立刻滿血，秒殺會變成每一刀一場。 */
+  if (killsPerSec > 0 && isFinite(killsPerSec) && state.encounterMode === 'melee' && typeof spawnDelayMs === 'function') {
+    const secPerKill = 1 / killsPerSec;
+    const refillSec = spawnDelayMs(false) / 1000;
+    if (secPerKill < refillSec) killsPerSec = 1 / (secPerKill + spawnDelayMs(true) / 1000);
+  }
+  /* 頭目模擬照較長的那段跑，再按兩條時鐘的比例拆開。
+     經驗用短的那段，道具用長的那段；兩條一樣長時比例是 1，跟以前相同。 */
+  const expScale = elapsedSec > 0 ? expSec / elapsedSec : 0;
+  const lootScale = elapsedSec > 0 ? lootSec / elapsedSec : 0;
+  const expBossKills = bossKills * expScale;
+  const lootBossKills = bossKills * lootScale;
+  const expBossList = bossGained.map(b => ({ id: b.id, kills: b.kills * expScale }));
+  const lootBossList = bossGained.map(b => ({ id: b.id, kills: b.kills * lootScale }));
+  const expNormalShare = expBossKills > 0 ? 1 - MVP_SPAWN_CHANCE_PCT / 100 : 1;
+  const lootNormalShare = lootBossKills > 0 ? 1 - MVP_SPAWN_CHANCE_PCT / 100 : 1;
+  const expTotalKills = killsPerSec * expSec * expNormalShare;
+  const totalKills = killsPerSec * lootSec * lootNormalShare;
 
   /* 經驗與鋅幣要跟線上 killMonster() 同一條式子（#145）：
        經驗 = def.exp × 卡片的種族經驗加成 × 打寶倍率
@@ -13934,20 +14996,19 @@ function computeOfflineProgress(minMs) {
      以前這裡兩個倍率都沒乘，瘋狂模式掛一整晚拿到的跟不開打寶一樣多。
      種族經驗加成照怪物出沒權重取平均——池子裡混著好幾個種族，
      只認第一隻的種族會讓「專打某族」的卡片被高估。 */
-  const expMult = 1 + (buffMult('exp').flatBonus || 0) / 100;
-  const raceExpOf = def => 1 + ((def && def.race && state.cardExpRace && state.cardExpRace[def.race]) || 0);
-  const avgRaceExp = wAvg(m => raceExpOf(m));
-  const expFarm = farmMult('exp') * expMult * avgRaceExp;
+  const dmgBy = _sampleDmgBy || {};
+  /* 經驗一級一級灌：升級後重算等級差，頭目跟這一段一起算。掉落仍用下面的一次結算。 */
+  const poured = pourOfflineGapExp(pool, totalWeight, expTotalKills, expBossList, dmgBy, excludeSlots);
+  const ownerQuoted = poured.owner;
+  let expGained = ownerQuoted.base;
+  let jobExpGained = ownerQuoted.job;
+  const allyQuotes = poured.allies;
+  _sampleDmgBy = null;
   const goldFarm = farmMult('gold');
-  let expGained = Math.round(avgExp * totalKills * expFarm);
-  let jobExpGained = Math.round(avgJobExp * totalKills * expFarm);
   let goldGained = Math.round((3 + avgLevel * 1.4) * totalKills * goldFarm);
-  bossGained.forEach(b => {
+  lootBossList.forEach(b => {
     const bd = MONSTERS[b.id];
-    const bm = farmMult('exp') * expMult * raceExpOf(bd);
-    expGained += Math.round((bd.exp || 0) * b.kills * bm);
-    jobExpGained += Math.round((bd.jobExp || 0) * b.kills * bm);
-    goldGained += Math.round((3 + (bd.level || 0) * 1.4) * b.kills * goldFarm);
+    goldGained += Math.round((3 + ((bd && bd.level) || 0) * 1.4) * b.kills * goldFarm);
   });
 
   /* 掉落物期望值（依真實怪物密度權重計算每次擊殺的期望掉落機率）。
@@ -13960,7 +15021,7 @@ function computeOfflineProgress(minMs) {
 
      全部走同一張 dropAgg：那張表的單位是「每次擊殺的期望件數」，
      最後統一乘上 totalKills，所以只要把各自的期望值加進來就好。 */
-  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100);   // 裝備掉寶率（快樂氣球+10%）
+  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100) * candyMult('dropboost');   // 裝備掉寶率（快樂氣球+10%）+ 掉寶糖
   const dropAgg = {};
   const addExp2 = (id, n) => { if (n > 0 && ITEMS[id]) dropAgg[id] = (dropAgg[id] || 0) + n; };
   /* 加權掉落表的期望分佈：偷竊與貪婪都是「照掉落率加權抽一件」（pickWeightedDrop），
@@ -14021,7 +15082,7 @@ function computeOfflineProgress(minMs) {
      卡片走 MONSTER_CARD_DROPS 那條的也要補，不然頭目卡片離線永遠掉不出來。 */
   const bossDropAgg = {};
   const addBoss = (id, n) => { if (n > 0 && ITEMS[id]) bossDropAgg[id] = (bossDropAgg[id] || 0) + n; };
-  bossGained.forEach(b => {
+  lootBossList.forEach(b => {
     const bd = MONSTERS[b.id];
     (bd.drops || []).forEach(d => addBoss(d.item, Math.min(1, d.chance * dropMult) * b.kills));
     const cd = (typeof MONSTER_CARD_DROPS !== 'undefined') ? MONSTER_CARD_DROPS[b.id] : null;
@@ -14052,7 +15113,7 @@ function computeOfflineProgress(minMs) {
     const normPct = RELIC_DROP_PCT_NORMAL / 100;      // 每次擊殺的機率
     RELIC_PIECE_IDS.forEach(id => addExp2(id, normPct / RELIC_PIECE_IDS.length));
     addExp2(RELIC_TICKET_ID, normPct);
-    bossGained.forEach(b => {
+    lootBossList.forEach(b => {
       const bd = MONSTERS[b.id];
       const pct = relicBossDropPct(bd.level) / 100;
       if (!(pct > 0)) return;
@@ -14090,25 +15151,43 @@ function computeOfflineProgress(minMs) {
     if (share > 1) ensureCodex().mon[m.id] += share - 1;
   });
   // 頭目同理。**不動 bossKills 的耗時紀錄**：那是線上實測的數字，離線不該回頭寫它
-  bossGained.forEach(b => {
+  lootBossList.forEach(b => {
     const share = Math.floor(b.kills);
     if (share > 0) codexRecordKill(b.id);
     if (share > 1) ensureCodex().mon[b.id] += share - 1;
   });
 
+  if (expOnlyKeep) {
+    state.gold = expOnlyKeep.gold;
+    state.inventory = expOnlyKeep.inventory;
+    state.codex = expOnlyKeep.codex;
+    state.bossKills = expOnlyKeep.bossKills;
+    goldGained = 0;
+    itemsGained.length = 0;
+  }
+
   const beforeBaseLv = state.baseLevel;
   const beforeJobLv = state.jobLevel;
   gainExp(expGained, jobExpGained);
   state.gold += goldGained;
-  /* 隊友的傭兵經驗（#135）。線上 killMonster() 每擊殺都會記 ALLY_MERC_EXP_PCT，
-     離線走的是外推所以沒有逐次擊殺，這裡照同一個比例一次補上——
-     不然「掛機一整晚」對隊友本人的存檔完全沒有意義。
-     跟線上同一條規則：記給全隊未倒地的每一位，不是只記給補刀的那個。 */
-  sampleAllies.forEach(a => {
-    a._pendingExp = (a._pendingExp || 0) + expGained * ALLY_MERC_EXP_PCT / 100;
-    a._pendingJobExp = (a._pendingJobExp || 0) + jobExpGained * ALLY_MERC_EXP_PCT / 100;
+  /* 同圖的隊友此刻結算，並寫進他自己的存檔。不同圖的不在 partyCtx 裡。 */
+  allyQuotes.forEach(row => {
+    const q = row.q;
+    if (q.base > 0 || q.job > 0) {
+      withAlly(row.member, () => gainExp(q.base, q.job));
+      if (row.member.hp > row.member.maxHp) row.member.hp = row.member.maxHp;
+      if (row.member.sp > row.member.maxSp) row.member.sp = row.member.maxSp;
+      if (expOnly) noteExpPrepaid(row.member, q.base, q.job);
+    }
+    writeAllyProgress(row.member);
   });
-  state.lastActiveAt = Date.now();
+  if (expOnly) {
+    if (expGained > 0 || jobExpGained > 0) {
+      noteExpPrepaid(state, expGained, jobExpGained);
+      state.lastExpAt = Date.now();
+    }
+  } else {
+  stampPlayedClocks();
   /* 時間錨點全部推回現在，否則主迴圈一恢復就會把離線那段「再打一次」（#135）：
      玩家的累積器會爆發一串攻擊，場上每隻怪也各賺一次免費攻擊
      （`now - mon.lastAttackTime` 是整段離線時間），慢心跳同理。 */
@@ -14120,6 +15199,7 @@ function computeOfflineProgress(minMs) {
   (state.monsters || []).forEach(m => { m.lastAttackTime = Date.now(); });
   (state.allies || []).forEach(a => { if (a) { a._atkAccum = 0; a._lastAttackAt = Date.now(); } });
   saveGame();
+  }
 
   return {
     elapsedMs, elapsedSec,
@@ -14131,8 +15211,8 @@ function computeOfflineProgress(minMs) {
     allyCount: sampleAllies.length,
     mapName: map.name,
     // 頭目那份分開回報：玩家最想知道的就是「這一晚有沒有打到頭目」（#137）
-    bossKills: Math.round(bossKills),
-    bossList: bossGained.filter(b => b.kills >= 0.5)
+    bossKills: Math.round(lootBossKills),
+    bossList: lootBossList.filter(b => b.kills >= 0.5)
       .map(b => ({ id: b.id, name: MONSTERS[b.id].name, kills: Math.round(b.kills) })),
   };
 }
@@ -14197,6 +15277,7 @@ function pushOfflineLog(off) {
     bossList: (off.bossList || []).slice(0, 4),
     itemsGained: spoils.slice(0, OFFLINE_LOG_ITEMS_MAX),
     itemsMore: Math.max(0, spoils.length - OFFLINE_LOG_ITEMS_MAX),
+    expPrepaid: off.expPrepaid || null,
   });
   state.offlineLog.length = Math.min(state.offlineLog.length, OFFLINE_LOG_MAX);
 }
