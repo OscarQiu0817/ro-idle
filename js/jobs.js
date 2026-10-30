@@ -13,7 +13,7 @@
 
 const JOB_TREE = {
   novice: {
-    id: 'novice', name: '新手', tier: 0, icon: '🌱',
+    id: 'novice', name: '初心者', tier: 0, icon: '🌱',
     baseLevelReq: 1, jobLevelReq: 1, jobLevelMax: 10,
     atkMod: 1.0, matkMod: 1.0,
     baseAspd: {"dagger":138,"sword":137,"tsword":null,"bow":null,"rod":129,"mace":144,"katar":null,"spear":null,"knuckle":null}, shieldPenalty: -6,
@@ -35,7 +35,7 @@ const JOB_TREE = {
        atk/matk    兩邊都給 1.0，物理魔法都能打但都不專精，正是這個職業的性格
      轉職條件依官方：新手職業等級滿 10、基本等級 45。轉了就不能再轉（next 為空）。 */
   supernovice: {
-    id: 'supernovice', name: '超級新手', tier: 1, icon: '⭐', parent: 'novice',
+    id: 'supernovice', name: '超級初心者', tier: 1, icon: '⭐', parent: 'novice',
     baseLevelReq: 45, jobLevelReq: 10, jobLevelMax: 99,
     atkMod: 1.0, matkMod: 1.0,
     baseAspd: {"dagger":138,"sword":137,"tsword":null,"bow":null,"rod":129,"mace":144,"katar":null,"spear":null,"knuckle":null}, shieldPenalty: -6,
@@ -68,7 +68,7 @@ const JOB_TREE = {
     desc: '以劍與盾為伴的近戰戰士，堅韌不拔。'
   },
   mage: {
-    id: 'mage', name: '法師', tier: 1, icon: '🔮', parent: 'novice',
+    id: 'mage', name: '魔法師', tier: 1, icon: '🔮', parent: 'novice',
     baseLevelReq: 10, jobLevelReq: 10, jobLevelMax: 50,
     atkMod: 0.55, matkMod: 1.35,
     // 法師是第五個做出分支的一轉（#71）
@@ -280,7 +280,7 @@ const JOB_TREE = {
 
      `genderLock` 是新欄位，`canJobChange()` 與 `jobChangeBlockReason()` 都認它。 */
   bard: {
-    id: 'bard', name: '詩人', tier: 2, icon: '🎻', parent: 'archer', genderLock: 'male',
+    id: 'bard', name: '吟遊詩人', tier: 2, icon: '🎻', parent: 'archer', genderLock: 'male',
     baseLevelReq: 40, jobLevelReq: 40, jobLevelMax: 50,
     atkMod: 1.6, matkMod: 0.9,
     // 攻速表由 x_詩人_舞孃 派生（見 js/data.js 的 splitBardDancerAspd）
@@ -457,7 +457,7 @@ const JOB_TREE = {
      51~70 那段再補一輪，讓多出來的 20 級不是白練。 */
 
   lordknight: {
-    id: 'lordknight', name: '領主騎士', tier: 2.5, icon: '⚔️', parent: 'knight',
+    id: 'lordknight', name: '騎士領主', tier: 2.5, icon: '⚔️', parent: 'knight',
     baseLevelReq: 70, jobLevelReq: 50, jobLevelMax: 70,
     atkMod: 1.8, matkMod: 0.7,
     hpSpFrom: 'knight', aspdFrom: 'knight',
@@ -473,7 +473,7 @@ const JOB_TREE = {
     desc: '騎士之上的騎士。戰場上的旗幟只為他而立。'
   },
   highwizard: {
-    id: 'highwizard', name: '高等巫師', tier: 2.5, icon: '🔮', parent: 'wizard',
+    id: 'highwizard', name: '超魔導士', tier: 2.5, icon: '🔮', parent: 'wizard',
     baseLevelReq: 70, jobLevelReq: 50, jobLevelMax: 70,
     atkMod: 0.5, matkMod: 2.0,
     hpSpFrom: 'wizard', aspdFrom: 'wizard', baseAspd: 150,
@@ -485,7 +485,7 @@ const JOB_TREE = {
     desc: '把咒文推到極限的人，最後連自己都成了咒文的一部分。'
   },
   sniper: {
-    id: 'sniper', name: '狙擊之王', tier: 2.5, icon: '🏹', parent: 'hunter',
+    id: 'sniper', name: '神射手', tier: 2.5, icon: '🏹', parent: 'hunter',
     baseLevelReq: 70, jobLevelReq: 50, jobLevelMax: 70,
     atkMod: 1.6, matkMod: 0.8,
     hpSpFrom: 'hunter', aspdFrom: 'hunter',
@@ -497,7 +497,7 @@ const JOB_TREE = {
     desc: '一箭，一命。距離只是他與獵物之間的一個數字。'
   },
   whitesmith: {
-    id: 'whitesmith', name: '神匠', tier: 2.5, icon: '🔨', parent: 'blacksmith',
+    id: 'whitesmith', name: '神工匠', tier: 2.5, icon: '🔨', parent: 'blacksmith',
     baseLevelReq: 70, jobLevelReq: 50, jobLevelMax: 70,
     atkMod: 1.75, matkMod: 0.7,
     hpSpFrom: 'blacksmith', aspdFrom: 'blacksmith',
@@ -523,7 +523,7 @@ const JOB_TREE = {
     desc: '影子裡的影子。你察覺的那一刻，已經是他允許的。'
   },
   highpriest: {
-    id: 'highpriest', name: '高階祭司', tier: 2.5, icon: '🕊️', parent: 'priest',
+    id: 'highpriest', name: '神官', tier: 2.5, icon: '🕊️', parent: 'priest',
     baseLevelReq: 70, jobLevelReq: 50, jobLevelMax: 70,
     atkMod: 0.6, matkMod: 1.4,
     hpSpFrom: 'priest', aspdFrom: 'priest', baseAspd: 150,
@@ -601,7 +601,7 @@ const JOB_TREE = {
     desc: '掌聲響起的時候，戰場已經結束了。'
   },
   gypsy: {
-    id: 'gypsy', name: '冷豔舞姬', tier: 2.5, icon: '🌹', parent: 'dancer', genderLock: 'female',
+    id: 'gypsy', name: '冷艷舞姬', tier: 2.5, icon: '🌹', parent: 'dancer', genderLock: 'female',
     baseLevelReq: 70, jobLevelReq: 50, jobLevelMax: 70,
     atkMod: 1.65, matkMod: 0.9,
     hpSpFrom: 'dancer', aspdFrom: 'dancer', baseAspd: 150,
@@ -668,7 +668,7 @@ const JOB_TREE = {
     desc: '龍與符文的繼承者。劍上刻著看不懂的字，但敵人看得懂。'
   },
   royalguard: {
-    id: 'royalguard', name: '皇家禁衛', tier: 3, icon: '🛡️', parent: 'paladin',
+    id: 'royalguard', name: '皇家禁衛隊', tier: 3, icon: '🛡️', parent: 'paladin',
     baseLevelReq: 99, jobLevelReq: 70, jobLevelMax: 70,
     atkMod: 1.65, matkMod: 1.0,
     hpSpFrom: 'paladin', aspdFrom: 'paladin',
@@ -716,7 +716,7 @@ const JOB_TREE = {
     desc: '箭離弦的那一刻，獵物才知道自己一直在陷阱裡。'
   },
   minstrel: {
-    id: 'minstrel', name: '樂團', tier: 3, icon: '🎻', parent: 'clown',
+    id: 'minstrel', name: '宮廷樂師', tier: 3, icon: '🎻', parent: 'clown',
     baseLevelReq: 99, jobLevelReq: 70, jobLevelMax: 70,
     atkMod: 1.65, matkMod: 0.9,
     hpSpFrom: 'clown', aspdFrom: 'clown',
@@ -728,7 +728,7 @@ const JOB_TREE = {
     desc: '一個人就是一整支樂隊，安可是必須的。'
   },
   wanderer: {
-    id: 'wanderer', name: '漂流者', tier: 3, icon: '💃', parent: 'gypsy',
+    id: 'wanderer', name: '浪姬舞者', tier: 3, icon: '💃', parent: 'gypsy',
     baseLevelReq: 99, jobLevelReq: 70, jobLevelMax: 70,
     atkMod: 1.65, matkMod: 0.9,
     hpSpFrom: 'gypsy', aspdFrom: 'gypsy',
@@ -740,7 +740,7 @@ const JOB_TREE = {
     desc: '舞步走到哪，戰場的節奏就改到哪。'
   },
   mechanic: {
-    id: 'mechanic', name: '機工士', tier: 3, icon: '⚙️', parent: 'whitesmith',
+    id: 'mechanic', name: '機械工匠', tier: 3, icon: '⚙️', parent: 'whitesmith',
     baseLevelReq: 99, jobLevelReq: 70, jobLevelMax: 70,
     atkMod: 1.75, matkMod: 0.7,
     hpSpFrom: 'whitesmith', aspdFrom: 'whitesmith',

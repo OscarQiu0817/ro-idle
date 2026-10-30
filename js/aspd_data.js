@@ -21,7 +21,7 @@ const ASPD_WEAPON_BASE = {
   x_十字軍_聖殿十字軍: { name: "十字軍/聖殿十字軍", weapons: { bare: 154, dagger: 146, sword1: 151, sword2: 139, spear1: 141, spear2: 142, axe1: 144, axe2: 139, mace: 149 }, shield: { none: 0, shield: -5 } },
   x_盧恩騎士: { name: "盧恩騎士", weapons: { bare: 154, dagger: 144, sword1: 142, sword2: 139, spear1: 134, spear2: 136, axe1: 146, axe2: 142, mace: 149 }, shield: { none: 0, shield: -5 } },
   x_皇家禁衛軍: { name: "皇家禁衛軍", weapons: { bare: 154, dagger: 147, sword1: 149, sword2: 141, spear1: 144, spear2: 144, axe1: 146, axe2: 142, mace: 150 }, shield: { none: 0, shield: -5 } },
-  mage: { name: "法師", weapons: { bare: 144, dagger: 144, rod1: 139, rod2: 139 }, shield: { none: 0, shield: -10 } },
+  mage: { name: "魔法師", weapons: { bare: 144, dagger: 144, rod1: 139, rod2: 139 }, shield: { none: 0, shield: -10 } },
   wizard: { name: "巫師/超魔導", weapons: { bare: 144, dagger: 140, rod1: 141, rod2: 141 }, shield: { none: 0, shield: -8 } },
   x_賢者_智者: { name: "賢者/智者", weapons: { bare: 149, dagger: 141, rod1: 139, rod2: 139, book: 151 }, shield: { none: 0, shield: -5 } },
   x_咒術士: { name: "咒術士", weapons: { bare: 149, dagger: 142, rod1: 144, rod2: 138 }, shield: { none: 0, shield: -5 } },
