@@ -1101,6 +1101,7 @@ function recomputeDerived(fullHeal) {
   // 官方計算機用的是「總 AGI/DEX」（含職業、裝備、卡片、buff），先寄存給 computeAspd() 用
   state._totalAgi = cAgi;
   state._totalDex = cDex;
+  state._totalInt = cInt;
   state._totalStr = cStr;   // 武器浮動用（官方 1 + STR/200 ± 武器等級×0.05）
   computeAspd();
 

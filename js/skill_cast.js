@@ -59,8 +59,9 @@ function readEffectiveDexIntFromState(state) {
   if (bd && bd.dex && bd.int) {
     return actorDexInt({ dex: bd.dex.total, int: bd.int.total });
   }
-  const dex = state._totalDex != null ? state._totalDex : (state.stats && state.stats.dex);
-  const int = state.stats && state.stats.int;
+  const s = state.stats || {};
+  const dex = state._totalDex != null ? state._totalDex : s.dex;
+  const int = state._totalInt != null ? state._totalInt : s.int;
   return actorDexInt({ dex, int });
 }
 
