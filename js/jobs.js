@@ -202,7 +202,7 @@ const JOB_TREE = {
       'oridecon', 'hiltbinding', 'findingore', 'daggercraft',
       'swordcraft', 'axecraft', 'knucklecraft', 'macecraft',
       'spearcraft', 'weaponresearch', 'hammerfall', 'adrenaline',
-      'skintemper', 'cartrevo', 'overthrust', 'overthrustbuff',
+      'skintemper', 'overthrust', 'overthrustbuff',
       'maximize', 'weaponfusion', 'greed',
     ],
     desc: '鎚起鎚起鎚落，鍛出無堅不摧的武器與力量。'

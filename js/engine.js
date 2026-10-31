@@ -9624,7 +9624,8 @@ const MIN_COOLDOWN_MS = 500;
 function effectiveCooldownMs(skillId, baseCdSec) {
   const base = (baseCdSec || 0) * 1000;
   if (base <= 0) return base;                       // 本來就沒有冷卻的技能不給它加上冷卻
-  const delta = (getCardBonus('skillCdFlat') + getCardBonus('skillCdFlat_' + skillId)) * 1000;
+  const delta = (getCardBonus('skillDelayFlat') + getCardBonus('skillDelayFlat_' + skillId)
+    + getCardBonus('skillCdFlat') + getCardBonus('skillCdFlat_' + skillId)) * 1000;
   // 布萊奇之詩（#68）：冷卻 −N%。乘在固定值增減之後，跟 #55 那批卡片同一條路
   const pct = Math.max(0, 1 - buffMult('skillcd').flatBonus / 100);
   return Math.max(MIN_COOLDOWN_MS, (base + delta) * pct);

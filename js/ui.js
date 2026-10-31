@@ -5492,7 +5492,19 @@ function formatCardBonus(k, v, all) {
     return v >= 100 ? `免疫${a}` : `${a}抗性 +${v}%`;
   }
   // #17 第五批：官方的「變動施法時間 ±N%」魔改成冷卻秒數（本作技能瞬發）
-  if (k === 'skillCdFlat') return `全技能冷卻 ${v > 0 ? '+' : ''}${v} 秒`;
+  // 詠唱／後搖／單技冷卻（與 #17 skillCdFlat 魔改分軌後）
+  if (k === 'vctPct' || k.startsWith('vctPct_')) {
+    const sk = k.startsWith('vctPct_') && typeof findSkillAnywhere === 'function'
+      ? findSkillAnywhere(k.slice(7)) : null;
+    const who = sk ? sk.name : '全技能';
+    return `${who} 變動詠唱 ${v > 0 ? '−' : '+'}${Math.abs(v)}%`;
+  }
+  if (k === 'fctFlatSec' || k.startsWith('fctFlatSec_')) return `固定詠唱 −${v} 秒`;
+  if (k === 'globalDelayPct') return `技能後延遲 −${v}%`;
+  if (k === 'skillDelayFlat' || k.startsWith('skillDelayFlat_')) {
+    return `技能冷卻 ${v > 0 ? '+' : ''}${v} 秒`;
+  }
+  if (k === 'skillCdFlat') return `全技能冷卻 ${v > 0 ? '+' : ''}${v} 秒（舊欄位）`;
   if (k.startsWith('skillCdFlat_')) {
     const sk = (typeof findSkillAnywhere === 'function') ? findSkillAnywhere(k.slice(12)) : null;
     return `${sk ? sk.name.split(' ')[0] : k.slice(12)} 冷卻 ${v > 0 ? '+' : ''}${v} 秒`;
