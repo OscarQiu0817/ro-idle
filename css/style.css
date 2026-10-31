@@ -1746,6 +1746,11 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .ro-equip-tooltip .inv-compare { margin-top: 6px; }
 .ro-equip-tooltip .tt-stats { font-size: 11px; color: #5dade2; }
 .ro-equip-tooltip .tt-stats span { display: inline-block; margin-right: 8px; }
+.ro-equip-tooltip .tt-condbonus { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 11px; }
+.ro-equip-tooltip .tt-condbonus-title { color: #f5d76e; margin-bottom: 4px; }
+.ro-equip-tooltip .tt-condbonus-row.on { color: #7dcea0; }
+.ro-equip-tooltip .tt-condbonus-row.off { color: #aaa; }
+.ro-equip-tooltip .tt-condbonus-sub { opacity: 0.85; font-size: 10px; }
 .ro-equip-tooltip .tt-refine { color: #f0c040; font-weight: 700; }
 .ro-equip-tooltip .tt-card { color: #58d68d; margin-top: 4px; }
 .ro-equip-tooltip .socket-card-name { color: #58d68d; }

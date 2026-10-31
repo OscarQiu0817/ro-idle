@@ -5551,13 +5551,21 @@ function itemDescParts(desc) {
   }
   return { flavor: s, meta: '' };
 }
-/* 浮層敘述：一句一行，本服註記拆到下方。註記裡的 ** 是粗體，不印星號。 */
+/* 浮層敘述：一句一行；不顯示資料檔注入的本服實作／🧩 註記。 */
+function scrubMetaNotesFromDesc(desc) {
+  let t = String(desc || '');
+  for (let i = 0; i < 8; i++) {
+    const before = t;
+    t = t.replace(/（[^）]*🧩[^）]*）/g, '');
+    t = t.replace(/（[^）]*本服(?:實作|未實作|更新)[^）]*）/g, '');
+    t = t.replace(/（⚠[^）]*）/g, '');
+    if (t === before) break;
+  }
+  return t.trim();
+}
 function tooltipDescHtml(desc) {
-  let t = String(desc || '').replace(/<\/?(?:ITEM|URL|TIPBOX|ele|a)>/gi, '').trim();
+  let t = scrubMetaNotesFromDesc(desc).replace(/<\/?(?:ITEM|URL|TIPBOX|ele|a)>/gi, '').trim();
   if (!t) return '';
-  let note = '';
-  const ni = t.search(/（\s*(?:⚠\s*)?本服/);
-  if (ni >= 0) { note = t.slice(ni).trim(); t = t.slice(0, ni).trim(); }
   let spec = '';
   const si = t.search(/系列[:：]/);
   if (si >= 0) { spec = t.slice(si).trim(); t = t.slice(0, si).trim(); }
@@ -5565,11 +5573,6 @@ function tooltipDescHtml(desc) {
   let html = '';
   if (lines.length) html += `<div class="tt-desc">${lines.map(shopEsc).join('<br>')}</div>`;
   if (spec) html += `<div class="tt-meta">${shopEsc(spec)}</div>`;
-  if (note) {
-    const cls = /未實作/.test(note) ? 'tt-note unimpl' : 'tt-note';
-    const body = shopEsc(note).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-    html += `<div class="${cls}">${body}</div>`;
-  }
   return html;
 }
 /* 裝備欄與商店共用這一塊。opts.cards／refine 只有身上那件帶得走；
@@ -5611,6 +5614,23 @@ function itemTooltipHtml(itemId, opts) {
   if (item.restoreSpPct) stats.push(`<span>回復 ${item.restoreSpPct}% SP</span>`);
   if (item.aspdPct) stats.push(`<span>攻擊速度 ${item.aspdPct > 0 ? '+' : ''}${item.aspdPct}%</span>`);
   if (stats.length) html += `<div class="tt-stats">${stats.join('')}</div>`;
+  if (typeof getItemEffectPanelRows === 'function') {
+    const panel = getItemEffectPanelRows(itemId);
+    if (panel.length) {
+      html += '<div class="tt-condbonus"><div class="tt-condbonus-title">條件加成（此件）</div>';
+      panel.forEach(r => {
+        const scale = r.scale != null ? r.scale : 1;
+        const bits = Object.entries(r.bonus || {})
+          .map(([k, v]) => (typeof formatCardBonus === 'function'
+            ? formatCardBonus(k, typeof v === 'number' ? v * scale : v, r.bonus)
+            : (k + '+' + v)))
+          .filter(Boolean).join('、');
+        const sub = r.detail ? ` <span class="tt-condbonus-sub">${shopEsc(r.detail)}</span>` : '';
+        html += `<div class="tt-condbonus-row ${r.active ? 'on' : 'off'}">${r.active ? '✅' : '⬜'} ${shopEsc(r.label)}${sub}${bits ? '：' + shopEsc(bits) : ''}</div>`;
+      });
+      html += '</div>';
+    }
+  }
   const maxSlots = opts.maxSlots || 0;
   const cards = opts.cards || [];
   if (maxSlots > 0) {
@@ -6805,8 +6825,7 @@ function renderCharacterTab() {
   const effectiveCritRate = Math.min(100, Math.round(state.critRate * critBuff.mult + critBuff.flatBonus));
   const effectiveHit = Math.round(state.hit * hitBuff.mult + hitBuff.flatBonus);
 
-  /* 生效中的裝備套裝（#20）。EQUIP_SETS 以前是空的，所以這一排從來沒東西可顯示，
-     現在有資料了就得讓玩家看得到——不然湊齊了也不知道有沒有生效。 */
+  /* 生效中的套裝（卡片 setName、EQUIP_SETS、遺物套）。裝備 condBonus 改看各件「條件加成」區塊。 */
   let setListHtml = '';
   if (typeof activeEquipSets === 'function') {
     const sets = activeEquipSets() || [];
@@ -6814,7 +6833,7 @@ function renderCharacterTab() {
       setListHtml = '<div class="active-sets">' + sets.map(s => {
         const bits = Object.entries(s.bonus || {})
           .map(([k, v]) => formatCardBonus(k, v, s.bonus)).filter(Boolean).join('、');
-        return `<span class="set-tag" title="${bits || '依精煉階數加成'}">🧩 ${s.name}${bits ? '：' + bits : ''}</span>`;
+        return `<span class="set-tag" title="${bits || '依精煉階數加成'}">✅ ${s.name}${bits ? '：' + bits : ''}</span>`;
       }).join('') + '</div>';
     }
   }

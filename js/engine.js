@@ -740,8 +740,7 @@ const PLAGIARISM_ATTACK_TYPES = ['damage', 'magic', 'damage_aoe', 'magic_aoe',
 const PLAGIARISM_PASSIVE_STATS = [
   'tripleAttack', 'chainCombo', 'comboFinish', 'extremityFist', 'investigate',
   'fingerOffensive', 'balkyoung', 'palmStrike', 'tigerFist', 'chainCrush',
-  'raidProc', 'onAttackStrike', 'magicCrasher', 'soulBurn', 'tarotCard',
-];
+  'raidProc', 'onAttackStrike', 'magicCrasher', 'soulBurn', 'tarotCard'];
 function plagiarismIsAttack(sk) {
   if (PLAGIARISM_ATTACK_TYPES.includes(sk.type)) return true;
   return !!(state.preserveOn && sk.type === 'passive'
@@ -4976,8 +4975,7 @@ const GOSPEL_BLESSINGS = [
       state.buffs.push({ type: 'hit', mult: 1, flatBonus: 20, msRemaining: GOSPEL_EFFECT_SEC * 1000, skillId: 'pa_gospel' });
       state.buffs.push({ type: 'flee', mult: 1, flatBonus: 20, msRemaining: GOSPEL_EFFECT_SEC * 1000, skillId: 'pa_gospel' });
       return '命中 +20、迴避 +20';
-    } },
-];
+    } }];
 const GOSPEL_CURSES = [
   { name: '神罰', icon: '⚡', run: mons => {
       let total = 0;
@@ -5007,8 +5005,7 @@ const GOSPEL_CURSES = [
       mons.forEach(m => { m.debuffDef = m10; m.debuffDefEnd = until; });
       return `${mons.length} 隻敵人受到 10 級挑釁（DEF −${Math.round((1 - m10) * 100)}%）`;
     } },
-  { name: '無事發生', icon: '🌫️', run: () => null },
-];
+  { name: '無事發生', icon: '🌫️', run: () => null }];
 
 /* ---------------- 智者（#76）----------------
    四個普攻觸發的被動。內部冷卻共用 `state.songProcReadyAt`（詩人開的那張表），
@@ -5108,8 +5105,7 @@ const TAROT_CARDS = [
       m.debuffFlee = Math.round((m.flee || 0) * 0.2); m.debuffFleeEnd = until;
       m.debuffHit = 20; m.debuffHitEnd = until;
       return 'ATK／迴避／命中／防禦 全部 −20%';
-    } },
-];
+    } }];
 
 /* 抽一張。`double` 那張要再抽兩張，所以拆出來讓它遞迴一層——
    再抽到 `double` 就跳過，不然會無限展開。 */
@@ -9255,8 +9251,7 @@ function statPointsAtLevel(level) {
    光是 121→130 就佔 304 點）。Lv200 一路升上來總共拿得到 4,497 點，
    剛好夠把**三項多一點**點到 130——所以 130 這條線本來就不是每項都點得滿，這是刻意的。 */
 const STAT_COST_HIGH = [
-  [105, 16], [110, 20], [115, 24], [120, 28], [125, 32], [130, 36],
-];
+  [105, 16], [110, 20], [115, 24], [120, 28], [125, 32], [130, 36]];
 function statPointCost(currentValue) {
   if (currentValue <= 100) return 2 + Math.floor((currentValue - 1) / 10);
   for (const [cap, cost] of STAT_COST_HIGH) if (currentValue <= cap) return cost;
@@ -10853,8 +10848,7 @@ function castSkillInner(skillId, opts) {
         ['critDmgPct', 'critdmg', '暴擊傷害 +%'], ['maxHpPct', 'maxhppct', '最大HP +%'],
         ['maxSpPct', 'maxsppct', '最大SP +%'], ['skillCdPct', 'skillcd', '技能冷卻 −%'],
         ['expPct', 'exp', '經驗值 +%'], ['atkFlat', 'atkflat', 'ATK +'],
-        ['defFlat', 'defflat', 'DEF +'],
-      ];
+        ['defFlat', 'defflat', 'DEF +']];
       flat.forEach(([f, type, label]) => {
         const v = at(f);
         if (v == null || v === 0) return;
@@ -11743,6 +11737,11 @@ function doJobChange(targetId) {
   });
   grantAutoSkills(true);
 
+  const stripped = stripIllegalEquipment({ quiet: true });
+  if (stripped.length) {
+    logMsg(`🎒 轉職後卸下了 ${stripped.length} 件無法繼續裝備的道具：${stripped.join('、')}。`);
+  }
+
   recomputeDerived(true);
   logMsg(`🎊 恭喜！你轉職成為「${target.icon} ${target.name}」！`);
   /* 新手第一次轉職禮：紅水 300 人人有；弓箭手多 1000 鋼鐵箭矢，
@@ -11783,7 +11782,7 @@ const NPC_SHOPS = {
     icon: '⚔️',
     items: ['knife', 'cutter', 'main_gauche', 'dirk', 'dagger', 'stiletto', 'gladius', 'damascus', 'cinquedea', 'kindling_dagger', 'obsidian_dagger', 'item_1249', 'jujube_dagger', 'coward', 'sword', 'falchion', 'blade', 'lapier', 'tsurugi', 'haedonggum', 'saber', 'slayer', 'bastard_sword', 'two_hand_sword', 'broad_sword', 'spear', 'pike', 'lance', 'guisarme', 'glaive', 'halberd', 'axe', 'battle_axe', 'hammer', 'buster', 'two_handed_axe', 'club', 'mace', 'smasher', 'flail', 'morning_star', 'sword_mace', 'chain', 'stunner', 'bow', 'composite_bow', 'great_bow', 'cross_bow', 'arbalest', 'kakkung', 'hunter_bow', 'repeting_cross_bow', 'waghnakh', 'knuckle_duster', 'hora', 'fist', 'claw', 'finger', 'violin', 'mandolin', 'lute', 'guitar', 'harp', 'guh_moon_goh',
       // 樂器／鞭子／法杖的低階線：官方商店同一家武器商人賣的就是這條線
-      'cello', 'contabass', 'electronic_guitar',
+      'cello', null, 'electronic_guitar',
       'rope', 'rope_', 'line', 'line_', 'wire', 'wire_', 'lariat', 'tail', 'tail_', 'whip', 'whip_', 'rante', 'rante_',
       'rod', 'rod_', 'wand', 'wand_', 'staff', 'staff_', 'survival_rod', 'survival_rod_', 'survival_rod2', 'survival_rod2_', 'arc_wand', 'arc_wand_',
       // 拳刃：刺客專用，官方商店賣的就是這條線
@@ -11817,7 +11816,7 @@ const NPC_SHOPS = {
   armor: {
     name: '防具商人',
     icon: '🛡️',
-    items: ['flu_mask', 'granpa_beard', 'hood', 'muffler', 'manteau', 'novice_manteau', 'cotton_shirt', 'leather_jacket', 'adventure_suit', 'mantle', 'coat', 'padded_armor', 'chain_mail', 'plate_armor', 'silk_robe', 'scapulare', 'saint_robe', 'wooden_mail', 'tights', 'silver_robe', 'thief_clothes', 'wedding_dress', 'novice_breast', 'full_plate_armor', 'guard', 'buckler', 'shield', 'mirror_shield', 'novice_shield', 'arm_guard', 'sandals', 'shoes', 'boots', 'grave', 'novice_shoes', 'rosary', 'skul_ring', 'flower_ring', 'diamond_ring', 'belt', 'novice_armlet', 'wedding_veil', 'ribbon', 'bandana', 'biretta', 'hat', 'turban', 'cap', 'helm', 'gemmed_sallet', 'circlet', 'super_novice_hat', 'fedora', 'sunglasses', 'glasses', 'item_2205', 'eye_bandage', 'one_eyed_glass', 'luxury_sunglasses', 'spinning_eyes', 'goggle', 'blue_coif'],
+    items: ['flu_mask', 'granpa_beard', 'hood', 'muffler', 'manteau', 'novice_manteau', 'cotton_shirt', 'leather_jacket', 'adventure_suit', 'mantle', 'coat', 'padded_armor', 'chain_mail', 'plate_armor', 'silk_robe', 'scapulare', 'saint_robe', 'wooden_mail', 'tights', 'silver_robe', 'thief_clothes', 'wedding_dress', 'novice_breast', 'full_plate_armor', 'guard', 'buckler', 'shield', 'mirror_shield', 'novice_shield', 'sandals', 'shoes', 'boots', 'grave', 'novice_shoes', 'rosary', 'skul_ring', 'flower_ring', 'diamond_ring', 'belt', 'novice_armlet', 'wedding_veil', 'ribbon', 'bandana', 'biretta', 'hat', 'turban', 'cap', 'helm', 'gemmed_sallet', 'circlet', 'super_novice_hat', 'fedora', 'sunglasses', 'glasses', 'item_2205', 'eye_bandage', 'one_eyed_glass', 'luxury_sunglasses', 'spinning_eyes', 'goggle', 'blue_coif'],
     getItems() {
       return this.items.filter(id => {
         const item = ITEMS[id];
@@ -11832,7 +11831,7 @@ const NPC_SHOPS = {
     icon: '🐾',
     /* 原本沒怪掉、也沒人賣的捕捉道具，加上各寵物飼料、孵蛋器、BOSS 寵物料理。
        愛心、紅寶石、蜂蜜不上架。售價用各道具自己的 buyPrice。 */
-    items: ['horror_of_tribe', 'no_recipient', 'heart_of_her', 'sweet_candy_striper', 'knife_goblin_ring', 'flail_goblin_ring', 'hammer_goblin_ring', 'holy_marble', 'red_burning_stone', 'skull_of_vagabond', 'magical_lithography', 'splendid_mirror', 'fit_pipe', 'staff_of_leader', 'item_12373', 'item_12370', 'hell_contract', 'kuloren', 'oilpalm_coconut', 'luxury_whisky_bottle', 'very_red_juice', 'fan_of_wind', 'very_soft_plant', 'shiny_wing_gown', 'flaming_ice', 'tikbalang_belt', 'juicy_fruit', 'unripe_apple2', 'sap_jelly', 'elixir_bandage', 'little_dall_needle', 'apple_juice', 'yellow_herb', 'green_herb', 'carrot_juice', 'red_herb', 'pet_food', 'iron_ore', 'banana_juice', 'shoot', 'white_potion', 'scell', 'bun_', 'green_apple', 'whole_barbecue', 'meat_veg_skewer', 'spirit_liquor', 'mystic_stone', 'apple_pudding', 'damp_darkness', 'big_cell', 'vital_flower_', 'vital_flower', 'fresh_plant', 'grilled_rice_cake', 'plant_neutrient', 'sunset_on_the_rock', 'pumpkin_pie_', 'flavored_alcohol', 'fish_with_blue_back', 'traditional_cookie', 'flame_gemstone', 'item_528', 'fruit_sundae', 'suspicious_bottle', 'cheap_lubricant', 'mementos', 'wad_of_cotton', 'airship_part', 'violet_dyestuffs', 'pet_incubator', 'high_class_pet_food', 'mightysoul_essence'],
+    items: ['horror_of_tribe', 'no_recipient', 'heart_of_her', 'old_broom', 'prohibition_red_candle', 'sweet_candy_striper', 'knife_goblin_ring', 'flail_goblin_ring', 'hammer_goblin_ring', 'holy_marble', 'red_burning_stone', 'skull_of_vagabond', 'magical_lithography', 'splendid_mirror', 'fit_pipe', 'staff_of_leader', 'item_12373', 'item_12370', 'hell_contract', 'kuloren', 'oilpalm_coconut', 'luxury_whisky_bottle', 'very_red_juice', 'fan_of_wind', 'very_soft_plant', 'shiny_wing_gown', 'flaming_ice', 'tikbalang_belt', 'juicy_fruit', 'unripe_apple2', 'sap_jelly', 'elixir_bandage', 'little_dall_needle', 'apple_juice', 'yellow_herb', 'green_herb', 'carrot_juice', 'red_herb', 'pet_food', 'iron_ore', 'banana_juice', 'shoot', 'white_potion', 'scell', 'bun_', 'green_apple', 'whole_barbecue', 'meat_veg_skewer', 'spirit_liquor', 'mystic_stone', 'apple_pudding', 'damp_darkness', 'big_cell', 'vital_flower_', 'vital_flower', 'fresh_plant', 'grilled_rice_cake', 'plant_neutrient', 'sunset_on_the_rock', 'pumpkin_pie_', 'flavored_alcohol', 'fish_with_blue_back', 'traditional_cookie', 'flame_gemstone', 'item_528', 'fruit_sundae', 'suspicious_bottle', 'cheap_lubricant', 'mementos', 'wad_of_cotton', 'airship_part', 'violet_dyestuffs', 'pet_incubator', 'high_class_pet_food', 'mightysoul_essence'],
     getItems() { return this.items.filter(id => ITEMS[id]); }
   }
 };
@@ -12500,6 +12499,21 @@ function useItem(itemId) {
       saveGame();
       return true;
     }
+    /* 官方 Script getitem（例：箭矢筒）— 單次使用發放固定道具。 */
+    if (def.useGrant && def.useGrant.length) {
+      removeItem(itemId, 1);
+      const bits = [];
+      def.useGrant.forEach((g) => {
+        if (!g || !g.item || !g.qty) return;
+        if (!ITEMS[g.item]) return;
+        addItem(g.item, g.qty);
+        bits.push(`${ITEMS[g.item].name}×${g.qty}`);
+      });
+      if (!bits.length) { logMsg(`⚠️ ${def.name} 無法使用（發放目標不存在）。`); return false; }
+      logMsg(`📦 使用了 ${def.name}，獲得了 ${bits.join('、')}。`);
+      saveGame();
+      return true;
+    }
     /* 四種屬性抵抗藥水（#72）：本作原本是完全沒有效果的雜物道具。
        使用者 2026-08-10 指定綁在配藥的等級上——Lv5 火／Lv6 水／Lv7 地／Lv8 風，
        沒點到就用不了（官方這四瓶本來就是鍊金術士配出來的東西）。
@@ -12684,6 +12698,33 @@ function equipBlockReason(itemId) {
   return null;
 }
 
+/* 身上已穿但已不符合條件（職業／等級／武器分類）的裝備卸回背包。 */
+function stripIllegalEquipment(opts) {
+  if (!state || !state.equip) return [];
+  const quiet = opts && opts.quiet;
+  const removed = [];
+  EQUIP_SLOTS_ALL.forEach(slot => {
+    if (!state.equip[slot]) return;
+    const id = getEquipBaseItemId(slot);
+    if (!id || !ITEMS[id]) return;
+    if (!equipBlockReason(id)) return;
+    const name = ITEMS[id].name || id;
+    returnEquipToInventory(slot);
+    removed.push(name);
+    if (!quiet) logMsg(`⚠️ ${name} 已不符合裝備條件，自動卸下。`);
+  });
+  if (state.equip.ammo) {
+    const aid = state.equip.ammo;
+    if (equipBlockReason(aid)) {
+      const name = (ITEMS[aid] && ITEMS[aid].name) || aid;
+      state.equip.ammo = null;
+      removed.push(name);
+      if (!quiet) logMsg(`⚠️ ${name} 已不符合裝備條件，自動卸下。`);
+    }
+  }
+  return removed;
+}
+
 // 裝備前的共通檢查與讓位處理；回傳 false 表示不能裝
 function prepareEquipSlot(slot, itemId) {
   // 雙手武器：裝備時自動卸下左手欄位（盾牌或副手武器）
@@ -12714,8 +12755,7 @@ function prepareEquipSlot(slot, itemId) {
 const EQUIP_PREVIEW_FIELDS = [
   ['atk', 'ATK'], ['matk', 'MATK'], ['def', 'DEF'],
   ['maxHp', '最大HP'], ['maxSp', '最大SP'],
-  ['hit', '命中'], ['flee', '迴避'], ['critRate', '暴擊率'], ['aspd', '攻速'],
-];
+  ['hit', '命中'], ['flee', '迴避'], ['critRate', '暴擊率'], ['aspd', '攻速']];
 function previewEquipDelta(itemId, instanceId) {
   if (!state) return null;
   if (instanceId) {
@@ -13256,6 +13296,160 @@ function condMet(when, host, lo) {
   return true;
 }
 
+function gearEffectItemName(id) {
+  return (ITEMS[id] && ITEMS[id].name) || (CARDS[id] && CARDS[id].name) || id;
+}
+
+function condBonusRowLabel(itemDef, cb, ci) {
+  if (cb.setName) return cb.setName;
+  const w = cb.when;
+  if (!w) return '加成段 ' + (ci + 1);
+  const parts = [];
+  if (w.refineMin != null) parts.push('此件精煉 ≥ +' + w.refineMin);
+  if (w.refineMax != null) parts.push('此件精煉 ≤ +' + w.refineMax);
+  if (w.refineSumMin != null) {
+    const of = (w.refineSumOf || []).map(gearEffectItemName).join('＋');
+    parts.push((of ? of + ' ' : '') + '精煉合計 ≥ ' + w.refineSumMin);
+  }
+  if (w.withItems && w.withItems.length) {
+    parts.push('同時穿戴 ' + w.withItems.map(gearEffectItemName).join('、'));
+  }
+  if (w.withAnyItem && w.withAnyItem.length) {
+    const n = gearEffectItemName(w.withAnyItem[0]);
+    parts.push('搭配 ' + n + (w.withAnyItem.length > 1 ? '（任一件）' : ''));
+  }
+  if (w.withCards && w.withCards.length) {
+    parts.push('插卡 ' + w.withCards.map(gearEffectItemName).join('、'));
+  }
+  if (w.ammo) {
+    const need = Array.isArray(w.ammo) ? w.ammo : [w.ammo];
+    parts.push('箭矢 ' + need.map(gearEffectItemName).join('／'));
+  }
+  if (w.statMin) {
+    parts.push(Object.entries(w.statMin).map(([k, v]) => (STAT_NAMES && STAT_NAMES[k] || k) + '≥' + v).join('、'));
+  }
+  if (w.statMax) {
+    parts.push(Object.entries(w.statMax).map(([k, v]) => (STAT_NAMES && STAT_NAMES[k] || k) + '≤' + v).join('、'));
+  }
+  if (parts.length) return parts.join('；');
+  return condBonusDisplayName(itemDef, cb) || ('加成段 ' + (ci + 1));
+}
+
+/* 裝備說明浮層：穿在身上時逐條列出 condBonus／精煉成長／EQUIP_SETS。 */
+function getItemEffectPanelRows(itemId) {
+  const def = ITEMS[itemId];
+  if (!def) return [];
+  const lo = buildLoadout();
+  let host = null;
+  for (const slot of EQUIP_SLOTS_ALL) {
+    const d = lo.slots[slot];
+    if (d && d.itemId === itemId) {
+      host = { slot, refine: d.refine, itemId: d.itemId };
+      break;
+    }
+  }
+  if (!host) return [];
+
+  const rows = [];
+  (def.condBonus || []).forEach((cb, ci) => {
+    if (!cb || (!cb.when && !cb.bonus)) return;
+    const active = condMet(cb.when, host, lo);
+    rows.push({
+      kind: 'cond',
+      label: condBonusRowLabel(def, cb, ci),
+      detail: '',
+      active,
+      bonus: cb.bonus || {},
+    });
+  });
+
+  const r = host.refine || 0;
+  const capR = def.perRefineCap != null ? Math.min(r, def.perRefineCap) : r;
+  const perSpecs = [
+    { key: 'perRefine', label: '精煉每 +1', mult: capR },
+    { key: 'per2Refine', label: '精煉每 +2', mult: Math.floor(capR / 2) },
+    { key: 'per2RefineExtra', label: '精煉每 +2（額外）', mult: Math.floor(capR / 2) },
+    { key: 'per3Refine', label: '精煉每 +3', mult: Math.floor(capR / 3) },
+    { key: 'per4Refine', label: '精煉每 +4', mult: Math.floor(capR / 4) },
+    { key: 'per5Refine', label: '精煉每 +5', mult: Math.floor(capR / 5) },
+    { key: 'perRefineSquare', label: '精煉²（攻）', mult: capR * capR },
+    { key: 'perRefineSquareMatk', label: '精煉²（魔）', mult: capR * capR },
+    { key: 'perRefineSquareMatkHalf', label: '精煉²÷2（魔）', mult: capR * capR / 2 }];
+  perSpecs.forEach(ps => {
+    const bonus = def[ps.key];
+    if (!bonus) return;
+    const active = ps.mult > 0;
+    rows.push({
+      kind: 'refine',
+      label: ps.label,
+      detail: '目前 +' + r + (def.perRefineCap != null ? '（計算至 +' + capR + '）' : ''),
+      active,
+      bonus,
+      scale: ps.mult,
+    });
+  });
+
+  if (typeof EQUIP_SETS !== 'undefined') {
+    const hasMember = m => Array.isArray(m) ? m.some(i => lo.items.has(i)) : lo.items.has(m);
+    for (const [setId, sdef] of Object.entries(EQUIP_SETS)) {
+      const mem = sdef.items || [];
+      const isMem = mem.some(m => Array.isArray(m) ? m.includes(itemId) : m === itemId);
+      if (!isMem) continue;
+      const missing = [];
+      mem.forEach(m => {
+        if (hasMember(m)) return;
+        const id = Array.isArray(m) ? m[0] : m;
+        missing.push(gearEffectItemName(id));
+      });
+      const active = mem.every(hasMember) && (!sdef.when || condMet(sdef.when, null, lo));
+      rows.push({
+        kind: 'set',
+        label: sdef.name || setId,
+        detail: missing.length ? '尚缺 ' + missing.join('、') : '全套已齊',
+        active,
+        bonus: sdef.bonus || {},
+      });
+    }
+  }
+  return rows;
+}
+
+function condBonusDisplayName(itemDef, cb) {
+  if (cb.setName) return cb.setName;
+  const w = cb.when;
+  if (!w) return null;
+  const partners = []
+    .concat(w.withItems || [], w.withAnyItem || [], w.withCards || [])
+    .map(id => (ITEMS[id] && ITEMS[id].name) || (CARDS[id] && CARDS[id].name) || null)
+    .filter(Boolean);
+  if (partners.length) {
+    const p = partners.slice(0, 2).join('＋') + (partners.length > 2 ? ' 等' : '');
+    return (itemDef.name || itemDef.id) + '＋' + p;
+  }
+  if (w.refineSumMin != null) {
+    return (itemDef.name || itemDef.id) + ' 精煉合計≥' + w.refineSumMin;
+  }
+  if (w.refineMin != null) {
+    return (itemDef.name || itemDef.id) + ' 精煉≥+' + w.refineMin;
+  }
+  return null;
+}
+
+function condBonusTracksActiveSet(cb) {
+  if (cb.setName) return true;
+  const w = cb.when;
+  if (!w) return false;
+  if ((w.withItems && w.withItems.length) || (w.withAnyItem && w.withAnyItem.length)
+    || (w.withCards && w.withCards.length)) return true;
+  if (w.refineMin != null || w.refineSumMin != null) return true;
+  return false;
+}
+
+/** @deprecated 請用 getItemEffectPanelRows */
+function getEquipCondBonusStatus(itemId) {
+  return getItemEffectPanelRows(itemId).filter(r => r.kind === 'cond');
+}
+
 function mergeBonus(target, bonus, scale) {
   if (!bonus) return;
   for (const [k, v] of Object.entries(bonus)) target[k] = (target[k] || 0) + v * (scale == null ? 1 : scale);
@@ -13310,7 +13504,7 @@ function effectiveGearBonuses() {
     /* 平鋪的特殊鍵（perBaseLv10_atk 等）也要進總表——getCardBonus() 會按前綴解析。
        只挑底線開頭的鍵，避免把 atk/def 那些平鋪數值重複算一次。 */
     for (const [k, v] of Object.entries(def)) {
-      if (/^per(BaseLv1|BaseLv10|BaseLv15|BaseLv210|JobLv10|Stat|Skill)_/.test(k) && typeof v === 'number') total[k] = (total[k] || 0) + v;
+      if (/^per(BaseLv1|BaseLv10Cap150|BaseLv10|BaseLv15|BaseLv210|JobLv10|Stat|Skill)_/.test(k) && typeof v === 'number') total[k] = (total[k] || 0) + v;
       if (k.startsWith('spCost_') && typeof v === 'number') total[k] = (total[k] || 0) + v;
     }
     if (def.perRefine) {
@@ -13358,7 +13552,10 @@ function effectiveGearBonuses() {
       const r = def.perRefineCap != null ? Math.min(d.refine, def.perRefineCap) : d.refine;
       mergeBonus(total, def.perRefineSquareMatkHalf, r * r / 2);
     }
-    (def.condBonus || []).forEach(cb => { if (condMet(cb.when, host, lo)) mergeBonus(total, cb.bonus); });
+    (def.condBonus || []).forEach(cb => {
+      if (!condMet(cb.when, host, lo)) return;
+      mergeBonus(total, cb.bonus);
+    });
   });
   lo.cards.forEach(cardId => {
     const card = CARDS[cardId];
@@ -13793,10 +13990,18 @@ const BASE_STAT_KEYS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
 function getCardBonus(stat) {
   const all = effectiveGearBonuses();
   let total = all[stat] || 0;
+  /* perBaseLv10Cap150_<目標>：min(BaseLv,150) 每 10 級 +N（強化金屬系列）。 */
+  for (const k in all) {
+    if (!k.startsWith('perBaseLv10Cap150_')) continue;
+    const target = k.slice('perBaseLv10Cap150_'.length);
+    if (target !== stat) continue;
+    total += Math.floor(Math.min(state.baseLevel || 0, 150) / 10) * all[k];
+  }
   /* perBaseLv10_<目標>（緋紅色系列）：官方「角色等級 70 以上，BaseLv 每上升 10 時 ATK+5」。
      看的是**基礎等級**，70 級起算——不足 70 不生效。 */
   for (const k in all) {
     if (!k.startsWith('perBaseLv10_')) continue;
+    if (k.startsWith('perBaseLv10Cap150_')) continue;
     const target = k.slice('perBaseLv10_'.length);
     if (target !== stat) continue;
     if ((state.baseLevel || 0) < 70) continue;
@@ -14570,6 +14775,10 @@ function loadGame() {
     repairSkillPointDeficit();
     // 補回被舊版重置刪掉的任務技能（轉職自帶 1 級，讀檔不會自己補）
     repairQuestSkills();
+    const strippedOnLoad = stripIllegalEquipment({ quiet: true });
+    if (strippedOnLoad.length) {
+      logMsg(`🎒 讀檔時卸下了 ${strippedOnLoad.length} 件已不符合條件的裝備：${strippedOnLoad.join('、')}。`);
+    }
     recomputeDerived(false);
     claimMercLedger();
     syncPartyOnLoad();
@@ -15304,8 +15513,7 @@ function importSaveToSlot(slot, obj) {
     ['stats', v => v && typeof v === 'object' && !Array.isArray(v)],
     ['inventory', v => Array.isArray(v)],
     ['baseLevel', v => typeof v === 'number'],
-    ['jobLevel', v => typeof v === 'number'],
-  ];
+    ['jobLevel', v => typeof v === 'number']];
   const missing = REQUIRED.filter(([k, ok]) => !ok(obj[k])).map(([k]) => k);
   if (missing.length) {
     return { ok: false, msg: `存檔結構不完整（缺少或格式錯誤：${missing.join('、')}）。` };

@@ -177,5 +177,9 @@ frames_png/
 # 打包產物
 dist/
 
+# 資料維護腳本產物（應寫入 tools/reports/，勿 commit 到 docs）
+docs/*.csv
+docs/*.json
+
 # 從 GRF 抽出的客戶端圖與對照表，只供紙娃娃試驗，不進版控
 grf_ex/
