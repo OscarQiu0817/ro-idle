@@ -9606,18 +9606,12 @@ function repairQuestSkills() {
 // Keep old function name as alias for compatibility
 function learnSkill(skillId) { return levelUpSkill(skillId); }
 
-/* 技能冷卻的卡片修正（#17／#55）。
+/* Skill Cooldown（技能冷卻）卡片修正 — 與 FCT/VCT（skill_cast.js）、After Cast Delay（globalDelayPct，Phase 2）分軌。
 
-   本作技能瞬發，官方那一大批「變動施法時間 ±N%」在這裡沒有對應的維度。
-   使用者決定**魔改成冷卻秒數增減**——兩者管的是同一件事（多久能放一次），
-   而且是本作唯一擋得住施放頻率的東西。
+     skillDelayFlat / skillDelayFlat_<id>   新欄：對應 RO Skill Delay（SD），±秒加在 cooldown[] 上
+     skillCdFlat / skillCdFlat_<id>         舊欄：同上用途，保留相容；同一筆效果不可同時寫新舊兩欄
 
-     skillCdFlat              全技能 ±N 秒（劍魚 +1、迷幻之王 −1…）
-     skillCdFlat_<技能id>     指名單一技能 ±N 秒（小雪怪的冰箭術、熔岩魔的火箭術）
-
-   刻意用**秒數**不用百分比：官方那批寫的是百分比沒錯，但本作的冷卻從 1 秒到
-   數十秒都有，一律打 25% 會讓長冷卻技能爽賺、短冷卻技能幾乎沒感覺。
-   固定秒數對短冷卻技能的相對收益反而更大，跟「施法時間」的手感比較接近。
+   變動／固定詠唱走 vctPct、fctFlatSec 等，由 getSkillCastTime 計算，不經此函式。
 
    **下限 0.5 秒**：冷卻減到 0 等於無限連發，任何一張減冷卻的卡都會變成必帶。 */
 const MIN_COOLDOWN_MS = 500;

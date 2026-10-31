@@ -1,19 +1,25 @@
 /* AUTO: node tools/build_skill_cast_data.js — Renewal FCT/VCT（勿手改） */
 const SKILL_CAST_META = {
-  "generatedAt": "2026-10-31T09:34:39.804Z",
+  "generatedAt": "2026-10-31T09:58:52.370Z",
+  "phase": "1.1",
   "roSkillEntries": 1305,
-  "gameSkills": 328,
-  "mapped": 323,
-  "mappedPct": 98.5,
-  "withCastData": 140,
-  "unmappedCount": 5,
-  "unmappedSample": [
+  "gameSkills": 327,
+  "roMapped": 322,
+  "roMappedPct": 98.5,
+  "authorCustomCount": 5,
+  "authorCustomIds": [
     "novice_firstaid",
     "novice_basicskill",
     "novice_hpboost",
     "novice_flee",
     "swordcraft"
-  ]
+  ],
+  "unmappedFailCount": 0,
+  "withCastData": 140,
+  "skillCastEntries": 140,
+  "interruptDamage": 139,
+  "interruptNone": 1,
+  "passiveWithRoMapping": 181
 };
 const SKILL_CAST = {
   "energycoat": {

@@ -45,10 +45,37 @@ function readCastModifiersFromActor(actor, skillId) {
   };
 }
 
+/** 詠唱 VCT 素質縮減用 DEX/INT（≥0）。 */
 function actorDexInt(actor) {
   const dex = actor && (actor.dex != null ? actor.dex : actor.DEX);
   const int = actor && (actor.int != null ? actor.int : actor.INT);
   return { dex: Math.max(0, dex || 0), int: Math.max(0, int || 0) };
+}
+
+/** 與 recomputeDerived 一致的最終 DEX/INT（基礎＋職業＋裝備／卡／被動／BUFF 等）。 */
+function readEffectiveDexIntFromState(state) {
+  if (!state) return { dex: 0, int: 0 };
+  const bd = state._statBreakdown;
+  if (bd && bd.dex && bd.int) {
+    return actorDexInt({ dex: bd.dex.total, int: bd.int.total });
+  }
+  const dex = state._totalDex != null ? state._totalDex : (state.stats && state.stats.dex);
+  const int = state.stats && state.stats.int;
+  return actorDexInt({ dex, int });
+}
+
+function isPlayerState(actor) {
+  return !!(actor && actor.stats && typeof actor.baseLevel === 'number');
+}
+
+function resolveDexIntForCast(actor) {
+  if (isPlayerState(actor)) return readEffectiveDexIntFromState(actor);
+  return actorDexInt(actor);
+}
+
+/** @deprecated 改用 readEffectiveDexIntFromState */
+function readBaseDexIntFromState(state) {
+  return readEffectiveDexIntFromState(state);
 }
 
 /** Renewal：VCT × (1 − sqrt((DEX×2+INT)/530))，stat≥530 → 0 */
@@ -84,20 +111,21 @@ function baseCastSecAtLv(skill, skillLv, skillId) {
   const lv = Math.max(1, skillLv | 0);
   const pack = (typeof SKILL_CAST !== 'undefined' && id && SKILL_CAST[id])
     || (skill && skill.cast);
-  if (!pack) return { fixedSec: 0, variableSec: 0, interrupt: 'instant' };
+  if (!pack) return { fixedSec: 0, variableSec: 0, interrupt: 'none' };
   const i = Math.min(lv, (pack.fixed || pack.variable || []).length) - 1;
   const idx = i < 0 ? 0 : i;
   const fixedSec = (pack.fixed && pack.fixed[idx]) || 0;
   const variableSec = (pack.variable && pack.variable[idx]) || 0;
+  const intr = pack.interrupt;
   return {
     fixedSec,
     variableSec,
-    interrupt: pack.interrupt || 'unknown',
+    interrupt: intr === 'damage' ? 'damage' : 'none',
   };
 }
 
 /**
- * @param {object} actor — 至少 dex/int；可帶 getCastModifiers(skillId)
+ * @param {object} actor — 遊戲 state，或含 dex/int 的物件；可帶 getCastModifiers(skillId)
  * @param {object} skill — SKILLS 條目
  * @param {number} skillLv — 1-based
  */
@@ -107,7 +135,7 @@ function getSkillCastTime(actor, skill, skillLv) {
   let fixedCastMs = Math.round(base.fixedSec * 1000);
   let variableCastMs = Math.round(base.variableSec * 1000);
 
-  const { dex, int } = actorDexInt(actor);
+  const { dex, int } = resolveDexIntForCast(actor);
   variableCastMs = applyRenewalStatToVctMs(variableCastMs, dex, int);
 
   const mod = readCastModifiersFromActor(actor, skillId);
@@ -131,6 +159,10 @@ if (typeof module !== 'undefined' && module.exports) {
     applyRenewalStatToVctMs,
     applyVctPctModifiers,
     applyFctModifiers,
+    actorDexInt,
+    readEffectiveDexIntFromState,
+    readBaseDexIntFromState,
+    resolveDexIntForCast,
     baseCastSecAtLv,
     getSkillCastTime,
   };
