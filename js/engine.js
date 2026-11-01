@@ -325,7 +325,7 @@ function createCharacter(name, statAlloc, gender) {
     converterElement: null,// 肯貝特武器附魔選的屬性
     elementChangePick: null,// 元素更換選的屬性
     autoSkill: true,
-    autoSkillConfig: { skillId: null, mode: 'once', spThreshold: 30, skillId2: null, spThreshold2: 50, monsterCount2: 2 }, // skillId2=第二招, spThreshold2=SP%門檻, monsterCount2=怪物數門檻
+    autoSkillConfig: null, // 3d：4 招優先序，見 defaultAutoSkillConfig()（建角／讀檔時補上）
     autoPotion: { enabled: true, primary: '', fallback: 'red_potion', hpThreshold: 50 },
     autoSpPotion: { enabled: false, primary: '', fallback: 'blue_potion', spThreshold: 30 },
     autoAspdPotion: { enabled: false, items: [] },
@@ -6391,8 +6391,8 @@ function playerEngageRange() {
   let r = playerAttackRange();
   const cfg = state.autoSkillConfig;
   if (!state.autoSkill || !cfg) return r;
-  for (const id of [cfg.skillId, cfg.skillId2]) {
-    const sk = id && findSkillForUse(id);
+  for (const sl of autoSkillSlots(cfg)) {
+    const sk = sl && sl.skillId && findSkillForUse(sl.skillId);
     const lv = sk && skillLv(sk.id);
     if (!lv || !skillNeedsMonster(sk) || state.sp < skillSpCost(sk, lv)) continue;
     r = Math.max(r, skillRangeCells(sk, lv));
@@ -11405,60 +11405,55 @@ function isAttackSkill(sk) { return !!sk && SKILL_ATTACK_TYPES.includes(sk.type)
 function isAutoSupportSkill(sk) { return !!sk && sk.type !== 'passive' && !isAttackSkill(sk); }
 function skillNeedsMonster(sk) { return !!sk && SKILL_NEEDS_MONSTER_TYPES.includes(sk.type); }
 
-function tryAutoCastSkill() {
-  if (!state.autoSkillConfig) state.autoSkillConfig = { skillId: null, mode: 'once', spThreshold: 30, skillId2: null, spThreshold2: 50, monsterCount2: 2 };
+/* 自動戰鬥攻擊技能欄（3d，docs/GAMEPLAY_DIRECTION.md D3）：4 招優先序。
+   每格 { skillId, spThreshold（SP 保留 %）, minMobs（場上至少幾隻才放） }，
+   由第 1 格往後檢查，第一個條件成立的就放。常駐增益另外走 tryAutoCastSupportSkills，不占欄位。
+   舊格式（skillId / skillId2 兩招，隊友設定仍是這種）在這裡轉成同一種格子。 */
+const AUTO_SKILL_SLOTS = 4;
+function emptyAutoSkillSlot() { return { skillId: null, spThreshold: 30, minMobs: 1 }; }
+function autoSkillSlots(cfg) {
+  if (!cfg) return [];
+  if (Array.isArray(cfg.slots)) return cfg.slots;
+  return [
+    { skillId: cfg.skillId || null, spThreshold: cfg.spThreshold != null ? cfg.spThreshold : 30, minMobs: 1 },
+    { skillId: cfg.skillId2 || null, spThreshold: cfg.spThreshold2 != null ? cfg.spThreshold2 : 50, minMobs: cfg.monsterCount2 || 2 },
+  ];
+}
+function defaultAutoSkillConfig() {
+  return { slots: Array.from({ length: AUTO_SKILL_SLOTS }, emptyAutoSkillSlot), smartCast: true };
+}
+/* 舊存檔：兩招設定轉成 4 格（只在沒有 slots 時轉一次） */
+function migrateAutoSkillConfig(cfg) {
+  if (!cfg) return defaultAutoSkillConfig();
+  if (!Array.isArray(cfg.slots)) {
+    const slots = autoSkillSlots(cfg).slice(0, AUTO_SKILL_SLOTS);
+    while (slots.length < AUTO_SKILL_SLOTS) slots.push(emptyAutoSkillSlot());
+    cfg.slots = slots;
+  }
+  if (cfg.smartCast == null) cfg.smartCast = true;
+  return cfg;
+}
 
-  const config = state.autoSkillConfig;
+function tryAutoCastSkill() {
+  if (!state.autoSkillConfig) state.autoSkillConfig = defaultAutoSkillConfig();
+  const slots = autoSkillSlots(state.autoSkillConfig).filter(sl => sl && sl.skillId);
+  /* 沒設定就什麼都不放（使用者 2026-08-15 指定：選「不使用技能」就真的不要放，不自動撈技能） */
+  if (!slots.length) return;
+  if (state.casting || Date.now() < (state.acdUntil || 0)) return;
   const spPct = (state.sp / state.maxSp) * 100;
   const monsterCount = state.monsters ? state.monsters.length : 0;
-
-  /* 兩招都沒設定就什麼都不放（使用者 2026-08-15 指定）。
-
-     這裡本來有一條「沒設定就自動撈第一個能放的技能」的回退。#100 把它限制成只撈
-     攻擊技能，但使用者要的是**下拉選單選「不使用技能」就真的不要放**——
-     商人一路上場的金錢攻擊與手推車攻擊都是這條回退自己跑出來的。
-     技能一律以自動戰鬥頁面的設定為準，回退整條移除。 */
-  if (!config.skillId && !config.skillId2) return;
-  if (state.casting || Date.now() < (state.acdUntil || 0)) return;
   let smartSkipped = null;   // 智能施法跳過的第一招（被貼身又沒別招可放時的退路）
-  const castable = (sk, lv) => {
-    if (skillNeedsMonster(sk) && !autoSkillInRange(sk, lv)) return false;
-    if (smartCastBlocks(sk, lv)) { if (!smartSkipped) smartSkipped = sk; return false; }
-    return true;
-  };
-
-  // 第一招：SP 達到門檻 + 有怪物就施放
-  if (config.skillId) {
-    const sk = findSkillForUse(config.skillId);
-    if (sk) {
-      const lv = skillLv(sk.id);
-      if (lv && skillReady(sk.id) && weaponReqMet(sk.requiresWeapon) && equipReqMet(sk.requiresEquip)) {
-        const spCost = skillSpCost(sk, lv);
-        const isAttack = skillNeedsMonster(sk);
-        if (state.sp >= spCost && spPct >= config.spThreshold && !wastesResourceInTown(sk, lv)) {
-          if ((!isAttack || monsterCount > 0) && castable(sk, lv)) {
-            castSkill(sk.id);
-            return;
-          }
-        }
-      }
-    }
-  }
-
-  // 第二招：SP 達到門檻 + 怪物數量達到門檻才施放
-  if (config.skillId2) {
-    const sk2 = findSkillForUse(config.skillId2);
-    if (sk2) {
-      const lv2 = skillLv(sk2.id);
-      if (lv2 && skillReady(sk2.id) && weaponReqMet(sk2.requiresWeapon) && equipReqMet(sk2.requiresEquip)) {
-        const spCost2 = skillSpCost(sk2, lv2);
-        if (state.sp >= spCost2 && spPct >= config.spThreshold2 && monsterCount >= config.monsterCount2 && !wastesResourceInTown(sk2, lv2)
-            && castable(sk2, lv2)) {
-          castSkill(sk2.id);
-          return;
-        }
-      }
-    }
+  for (const sl of slots) {
+    const sk = findSkillForUse(sl.skillId);
+    const lv = sk && skillLv(sk.id);
+    if (!lv || !skillReady(sk.id) || !weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) continue;
+    if (state.sp < skillSpCost(sk, lv) || spPct < (sl.spThreshold || 0) || wastesResourceInTown(sk, lv)) continue;
+    const isAttack = skillNeedsMonster(sk);
+    if (isAttack && monsterCount < Math.max(1, sl.minMobs || 1)) continue;
+    if (isAttack && !autoSkillInRange(sk, lv)) continue;
+    if (smartCastBlocks(sk, lv)) { if (!smartSkipped) smartSkipped = sk; continue; }
+    castSkill(sk.id);
+    return;
   }
   // 退路：已經有會打斷的怪貼身、又沒有別招可放，照放被跳過的那招（不然只能站著挨打）
   if (smartSkipped && playerCornered()) castSkill(smartSkipped.id);
@@ -14558,10 +14553,7 @@ function loadGame() {
     if (typeof state.deaths !== 'number') state.deaths = 0;
     if (!state.achievements) state.achievements = { done: {}, points: 0 };
     if (!state.lockedItems) state.lockedItems = {};
-    if (!state.autoSkillConfig) state.autoSkillConfig = { skillId: null, mode: 'once', spThreshold: 30, skillId2: null, spThreshold2: 50, monsterCount2: 2 };
-    if (!state.autoSkillConfig.skillId2) state.autoSkillConfig.skillId2 = null;
-    if (!state.autoSkillConfig.spThreshold2) state.autoSkillConfig.spThreshold2 = 50;
-    if (!state.autoSkillConfig.monsterCount2) state.autoSkillConfig.monsterCount2 = 2;
+    state.autoSkillConfig = migrateAutoSkillConfig(state.autoSkillConfig);
     if (!state.autoSupportSkills) state.autoSupportSkills = {};
     if (!state.autoHealConfig) state.autoHealConfig = {};
     // 多怪物系統遷移

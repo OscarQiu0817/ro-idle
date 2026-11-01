@@ -2555,7 +2555,7 @@ function playerKeepsDistance() {
     const cat = typeof aspdCategoryOf === 'function' ? aspdCategoryOf(wid) : '';
     if (cat === 'rod1' || cat === 'rod2' || cat === 'book' || cat === 'pistol' || cat === 'rifle' || cat === 'shotgun' || cat === 'gatling' || cat === 'grenade') return true;
     const cfg = state.autoSkillConfig || {};
-    return [cfg.skillId, cfg.skillId2].some(id => {
+    return autoSkillSlots(cfg).map(sl => sl && sl.skillId).some(id => {
       const sk = id && typeof SKILLS !== 'undefined' && SKILLS[id];
       return sk && (sk.type === 'magic' || sk.type === 'magic_aoe');
     });
@@ -3723,7 +3723,8 @@ function renderAutoBattleTab() {
   if (!el) return;
 
   const job = currentJob();
-  const config = state.autoSkillConfig || { skillId: null, mode: 'once', spThreshold: 30 };
+  state.autoSkillConfig = migrateAutoSkillConfig(state.autoSkillConfig);
+  const config = state.autoSkillConfig;
 
   /* 收集現在能用的主動技能。走 usableSkillEntries()，所以卡片賦予的技能
      也設得成自動施放（來源標成「卡片」）。
@@ -3799,12 +3800,35 @@ function renderAutoBattleTab() {
     : '';
 
   // 攻擊技能下拉選項
-  const attackOptions = attackSkills.map(sk =>
-    `<option value="${sk.id}" ${config.skillId === sk.id ? 'selected' : ''}>[${sk.jobName}] ${sk.name} Lv${sk.lv}</option>`
-  ).join('');
-  const attackOptions2 = attackSkills.map(sk =>
-    `<option value="${sk.id}" ${config.skillId2 === sk.id ? 'selected' : ''}>[${sk.jobName}] ${sk.name} Lv${sk.lv}</option>`
-  ).join('');
+  /* 4 招優先序（3d）：第 1 格往後檢查，第一個條件成立的就放 */
+  const slotHtml = config.slots.map((sl, i) => {
+    const opts = attackSkills.map(sk =>
+      `<option value="${sk.id}" ${sl.skillId === sk.id ? 'selected' : ''}>[${sk.jobName}] ${sk.name} Lv${sk.lv}</option>`).join('');
+    return `
+        <div class="ab-skill-slot">
+          <div class="ab-skill-slot-label">第 ${i + 1} 招</div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">選擇技能</label>
+            <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'skillId', this.value || null)">
+              <option value="">不使用技能</option>
+              ${opts}
+            </select>
+          </div>
+          ${sl.skillId ? `
+          <div class="ab-config-row">
+            <label class="ab-config-label">SP 保留 %</label>
+            <input type="range" class="ab-slider" min="0" max="90" value="${sl.spThreshold || 0}"
+              oninput="setAutoSkillSlot(${i}, 'spThreshold', parseInt(this.value), true);document.getElementById('sp-threshold-val-${i}').textContent=this.value+'%'">
+            <span id="sp-threshold-val-${i}" class="ab-slider-val">${sl.spThreshold || 0}%</span>
+          </div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">怪物數量門檻</label>
+            <input type="range" class="ab-slider" min="1" max="5" value="${sl.minMobs || 1}"
+              oninput="setAutoSkillSlot(${i}, 'minMobs', parseInt(this.value), true);document.getElementById('min-mobs-val-${i}').textContent=this.value+'隻'">
+            <span id="min-mobs-val-${i}" class="ab-slider-val">${sl.minMobs || 1}隻</span>
+          </div>` : ''}
+        </div>`;
+  }).join('');
 
   // 輔助技能勾選
   const supportRows = supportSkills.map(sk => {
@@ -3879,55 +3903,14 @@ function renderAutoBattleTab() {
     <div class="ab-section">
       <h4 class="ab-section-title">🗡️ 攻擊技能</h4>
       <label class="auto-toggle"><input type="checkbox" ${state.autoSkill ? 'checked' : ''} onchange="state.autoSkill=this.checked;saveGame();"> 自動施放技能</label>
-      <div class="ab-attack-config">
-        <!-- 第一招 -->
-        <div class="ab-skill-slot">
-          <div class="ab-skill-slot-label">第一招</div>
-          <div class="ab-config-row">
-            <label class="ab-config-label">選擇技能</label>
-            <select class="ab-select" onchange="setAutoSkillConfig('skillId', this.value)">
-              <option value="">不使用技能</option>
-              ${attackOptions}
-            </select>
-          </div>
-          ${config.skillId ? `
-          <div class="ab-config-row">
-            <label class="ab-config-label">SP 保留 %</label>
-            <input type="range" class="ab-slider" min="5" max="90" value="${config.spThreshold}"
-              oninput="setAutoSkillConfig('spThreshold', parseInt(this.value));document.getElementById('sp-threshold-val').textContent=this.value+'%'">
-            <span id="sp-threshold-val" class="ab-slider-val">${config.spThreshold}%</span>
-          </div>
-          ` : ''}
-        </div>
-        <div class="ab-config-row">
-          <label class="ab-config-label" title="預估詠唱完成前會被怪打到（會被打斷）就先不放；已被貼身又沒別招時照放">
-            <input type="checkbox" ${config.smartCast !== false ? 'checked' : ''} onchange="setAutoSkillConfig('smartCast', this.checked)">
-            智能施法：預估會被打斷就先不放
-          </label>
-        </div>
-        <!-- 第二招 -->
-        <div class="ab-skill-slot">
-          <div class="ab-skill-slot-label">第二招（範圍技推薦）</div>
-          <div class="ab-config-row">
-            <label class="ab-config-label">選擇技能</label>
-            <select class="ab-select" onchange="setAutoSkillConfig('skillId2', this.value)">
-              <option value="">不使用技能</option>
-              ${attackOptions2}
-            </select>
-          </div>
-          <div class="ab-config-row">
-            <label class="ab-config-label">SP 保留 %</label>
-            <input type="range" class="ab-slider" min="5" max="90" value="${config.spThreshold2}"
-              oninput="setAutoSkillConfig('spThreshold2', parseInt(this.value));document.getElementById('sp-threshold2-val').textContent=this.value+'%'">
-            <span id="sp-threshold2-val" class="ab-slider-val">${config.spThreshold2}%</span>
-          </div>
-          <div class="ab-config-row">
-            <label class="ab-config-label">怪物數量門檻</label>
-            <input type="range" class="ab-slider" min="1" max="5" value="${config.monsterCount2}"
-              oninput="setAutoSkillConfig('monsterCount2', parseInt(this.value));document.getElementById('monster-count2-val').textContent=this.value+'隻'">
-            <span id="monster-count2-val" class="ab-slider-val">${config.monsterCount2}隻</span>
-          </div>
-        </div>
+      <div class="ab-info-text">由第 1 招往後檢查，第一個條件成立的就施放；常駐增益在下方「輔助技能」設定，不占欄位。</div>
+      <div class="ab-config-row">
+        <label class="ab-config-label" title="預估詠唱完成前會被怪打到（會被打斷）就先不放；已被貼身又沒別招時照放">
+          <input type="checkbox" ${config.smartCast !== false ? 'checked' : ''} onchange="setAutoSkillConfig('smartCast', this.checked)">
+          智能施法：預估會被打斷就先不放
+        </label>
+      </div>
+      <div class="ab-attack-config">${slotHtml}
       </div>
     </div>
 
@@ -4038,6 +4021,15 @@ function renderAutoBattleTab() {
 }
 
 // 自動戰鬥配置設定
+/* quiet：拖拉滑桿時只存值、不重繪（重繪會讓滑桿失去焦點） */
+function setAutoSkillSlot(i, key, value, quiet) {
+  state.autoSkillConfig = migrateAutoSkillConfig(state.autoSkillConfig);
+  const sl = state.autoSkillConfig.slots[i];
+  if (!sl) return;
+  sl[key] = value;
+  saveGame();
+  if (!quiet) renderAutoBattleTab();
+}
 function setAutoSkillConfig(key, value) {
   if (!state.autoSkillConfig) state.autoSkillConfig = { skillId: null, mode: 'once', spThreshold: 30 };
   state.autoSkillConfig[key] = value;
