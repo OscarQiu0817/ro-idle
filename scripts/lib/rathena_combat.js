@@ -53,6 +53,8 @@ function pickMobMove(m) {
     aggressive: AGGRESSIVE_AI.has(ai),
     immobile: IMMOBILE_AI.has(ai),
     eleLv: m.ElementLevel || 1,   // 屬性等級（怪物資訊顯示用；抗性已在 MONSTERS.elementResistance）
+    baseExp: m.BaseExp || 0,       // 官方經驗（T4），engine 載入時覆寫 MONSTERS.exp／jobExp
+    jobExp: m.JobExp || 0,
   };
 }
 

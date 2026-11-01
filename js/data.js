@@ -27309,129 +27309,49 @@ const AUTO_BUY_QTY = 100;
 
 
 
-/* ---------------- 經驗值曲線 ---------------- */
+/* ---------------- 經驗值曲線（T4：官方表）----------------
+   需求照 rAthena db/re/job_exp.yml（js/exp_tables.js）。原作者照放置節奏自訂的公式已撤掉，
+   放置遊戲等於不間斷打怪，體感由打怪速度決定。
 
-
-/* 兩條曲線都是**照實測產出反推**的，不是憑感覺調的係數。
-   量法：把 gameTick() 接上假時鐘真的跑（tools/measure_exp_curve.js），
-   角色是騎士線、技能點滿、穿當級買得到的最好裝、自動挑等級相稱的地圖，
-   每 5 級實跑 8 分鐘。量到的產出是 Lv1 約 32 exp/秒、Lv50 約 160、Lv99 約 475。
-
-   目標節奏（使用者 2026-08-15 指定）：
-     基礎 1→50 一小時、50→80 兩小時、80→99 三小時
-     職業 一轉    1→40 30分、40→50 30分
-          二轉以上 1→40 50分、40→50 60分、50→70 120分
-   舊曲線（20*L^1.55+15）跑完 1→99 只要 1.6 小時，而且時間平均分布在三段，
-   跟上面的節奏差很遠。 */
-
-/* 基礎經驗。50 級是分水嶺：前段只比舊曲線陡一點（×1.8），
-   要的三小時全押在 50 級之後，所以後段的冪次從 1.39 跳到 4.12。 */
-/* ---------------- 基礎經驗曲線 ----------------
-
-   1~99 是原本那兩段（1~50 一小時、50~80 兩小時、80~99 三小時，見 #80）。
-
-   100~200 是進階二轉的延伸段（#110）。**不是把 99 那條公式外推**——
-   外推出來 Lv99→200 只有 1.68 億，照每日預算算不到五天就走完了。
-
-   **2026-08-21 重配（#127）**：使用者回報「玩一天就衝到 170」。實測屬實——
-   舊曲線照官方形狀，重量全押在最後十級（190→200 佔 67.5%），結果是
-   100→170 只要 2.4 天，剩下 30 級佔掉三個月。100 級裡有 70 級是白送的。
-
-   會變成這樣，是因為舊的校準只對「總量」不對「節奏」：每日預算用估的
-   （「2 小時主動 + 22 小時離線」＝ 3,785 萬／天），但**離線結算走的是
-   實戰外推、沒有折扣**（見 applyOfflineProgress），實際等於全天候滿速，
-   一天就是 8,000 萬以上。總量因此少了 2.3 倍，形狀又過度後傾。
-
-   這次改成量出來再配。實測（領主騎士、打寶一般檔、商店裝無卡無精煉、
-   真的跑 gameTick）：Lv100 附近 707 exp/秒，Lv140 之後穩定在 950~1,020。
-
-   新的形狀是「接軌段 + 平緩爬升」：
-     · 100→110 用 1.35 的陡比率當**接軌段**，把每級需求從 148 萬拉到 2,976 萬。
-       起點只有 Lv99（246,900）的 6 倍，而玩家正好在這裡開打寶模式拿 ×5 經驗
-       ——成本 ×6、收入 ×5，接起來幾乎無感，不會有斷層。
-/* ---------------- 經驗曲線（基礎等級）----------------
-   等級上限 250。延伸原本 100→200 的分段等比設計，保持相似節奏。
-   1~49：前期較緩
-   50~99：中段加速
-   100~250：分段等比，延長原本 100→200 的設計哲學
-*/
-const BASE_EXP_L100 = 1550000;
-const BASE_EXP_SEGS = [
-  [110, 1.36],
-  [130, 1.005],
-  [150, 1.01],
-  [180, 1.02],
-  [200, 1.095],
-  [250, 2.0],
-];
-function expToNextBaseLevel(level) {
-  if (level < 50) return Math.floor(65 * Math.pow(level, 1.39));
-  if (level < 100) return Math.floor(14800 * Math.pow(level / 50, 4.12));
-  let need = BASE_EXP_L100;
-  let cur = 100;
-  for (const [to, r] of BASE_EXP_SEGS) {
-    while (cur < to && cur < level) { need *= r; cur++; }
-    if (cur >= level) break;
-  }
-  return Math.floor(need);
-}
-
-/* 職業經驗。**要看職業階層**，不能只看職業等級——
-   同樣是 job 30，一轉的劍士跟進階二轉的領主騎士，產出差了六倍以上
-   （劍士期在 base 10~50 打，進階二轉期在 base 70~95 打），
-   同一條曲線套下去的話一轉會太慢、進階二轉會太快。
-
-   段界（job 40）的台階是刻意的：使用者指定「1~40 三十分、40~50 也三十分」，
-   十級要跟三十九級花一樣久，需求本來就得跳一階。
-
-   新手（tier 0，上限 10 級）維持原本的公式不動。
-   超級初心者是 tier 1 但上限 99，50 級以後沿用最後一段的係數。 */
-const JOB_EXP_COEF = {
-  1: [[40, 41], [50, 114]],              // 一轉
-  2: [[40, 268], [50, 495], [70, 515]],  // 二轉／進階二轉共用（實測兩者產出只差一成）
+   EXP_REQ_SCALE：想把某一段變快／變慢時用的開關。[起始等級, 結束等級, 倍率]，
+   等級落在區間內（含頭尾）時，升級所需經驗 × 倍率。例：[[1, 50, 0.5]] 表示 1~50 級只要官方一半。
+   job 那組可加第 4 欄限定職業階層（0 新手、1 一轉、2 二轉、2.5 進階二轉、3 三轉）。 */
+const EXP_REQ_SCALE = {
+  base: [],
+  job: [],
 };
-const JOB_EXP_POW = 1.35;
-
-/* ---- 三轉的職業經驗（#122）----
-
-   三轉沿用二轉那條 `coef × level^1.35` 的話，job 1→70 總共只要 404 萬，
-   而基礎 99→200 要 34.07 億——**職業等級佔基礎的 0.12%**，
-   等於一進三轉就在第一個小時內把 job 點滿，剩下三個月完全沒有職業成長。
-
-   所以三轉自己一條，形狀**照抄基礎 100→200 那條**（見 expToNextBaseLevel）：
-   一樣是分段的等比成長，段落的級數佔比也一樣。差別只在要把 100 級的曲線
-   壓進 69 級，所以每段的比率提高到 ^(100/69)，段界也照同一個比例縮：
-
-     基礎 100→110→130→150→180→200（10/20/20/30/20 級）
-     三轉 job 1→8→22→36→56→70    （ 7/14/14/20/14 級）
-     1.36 → 1.561474、1.005 → 1.007255、1.01 → 1.014525、
-     1.02 → 1.029115、1.095 → 1.14057
-
-   **2026-08-21 跟著基礎曲線一起重配（#127）**：基礎那條改了形狀與總量，
-   這條不跟著改的話，job 會在 base 還在 130 的時候就點滿，後面六十級零職業成長。
-
-   總量對齊：維持原本「job 總需求 ＝ 基礎的 0.8 倍」的關係
-   （實測主力地圖的 jobExp/exp 約 1.13，需求少一點剛好讓兩條線差不多同時走完）。
-   基礎新總量 78.8 億 × 0.8 ＝ 63.0 億，起始值回推得 1,739,000，實際 63.06 億。 */
-const JOB3_EXP_L1 = 1739000;
-const JOB3_EXP_SEGS = [[8, 1.561474], [22, 1.007255], [36, 1.014525], [56, 1.029115], [70, 1.14057]];
-function expToNextJob3Level(level) {
-  let need = JOB3_EXP_L1;
-  let cur = 1;
-  for (const [to, r] of JOB3_EXP_SEGS) {
-    while (cur < to && cur < level) { need *= r; cur++; }
-    if (cur >= level) break;
+function expReqScale(list, level, tier) {
+  let m = 1;
+  for (const [from, to, mult, onlyTier] of list) {
+    if (level >= from && level <= to && (onlyTier == null || onlyTier === tier)) m *= mult;
   }
-  return Math.floor(need);
+  return m;
 }
-
+/* 轉生過的角色走轉生表（官方 High 系列需求較高） */
+function expReborn() { return typeof state !== 'undefined' && state && (state.rebirthCount || 0) > 0; }
+function expTier() {
+  const jd = typeof state !== 'undefined' && state && JOB_TREE[state.jobId];
+  return jd ? jd.tier || 0 : 0;
+}
+function expToNextBaseLevel(level) {
+  const tier = expTier();
+  let need;
+  if (tier >= 3) need = level < 200 ? EXP_TABLES.base3[level - 1] : EXP_TABLES.base4[level - 1];
+  else need = (expReborn() ? EXP_TABLES.baseHigh : EXP_TABLES.base)[level - 1];
+  if (need == null) need = 999999999;   // 超出表（等級上限以上）
+  return Math.floor(need * expReqScale(EXP_REQ_SCALE.base, level));
+}
 function expToNextJobLevel(level, tier) {
-  if (!tier) return Math.floor(15 * Math.pow(level, 1.4) + 10);   // 新手
-  if (tier >= 3) return expToNextJob3Level(level);                // 三轉自己一條（#122）
-  const segs = JOB_EXP_COEF[tier >= 2 ? 2 : 1];
-  let coef = segs[segs.length - 1][1];
-  for (const [cap, c] of segs) if (level < cap) { coef = c; break; }
-  return Math.floor(coef * Math.pow(level, JOB_EXP_POW));
+  const reborn = expReborn();
+  let t;
+  if (!tier) t = reborn ? EXP_TABLES.jobNoviceHigh : EXP_TABLES.jobNovice;
+  else if (tier >= 3) t = EXP_TABLES.job3;
+  else if (tier >= 2.5) t = EXP_TABLES.job2High;
+  else if (tier >= 2) t = EXP_TABLES.job2;
+  else if (typeof state !== 'undefined' && state && state.jobId === 'supernovice') t = EXP_TABLES.jobSuperNovice;
+  else t = reborn ? EXP_TABLES.job1High : EXP_TABLES.job1;
+  const need = t[level - 1] != null ? t[level - 1] : 999999999;
+  return Math.floor(need * expReqScale(EXP_REQ_SCALE.job, level, tier || 0));
 }
 
 // Refinement placeholder

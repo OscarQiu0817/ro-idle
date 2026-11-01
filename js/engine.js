@@ -6393,6 +6393,16 @@ function rollMonsterPos() {
     a: (Math.random() * 2 - 1) * SPAWN_ANGLE_MAX,
   };
 }
+/* 怪物經驗改照官方（T4，rAthena mob_db_re 的 BaseExp／JobExp，存在 MOB_MOVE） */
+(function applyOfficialMobExp() {
+  if (typeof MOB_MOVE === 'undefined') return;
+  for (const [id, mv] of Object.entries(MOB_MOVE)) {
+    const m = MONSTERS[id];
+    if (!m || mv.baseExp == null) continue;
+    m.exp = mv.baseExp;
+    m.jobExp = mv.jobExp;
+  }
+})();
 function monMove(mon) {
   return (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[mon.defId]) || MOB_MOVE_DEFAULT;
 }
