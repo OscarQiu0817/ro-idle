@@ -840,7 +840,8 @@ function toggleAllyAuto(slot) { allyAutoOpen[slot] = !allyAutoOpen[slot]; render
 
 function renderAllyAutoBattle(a) {
   const open = !!allyAutoOpen[a._slot];
-  const cfg = a.autoSkillConfig || { skillId: null, skillId2: null, spThreshold: 30, spThreshold2: 50, monsterCount2: 2 };
+  // 隊友也是 4 招優先序（T8）；舊的兩招設定由 migrateAutoSkillConfig 轉成 4 格
+  const cfg = a.autoSkillConfig = migrateAutoSkillConfig(a.autoSkillConfig);
   let atk = [], sup = [];
   withAlly(a, () => {
     usableSkillEntries().forEach(({ sk, lv }) => {
@@ -849,7 +850,7 @@ function renderAllyAutoBattle(a) {
     });
   });
   const on = sup.filter(e => (a.autoSupportSkills || {})[e.sk.id]).length;
-  const cur = atk.find(e => e.sk.id === cfg.skillId);
+  const cur = atk.find(e => cfg.slots.some(sl => sl.skillId === e.sk.id));
   const head = `<div class="ally-sec ally-sec-toggle" onclick="toggleAllyAuto('${a._slot}')">
       <span>${open ? '▾' : '▸'} ${a._allyName}</span>
       <span class="codex-sec-hint">${cur ? cur.sk.name : '沒設攻擊技'}・輔助 ${on}</span>
@@ -864,16 +865,16 @@ function renderAllyAutoBattle(a) {
   if (!atk.length) {
     html += '<div class="ally-note-sm">這位隊友沒有學任何攻擊技能。</div>';
   } else {
-    html += `<label>第一招
-      <select class="ally-sel" onchange="setAllyAutoCfg('${a._slot}','skillId', this.value)">${opt(atk, cfg.skillId)}</select></label>
-      <label>SP 保留
-        <input class="ally-num" type="number" min="5" max="90" value="${cfg.spThreshold || 30}"
-          onchange="setAllyAutoCfg('${a._slot}','spThreshold', Math.max(5, Math.min(90, parseInt(this.value) || 30)))">%</label>
-      <label>第二招（範圍技）
-        <select class="ally-sel" onchange="setAllyAutoCfg('${a._slot}','skillId2', this.value)">${opt(atk, cfg.skillId2)}</select></label>
+    html += cfg.slots.map((sl, i) => `<div class="ally-slot-row">
+      <label>第 ${i + 1} 招
+        <select class="ally-sel" onchange="setAllyAutoSlot('${a._slot}', ${i}, 'skillId', this.value)">${opt(atk, sl.skillId)}</select></label>
+      ${sl.skillId ? `<label>SP 保留
+        <input class="ally-num" type="number" min="0" max="90" value="${sl.spThreshold || 0}"
+          onchange="setAllyAutoSlot('${a._slot}', ${i}, 'spThreshold', Math.max(0, Math.min(90, parseInt(this.value) || 0)))">%</label>
       <label>怪物達
-        <input class="ally-num" type="number" min="1" max="${MELEE_MAX_MONSTERS}" value="${cfg.monsterCount2 || 2}"
-          onchange="setAllyAutoCfg('${a._slot}','monsterCount2', Math.max(1, Math.min(MELEE_MAX_MONSTERS, parseInt(this.value) || 2)))">隻才放</label>`;
+        <input class="ally-num" type="number" min="1" max="${MELEE_MAX_MONSTERS}" value="${sl.minMobs || 1}"
+          onchange="setAllyAutoSlot('${a._slot}', ${i}, 'minMobs', Math.max(1, Math.min(MELEE_MAX_MONSTERS, parseInt(this.value) || 1)))">隻才放</label>` : ''}
+    </div>`).join('');
   }
   if (sup.length) {
     html += '<div class="ally-note-sm">輔助技能（勾了才會放）</div>';
@@ -885,11 +886,13 @@ function renderAllyAutoBattle(a) {
 }
 function allyBySlot(slot) { return (state.allies || []).find(a => a && String(a._slot) === String(slot)); }
 function setAllyAutoSkill(slot, v) { const a = allyBySlot(slot); if (!a) return; a.autoSkill = !!v; saveGame(); renderAllyPanel(); }
-function setAllyAutoCfg(slot, key, v) {
+function setAllyAutoSlot(slot, i, key, v) {
   const a = allyBySlot(slot);
   if (!a) return;
-  if (!a.autoSkillConfig) a.autoSkillConfig = { skillId: null, skillId2: null, spThreshold: 30, spThreshold2: 50, monsterCount2: 2 };
-  a.autoSkillConfig[key] = v === '' ? null : v;
+  a.autoSkillConfig = migrateAutoSkillConfig(a.autoSkillConfig);
+  const sl = a.autoSkillConfig.slots[i];
+  if (!sl) return;
+  sl[key] = v === '' ? null : v;
   saveGame();
   renderAllyPanel();
 }

@@ -8883,8 +8883,9 @@ function alliesTick() {
        castSkill 尾端就有一次，沒有那道保險這裡會把玩家的存檔蓋成隊友。 */
     try {
       withAlly(ally, () => {
+        tickCasting(now);   // 隊友的詠唱也要跑完（T8）
+        tryAutoCastSupportSkills();   // 輔助先（見 tryAutoCastSkill 開頭）
         if (state.autoSkill) tryAutoCastSkill();
-        tryAutoCastSupportSkills();
         /* 隊友自己掛上的場域效果也要跳（#131）。以前這段只長在 gameTick() 裡，
            而 gameTick 只跑玩家那一份——隊友祭司放的光耀之堂掛上去就沒人理，
            一跳都不會發生（放了完全沒作用，連他自己都沒回到血）。 */
@@ -8892,6 +8893,8 @@ function alliesTick() {
       });
     } catch (e) { console.error('隊友施法失敗', ally && ally._allyName, e); }
     if (ally._downed) return;   // 自傷類技能（聖十字審判、HP轉換）可能把自己放倒
+    // 詠唱中不普攻（官方規則，跟玩家一樣）；累積的攻擊時間也不留，免得詠唱完一口氣補刀
+    if (ally.casting) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
     if (!ally._lastAttackAt) ally._lastAttackAt = now - 1000;
     ally._atkAccum = (ally._atkAccum || 0) + (now - ally._lastAttackAt);
     ally._lastAttackAt = now;
@@ -9208,6 +9211,8 @@ function pickMonsterTarget() {
 
 function allyTakeDamage(ally, dmg, sourceName) {
   ally.hp = Math.max(0, (ally.hp || 0) - Math.max(1, Math.round(dmg)));
+  // 隊友詠唱中被打到就斷（T8，跟玩家同一條規則；CastCancel:false 與劍魚卡免疫）
+  if (ally.casting && (ally.casting.cancel || ally.hp <= 0)) withAlly(ally, () => interruptCast(ally.hp <= 0 ? '倒地' : '受到攻擊'));
   if (ally.hp <= 0 && !ally._downed) {
     ally._downed = true;
     ally._reviveAt = Date.now() + ALLY_DOWN_REVIVE_CD_SEC * 1000;
@@ -10040,7 +10045,8 @@ function findSkillAnywhere(skillId) {
 function castSkill(skillId, opts) {
   return withLogLane('skill', () => {
     const free = !!(opts && opts.free);
-    if (_allyActing || free) return castSkillInner(skillId, opts);
+    // 隊友也走詠唱（T8）：withAlly 期間 state 就是隊友，casting／acdUntil 存在隊友身上
+    if (free) return castSkillInner(skillId, opts);
     if (state.casting || Date.now() < (state.acdUntil || 0)) return false;
     const sk = findSkillForUse(skillId);
     const lv = sk ? skillLv(skillId) : 0;
@@ -10053,8 +10059,8 @@ function castSkill(skillId, opts) {
 }
 
 /* ---------------- 詠唱（3c，docs/GAMEPLAY_DIRECTION.md D2）----------------
-   數值取自 js/skill_cast_data.js（rAthena skill_db）。只套用在玩家本人：
-   卡片的自動念咒（opts.free）與隊友仍是瞬發。
+   數值取自 js/skill_cast_data.js（rAthena skill_db）。玩家與隊友（T8）都套用；
+   卡片的自動念咒（opts.free）仍是瞬發。
      變動詠唱 VCT × max(0, 1 − √((DEX×2 + INT) / 530))，加上固定詠唱 FCT
      後延遲 AfterCastActDelay，下限是普攻間隔（避免 0 延遲的技能每 tick 連放）
      冷卻 Cooldown（取代原本卡片的「冷卻 ±秒」魔改）
@@ -10140,7 +10146,7 @@ function interruptCast(why) {
   state.casting = null;
   const sk = SKILLS[c.skillId];
   logMsg(`💢 詠唱「${sk ? skillDisplayName(sk) : c.skillId}」被打斷了（${why}）`);
-  if (typeof showPlayerFloat === 'function') showPlayerFloat('詠唱中斷', 'miss');
+  if (!_allyActing && typeof showPlayerFloat === 'function') showPlayerFloat('詠唱中斷', 'miss');
 }
 /* 怪物的普攻與技能命中玩家時呼叫（跟睡眠被打醒同一個位置） */
 function castBreakOnDamage(dmg) {
@@ -10268,7 +10274,7 @@ function castSkillInner(skillId, opts) {
   // 自動念咒不寫冷卻：那是玩家自己那份資源，不該被卡片的觸發吃掉
   if (!free) {
     const cd = Array.isArray(sk.cooldown) ? sk.cooldown[lv - 1] : sk.cooldown;
-    const castRow = !_allyActing && skillCastRow(skillId);
+    const castRow = skillCastRow(skillId);
     const fcd = fieldCooldownSec(sk, lv);
     state.cooldowns[skillId] = fcd != null ? fcd * 1000
       : castRow ? Math.max(0, castLv(castRow.cooldown, lv) + getCardBonus('skillCdMs_' + skillId)) : effectiveCooldownMs(skillId, cd);
@@ -11749,6 +11755,10 @@ function tryAutoCastSkill() {
   const slots = autoSkillSlots(state.autoSkillConfig).filter(sl => sl && sl.skillId);
   /* 沒設定就什麼都不放（使用者 2026-08-15 指定：選「不使用技能」就真的不要放，不自動撈技能） */
   if (!slots.length) return;
+  if (state.casting || Date.now() < (state.acdUntil || 0)) return;
+  /* 輔助技能優先：攻擊欄每拍都在搶詠唱／後延遲的空檔，輔助（每秒檢查一次）會一直排不進去，
+     祭司就只會放攻擊技、增益永遠補不上。這裡先補需要補的輔助，有放出去（開始詠唱或進後延遲）就讓出這一拍。 */
+  tryAutoCastSupportSkills();
   if (state.casting || Date.now() < (state.acdUntil || 0)) return;
   const spPct = (state.sp / state.maxSp) * 100;
   const monsterCount = state.monsters ? state.monsters.length : 0;
