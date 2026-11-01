@@ -13863,7 +13863,9 @@ function effectiveGearBonuses() {
   if (typeof EQUIP_SETS !== 'undefined') {
     /* 成員寫成陣列代表「這幾件任一件都算」。同一件官方裝備在本作常有無孔／有孔
        兩個 id（魔法外套 / 魔法外套[1]），不支援的話玩家拿到有孔版反而湊不成套。 */
-    const hasMember = m => Array.isArray(m) ? m.some(i => lo.items.has(i)) : lo.items.has(m);
+    // 成員可以是卡片（rAthena 套卡，js/equip_sets.js）
+    const has = i => lo.items.has(i) || lo.cards.has(i);
+    const hasMember = m => Array.isArray(m) ? m.some(has) : has(m);
     const slotOfMember = m => EQUIP_SLOTS_ALL.find(s => lo.slots[s] &&
       (Array.isArray(m) ? m.includes(lo.slots[s].itemId) : lo.slots[s].itemId === m));
     for (const [setId, def] of Object.entries(EQUIP_SETS)) {

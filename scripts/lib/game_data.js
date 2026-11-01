@@ -20,7 +20,7 @@ function loadGameData() {
   vm.createContext(ctx);
   // const 宣告不會掛到 context 上，結尾補一行把需要的表匯出
   const src = files.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n') +
-    '\n;this.__out = { MONSTERS, MAPS, ITEMS, CARDS, SKILLS, JOB_TREE, jobCanUseWeapon };';
+    '\n;this.__out = { MONSTERS, MAPS, ITEMS, CARDS, EQUIP_SETS, SKILLS, JOB_TREE, jobCanUseWeapon };';
   vm.runInContext(src, ctx, { filename: 'game_data' });
   return ctx.__out;
 }
