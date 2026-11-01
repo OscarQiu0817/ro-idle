@@ -2302,7 +2302,7 @@ function recomputeDerived(fullHeal) {
   }
   state.def = state.defHard + state.defSoft;
   // MDEF 同理歸到硬魔防。可以是負的（迪塔勒泰晤勒斯：免疫冰凍的代價是 MDEF−20）
-  state.mdefHard += getCardBonus('mdef') + equippedStatBonus('mdef');
+  state.mdefHard += getCardBonus('mdef') + equippedStatBonus('mdef') + buffMult('mdefflat').flatBonus;   // 霸體 MDEF +lv
   state.mdef = state.mdefHard + state.mdefSoft;
   state.hit += getCardBonus('hit') + equippedStatBonus('hit');
   state.flee += getCardBonus('flee') + equippedStatBonus('flee');
@@ -2370,6 +2370,8 @@ function recomputeDerived(fullHeal) {
     state._atkMastery = Math.round(state._atkMastery * m);
     state.atk = state._atkStatus + state._atkWeapon + state._atkMastery;
   }
+  // 固定 MATK 的 buff（神威祈福、火元素領域）：以前推了沒人讀
+  { const mf = buffMult('matk').flatBonus; if (mf) { state.matkMin += mf; state.matkMax += mf; state.matk = Math.round((state.matkMin + state.matkMax) / 2); } }
   const matkPctBonus = getCardBonus('matkPct') / 100;
   const matkBuffMult = buffMult('matk').mult;
   if (matkPctBonus !== 0 || matkBuffMult !== 1) {
@@ -6180,7 +6182,8 @@ function computeAspd() {
 
   // Step 6: 裝備攻速百分比 + 固定值（含蒼鷹之眼等被動固定ASPD加成）
   // 卡片的攻速走這一層：官方把卡片跟裝備的攻速%放同一條乘算，跟技能/藥水那層是分開的
-  let equipAspdPct = getCardBonus('aspdPct') / 100;
+  // 「攻擊後延遲 −N%」的技能（雙手劍加速等，T5）跟裝備同一層
+  let equipAspdPct = (getCardBonus('aspdPct') + buffMult('aspddelay').flatBonus) / 100;
   let aspdFlatBonus = (state.passiveAspdFlat || 0) + getCardBonus('aspdFlat') + buffAspdFlat;
   EQUIP_SLOTS_ALL.forEach(slot => {
     const aspdItemId = getEquipBaseItemId(slot);
@@ -7174,7 +7177,7 @@ function playerAttackInner() {
   const ewLv = state.learnedSkills['as_enchantpoison'] || 0;
   if (ewLv > 0 && state.monsters.includes(target) && state.buffs.some(b => b.skillId === 'as_enchantpoison')) {
     const ewSkill = findSkillById('as_enchantpoison');
-    const ewChance = ewSkill.procChance != null ? ewSkill.procChance : 20;
+    const ewChance = lvArr(ewSkill.procChance, ewLv) || 20;
     if (Math.random() * 100 < ewChance) {
       const ewDmgPct = ewSkill.mult[ewLv - 1];
       applyPoisonDot(target, monDef, rightHandPanelAtk() * ewDmgPct);
@@ -9019,7 +9022,12 @@ function shareBuffsWithAllies(fresh, freshShields, sk) {
         return !(from && from.exclusiveGroup === grp);
       });
     }
-    fresh.forEach(b => tg.buffs.push(Object.assign({}, b)));
+    /* partyBuffMult：隊友拿到的倍率跟施術者不同（速度激發攻速：自己 +30%、隊友 +25%；凶砍 ATK：隊友 5/5/10/10/15%） */
+    const pm = sk.partyBuffMult || {};
+    fresh.forEach(b => {
+      const m = pm[b.type] && lvArr(pm[b.type], lv);
+      tg.buffs.push(Object.assign({}, b, m ? { mult: m } : null));
+    });
     /* 護盾的耐久要照**收禮那個人自己的** maxHp 重算——霸邪之陣寫的是「最大HP 的 12~30%」，
        照抄施術者那份的話，血薄的祭司會發給坦克一面只有自己血量三成的盾。 */
     freshShields.forEach(sh => {
@@ -10090,7 +10098,7 @@ function skillCastTimeMs(sk, lv) {
      變動 ＝ (基礎 + 指定技能 ms) × 素質 × (1 + 全部% + 指定技能%)
      固定 ＝ max(0, 基礎 + 全部 ms + 指定技能 ms) × (1 + 最大單一%) */
   const vct = Math.max(0, castLv(row.castTime, lv) + getCardBonus('castVarMs_' + sk.id))
-    * statFactor * Math.max(0, 1 + (getCardBonus('castVarPct') + getCardBonus('castVarPct_' + sk.id)) / 100);
+    * statFactor * Math.max(0, 1 + (getCardBonus('castVarPct') + getCardBonus('castVarPct_' + sk.id) - buffMult('castcut').flatBonus) / 100);
   const fct = Math.max(0, castLv(row.fixedCastTime, lv) + getCardBonus('castFixedMs') + getCardBonus('castFixedMs_' + sk.id))
     * Math.max(0, 1 + getCardBonus('castFixedPct') / 100);
   return Math.round(vct + fct);
@@ -10102,7 +10110,7 @@ function skillRangeCells(sk, lv) {
 }
 function applyAfterCastDelay(skillId, lv) {
   const row = skillCastRow(skillId);
-  const acd = (row ? castLv(row.afterCastDelay, lv) : 0) * Math.max(0, 1 + getCardBonus('acdPct') / 100);
+  const acd = (row ? castLv(row.afterCastDelay, lv) : 0) * Math.max(0, 1 + (getCardBonus('acdPct') - buffMult('acdcut').flatBonus) / 100);
   state.acdFrom = Date.now();
   state.acdUntil = state.acdFrom + Math.max(acd, state.attackInterval || 0);
 }
@@ -11148,6 +11156,24 @@ function castSkillInner(skillId, opts) {
       logMsg(`💫 「${sk.name}」Lv${lv} 持續恢復HP。`);
       break;
     }
+    /* 神威祈福（T5，SC_IMPOSITIO）：武器 ATK／MATK 各 +5×lv，固定值 */
+    case 'buff_impositio': {
+      const dur = lvArr(sk.duration, lv);
+      const v = lvArr(sk.watkFlat, lv) || 5 * lv;
+      state.buffs.push({ type: 'atkflat', mult: 1, flatBonus: v, msRemaining: dur * 1000, skillId: sk.id });
+      state.buffs.push({ type: 'matk', mult: 1, flatBonus: v, msRemaining: dur * 1000, skillId: sk.id });
+      logMsg(`💪 「${sk.name}」Lv${lv} 發動，ATK／MATK +${v}！`);
+      recomputeDerived(false);
+      break;
+    }
+    /* 霸體（T5，SC_ENDURE）：MDEF +lv。官方另有受擊不硬直，本作玩家沒有受擊硬直 */
+    case 'buff_endure': {
+      const dur = lvArr(sk.duration, lv);
+      state.buffs.push({ type: 'mdefflat', mult: 1, flatBonus: lv, msRemaining: dur * 1000, skillId: sk.id });
+      logMsg(`🛡️ 「${sk.name}」Lv${lv} 發動，MDEF +${lv}！`);
+      recomputeDerived(false);
+      break;
+    }
     case 'buff_def': {
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       state.buffs.push({ type: 'def', mult, msRemaining: dur * 1000 });
@@ -11161,6 +11187,8 @@ function castSkillInner(skillId, opts) {
       state.buffs.push({ type: 'atk', mult, msRemaining: dur * 1000, skillId: sk.id });
       /* `defMult`：官方有一批攻擊 buff 是「以防禦換攻擊」（集中攻擊 ATK+5~25%／DEF−5~25%）。
          代價跟效果推同一個持續時間，不然玩家可以只留好處。 */
+      // 集中攻擊另加 HIT（台服 +10×lv）
+      if (sk.hitFlat) state.buffs.push({ type: 'hit', mult: 1, flatBonus: lvArr(sk.hitFlat, lv), msRemaining: dur * 1000, skillId: sk.id });
       if (sk.defMult) {
         const dm = Array.isArray(sk.defMult) ? sk.defMult[lv - 1] : sk.defMult;
         state.buffs.push({ type: 'def', mult: dm, msRemaining: dur * 1000, skillId: sk.id });
@@ -11294,6 +11322,8 @@ function castSkillInner(skillId, opts) {
         ['hitFlat', 'hit', '命中 +'], ['critFlat', 'crit', '暴擊 +'],
         ['critDmgPct', 'critdmg', '暴擊傷害 +%'], ['maxHpPct', 'maxhppct', '最大HP +%'],
         ['maxSpPct', 'maxsppct', '最大SP +%'], ['skillCdPct', 'skillcd', '技能冷卻 −%'],
+        // 布萊奇之詩（T5，SC_POEMBRAGI）：變動詠唱 −2×lv%、後延遲 −3×lv%
+        ['castCutPct', 'castcut', '變動詠唱 −%'], ['acdCutPct', 'acdcut', '技能後延遲 −%'],
         ['expPct', 'exp', '經驗值 +%'], ['atkFlat', 'atkflat', 'ATK +'],
         ['defFlat', 'defflat', 'DEF +'],
       ];
@@ -11388,6 +11418,7 @@ function castSkillInner(skillId, opts) {
       const cri = Array.isArray(sk.critFlat) ? sk.critFlat[lv - 1] : (sk.critFlat || 0);
       const fle = Array.isArray(sk.fleeFlat) ? sk.fleeFlat[lv - 1] : (sk.fleeFlat || 0);
       state.buffs.push({ type: 'aspd', mult, msRemaining: ms, skillId: sk.id });
+      if (sk.delayCutPct) state.buffs.push({ type: 'aspddelay', mult: 1, flatBonus: lvArr(sk.delayCutPct, lv), msRemaining: ms, skillId: sk.id });
       state.buffs.push({ type: 'crit', mult: 1, flatBonus: cri, msRemaining: ms, skillId: sk.id });
       state.buffs.push({ type: 'flee', mult: 1, flatBonus: fle, msRemaining: ms, skillId: sk.id });
       recomputeDerived(false);
@@ -11412,6 +11443,8 @@ function castSkillInner(skillId, opts) {
       // 武器保有：速度激發持續時間+10%
       if (sk.id === 'bs_adrenaline' && state.hiltBindingDurationBonus) dur *= (1 + state.hiltBindingDurationBonus);
       state.buffs.push({ type: 'aspd', mult, msRemaining: dur * 1000 });
+      // 另外的「攻擊後延遲 −N%」：跟裝備的攻速 % 同一層（台服說明：雙手劍加速、速度激發）
+      if (sk.delayCutPct) state.buffs.push({ type: 'aspddelay', mult: 1, flatBonus: lvArr(sk.delayCutPct, lv), msRemaining: dur * 1000, skillId: sk.id });
       // 雙手劍加速額外加成：暴擊率+命中
       if (sk.bonusCrit) {
         const critBonus = Array.isArray(sk.bonusCrit) ? sk.bonusCrit[lv - 1] : sk.bonusCrit;

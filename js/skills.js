@@ -16,7 +16,7 @@ const SKILLS = {
   sm_bash: {"id":"sm_bash","name":"狂擊 Bash","maxLv":10,"type":"damage","element":"neutral","spCost":[8,8,8,8,8,15,15,15,15,15],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[1.3,1.6,1.9,2.2,2.5,2.8,3.1,3.4,3.7,4],"hitBonus":[5,10,15,20,25,30,35,40,45,50],"desc":"強力一擊，造成ATK×130%~400%傷害，命中+5~50。"},
   sm_magnum: {"id":"sm_magnum","name":"怒爆 Magnum Break","maxLv":10,"type":"damage_aoe","element":"fire","spCost":[30,30,30,30,30,30,30,30,30,30],"cooldown":[2,2,2,2,2,2,2,2,2,2],"mult":[1.2,1.4,1.6,1.8,2,2.2,2.4,2.6,2.8,3],"buffPct":20,"buffDurationSec":10,"desc":"以火焰之力對全部敵人造成火屬性ATK×120%~300%傷害，並使自身10秒內普攻額外附加20%火屬性傷害。"},
   sm_provoke: {"id":"sm_provoke","name":"挑釁 Provoke","maxLv":10,"type":"debuff_def","element":"neutral","spCost":[3,3,4,4,5,5,6,6,7,8],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.45],"duration":[10,10,10,10,10,10,10,10,10,10],"desc":"激怒敵人，使其DEF降低10%~55%，必定成功。"},
-  sm_endure: {"id":"sm_endure","name":"霸體 Endure","maxLv":10,"type":"buff_def","element":"neutral","spCost":[10,10,10,10,10,10,10,10,10,10],"cooldown":[20,20,20,20,20,20,20,20,20,20],"mult":[1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55],"duration":[10,12,14,16,18,20,22,24,26,28],"desc":"短時間內DEF與MDEF大幅提升10%~55%。"},
+  sm_endure: {"id":"sm_endure","name":"霸體 Endure","maxLv":10,"type":"buff_endure","element":"neutral","spCost":[10,10,10,10,10,10,10,10,10,10],"cooldown":[20,20,20,20,20,20,20,20,20,20],"duration":[10,13,16,19,22,25,28,31,34,37],"desc":"MDEF +1~10，持續10~37秒。（官方另有受擊不硬直，本作玩家沒有受擊硬直）"},
   sm_recovery: {"id":"sm_recovery","name":"快速恢復 Increase HP Recovery","maxLv":10,"type":"passive","passiveStat":"hpRegenMult","element":"neutral","spCost":[0],"cooldown":[0],"mult":[1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2],"itemEffectBonus":[10,20,30,40,50,60,70,80,90,100],"desc":"HP自然恢復+10%~100%，並使HP恢復道具效果+10%~100%。"},
   sm_sword: {"id":"sm_sword","name":"單手劍熟練度 Sword Mastery","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[4,8,12,16,20,24,28,32,36,40],"requiresWeapon":"sword","desc":"劍與短劍 ATK +4~40（需裝備單手劍或短劍才生效）。"},
   sm_twohand: {"id":"sm_twohand","name":"雙手劍熟練度 Two-Handed Sword Mastery","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[4,8,12,16,20,24,28,32,36,40],"requiresWeapon":"sword2","desc":"雙手劍 ATK +4~40（需裝備雙手劍才生效）。"},
@@ -78,7 +78,7 @@ const SKILLS = {
   kn_cavaliermastery: {"id":"kn_cavaliermastery","name":"騎兵修練 Cavalier Mastery","maxLv":1,"type":"passive","passiveStat":"cavalierBonus","element":"neutral","spCost":[0],"cooldown":[0],"mult":[5],"atkBonus":[10],"critBonus":[3],"desc":"被動技能，永久提升ATK+10、迴避+5、暴擊率+3%。"},
   kn_bowlingbash: {"id":"kn_bowlingbash","name":"怪物互擊 Bowling Bash","maxLv":10,"type":"damage_multihit","element":"neutral","spCost":[13,14,15,16,17,18,20,22,24,28],"cooldown":[5,5,5,5,5,5,5,5,5,5],"mult":[2,2.3,2.6,2.9,3.2,3.5,3.8,4.1,4.5,5],"mult2":[2,2,2,2,2,2,2,2,2,2],"desc":"強力一擊造成2段傷害：第一段ATK×200%~500%，第二段範圍ATK×200%。"},
   kn_pierce: {"id":"kn_pierce","name":"連刺攻擊 Pierce","maxLv":10,"type":"damage","element":"neutral","spCost":[10,10,10,12,12,12,15,15,15,20],"cooldown":[2,2,2,2,2,2,2,2,2,2],"mult":[2,2.44,2.89,3.33,3.78,4.22,4.67,5.11,5.56,6],"requiresWeapon":"spear","desc":"長矛專用技能，造成ATK×200%~600%傷害（需裝備矛類武器，體型加成待日後補上）。"},
-  kn_twohandquicken: {"id":"kn_twohandquicken","name":"雙手劍加速 Twohand Quicken","maxLv":10,"type":"buff_aspd","element":"neutral","spCost":[14,18,22,26,30,34,38,42,46,50],"cooldown":[30,30,30,30,30,30,30,30,30,30],"mult":[1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3],"duration":[30,60,90,120,150,180,210,240,270,300],"bonusCrit":[3,4,5,6,7,8,9,10,11,12],"bonusHit":[2,4,6,8,10,12,14,16,18,20],"requiresWeapon":"sword2","desc":"雙手劍專用技能，30秒~300秒內ASPD+30%、暴擊率+3~12、命中+2~20（需裝備雙手劍才能施放）。"},
+  kn_twohandquicken: {"id":"kn_twohandquicken","name":"雙手劍加速 Twohand Quicken","maxLv":10,"type":"buff_aspd","element":"neutral","spCost":[14,18,22,26,30,34,38,42,46,50],"cooldown":[30,30,30,30,30,30,30,30,30,30],"mult":[1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3],"delayCutPct":[10,10,10,10,10,10,10,10,10,10],"duration":[30,60,90,120,150,180,210,240,270,300],"bonusCrit":[3,4,5,6,7,8,9,10,11,12],"bonusHit":[2,4,6,8,10,12,14,16,18,20],"requiresWeapon":"sword2","desc":"雙手劍專用技能，30秒~300秒內攻擊速度 +30%、追加攻擊後延遲 −10%、暴擊率+3~12、命中+2~20（需裝備雙手劍才能施放）。"},
   kn_spearmastery: {"id":"kn_spearmastery","name":"長矛熟練度 Spear Mastery","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[5,10,15,20,25,30,35,40,45,50],"requiresWeapon":"spear","desc":"長矛ATK+5~50（需裝備矛類武器才生效）。"},
   kn_spearstab: {"id":"kn_spearstab","name":"長矛刺擊 Spear Stab","maxLv":1,"type":"passive","passiveStat":"spearCounterProc","element":"neutral","spCost":[0],"cooldown":[0],"procChance":[30],"mult":[2],"stunSec":[2],"internalCooldown":[10],"desc":"被動技能，需裝備矛類武器。被攻擊時有30%機率反擊，造成ATK200%傷害並使攻擊者暈眩2秒，冷卻10秒。"},
   kn_spearboomerang: {"id":"kn_spearboomerang","name":"投擲長矛 Spear Boomerang","maxLv":1,"type":"passive","passiveStat":"spearBoomerangProc","element":"neutral","spCost":[0],"cooldown":[0],"mult":[2],"internalCooldown":[5],"desc":"被動技能，需裝備矛類武器。場上敵人數≥2時，每5秒隨機對一隻造成ATK200%傷害。"},
@@ -127,10 +127,10 @@ const SKILLS = {
   bs_spear: {"id":"bs_spear","name":"長矛製作","maxLv":1,"type":"passive","passiveStat":"weaponCraft","craftCategory":"spear","spCost":[0],"cooldown":[0],"mult":[1],"desc":"被動技能，解鎖單手長矛與雙手長矛鍛造，基礎成功率15%（依DEX/LUK/神之金屬研究提升）。"},
   bs_weaponresearch: {"id":"bs_weaponresearch","name":"武器研究","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[2,4,6,8,10,12,14,16,18,20],"hitBonus":[2,4,6,8,10,12,14,16,18,20],"craftBonusExtra":[1,2,3,4,5,6,7,8,9,10],"desc":"永久提升ATK與HIT各+2~20，並提升鍛造武器成功率+1%~10%（依等級）。"},
   bs_hammerfall: {"id":"bs_hammerfall","name":"大地之擊","maxLv":5,"type":"passive","passiveStat":"hammerfallProc","element":"earth","spCost":[0],"cooldown":[0],"singleStunChance":[10,12,15,18,20],"aoeStunChance":[5,6,7,8,10],"stunSec":[1,1,1,1,1],"requiresWeapon":"axemace","desc":"被動技能，裝備斧頭或鈍器攻擊時，10%~20%機率使目前敵人暈眩1秒，另有5%~10%機率使全體敵人暈眩1秒（依等級）。"},
-  bs_adrenaline: {"id":"bs_adrenaline","name":"速度激發","maxLv":5,"type":"buff_aspd","party":true,"spCost":[20,23,26,29,32],"cooldown":[30,60,90,120,150],"mult":[1.25,1.25,1.25,1.25,1.25],"bonusHit":[8,11,14,17,20],"duration":[30,60,90,120,150],"requiresWeapon":"axemace","partyRequiresWeapon":"axemace","desc":"斧頭／鈍器專用技能，使**全體拿斧頭或鈍器的人**攻擊速度固定+25%，並提升HIT+8~20，持續30~150秒（依等級）。拿其他武器的隊友不受影響。"},
+  bs_adrenaline: {"id":"bs_adrenaline","name":"速度激發","maxLv":5,"type":"buff_aspd","party":true,"spCost":[20,23,26,29,32],"cooldown":[30,60,90,120,150],"mult":[1.3,1.3,1.3,1.3,1.3],"partyBuffMult":{"aspd":[1.25,1.25,1.25,1.25,1.25]},"delayCutPct":[10,10,10,10,10],"bonusHit":[8,11,14,17,20],"duration":[30,60,90,120,150],"requiresWeapon":"axemace","partyRequiresWeapon":"axemace","desc":"斧頭／鈍器專用技能，使**全體拿斧頭或鈍器的人**攻擊速度增加（施術者 +30%、隊友 +25%）、追加攻擊後延遲 −10%，並提升HIT+8~20，持續30~150秒（依等級）。拿其他武器的隊友不受影響。"},
   bs_skintemper: {"id":"bs_skintemper","name":"強化火屬性","maxLv":5,"type":"passive","passiveStat":"fireResist","spCost":[0],"cooldown":[0],"mult":[4,8,12,16,20],"neutralResistMult":[1,2,3,4,5],"desc":"被動技能，增加對火屬性傷害的耐性+4%~20%，對無屬性傷害的耐性+1%~5%（依等級）。"},
-  bs_weaponperfect: {"id":"bs_weaponperfect","name":"無視體型攻擊","maxLv":5,"type":"buff_ignoresize","party":true,"element":"neutral","spCost":[15,18,21,24,27],"cooldown":[30,40,50,60,70],"duration":[30,45,60,75,90],"desc":"使**全體**的攻擊不再受體型修正影響（只拿掉懲罰，本來就有的加成照留），持續30~90秒（依等級）。（官方為武器完全定義 Weapon Perfection）"},
-  bs_overthrust: {"id":"bs_overthrust","name":"凶砍","maxLv":5,"type":"buff_atk","spCost":[18,16,14,12,10],"cooldown":[20,40,60,80,100],"mult":[1.05,1.1,1.15,1.2,1.25],"duration":[20,40,60,80,100],"desc":"短暫提升自身攻擊力+5%~25%，持續20~100秒（依等級）。"},
+  bs_weaponperfect: {"id":"bs_weaponperfect","name":"無視體型攻擊","maxLv":5,"type":"buff_ignoresize","party":true,"element":"neutral","spCost":[15,18,21,24,27],"cooldown":[30,40,50,60,70],"duration":[10,20,30,40,50],"desc":"使**全體**的攻擊不再受體型修正影響（只拿掉懲罰，本來就有的加成照留），持續10~50秒（依等級）。（官方為武器完全定義 Weapon Perfection）"},
+  bs_overthrust: {"id":"bs_overthrust","name":"凶砍","maxLv":5,"type":"buff_atk","party":true,"spCost":[18,16,14,12,10],"cooldown":[20,40,60,80,100],"mult":[1.05,1.1,1.15,1.2,1.25],"partyBuffMult":{"atk":[1.05,1.05,1.1,1.1,1.15]},"duration":[20,40,60,80,100],"desc":"提升攻擊力：自身 +5%~25%、隊員 +5%/5%/10%/10%/15%，持續20~100秒（依等級）。"},
   bs_maximize: {"id":"bs_maximize","name":"武器值最大化","maxLv":5,"type":"buff_maxroll","spCost":[10,20,30,40,50],"cooldown":[30,30,30,30,30],"duration":[10,15,20,25,30],"desc":"短暫使武器傷害浮動值固定為最大值，持續10~30秒，消耗SP10~50（依等級）。"},
   bs_unfairlytrick: {"id":"bs_unfairlytrick","name":"詭計的商術","maxLv":1,"type":"passive","passiveStat":"zenyCostReduction","spCost":[0],"cooldown":[0],"mult":[20],"desc":"被動技能，使金錢攻擊的鋅幣消耗量-20%（手推車終結技留待未來新職業加入後再接上）。"},
   bs_greed: {"id":"bs_greed","name":"貪婪","maxLv":1,"type":"passive","passiveStat":"greedProc","spCost":[0],"cooldown":[0],"procChance":[10],"desc":"被動技能，擊敗怪物時有10%機率額外多獲得一份戰利品。"},
@@ -140,7 +140,7 @@ const SKILLS = {
   as_cloaking: {"id":"as_cloaking","name":"偽裝","maxLv":10,"type":"buff_flee","spCost":[10,10,10,10,10,12,12,12,12,12],"cooldown":[20,20,20,20,20,20,20,20,20,20],"mult":[1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75],"duration":[10,10,10,10,10,10,10,10,10,10],"desc":"偽裝成其他玩家，提升迴避。勾選自動施放後，偽裝生效中會自動連動施放無影之牙。"},
   as_sonicblow: {"id":"as_sonicblow","name":"音速投擲","maxLv":10,"type":"damage","element":"neutral","spCost":[16,16,16,16,16,18,18,18,18,18],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[3,4,5,6,7,8,9,10,11,12],"lowHpThreshold":0.5,"lowHpMult":1.5,"requiresWeapon":"katar","desc":"拳刃專屬技能，極速攻擊造成ATK 300%~1200%傷害；目標HP低於50%時傷害額外+50%。冷卻3秒，無法連續施放（需裝備拳刃才能施放）。"},
   as_grimtooth: {"id":"as_grimtooth","name":"無影之牙","maxLv":5,"type":"damage_aoe","element":"neutral","spCost":[14,14,14,14,14],"cooldown":[3,3,3,3,3],"mult":[1.2,1.4,1.6,1.8,2],"desc":"偽裝專屬技能，對目標與周圍怪物造成ATK 120%~200%範圍傷害。偽裝生效中會自動施放。"},
-  as_enchantpoison: {"id":"as_enchantpoison","name":"塗毒","maxLv":10,"type":"buff_poison","element":"poison","spCost":[12,12,12,12,12,14,14,14,14,14],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55],"duration":[8,8,8,8,8,8,8,8,8,8],"procChance":20,"desc":"輔助技能，施放後武器沾毒（持續8秒），生效中攻擊有20%機率使敵人中毒3秒，每秒造成ATK 10%~55%傷害（不會疊加）。毒屬性怪物免疫。"},
+  as_enchantpoison: {"id":"as_enchantpoison","name":"塗毒","maxLv":10,"type":"buff_poison","element":"poison","spCost":[12,12,12,12,12,14,14,14,14,14],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55],"duration":[30,45,60,75,90,105,120,135,150,165],"procChance":[3,3.5,4,4.5,5,5.5,6,6.5,7,7.5],"desc":"輔助技能，施放後武器沾毒（持續30~165秒），生效中攻擊有3%~7.5%機率使敵人中毒3秒，每秒造成ATK 10%~55%傷害（不會疊加）。毒屬性怪物免疫。"},
   as_poisonreact: {"id":"as_poisonreact","name":"毒性反彈","maxLv":10,"type":"passive","passiveStat":"poisonReact","element":"poison","spCost":[0],"cooldown":[0],"mult":[1,1.2,1.4,1.6,1.8,2,2.2,2.4,2.6,2.8],"internalCooldown":10,"desc":"被動技能，被毒屬性怪物攻擊時觸發反擊，造成ATK 100%~280%傷害（依等級，冷卻10秒）。目前遊戲中沒有毒屬性怪物，之後新增後才會實際觸發。"},
   as_venomdust: {"id":"as_venomdust","name":"病毒散播","maxLv":10,"type":"ground_zone","element":"poison","fieldCd":1,"maxUnits":3,"costItems":["red_gemstone"],"costQty":1,"spCost":[20,20,20,20,20,20,20,20,20,20],"cooldown":[0,0,0,0,0,0,0,0,0,0],"poisonMult":[0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55],"zoneRadius":1.5,"desc":"在最近敵人腳下散出 3×3 毒霧（持續 5~50 秒，場上最多 3 處），霧裡的敵人持續中毒，每秒受到 ATK 10%~55% 傷害。消耗 1 個紅色魔力礦石。"},
   as_splasher: {"id":"as_splasher","name":"毒性感染","maxLv":10,"type":"passive","passiveStat":"venominfusionProc","element":"poison","spCost":[0],"cooldown":[0],"mult":[0.2,0.4,0.6,0.8,1,1.2,1.4,1.6,1.8,2],"procChance":20,"internalCooldown":10,"desc":"被動技能，攻擊已中毒的敵人時有20%機率引爆，對全體敵人造成ATK 20%~200%範圍傷害（依等級，冷卻10秒）。"},
@@ -148,7 +148,7 @@ const SKILLS = {
   as_venomknife: {"id":"as_venomknife","name":"毒刃","maxLv":1,"type":"damage","element":"poison","spCost":[14],"cooldown":[5],"mult":[2],"desc":"用毒刃攻擊敵人。"},
   pr_macemastery: {"id":"pr_macemastery","name":"鈍器使用熟練度","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[3,6,9,12,15,18,21,24,27,30],"critBonus":[1,2,3,4,5,6,7,8,9,10],"requiresWeapon":"mace","desc":"永久提升鈍器攻擊力+3~30、爆擊率+1%~10%（依等級，需裝備鈍器才生效）。"},
   pr_sanctuary: {"id":"pr_sanctuary","name":"光耀之堂","maxLv":10,"type":"field_heal","party":true,"undeadDmg":true,"cdFromDuration":true,"costItems":["blue_gemstone"],"fieldTickIntervalSec":1,"spCost":[15,18,21,24,27,30,33,36,39,42],"cooldown":[20,20,20,20,20,20,20,20,20,20],"healPerTick":[100,200,300,400,500,600,777,777,777,777],"duration":[4,7,10,13,16,19,22,25,28,31],"desc":"消耗藍色魔力礦石×1。跟著玩家的光耀之堂：**全體**每秒恢復100~777點HP，身邊的不死／惡魔怪受到回復量一半的傷害，持續4~31秒；冷卻＝持續時間。"},
-  pr_magnificat: {"id":"pr_magnificat","name":"聖母之頌歌","maxLv":1,"type":"buff_sprate","party":true,"spCost":[40],"cooldown":[45],"mult":[2],"duration":[30],"desc":"使全體SP自然恢復速度變為2倍，持續30秒。"},
+  pr_magnificat: {"id":"pr_magnificat","name":"聖母之頌歌","maxLv":5,"type":"buff_sprate","party":true,"spCost":[40,40,40,40,40],"cooldown":[45,45,45,45,45],"mult":[2,2,2,2,2],"duration":[30,45,60,75,90],"desc":"使全體SP自然恢復速度變為2倍，持續30~90秒。"},
   pr_gloria: {"id":"pr_gloria","name":"幸運之頌歌","maxLv":5,"type":"buff_lukflat","party":true,"spCost":[20,20,20,20,20],"cooldown":[30,30,30,30,30],"lukBonus":[30,30,30,30,30],"duration":[10,15,20,25,30],"desc":"使全體LUK+30，持續10~30秒（依等級）。"},
   pr_kyrie: {"id":"pr_kyrie","name":"霸邪之陣","maxLv":10,"type":"buff_shield","party":true,"spCost":[20,20,20,20,20,20,20,20,20,20],"cooldown":[15,15,15,15,15,15,15,15,15,15],"shieldCapacityPct":[12,14,16,18,20,22,24,26,28,30],"shieldCharges":[5,6,6,7,7,8,8,9,9,10],"duration":[120,120,120,120,120,120,120,120,120,120],"desc":"為全體設置護盾，耐久度為最大HP的12%~30%，可抵擋5~10次物理傷害，最多持續2分鐘（依等級）。"},
   pr_suffragium: {"id":"pr_suffragium","name":"犧牲祈福","maxLv":3,"type":"passive","passiveStat":"aspdFlat","spCost":[0],"cooldown":[0],"mult":[1,2,3],"desc":"被動技能，永久提升ASPD+1~3（依等級）。"},
@@ -171,7 +171,7 @@ const SKILLS = {
      痊癒術要有 `state.playerAil`（#30）、冷笑話要有怪物異常狀態（#29）。
      這些在 #22 寫下時都還不存在。 */
   ba_frostjoker: {"id":"ba_frostjoker","name":"冷笑話","maxLv":5,"type":"ailment_aoe","element":"water","ailment":"freeze","successChance":[15,20,25,30,35],"spCost":[10,10,10,10,10],"cooldown":[10,10,10,10,10],"desc":"講一個冷到結凍的笑話，對全部敵人各有15%~35%機率造成冰凍（依等級）。"},
-  pr_impositio: {"id":"pr_impositio","name":"神威祈福","maxLv":5,"type":"buff_atk","party":true,"spCost":[20,20,20,20,20],"cooldown":[30,30,30,30,30],"mult":[1.05,1.075,1.1,1.125,1.15],"duration":[30,38,45,53,60],"desc":"使全體攻擊力+5%~15%，持續30~60秒（依等級）。（官方是固定值 ATK+5×等級，本作的攻擊力buff一律是倍率制，改成等效的百分比）"},
+  pr_impositio: {"id":"pr_impositio","name":"神威祈福","maxLv":5,"type":"buff_impositio","party":true,"spCost":[20,20,20,20,20],"cooldown":[30,30,30,30,30],"watkFlat":[5,10,15,20,25],"duration":[120,120,120,120,120],"desc":"使全體武器 ATK／MATK +5~25，持續120秒。"},
   /* 自動防禦與聖十字審判是十字軍的技能，但 id **沒有 cr_ 前綴**——
      `clock_card` 與 `solace_card` 兩張卡片的 autoSpell 指名這兩個 id，
      改名等於把那兩張卡打斷。既有 id 留著，內容更新成官方數值。 */
@@ -283,11 +283,12 @@ const SKILLS = {
     id: 'lk_concentration', name: '集中攻擊 Concentration', maxLv: 5,
     type: 'buff_atk', element: 'neutral',
     spCost: [20, 24, 28, 32, 36], cooldown: [30, 30, 30, 30, 30],
-    // 官方：ATK +5×等級%，代價是 DEF −5×等級%
-    mult: [1.05, 1.10, 1.15, 1.20, 1.25],
-    defMult: [0.95, 0.90, 0.85, 0.80, 0.75],
-    duration: [30, 45, 60, 75, 90],
-    desc: '集中精神提升攻擊力 5%~25%，代價是防禦力下降 5%~25%，持續 30~90 秒。'
+    // 台服：HIT +10×lv、ATK +(5+2×lv)%、DEF −(5+2×lv)%，持續 60 秒
+    mult: [1.07, 1.09, 1.11, 1.13, 1.15],
+    defMult: [0.93, 0.91, 0.89, 0.87, 0.85],
+    hitFlat: [10, 20, 30, 40, 50],
+    duration: [60, 60, 60, 60, 60],
+    desc: '命中 +10~50、攻擊力 +7%~15%，代價是防禦力 −7%~15%，持續 60 秒。'
   },
 
   /* ---------------- 十字刺客 Assassin Cross（#59）----------------
@@ -716,8 +717,8 @@ const SKILLS = {
     spCost: [25, 25, 25, 25, 25],
     cooldown: [30, 30, 30, 30, 30],
     targetPlayerPct: [65, 70, 75, 80, 80],
-    duration: [60, 60, 60, 60, 60],
-    desc: '輔助技能，引導敵人攻擊自身。怪物攻擊自身機率：65%~80%（基礎 60%），持續 60 秒。'
+    duration: [30, 45, 60, 75, 90],
+    desc: '輔助技能，引導敵人攻擊自身。怪物攻擊自身機率：65%~80%（基礎 60%），持續 30~90 秒。'
   },
   cr_reflectshield: {
     id: 'cr_reflectshield', name: '反射盾 Reflect Shield', maxLv: 10,
@@ -762,11 +763,12 @@ const SKILLS = {
     type: 'buff_spearquicken', requiresWeapon: 'spear',
     spCost: [24, 28, 32, 36, 40, 44, 48, 52, 56, 60],
     cooldown: [30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
-    mult: [1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3],   // 攻速 +30%（官方各級相同）
+    mult: [1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3],   // 攻速 +30%（技能層）
+    delayCutPct: [10, 10, 10, 10, 10, 10, 10, 10, 10, 10],     // 追加攻擊後延遲 −10%（裝備層，台服說明）
     critFlat: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
     fleeFlat: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
     duration: [30, 60, 90, 120, 150, 180, 210, 240, 270, 300],
-    desc: '需裝備矛類武器。攻擊速度 +30%、暴擊率 +3~30、迴避 +2~20，持續 30~300 秒。'
+    desc: '需裝備矛類武器。攻擊速度 +30%、追加攻擊後延遲 −10%、暴擊率 +3~30、迴避 +2~20，持續 30~300 秒。'
   },
 
   /* ================= 詩人 BA_ / 舞孃 DC_ / 共用 BD_（#68）=================
@@ -841,10 +843,10 @@ const SKILLS = {
     type: 'buff_song', party: true, exclusiveGroup: 'song', requiresWeapon: 'instrument',
     spCost: [65, 70, 75, 80, 85, 90, 95, 100, 105, 110],
     cooldown: [10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
-    skillCdPct: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
+    castCutPct: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+    acdCutPct: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
     duration: [180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
-    desc: '需裝備樂器。技能冷卻時間 −3%~30%，持續 180 秒。'
-        + '（官方是變動詠唱與共同延遲，本作沒有詠唱，照 #55 的慣例折成技能冷卻）'
+    desc: '需裝備樂器。變動詠唱時間 −2%~20%、技能後延遲 −3%~30%，持續 180 秒。'
   },
   ba_appleidun: {
     id: 'ba_appleidun', name: '伊登的蘋果 Apple of Idun', maxLv: 10,
@@ -1496,9 +1498,9 @@ const SKILLS = {
     spCost: [40, 40, 40, 40, 40], cooldown: [3, 3, 3, 3, 3],
     requires: { skillId: 'sa_advancedbook', level: 5 },
     mult: [1, 2, 3, 4, 5],
-    duration: [1200, 1800, 2400, 3000, 3600],
+    duration: [600, 900, 1200, 1500, 1800],
     costItems: ['scarlet_pts', 'boody_red'],
-    desc: '消耗火靈碎片或火靈礦石×1，武器變成火屬性並使火屬性傷害 +1%~5%，持續 20~60 分鐘。'
+    desc: '消耗火靈碎片或火靈礦石×1，武器變成火屬性並使火屬性傷害 +1%~5%，持續 10~30 分鐘。'
   },
   sa_frostweapon: {
     id: 'sa_frostweapon', name: '水屬性附加 Frost Weapon', maxLv: 5,
@@ -1506,9 +1508,9 @@ const SKILLS = {
     spCost: [40, 40, 40, 40, 40], cooldown: [3, 3, 3, 3, 3],
     requires: { skillId: 'sa_advancedbook', level: 5 },
     mult: [1, 2, 3, 4, 5],
-    duration: [1200, 1800, 2400, 3000, 3600],
+    duration: [600, 900, 1200, 1500, 1800],
     costItems: ['indigo_pts', 'crystal_blue'],
-    desc: '消耗水靈碎片或水靈礦石×1，武器變成水屬性並使水屬性傷害 +1%~5%，持續 20~60 分鐘。'
+    desc: '消耗水靈碎片或水靈礦石×1，武器變成水屬性並使水屬性傷害 +1%~5%，持續 10~30 分鐘。'
   },
   sa_lightningloader: {
     id: 'sa_lightningloader', name: '風屬性附加 Lightning Loader', maxLv: 5,
@@ -1516,9 +1518,9 @@ const SKILLS = {
     spCost: [40, 40, 40, 40, 40], cooldown: [3, 3, 3, 3, 3],
     requires: { skillId: 'sa_advancedbook', level: 5 },
     mult: [1, 2, 3, 4, 5],
-    duration: [1200, 1800, 2400, 3000, 3600],
+    duration: [600, 900, 1200, 1500, 1800],
     costItems: ['yellow_wish_pts', 'wind_of_verdure'],
-    desc: '消耗風靈碎片或風靈礦石×1，武器變成風屬性並使風屬性傷害 +1%~5%，持續 20~60 分鐘。'
+    desc: '消耗風靈碎片或風靈礦石×1，武器變成風屬性並使風屬性傷害 +1%~5%，持續 10~30 分鐘。'
   },
   sa_seismicweapon: {
     id: 'sa_seismicweapon', name: '地屬性附加 Seismic Weapon', maxLv: 5,
@@ -1526,9 +1528,9 @@ const SKILLS = {
     spCost: [40, 40, 40, 40, 40], cooldown: [3, 3, 3, 3, 3],
     requires: { skillId: 'sa_advancedbook', level: 5 },
     mult: [1, 2, 3, 4, 5],
-    duration: [1200, 1800, 2400, 3000, 3600],
+    duration: [600, 900, 1200, 1500, 1800],
     costItems: ['lime_green_pts', 'yellow_live'],
-    desc: '消耗地靈碎片或地靈礦石×1，武器變成地屬性並使地屬性傷害 +1%~5%，持續 20~60 分鐘。'
+    desc: '消耗地靈碎片或地靈礦石×1，武器變成地屬性並使地屬性傷害 +1%~5%，持續 10~30 分鐘。'
   },
 
   /* 元素領域 ×4。官方是設在地上的 7×7 領域，本作沒有座標 → **做成自身領域 buff**

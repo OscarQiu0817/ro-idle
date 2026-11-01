@@ -1021,14 +1021,71 @@ const BATTLE_BUFF_NAMES = {
   dmgtaken: '減傷', eleweapon: '屬性', eledmg_fire: '火傷', eledmg_water: '水傷',
   eledmg_wind: '風傷', eledmg_earth: '地傷', eleresist: '抗屬'
 };
+/* 加成欄浮層的效果文字（T5）：照 buff 的實際欄位寫出加了什麼，不再只印「名稱 +數字」 */
+const pctOf = m => Math.round((m - 1) * 100);
+const sgn = (v, unit) => (v > 0 ? '+' : '') + v + (unit || '');
+const ELE_ZH = e => (typeof ELEMENT_NAMES !== 'undefined' && ELEMENT_NAMES[e]) || e;
+const BUFF_EFFECT_TEXT = {
+  blessing: b => `STR/INT/DEX ${sgn(b.strBonus || 0)}`,
+  flatstat: b => [b.strBonus ? `STR ${sgn(b.strBonus)}` : '', b.flatBonus ? `ATK ${sgn(b.flatBonus)}` : ''].filter(Boolean).join('、'),
+  statpct: b => `DEX/AGI ${sgn(Math.round(b.mult * 100), '%')}`,
+  agiflat: b => `AGI ${sgn(b.flatBonus)}`,
+  lukflat: b => `LUK ${sgn(b.flatBonus)}`,
+  allstat: b => `全素質 ${sgn(b.flatBonus)}`,
+  hit: b => `命中 ${sgn(b.flatBonus)}`,
+  crit: b => `暴擊 ${sgn(b.flatBonus)}`,
+  maxhpflat: b => `MaxHP ${sgn(b.flatBonus)}`,
+  maxhppct: b => `MaxHP ${sgn(b.flatBonus, '%')}`,
+  maxsppct: b => `MaxSP ${sgn(b.flatBonus, '%')}`,
+  atk: b => `ATK ${sgn(pctOf(b.mult), '%')}`,
+  def: b => `DEF ${sgn(pctOf(b.mult), '%')}`,
+  matk: b => b.flatBonus ? `MATK ${sgn(b.flatBonus)}` : `MATK ${sgn(pctOf(b.mult), '%')}`,
+  flee: b => b.flatBonus ? `迴避 ${sgn(b.flatBonus)}` : `迴避 ${sgn(pctOf(b.mult), '%')}`,
+  aspd: b => `攻速 ${sgn(pctOf(b.mult), '%')}`,
+  sprate: b => `SP 回復 ×${b.mult}`,
+  spcost: b => `SP 消耗 ${sgn(b.flatBonus, '%')}`,
+  exp: b => `經驗 ${sgn(b.flatBonus, '%')}`,
+  atkflat: b => `ATK ${sgn(b.flatBonus)}`,
+  defflat: b => `DEF ${sgn(b.flatBonus)}`,
+  eleweapon: b => `武器屬性：${ELE_ZH(b.element)}`,
+  elearmor: b => `鎧甲屬性：${ELE_ZH(b.element)}`,
+  holyweapon: () => `武器屬性：${ELE_ZH('holy')}`,
+  ignoresize: () => '攻擊不受體型影響',
+  maxroll: () => '武器傷害固定最大值',
+  poison: () => '武器塗毒',
+  auraflat: b => `ATK ${sgn(b.flatBonus)}（無視防禦）`,
+  meltdown: b => `攻擊時機率破壞武器 ${b.atkChance}%／防具 ${b.defChance}%`,
+  spawnspeed: b => `生怪速度 ${sgn(pctOf(b.mult), '%')}`,
+  targetele: b => `對 ${(b.elements || []).map(ELE_ZH).join('／')}屬性${(b.races || []).length ? '、' + b.races.map(r => (typeof RACE_LABELS !== 'undefined' && RACE_LABELS[r]) || r).join('／') + '種族' : ''}傷害 ${sgn(b.pct, '%')}`,
+  healrecv: b => `受到治癒 ${sgn(pctOf(b.mult), '%')}`,
+  devotion: b => `替隊友承受傷害（${b.targetPlayerPct}%）`,
+  providence: b => `受惡魔種族／聖屬性傷害 −${b.reducePct}%`,
+  gemfree: b => `${b.flatBonus}% 不消耗礦石`,
+  songelereduce: b => `屬性耐性 ${sgn(b.flatBonus, '%')}`,
+  songailresist: b => `異常狀態抗性 ${sgn(b.flatBonus, '%')}`,
+  weaponatk: b => `武器 ATK ${sgn(pctOf(b.mult), '%')}`,
+  sacrifice: b => `捨命攻擊剩 ${b.charges} 次（每次扣 HP ${b.hpCostPct}%）`,
+  fogwall: () => '遠程普攻傷害 −75%',
+  doublecast: b => `雙倍投擲 ${b.flatBonus}%`,
+  block: b => `格擋 ${b.flatBonus}%`,
+  reject: b => `霸王魂 ${b.flatBonus}%（剩 ${b.charges} 次）`,
+  aspddelay: b => `攻擊後延遲 −${b.flatBonus}%`,
+  castcut: b => `變動詠唱 −${b.flatBonus}%`,
+  acdcut: b => `技能後延遲 −${b.flatBonus}%`,
+  mdefflat: b => `MDEF ${sgn(b.flatBonus)}`,
+  ailimmune: b => `免疫${(typeof MON_AILMENTS !== 'undefined' && MON_AILMENTS[b.ailType] && MON_AILMENTS[b.ailType].name) || b.ailType}`,
+};
 function buffEffectLine(b) {
-  const name = BATTLE_BUFF_NAMES[b.type] || b.type;
-  let bonus = '啟動中';
-  if (b.type === 'blessing') bonus = '+' + (b.strBonus || 0);
-  else if (b.flatBonus) bonus = '+' + b.flatBonus;
-  else if (typeof b.mult === 'number' && b.mult !== 1) bonus = '×' + b.mult.toFixed(2);
   const remain = Math.max(0, Math.ceil((b.msRemaining || 0) / 1000));
-  return name + ' ' + bonus + '　' + remain + ' 秒';
+  let text = '';
+  const eleDmg = /^eledmg_(\w+)$/.exec(b.type || '');
+  if (BUFF_EFFECT_TEXT[b.type]) text = BUFF_EFFECT_TEXT[b.type](b);
+  else if (eleDmg) text = `${ELE_ZH(eleDmg[1])}屬性傷害 ${sgn(pctOf(b.mult), '%')}`;
+  if (!text) {
+    const name = BATTLE_BUFF_NAMES[b.type] || b.type;
+    text = name + ' ' + (b.flatBonus ? '+' + b.flatBonus : (typeof b.mult === 'number' && b.mult !== 1 ? '×' + b.mult.toFixed(2) : '啟動中'));
+  }
+  return text + '　' + remain + ' 秒';
 }
 /* 同一個技能給的多個效果收成一格。沒有 skillId 的（藥水之類）仍各佔一格。 */
 function buffChipGroups(list) {
