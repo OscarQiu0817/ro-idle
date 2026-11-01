@@ -6,14 +6,15 @@ const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-function loadGameData() {
+/* until：載到哪個檔為止（預設 data.js；要台服名稱等身分欄位時傳 'js/item_identity.js'） */
+function loadGameData(until) {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const files = [];
   const re = /<script\s+src="([^"]+)"><\/script>/g;
   let m;
   while ((m = re.exec(html))) {
     files.push(m[1]);
-    if (m[1] === 'js/data.js') break;
+    if (m[1] === (until || 'js/data.js')) break;
   }
   const ctx = { console: { log() {}, warn() {}, error: console.error }, window: {}, document: undefined };
   ctx.window = ctx;

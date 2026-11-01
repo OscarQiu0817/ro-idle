@@ -17,7 +17,7 @@ const OUT = path.join(ROOT, 'js', 'equip_sets.js');
 
 const cardSetKey = (cid, withCards) => [cid, ...withCards.slice().sort()].join('+');
 function build() {
-  const { ITEMS, CARDS, SKILLS, EQUIP_SETS } = loadGameData();
+  const { ITEMS, CARDS, SKILLS, EQUIP_SETS } = loadGameData('js/item_prune.js');   // 套裝名稱要用台服名稱、刪掉的道具不收
   const db = loadItemDb();
   const byAegis = new Map();
   db.forEach(it => byAegis.set(String(it.AegisName).toLowerCase(), it));

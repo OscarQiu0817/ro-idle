@@ -105,6 +105,11 @@ function main() {
     if (it.type === 'consumable' && raType === 'material' && !Object.keys(it).some(k => !BASE_KEYS.has(k))) put(it.id, 'type', 'material');
     /* 名稱：非裝備直接用台服名稱；裝備在下面加孔數後綴 */
     if (twName && !(it.type === 'weapon' || it.type === 'armor') && twName !== it.name) put(it.id, 'name', twName);
+    /* 說明：目前是英文（rAthena 原文）而台服有中文的，換成台服（T3）。色碼 ^RRGGBB 去掉、各行以空白接起來 */
+    const hasZh = s => /[一-鿿]/.test(s || '');
+    if (!hasZh(it.desc) && /[A-Za-z]{3,}/.test(it.desc || '') && zhAll && hasZh(zhAll.desc.join(''))) {
+      put(it.id, 'desc', zhAll.desc.map(l => l.replace(/\^[0-9a-fA-F]{6}/g, '').replace(/\\/g, '').trim()).filter(Boolean).join(' '));
+    }
     if (raType !== it.type && !(raType === 'card' && it.type === 'material')) R.typeDiff.push({ ...row, game: it.type, ra: raType });
 
     const tier = raTier(ra.Classes);

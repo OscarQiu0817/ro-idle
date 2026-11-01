@@ -29,6 +29,7 @@ function loadWarehouse() {
     const raw = localStorage.getItem(WAREHOUSE_KEY);
     const wh = raw ? JSON.parse(raw) : { items: [] };
     if (!wh.items) wh.items = [];
+    wh.items = wh.items.filter(r => r && ITEMS[r.item]);   // 已刪除的道具（js/item_prune.js）
     if (typeof wh.gold !== 'number') wh.gold = 0;
     return wh;
   } catch (e) { return { items: [], gold: 0 }; }
@@ -14768,6 +14769,8 @@ function loadGame() {
     const raw = localStorage.getItem(getSlotKey(currentSlot));
     if (!raw) return false;
     state = JSON.parse(raw);
+    // 已刪除的道具（js/item_prune.js）從背包拿掉，不然畫面查不到定義
+    if (Array.isArray(state.inventory)) state.inventory = state.inventory.filter(r => r && ITEMS[r.item]);
     if (!state.lastActiveAt) state.lastActiveAt = Date.now();
     if (!state.lastExpAt) state.lastExpAt = state.lastActiveAt;
     if (!state.lastLootAt) state.lastLootAt = state.lastActiveAt;
