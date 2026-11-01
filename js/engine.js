@@ -312,7 +312,7 @@ function createCharacter(name, statAlloc, gender) {
     /* 新角色預設**遠攻**（#98）。一開始只有一隻怪、節奏看得懂；
        近戰一次五隻對剛進遊戲的人來說畫面太滿。
        舊存檔沒有這個欄位時照樣退回 'melee'（見 loadGame），不改變既有角色的行為。 */
-    encounterMode: 'ranged', // 'melee'=近戰, 'ranged'=遠攻
+    encounterMode: 'melee', // 遇怪模式已移除（v2）：固定近戰（場上最多 5 隻、有補怪間隔）
     mvpMode: false,         // MVP 模式開關（#147 之後只管正牌 MVP）
     miniMode: false,        // 迷你王模式開關（#147）：跟 MVP 各自獨立勾選
     farmMode: 0,            // 打寶模式（#110）：0 關／1 一般／2 瘋狂
@@ -325,6 +325,7 @@ function createCharacter(name, statAlloc, gender) {
     converterElement: null,// 肯貝特武器附魔選的屬性
     elementChangePick: null,// 元素更換選的屬性
     autoSkill: true,
+    autoAttack: true,      // 自動普攻；關掉時停在技能射程只放技能（3d）
     autoSkillConfig: null, // 3d：4 招優先序，見 defaultAutoSkillConfig()（建角／讀檔時補上）
     autoPotion: { enabled: true, primary: '', fallback: 'red_potion', hpThreshold: 50 },
     autoSpPotion: { enabled: false, primary: '', fallback: 'blue_potion', spThreshold: 30 },
@@ -3910,7 +3911,8 @@ function tryCardAilments(trigger, mon) {
 }
 
 /* ---------------- 獵人陷阱：被動觸發（攻擊時機率/固定觸發，各自獨立冷卻）---------------- */
-const TRAP_SKILL_IDS = ['ht_landmine', 'ht_skidtrap', 'ht_flasher', 'ht_sandman', 'ht_freezingtrap', 'ht_blastmine', 'ht_anklesnare', 'ht_claymoretrap'];
+// 陷阱已改成官方的放置型場地技（工作 4，ground_trap），不再是攻擊時機率觸發的被動
+const TRAP_SKILL_IDS = [];
 function tryTrapProcs(target, monDef) {
   if (!state.learnedSkills) return;
   if (!state.trapReadyAt) state.trapReadyAt = {};
@@ -5458,6 +5460,20 @@ function tickFieldEffects() {
           });
           if (healed.length) pushCombatLog(`  → 「${f.name}」也治療了 ${partyMateNames(healed)}。`, 'ally');
         }
+        /* 光耀之堂：身邊（5×5）的不死／惡魔怪受到回復量一半的傷害（rAthena skill.cpp UNT_SANCTUARY） */
+        if (f.undeadDmg) {
+          for (const mon of (state.monsters || []).slice()) {
+            const def = MONSTERS[mon.defId];
+            if (!def || mon.hp <= 0 || !(mon.d <= SANCTUARY_RADIUS)) continue;
+            if (def.race !== 'undead' && def.race !== 'demon' && def.element !== 'undead') continue;
+            const dmg = Math.max(1, Math.floor(f.amount / 2)) * ticks;
+            noteMonsterDamage(mon, dmg);
+            mon.hp -= dmg;
+            pushCombatLog(`  → 「${f.name}」對 ${def.name} 造成 ${dmg} 點傷害！`);
+            if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', 'holy');
+            if (mon.hp <= 0) killMonster(def, mon);
+          }
+        }
       } else if (f.kind === 'aoe_holydmg') {
         if (state.monsters && state.monsters.length > 0) {
           state.monsters.forEach(mon => {
@@ -5571,9 +5587,7 @@ function gameTick() {
     tickHuntBoard();
     tickAttendance();
     tickPetFeed();
-    if (state.autoSkill) {
-      tryAutoCastSkill();
-    }
+    // 攻擊技能欄改到 gameTick 每拍檢查（見 tickCasting 之後），這裡只剩輔助技能
     // 輔助技能獨立控制，不受自動施放技能開關影響
     tryAutoCastSupportSkills();
     // 中毒持續傷害：每秒跳一次
@@ -5681,8 +5695,12 @@ function gameTick() {
   const moveNow = Date.now();
   const moveDt = Math.min(1000, moveNow - (state._lastMoveTick || moveNow));
   state._lastMoveTick = moveNow;
+  tickGroundUnits(moveNow);
   tickMonsterMovement(moveDt, moveNow);
   tickCasting(moveNow);
+  /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
+     施放卻要等下一秒，中間角色會站在技能射程上乾等、普攻也打不到。隊友仍在 alliesTick（每秒）。 */
+  if (state.autoSkill) tryAutoCastSkill();
   if (state.monsters.length > 0) {
     // 使用攻擊間隔控制攻擊頻率（累積時間差模式）
     const now = Date.now();
@@ -5701,6 +5719,9 @@ function gameTick() {
     const tgt = state.monsters[0];
     const engage = playerEngageRange();
     if (state.casting) state.attackAccumulator = 0;   // 詠唱中不普攻、不走路
+    else if (state.autoAttack === false && tgt && Number.isFinite(tgt.d) && tgt.d <= engage + DIST_EPS) {
+      state.attackAccumulator = 0;   // 自動普攻關：站定只放技能
+    }
     else if (tgt && Number.isFinite(tgt.d) && tgt.d > engage + DIST_EPS) {
       if (!playerImmobile()) tgt.d = Math.max(engage, tgt.d - moveDt / PLAYER_WALK_MS);
       state.attackAccumulator = 0;
@@ -6386,31 +6407,167 @@ function playerAttackRange() {
   if (cat === 'bow') r += skillLv('ac_vulture') || 0;
   return r;
 }
-/* 玩家要走到多近才停：普攻距離，或自動戰鬥設定的攻擊技能（SP 夠放的）裡最遠的射程 */
+/* 玩家要走到多近才停（交戰距離）。只看技能欄裡「會造成傷害」的技能（挑釁這類減益不算）：
+     自動普攻開（預設）：技能現在放得出來才停在技能射程，否則走到普攻距離打普攻
+     自動普攻關：停在技能射程只放技能；沒有可放的傷害技能時才退回普攻距離（但不會普攻） */
+// SKILL_ATTACK_TYPES 宣告在檔案後段，這裡不能在載入時就引用（const 暫時性死區），放進函式裡
+const DAMAGE_FIELD_TYPES = ['field_phys_aoe', 'field_aoe_magic', 'multi_dot_stun', 'stun_field'];
+function skillDealsDamage(sk) { return !!sk && sk.type !== 'ground_zone' && sk.type !== 'ground_icewall' && (SKILL_ATTACK_TYPES.includes(sk.type) || DAMAGE_FIELD_TYPES.includes(sk.type)); }
+function autoSkillCastableNow(sk, lv) {
+  return !state.casting && Date.now() >= (state.acdUntil || 0) && skillReady(sk.id) && state.sp >= skillSpCost(sk, lv)
+    && !groundUnitsFull(sk) && !(skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1));
+}
+/* 要扣觸媒的技能：costMinLv 以上才扣（火柱攻擊 Lv6 起吃藍礦石） */
+function skillItemCost(sk, lv) {
+  return sk.costItems && sk.costItems.length && lv >= (sk.costMinLv || 1) ? sk.costItems : null;
+}
+/* 場地技的自訂冷卻（偏離官方，避免連放）：輔助場地＝持續時間；攻擊場地填 fieldCd 秒 */
+function fieldCooldownSec(sk, lv) {
+  if (sk.cdFromDuration) return lvArr(sk.duration, lv) || 0;
+  if (sk.fieldCd != null) return lvArr(sk.fieldCd, lv) || 0;
+  return null;
+}
+/* 同一招場上數量已達上限（maxUnits）就不放 */
+function groundUnitsFull(sk) {
+  return !!sk.maxUnits && (state.groundUnits || []).filter(u => u.skillId === sk.id).length >= sk.maxUnits;
+}
 function playerEngageRange() {
-  let r = playerAttackRange();
+  const weapon = playerAttackRange();
   const cfg = state.autoSkillConfig;
-  if (!state.autoSkill || !cfg) return r;
+  const autoAttack = state.autoAttack !== false;
+  // 自動普攻關、又沒有技能可放：原地不動（走到近身也不會普攻）
+  if (!state.autoSkill || !cfg) return autoAttack ? weapon : Infinity;
+  let best = 0;
   for (const sl of autoSkillSlots(cfg)) {
     const sk = sl && sl.skillId && findSkillForUse(sl.skillId);
     const lv = sk && skillLv(sk.id);
-    if (!lv || !skillNeedsMonster(sk) || state.sp < skillSpCost(sk, lv)) continue;
-    r = Math.max(r, skillRangeCells(sk, lv));
+    if (!lv || !skillDealsDamage(sk) || state.sp < skillSpCost(sk, lv)) continue;
+    if (autoAttack && !autoSkillCastableNow(sk, lv)) continue;
+    best = Math.max(best, skillRangeCells(sk, lv));
   }
-  return r;
+  return autoAttack ? Math.max(weapon, best) : (best || Infinity);
 }
+/* ---------------- 場地物件（工作 4）----------------
+   放在地上、有位置的技能：火牆（wall）、陷阱（trap）、減速區（zone）。
+   位置用跟怪一樣的距離 d＋方向角 a；判定用平面距離（餘弦定理）。
+     wall：怪越過牆所在距離、且方向在牆蓋住的弧內 → 吃一下、擊退 2 格、牆扣 1 次
+     trap：怪走到陷阱 0.8 格內 → 觸發一次就消失（傷害／擊退／定身／異常，部分有範圍）
+     zone：怪在區域內移動速度變慢 */
+const GROUND_PUSH_MAX = SPAWN_DIST_MAX + 4;
+const TRAP_TRIGGER_RADIUS = 0.8;
+const SANCTUARY_RADIUS = 2.5;      // 5×5，跟著玩家
+const RANGED_ATTACK_CELLS = 4;     // 射程 ≥ 4 格算遠程（光之障壁擋、暗之障壁不擋）
+const ICE_MELT_PER_SEC = 50;       // 冰刃之牆每秒融化
+const ICE_DETOUR_CELLS = 3;        // 被冰牆擋住的怪繞路要多走幾格
+const FOGWALL_RANGED_MULT = 0.25;  // 薄霧牆：遠程普攻傷害 −75%
+function angDiff(a, b) { const x = Math.abs((a || 0) - (b || 0)) % (Math.PI * 2); return x > Math.PI ? Math.PI * 2 - x : x; }
+function planarDist(p, q) {
+  return Math.sqrt(Math.max(0, p.d * p.d + q.d * q.d - 2 * p.d * q.d * Math.cos(angDiff(p.a, q.a))));
+}
+function pushBack(mon, n) {
+  const def = MONSTERS[mon.defId];
+  if (!n || !Number.isFinite(mon.d) || (def && def.isBoss)) return;
+  mon.d = Math.min(GROUND_PUSH_MAX, mon.d + n);
+}
+function wallCovers(w, mon) { return angDiff(w.a, mon.a) <= w.half; }
+/* 場地物件造成的傷害；怪死了會被移出 state.monsters，呼叫端要用副本迭代 */
+function groundDamage(mon, u) {
+  const def = MONSTERS[mon.defId];
+  if (!def || mon.hp <= 0) return;
+  const em = getElementMultiplierVsMonster(u.element || 'none', def, mon);
+  const dmg = u.magic && u.ignoreDef ? Math.max(1, Math.round(state.matk * u.mult * em))   // 火柱攻擊：無視魔防
+    : u.magic
+    ? mitigateDamage(state.matk * u.mult * em, ...defOf(def, 1, true))
+    : mitigateDamage(skillBaseDamage(false, def, em) * u.mult, ...defOf(def));
+  noteMonsterDamage(mon, dmg);
+  mon.hp -= dmg;
+  pushCombatLog(`  → 「${u.name}」對 ${def.name} 造成 ${dmg} 點傷害${u.hits > 1 ? `（${u.hits} 段）` : ''}！`);
+  if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', u.element || null);
+  if (mon.hp <= 0) killMonster(def, mon);
+}
+function hitByWall(mon, w) {
+  w.hits--;
+  groundDamage(mon, w);
+  if (mon.hp > 0) { if (MONSTERS[mon.defId] && MONSTERS[mon.defId].isBoss) mon.d = w.d; else mon.d = w.d + 2; }
+}
+function triggerTrap(mon, t) {
+  t.used = true;
+  const victims = t.radius ? state.monsters.filter(m => m.hp > 0 && Number.isFinite(m.d) && planarDist(m, t) <= t.radius) : [mon];
+  logMsg(`💥 「${t.name}」觸發！`);
+  for (const m of victims.slice()) {
+    const def = MONSTERS[m.defId];
+    if (t.effect === 'damage' || t.effect === 'damageAoe' || t.effect === 'freeze') groundDamage(m, t);
+    if (m.hp <= 0) continue;
+    if (t.effect === 'damage' && t.stunSec) applyStun(m, t.stunSec, true);
+    if (t.effect === 'knockback') pushBack(m, t.knockback || 5);
+    if (t.effect === 'root') m.rootUntil = Date.now() + t.rootSec * 1000 * (def && def.isBoss ? 0.5 : 1);
+    if (t.effect === 'blind' || t.effect === 'sleep' || t.effect === 'freeze') applyAilment(m, def, t.effect, { sec: t.ailSec });
+  }
+}
+/* 放置目標：最近的怪（施放時還會依技能種類調整距離） */
+function pickGroundTarget() {
+  let best = null;
+  for (const m of state.monsters || []) if (m.hp > 0 && Number.isFinite(m.d) && (!best || m.d < best.d)) best = m;
+  return best;
+}
+function tickGroundUnits(now) {
+  if (!state.groundUnits) state.groundUnits = [];
+  state.groundUnits = state.groundUnits.filter(u => u.endsAt > now && !u.used && !(u.kind === 'wall' && u.hits <= 0));
+  // 陷阱：怪站在附近就觸發（不只走過去的那一刻，站著不動的怪也會踩到）
+  for (const t of state.groundUnits.filter(u => u.kind === 'trap')) {
+    const m = (state.monsters || []).find(x => x.hp > 0 && Number.isFinite(x.d) && planarDist(x, t) <= TRAP_TRIGGER_RADIUS);
+    if (m) triggerTrap(m, t);
+  }
+  // 毒霧（病毒散播）：每秒讓霧裡的怪中毒
+  for (const z of state.groundUnits.filter(u => u.kind === 'zone' && u.poisonMult && now >= (u.nextTickAt || 0))) {
+    z.nextTickAt = now + 1000;
+    for (const m of (state.monsters || []).slice()) {
+      const def = MONSTERS[m.defId];
+      if (def && m.hp > 0 && Number.isFinite(m.d) && planarDist(m, z) <= z.radius) applyPoisonDot(m, def, state.atk * z.poisonMult);
+    }
+  }
+  // 冰刃之牆：每秒融化
+  for (const w of state.groundUnits.filter(u => u.kind === 'ice')) {
+    w.hp -= ICE_MELT_PER_SEC * (now - (w.meltAt || now)) / 1000;
+    w.meltAt = now;
+  }
+  state.groundUnits = state.groundUnits.filter(u => u.kind !== 'ice' || u.hp > 0);
+}
+/* 冰刃之牆擋路：要越過冰牆、方向又在牆蓋住的弧內 → 停在牆外，繞路時間到了才放行 */
+function iceWallBlocks(mon, nd, mv, now) {
+  const ice = (state.groundUnits || []).find(w => w.kind === 'ice' && mon.d >= w.d - DIST_EPS && nd < w.d && wallCovers(w, mon));
+  if (!ice || mon._iceThrough === ice.uid) return false;
+  if (mon._iceWall !== ice.uid) { mon._iceWall = ice.uid; mon._iceWaitUntil = now + ICE_DETOUR_CELLS * mv.walkMs; }
+  if (now >= mon._iceWaitUntil) { mon._iceThrough = ice.uid; return false; }
+  mon.d = Math.max(nd, ice.d);
+  return true;
+}
+/* 減速區：在區域內的怪每格要多花的倍率（取最慢的一個） */
+function zoneSlowMult(mon) {
+  let mult = 1;
+  for (const z of state.groundUnits || []) {
+    if (z.kind === 'zone' && z.slow > 0 && planarDist(mon, z) <= z.radius) mult = Math.max(mult, 1 / Math.max(0.05, 1 - z.slow));
+  }
+  return mult;
+}
+
 /* 每 tick：怪物走近。昏迷類異常、受擊硬直、不會動的怪不走；
    被動怪要等被打（血量少於上限）才會靠過來。受擊硬直用血量下降偵測，不必改各傷害路徑。 */
 function tickMonsterMovement(dtMs, now) {
-  for (const mon of state.monsters) {
-    if (!Number.isFinite(mon.d)) continue;
+  for (const mon of state.monsters.slice()) {   // 撞火牆可能打死怪（會從陣列移除），用副本迭代
+    if (!Number.isFinite(mon.d) || mon.hp <= 0) continue;
     const mv = monMove(mon);
     if (mon._lastHp != null && mon.hp < mon._lastHp) mon.flinchUntil = now + mv.damageMotion;
     mon._lastHp = mon.hp;
     if (mv.immobile || mon.d <= mv.range + DIST_EPS) continue;
     if (!mv.aggressive && mon.hp >= mon.maxHp) continue;
     if ((mon.stunnedUntil && now < mon.stunnedUntil) || (mon.flinchUntil && now < mon.flinchUntil)) continue;
-    mon.d = Math.max(mv.range, mon.d - dtMs / mv.walkMs);
+    if (mon.rootUntil && now < mon.rootUntil) continue;   // 定位陷阱
+    const nd = Math.max(mv.range, mon.d - dtMs / (mv.walkMs * zoneSlowMult(mon)));
+    const wall = (state.groundUnits || []).find(w => w.kind === 'wall' && w.hits > 0 && mon.d > w.d && nd <= w.d && wallCovers(w, mon));
+    if (wall) { hitByWall(mon, wall); continue; }
+    if (iceWallBlocks(mon, nd, mv, now)) continue;
+    mon.d = nd;
   }
 }
 function spawnMonster() {
@@ -7497,7 +7654,8 @@ function monsterAttackSingle(mon) {
     }
   }
   // 護盾（霸邪之陣/暗之障壁）：吸收近距離物理傷害，直到耐久或次數耗盡
-  dmg = absorbWithShields(state, dmg);
+  dmg = fogWallCut(state, dmg, monMove(mon).range >= RANGED_ATTACK_CELLS);
+  dmg = absorbWithShields(state, dmg, undefined, undefined, monMove(mon).range >= RANGED_ATTACK_CELLS);
   state.hp -= dmg;
   // 同上：睡眠「被打就醒」以前也只寫在技能那條路徑，普攻打不醒
   playerAilBreakOnDamage();
@@ -8855,6 +9013,7 @@ function shareBuffsWithAllies(fresh, freshShields, sk) {
     /* 護盾的耐久要照**收禮那個人自己的** maxHp 重算——霸邪之陣寫的是「最大HP 的 12~30%」，
        照抄施術者那份的話，血薄的祭司會發給坦克一面只有自己血量三成的盾。 */
     freshShields.forEach(sh => {
+      if (sh.shared) { tg.shields.push(sh); return; }   // 全隊共用同一個物件，次數一起扣
       const cp = Array.isArray(sk.shieldCapacityPct) ? sk.shieldCapacityPct[lv - 1] : sk.shieldCapacityPct;
       const copy = Object.assign({}, sh);
       if (cp != null) copy.remainingHp = Math.round((tg.maxHp || 1) * cp / 100);
@@ -8874,19 +9033,25 @@ function shareBuffsWithAllies(fresh, freshShields, sk) {
    抽成獨立一支是因為隊友也會拿到霸邪之陣的盾（#95）——兩邊必須用**同一套**
    消耗規則（先過期再看耐久與次數、只吃第一面、破了就丟掉），
    不然「玩家的盾擋一次扣一次、隊友的盾永遠不破」這種事不會有人發現。 */
-function absorbWithShields(holder, dmg, who, lane) {
+/* 薄霧牆：遠程普攻 −75%（至少 1） */
+function fogWallCut(holder, dmg, ranged) {
+  if (!ranged || !(holder.buffs || []).some(b => b.type === 'fogwall')) return dmg;
+  return Math.max(1, Math.round(dmg * FOGWALL_RANGED_MULT));
+}
+function absorbWithShields(holder, dmg, who, lane, ranged) {
   if (!holder.shields || !holder.shields.length) return dmg;
   const now = Date.now();
   holder.shields = holder.shields.filter(sh => now < sh.expiresAt && sh.remainingCharges > 0 && sh.remainingHp > 0);
-  if (!holder.shields.length) return dmg;
-  const sh = holder.shields[0];
+  // 只擋近戰／只擋遠程的盾要對得上這一下的距離
+  const sh = holder.shields.find(x => !x.blocks || (x.blocks === 'ranged') === !!ranged);
+  if (!sh) return dmg;
   const absorbed = Math.min(dmg, sh.remainingHp);
   sh.remainingHp -= absorbed;
   sh.remainingCharges -= 1;
   const pre = who ? `${who} 的` : '';
   logMsg(`🛡️ ${pre}護盾抵擋了 ${absorbed} 點傷害！`, lane);
   if (sh.remainingCharges <= 0 || sh.remainingHp <= 0) {
-    holder.shields.shift();
+    holder.shields = holder.shields.filter(x => x !== sh);   // 共用的盾：其他人身上那份下次過濾時一起消失
     logMsg(`🛡️ ${pre}護盾已破裂！`, lane);
   }
   return dmg - absorbed;
@@ -9207,7 +9372,8 @@ function monsterAttackAlly(mon, monDef, ally) {
      仍然每下掉 1 滴血）。 */
   let dmg = Math.max(1, Math.round(mitigatePlayerIncoming(raw, ally.defHard || 0, ally.defSoft || 0)));
   // 霸邪之陣分給隊友的盾（#95）：跟玩家走完全同一套消耗規則
-  dmg = absorbWithShields(ally, dmg, ally._allyName, 'ally');
+  dmg = fogWallCut(ally, dmg, monMove(mon).range >= RANGED_ATTACK_CELLS);
+  dmg = absorbWithShields(ally, dmg, ally._allyName, 'ally', monMove(mon).range >= RANGED_ATTACK_CELLS);
   if (dmg > 0) allyTakeDamage(ally, dmg, monDef.name);
   pushCombatLog(`  → ${monDef.name} 攻擊 ${ally._allyName}，造成 ${dmg} 點傷害！`, 'ally');
   if (typeof renderLog === 'function') renderLog();
@@ -9888,6 +10054,27 @@ function castSkill(skillId, opts) {
      冷卻 Cooldown（取代原本卡片的「冷卻 ±秒」魔改）
      受擊打斷：怪物普攻或技能命中就中斷（技能 CastCancel:false 免疫）；昏迷類異常也會中斷
    SP 在詠唱完成、技能真的放出時才扣（被打斷不扣）。裝備的詠唱加成留到效果層。 */
+/* 範圍技的作用區：rAthena 沒有範圍資料就回 null（維持打全部怪的舊行為） */
+function skillAoeArea(sk, lv) {
+  const row = skillCastRow(sk.id);
+  if (!row) return null;
+  const r = (row.unit && row.unit.range ? castLv(row.unit.range, lv) : 0) || castLv(row.splash, lv);
+  if (!r) return null;
+  const tgt = state.monsters && state.monsters[0];
+  const self = row.target === 'Self' || !tgt || !Number.isFinite(tgt.d);
+  return { r, center: self ? { d: 0, a: 0 } : { d: tgt.d, a: tgt.a || 0 } };
+}
+function inAoeArea(area, mon) {
+  return !Number.isFinite(mon.d) || planarDist(mon, area.center) <= area.r + DIST_EPS;
+}
+/* 技能擊退：rAthena Knockback 格數，打到的怪（還活著、不是首領）往後推 */
+function applyKnockback(sk, lv, mons) {
+  const row = skillCastRow(sk.id);
+  const kb = row ? castLv(row.knockback, lv) : 0;
+  if (!kb) return;
+  for (const m of mons) if (m.hp > 0) pushBack(m, kb);
+}
+function lvArr(v, lv) { return Array.isArray(v) ? v[Math.min(lv, v.length) - 1] : v; }
 function skillCastRow(skillId) {
   return (typeof SKILL_CAST !== 'undefined' && SKILL_CAST[skillId]) || null;
 }
@@ -9911,7 +10098,8 @@ function skillRangeCells(sk, lv) {
 function applyAfterCastDelay(skillId, lv) {
   const row = skillCastRow(skillId);
   const acd = row ? castLv(row.afterCastDelay, lv) : 0;
-  state.acdUntil = Date.now() + Math.max(acd, state.attackInterval || 0);
+  state.acdFrom = Date.now();
+  state.acdUntil = state.acdFrom + Math.max(acd, state.attackInterval || 0);
 }
 function beginCast(sk, lv, ct, opts) {
   if (!skillReady(sk.id) || state.sp < skillSpCost(sk, lv)) return false;
@@ -10020,7 +10208,7 @@ function castSkillInner(skillId, opts) {
      這裡只**檢查**湊不湊得出來（背包 → 倉庫），真正扣除在各自的 case 裡，
      跟上面鋅幣／HP／箭矢那幾道守門同一個寫法。
      元素領域從別的領域切換過來時官方不消耗礦石，所以那種情況直接放行。 */
-  if (sk.costItems && sk.costItems.length && !free
+  if (skillItemCost(sk, lv) && !free
       && !(sk.type === 'buff_elementfield' && elementFieldActive())
       && !sageCanPay(sk.costItems, sk.costQty || 1)) {
     logMsg(`⚠️ 缺少${sk.costItems.map(id => getItemDisplayName(id)).join('或')}，無法施放「${sk.name}」！`);
@@ -10058,6 +10246,8 @@ function castSkillInner(skillId, opts) {
     return false;
   }
 
+  if (!free && groundUnitsFull(sk)) return false;
+
   state.sp -= spCost;
   if (hpCost > 0) state.hp -= hpCost;
   if (sk.consumeAmmo && !free) for (let i = 0; i < sk.consumeAmmo; i++) consumeAmmo();
@@ -10066,7 +10256,8 @@ function castSkillInner(skillId, opts) {
   if (!free) {
     const cd = Array.isArray(sk.cooldown) ? sk.cooldown[lv - 1] : sk.cooldown;
     const castRow = !_allyActing && skillCastRow(skillId);
-    state.cooldowns[skillId] = castRow ? castLv(castRow.cooldown, lv) : effectiveCooldownMs(skillId, cd);
+    const fcd = fieldCooldownSec(sk, lv);
+    state.cooldowns[skillId] = fcd != null ? fcd * 1000 : castRow ? castLv(castRow.cooldown, lv) : effectiveCooldownMs(skillId, cd);
   }
   /* 技能音效與特效：確定放得出來（SP/鋅幣/冷卻都過了）才出聲、才播圖。
      **特效**換身中不播（不該讓玩家的立繪擺出施放姿勢），**音效**照播。 */
@@ -10254,6 +10445,7 @@ function castSkillInner(skillId, opts) {
         logMsg(`💫 ${def.name} 被擊退撞暈了，${stunSec.toFixed(1)}秒內無法攻擊！`);
       }
       if (target.hp <= 0) killMonster(def, target);
+      applyKnockback(sk, lv, [target]);
       break;
     }
     case 'damage_aoe':
@@ -10264,9 +10456,15 @@ function castSkillInner(skillId, opts) {
       // 聖十字審判的自傷（#66）用的是「單一目標的傷害」，不是全場加總——
       // 官方是同一發法術打到自己，怪多不會讓自傷變多
       let aoeTopDmg = 0;
+      /* 範圍（工作 4）：rAthena 有範圍資料的技能只打範圍內的怪——
+         以自己為中心（TargetType Self）量到玩家的距離，其餘量到目標（monsters[0]）的平面距離 */
+      const aoeArea = skillAoeArea(sk, lv);
+      const aoeHit = [];
       for (let i = state.monsters.length - 1; i >= 0; i--) {
         const mon = state.monsters[i];
         const monDef = MONSTERS[mon.defId];
+        if (aoeArea && !inAoeArea(aoeArea, mon)) continue;
+        aoeHit.push(mon);
         // 命中判定：ATK 範圍技對每隻怪各判一次，MATK 範圍技必中（#76）
         if (sk.type !== 'magic_aoe' && !skillHits(sk, lv, monDef, mon)) {
           pushCombatLog(`  → ${monDef.name} 閃避了！`);
@@ -10364,6 +10562,7 @@ function castSkillInner(skillId, opts) {
         }
       }
       if (typeof renderLog === 'function') renderLog();
+      applyKnockback(sk, lv, aoeHit);
       break;
     }
     case 'stun_field': {
@@ -10766,8 +10965,13 @@ function castSkillInner(skillId, opts) {
       const capacity = capacityFlat != null ? capacityFlat : Math.round(state.maxHp * ((capacityPct || 0) / 100));
       const charges = Array.isArray(sk.shieldCharges) ? sk.shieldCharges[lv - 1] : sk.shieldCharges;
       if (!state.shields) state.shields = [];
-      state.shields.push({ id: sk.id, remainingHp: capacity, remainingCharges: charges, expiresAt: Date.now() + dur * 1000 });
-      logMsg(`🛡️ 「${sk.name}」Lv${lv} 發動，護盾展開！（耐久${capacity}，可擋${charges}次）`);
+      state.shields = state.shields.filter(sh => sh.id !== sk.id);
+      // blocks：'melee' 暗之障壁／'ranged' 光之障壁；shared：全隊同一面盾、共用次數
+      state.shields.push({ id: sk.id, remainingHp: capacity, remainingCharges: charges, expiresAt: Date.now() + dur * 1000,
+        blocks: sk.shieldBlocks || null, shared: !!sk.shieldShared });
+      const paid = !free && sk.costItems ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      const what = sk.shieldBlocks === 'ranged' ? '遠程攻擊' : sk.shieldBlocks === 'melee' ? '近戰攻擊' : '攻擊';
+      logMsg(`🛡️ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！可擋${what} ${charges} 次${sk.shieldShared ? '（全隊共用）' : ''}`);
       break;
     }
     /* 無視體型攻擊（#131）。官方是武器完全定義 Weapon Perfection：
@@ -10787,8 +10991,10 @@ function castSkillInner(skillId, opts) {
       const tickSec = sk.fieldTickIntervalSec || 1;
       if (!state.activeFieldEffects) state.activeFieldEffects = [];
       // party 的話每一跳也回給隊友（#131）。回復量記施術者的，跟官方的範圍治療一致
-      state.activeFieldEffects.push({ kind: 'selfheal', name: sk.name, amount: healAmt, party: !!sk.party, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
-      logMsg(`✨ 「${sk.name}」Lv${lv} 發動！`);
+      state.activeFieldEffects.push({ kind: 'selfheal', name: sk.name, amount: healAmt, party: !!sk.party,
+        undeadDmg: !!sk.undeadDmg, skillId: sk.id, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
+      const paid = !free && sk.costItems ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      logMsg(`✨ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！`);
       break;
     }
     case 'field_aoe_magic': {
@@ -10800,6 +11006,73 @@ function castSkillInner(skillId, opts) {
       if (!state.activeFieldEffects) state.activeFieldEffects = [];
       state.activeFieldEffects.push({ kind: 'aoe_holydmg', name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動！`);
+      break;
+    }
+    /* 場地技（工作 4）：放在最近那隻怪的方向上，判定見 tickGroundUnits／tickMonsterMovement */
+    case 'ground_wall': {
+      const tgt = pickGroundTarget();
+      if (!tgt) break;
+      const w = tgt.d <= 1.5 ? Math.max(1, tgt.d) : Math.min(3, tgt.d - 0.5);
+      const row = skillCastRow(sk.id);
+      const wall = { kind: 'wall', skillId: sk.id, name: sk.name, d: w, a: tgt.a || 0,
+        half: Math.min(Math.PI, (sk.wallCells || 3) / 2 / w), hits: lvArr(sk.wallHits, lv) || (lv + 2),
+        mult, element: skElement, magic: true, endsAt: Date.now() + (row ? castLv(row.duration, lv) : 5000) };
+      if (!state.groundUnits) state.groundUnits = [];
+      state.groundUnits.push(wall);
+      // 站在牆上的怪立刻吃一下、被擊退
+      for (const m of state.monsters.slice()) {
+        if (wall.hits > 0 && m.hp > 0 && Number.isFinite(m.d) && Math.abs(m.d - w) <= 0.5 && wallCovers(wall, m)) hitByWall(m, wall);
+      }
+      logMsg(`🔥 「${sk.name}」Lv${lv}：在 ${w.toFixed(1)} 格處立起火牆（可擋 ${wall.hits} 次）`);
+      break;
+    }
+    case 'ground_trap': {
+      const tgt = pickGroundTarget();
+      if (!tgt) break;
+      const row = skillCastRow(sk.id);
+      const range = row ? Math.abs(castLv(row.range, lv)) || 3 : 3;
+      // 放在怪的來路上；已經貼身就直接放在牠腳下
+      const d = tgt.d <= 1.2 ? tgt.d : Math.max(1, Math.min(range, tgt.d - 1));
+      if (!state.groundUnits) state.groundUnits = [];
+      state.groundUnits.push({ kind: 'trap', skillId: sk.id, name: sk.name, d, a: tgt.a || 0,
+        effect: sk.trapEffect, radius: row ? castLv(row.splash, lv) || 0 : 0,
+        mult, element: skElement, magic: !!sk.trapMagic, ignoreDef: !!sk.ignoreDef, hits: lvArr(sk.trapHits, lv) || 1,
+        stunSec: lvArr(sk.stunSec, lv) || 0, ailSec: lvArr(sk.ailSec, lv) || 0, rootSec: lvArr(sk.rootSec, lv) || 0,
+        knockback: row ? castLv(row.knockback, lv) || 0 : 0,
+        endsAt: Date.now() + (row ? castLv(row.duration, lv) || 60000 : 60000) });
+      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      logMsg(`🪤 「${sk.name}」Lv${lv}：放在 ${d.toFixed(1)} 格處${paid ? `（消耗${paid.label}）` : ''}`);
+      break;
+    }
+    case 'ground_zone': {
+      const tgt = pickGroundTarget();
+      if (!tgt) break;
+      const row = skillCastRow(sk.id);
+      if (!state.groundUnits) state.groundUnits = [];
+      const poisonMult = lvArr(sk.poisonMult, lv) || 0;
+      state.groundUnits.push({ kind: 'zone', skillId: sk.id, name: sk.name, d: tgt.d, a: tgt.a || 0,
+        radius: sk.zoneRadius || 2, slow: (lvArr(sk.slowPct, lv) || 0) / 100, poisonMult,
+        endsAt: Date.now() + (row ? castLv(row.duration, lv) : 5000) });
+      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      logMsg(poisonMult ? `☠️ 「${sk.name}」Lv${lv}：${(tgt.d).toFixed(1)} 格處散出毒霧${paid ? `（消耗${paid.label}）` : ''}`
+        : `🟫 「${sk.name}」Lv${lv}：${(tgt.d).toFixed(1)} 格處的地面變成泥沼`);
+      break;
+    }
+    case 'ground_icewall': {
+      const tgt = pickGroundTarget();
+      if (!tgt) break;
+      const d = Math.max(1, Math.min(9, tgt.d - 1));
+      if (!state.groundUnits) state.groundUnits = [];
+      const hp = lvArr(sk.iceHp, lv) || 400;
+      state.groundUnits.push({ kind: 'ice', uid: Date.now() + Math.random(), skillId: sk.id, name: sk.name, d, a: tgt.a || 0,
+        half: Math.min(Math.PI, 5 / 2 / d), hp, maxHp: hp, meltAt: Date.now(), endsAt: Infinity });
+      logMsg(`🧊 「${sk.name}」Lv${lv}：在 ${d.toFixed(1)} 格處立起冰牆（耐久 ${hp}）`);
+      break;
+    }
+    case 'buff_fogwall': {
+      const dur = lvArr(sk.duration, lv) || 20;
+      state.buffs.push({ type: 'fogwall', mult: 1, msRemaining: dur * 1000, skillId: sk.id });
+      logMsg(`🌫️ 「${sk.name}」：全隊籠罩在霧中 ${dur} 秒，遠程普攻傷害 −75%`);
       break;
     }
     case 'multi_dot_stun': {
@@ -11367,14 +11640,12 @@ function tryChainSpells(afterSkillId, afterLv) {
 }
 
 // 在城鎮安全區休息時，HP/SP每秒都會被townRestore()自動補滿：
-// 此時自動施放會消耗HP的技能，或只對治療/場域/戰鬥才有意義的技能，
-// 只會造成「扣了又馬上補回」的無謂消耗與畫面閃爍，故休息時應跳過
+// 此時自動施放只對治療/場域/戰鬥才有意義的技能，只會造成無謂消耗，故休息時應跳過。
+// 扣 HP 的增益（加速術等）照放：使用者指定城內也要補 buff，扣的血馬上會補回
 // 有怪物時不視為「城鎮休息」，允許施放
 function wastesResourceInTown(sk, lv) {
   if (!isInTown()) return false;
   if (state.monsters && state.monsters.length > 0) return false;  // 有怪物時不阻擋
-  const hpCostCheck = Array.isArray(sk.hpCost) ? sk.hpCost[lv - 1] : sk.hpCost;
-  if (hpCostCheck > 0) return true;
   // #72 鍊金術士：火煙瓶投擲／生物調撥／生命體召喚／氣泡蟲召喚／化學保護都是「掛著讓它跑」的輔助
   return ['heal', 'heal_over_time', 'field_heal', 'field_aoe_magic', 'stun_field', 'multi_dot_stun', 'debuff_def', 'debuff',
     'field_phys_aoe', 'alchemy_summon', 'bomb_random', 'buff_chemical',
@@ -11394,7 +11665,7 @@ function wastesResourceInTown(sk, lv) {
    所以改成**只維護攻擊那份白名單**，其餘非被動一律算輔助——
    之後新增技能類型會自動出現在頁面上，不會再安靜地消失。 */
 const SKILL_ATTACK_TYPES = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi',
-  'damage_aoe', 'magic_aoe', 'poison_proc', 'bomb_random'];
+  'damage_aoe', 'magic_aoe', 'poison_proc', 'bomb_random', 'ground_wall', 'ground_trap', 'ground_zone', 'ground_icewall'];
 /* 場上沒怪就放不出效果的類型。castSkill() 是**先扣 SP／鋅幣再進 switch**，
    氣泡蟲召喚那種「沒怪就 return false」的 case 會白白吃掉 5,000 鋅幣，
    所以擋在自動施放這一層。 */
@@ -11420,7 +11691,7 @@ function autoSkillSlots(cfg) {
   ];
 }
 function defaultAutoSkillConfig() {
-  return { slots: Array.from({ length: AUTO_SKILL_SLOTS }, emptyAutoSkillSlot), smartCast: true };
+  return { slots: Array.from({ length: AUTO_SKILL_SLOTS }, emptyAutoSkillSlot) };
 }
 /* 舊存檔：兩招設定轉成 4 格（只在沒有 slots 時轉一次） */
 function migrateAutoSkillConfig(cfg) {
@@ -11430,7 +11701,7 @@ function migrateAutoSkillConfig(cfg) {
     while (slots.length < AUTO_SKILL_SLOTS) slots.push(emptyAutoSkillSlot());
     cfg.slots = slots;
   }
-  if (cfg.smartCast == null) cfg.smartCast = true;
+  delete cfg.smartCast;   // 智能施法已移除
   return cfg;
 }
 
@@ -11442,7 +11713,6 @@ function tryAutoCastSkill() {
   if (state.casting || Date.now() < (state.acdUntil || 0)) return;
   const spPct = (state.sp / state.maxSp) * 100;
   const monsterCount = state.monsters ? state.monsters.length : 0;
-  let smartSkipped = null;   // 智能施法跳過的第一招（被貼身又沒別招可放時的退路）
   for (const sl of slots) {
     const sk = findSkillForUse(sl.skillId);
     const lv = sk && skillLv(sk.id);
@@ -11451,12 +11721,9 @@ function tryAutoCastSkill() {
     const isAttack = skillNeedsMonster(sk);
     if (isAttack && monsterCount < Math.max(1, sl.minMobs || 1)) continue;
     if (isAttack && !autoSkillInRange(sk, lv)) continue;
-    if (smartCastBlocks(sk, lv)) { if (!smartSkipped) smartSkipped = sk; continue; }
     castSkill(sk.id);
     return;
   }
-  // 退路：已經有會打斷的怪貼身、又沒有別招可放，照放被跳過的那招（不然只能站著挨打）
-  if (smartSkipped && playerCornered()) castSkill(smartSkipped.id);
 }
 
 /* 攻擊技能的目標（monsters[0]）要在技能射程內；射程 0＝以自己為中心，不看距離 */
@@ -11465,37 +11732,6 @@ function autoSkillInRange(sk, lv) {
   const r = skillRangeCells(sk, lv);
   return !tgt || !r || !Number.isFinite(tgt.d) || tgt.d <= r + DIST_EPS;
 }
-/* 智能施法（自動戰鬥設定，預設開）：預估詠唱完成前會被打到就先不放 */
-function smartCastBlocks(sk, lv) {
-  const cfg = state.autoSkillConfig || {};
-  if (cfg.smartCast === false) return false;
-  const row = skillCastRow(sk.id);
-  if (!row || row.castCancel === false) return false;
-  const ct = skillCastTimeMs(sk, lv);
-  return ct > 0 && firstHitMs() < ct;
-}
-/* 最快多久會有怪打到玩家（毫秒） */
-function firstHitMs() {
-  const now = Date.now();
-  let best = Infinity;
-  for (const mon of state.monsters || []) {
-    const mv = monMove(mon);
-    const def = MONSTERS[mon.defId];
-    const wait = Math.max(0, (mon.stunnedUntil || 0) - now, (mon.flinchUntil || 0) - now);
-    let ms;
-    if (monInRange(mon)) {
-      const interval = (def && def.atkInterval ? def.atkInterval * 1000 : 1000);
-      ms = Math.max(wait, interval - (now - (mon.lastAttackTime || now)));
-    } else if (mv.immobile || (!mv.aggressive && mon.hp >= mon.maxHp)) continue;
-    else ms = wait + (mon.d - mv.range) * mv.walkMs;
-    best = Math.min(best, ms);
-  }
-  return best;
-}
-function playerCornered() {
-  return (state.monsters || []).some(mon => monInRange(mon));
-}
-
 // 自動施放輔助技能
 function tryAutoCastSupportSkills() {
   if (!state.autoSupportSkills) return;
@@ -12011,6 +12247,8 @@ const NPC_SHOPS = {
     items: ['red_potion', 'orange_potion', 'yellow_potion', 'white_potion',
             'blue_potion',
             'refine_stone',
+            // 技能觸媒：魔力礦石（藍／紅／黃）、陷阱道具（官方 NPC 有賣）
+            'blue_gemstone', 'red_gemstone', 'yellow_gemstone', 'booby_trap',
             'center_potion', 'awakening_potion', 'berserk_potion',
             // 未解封的卡冊：500 萬一本，開出卡冊再開出卡片。純粹是給後期消耗金錢的玩法
             'sealed_card_album', 'leaf_of_yggdrasil',
@@ -14521,6 +14759,7 @@ function loadGame() {
     // 打寶模式（#110）：舊存檔補 0（關閉）；不是進階二轉的話一律關掉
     if (typeof state.farmMode !== 'number') state.farmMode = 0;
     if (state.farmMode && !farmModeUnlocked()) state.farmMode = 0;
+    state.farmMode = 0;   // 打寶模式介面暫時移除（v2），一律關閉
     // 隊友藍水（#105）：舊存檔補上預設，不然隊友放完技能就再也沒 SP
     if (!state.allySpPotion) state.allySpPotion = { enabled: true, primary: '', fallback: ALLY_SP_POTION_FALLBACK, spThreshold: 30 };
     if (typeof state.autoBuyAllySpPotion !== 'boolean') state.autoBuyAllySpPotion = true;
@@ -14560,7 +14799,8 @@ function loadGame() {
     if (!state.monsters) state.monsters = [];
     if (!state.maxMonsters) state.maxMonsters = MELEE_MAX_MONSTERS;
     if (!state.monsterIdCounter) state.monsterIdCounter = 0;
-    if (!state.encounterMode) state.encounterMode = 'melee';
+    state.encounterMode = 'melee';   // 遇怪模式已移除（v2），舊存檔的遠攻／不遇怪一律改回近戰
+    if (state.autoAttack == null) state.autoAttack = true;
     if (!state.lastSpawnTime) state.lastSpawnTime = 0;
     if (!state.bossKills) state.bossKills = {};   // 頭目擊殺紀錄（#137）：舊存檔沒有這格
     migrateBossKills(state);                      // 初版沒分打寶模式，搬到「普通」那一格

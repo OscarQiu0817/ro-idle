@@ -289,6 +289,41 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .map-bg-layer { position: absolute; inset: 0; z-index: 0; }
 .map-bg-layer img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: saturate(0.8) brightness(0.75); }
 /* 3b：可捲動的拼貼背景（玩家走路時往反方向捲）。圖載入成功就蓋住下面那張 img */
+/* 3d：自動戰鬥 4 招並列、即時狀態列 */
+.ab-cast-status { margin: 6px 0 8px; font-size: 12px; color: var(--text-dim, #aaa); height: 30px; }
+.ab-cast-status > span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ab-toggle-row { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.ab-toggle-row .auto-toggle { margin-top: 8px; }
+.ab-cast-status.cast { color: #e8c34b; }
+.ab-cast-status.acd { color: #8fb8ff; }
+.ab-cast-track { height: 6px; margin-top: 3px; background: rgba(0,0,0,0.35); border-radius: 3px; overflow: hidden; }
+.ab-cast-track i { display: block; height: 100%; width: 0; background: currentColor; }
+.ab-slots-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+.ab-slot-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-height: 92px; padding: 14px 4px 6px; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px;
+  background: rgba(0,0,0,0.25); color: inherit; font: inherit; cursor: pointer; }
+.ab-slot-card.sel { border-color: var(--gold, #e8c34b); box-shadow: 0 0 0 1px var(--gold, #e8c34b) inset; }
+.ab-slot-card.empty { border-style: dashed; opacity: 0.75; }
+.ab-slot-no { position: absolute; top: 3px; left: 6px; font-size: 11px; opacity: 0.7; }
+.ab-slot-icon { width: 28px; height: 28px; line-height: 28px; border-radius: 6px; font-weight: bold; background: #555; color: #fff; }
+.ab-slot-icon.el-fire { background: #b5482c; } .ab-slot-icon.el-water { background: #2c6fb5; }
+.ab-slot-icon.el-wind { background: #3c9a5a; } .ab-slot-icon.el-earth { background: #8a6a2c; }
+.ab-slot-icon.el-holy { background: #b59a2c; } .ab-slot-icon.el-shadow, .ab-slot-icon.el-dark { background: #5a3c8a; }
+.ab-slot-icon.el-ghost { background: #6a6a9a; } .ab-slot-icon.el-poison { background: #6a8a2c; } .ab-slot-icon.el-undead { background: #4a4a4a; }
+.ab-slot-name { font-size: 12px; line-height: 1.2; text-align: center; word-break: break-all; }
+.ab-slot-meta { font-size: 10px; opacity: 0.75; white-space: nowrap; }
+.ab-slot-cd { font-size: 10px; color: #8fb8ff; min-height: 12px; }
+.ab-slot-empty { margin-top: 10px; font-size: 12px; opacity: 0.7; text-align: center; }
+.ab-slot-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+/* 工作 4：場地物件 */
+#bf-ground { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.bf-gu { position: absolute; transform: translate(-50%, -50%); }
+.bf-fire { font-size: 18px; filter: drop-shadow(0 0 4px #ff7a1a); }
+.bf-hits { font-size: 11px; color: #ffd9a0; text-shadow: 0 0 3px #000; }
+.bf-trap { font-size: 18px; color: #ffcf5a; text-shadow: 0 0 4px #000, 0 0 2px #000; }
+.bf-zone { border-radius: 50%; background: rgba(110, 80, 40, 0.45); border: 1px solid rgba(160, 120, 60, 0.7); }
+.bf-zone.bf-poison { background: rgba(120, 60, 160, 0.45); border-color: rgba(170, 100, 220, 0.75); }
+.bf-ice { font-size: 18px; filter: drop-shadow(0 0 4px #7fd4ff); }
 /* 3c：詠唱條（玩家立繪上方） */
 .player-castbar { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); width: 80px;
   text-align: center; pointer-events: none; z-index: 3; }
@@ -956,6 +991,9 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
   background: rgba(20, 28, 48, 0.55); color: #d6e4ff;
   font-size: 14px; font-weight: 700;
 }
+.buff-chip-img { width: 32px; height: 32px; display: block; margin: auto; image-rendering: pixelated; }
+.skill-icon { width: 24px; height: 24px; vertical-align: middle; margin-right: 4px; image-rendering: pixelated; }
+.ab-slot-icon .skill-icon { margin: 2px; }
 .buff-chip-t {
   position: absolute; right: 1px; bottom: 0; font-size: 9px; color: #fff;
   text-shadow: 0 1px 1px #000;

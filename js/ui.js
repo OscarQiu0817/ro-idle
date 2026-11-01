@@ -451,6 +451,7 @@ function onTickUI() {
     syncSkillScaleSlider();   // 換職業時滑桿要跳到那個職業記住的值
     renderAllySprites();
     updateAllyPanelLive();   // 只改數字，整個重畫會把展開中的下拉選單刪掉
+    if (activeTab === 'autobattle') updateAutoSkillLive();
     if (activeTab === 'quests' && huntTabSig() !== _huntSig
         && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#tab-quests'))) {
       renderQuestsTab();
@@ -1047,6 +1048,19 @@ function buffChipKey(group) {
 function buffChipRemain(group) {
   return group.reduce((m, b) => Math.max(m, Math.ceil((b.msRemaining || 0) / 1000)), 0);
 }
+/* 原版技能圖示（images/skills/<技能 id>.png，scripts/gen_skill_icons.js 產生） */
+function skillIconHtml(sk, cls) {
+  if (!sk || !sk.id || !SKILLS[sk.id]) return '';
+  return `<img class="skill-icon${cls ? ' ' + cls : ''}" src="images/skills/${sk.id}.png" alt="" loading="lazy">`;
+}
+/* 加成欄圖示：原版狀態圖 → 該技能的圖示 → 沒有就回空字串（改顯示文字） */
+function buffChipIconSrc(group) {
+  const b = group[0];
+  const key = b.skillId || ('type_' + (b.type || ''));
+  if (typeof SKILL_STATUS_ICONS !== 'undefined' && SKILL_STATUS_ICONS.has(key)) return `images/skills/status/${key}.png`;
+  if (b.skillId && SKILLS[b.skillId]) return `images/skills/${b.skillId}.png`;
+  return '';
+}
 function buffChipLabel(group) {
   const b = group[0];
   if (b.skillId && typeof buffSourceLabel === 'function') return buffSourceLabel(b);
@@ -1139,7 +1153,9 @@ function updateBuffCountdown() {
     const remain = buffChipRemain(g);
     const tip = buffChipTip(g).replace(/&/g, '＆').replace(/"/g, '＂').replace(/</g, '＜').replace(/\n/g, '&#10;');
     const key = buffChipKey(g).replace(/"/g, '');
-    return `<button type="button" class="buff-chip" data-key="${key}" data-tip="${tip}" onclick="openBuffTip(this, true)" onmouseenter="openBuffTip(this, false)" onmouseleave="leaveBuffTip()">${label.slice(0, 1)}<span class="buff-chip-t">${remain}</span></button>`;
+    const src = buffChipIconSrc(g);
+    const face = src ? `<img class="buff-chip-img" src="${src}" alt="">` : label.slice(0, 1);
+    return `<button type="button" class="buff-chip" data-key="${key}" data-tip="${tip}" onclick="openBuffTip(this, true)" onmouseenter="openBuffTip(this, false)" onmouseleave="leaveBuffTip()">${face}<span class="buff-chip-t">${remain}</span></button>`;
   }).join('');
   html += debKeys.map(k => {
     const remain = pdebuffChipRemain(k);
@@ -2242,8 +2258,7 @@ function showDamageFloat(dmg, type, element) {
     el.style.left = (rect.left + rect.width * 0.55 + offsetX) + 'px';
     el.style.top = (rect.top + rect.height * 0.28) + 'px';
     _lastFloatAnchor = { left: parseFloat(el.style.left), top: parseFloat(el.style.top), at: Date.now() };
-    el.style.animationDelay = (_floatDelayMs * 30) + 'ms';
-    document.body.appendChild(el);
+    appendFloatLater(el, _floatDelayMs % 5);
     _floatDelayMs++;
     // 快速重置：200ms 後歸零（一次攻擊間隔）
     clearTimeout(el._resetTimer);
@@ -2258,7 +2273,7 @@ function showDamageFloat(dmg, type, element) {
     else return;
   }
   _liveFloats++;
-  setTimeout(() => { el.remove(); _liveFloats--; }, 1500);
+  setTimeout(() => { el.remove(); _liveFloats--; }, 1500 + 4 * FLOAT_STAGGER_MS);
 }
 
 /* 白字出生點。黃字要接在它往上淡出的那段，不另找一個位置。 */
@@ -2514,6 +2529,43 @@ function bfScrollBackground(lead, dt) {
   bfBg.y -= Math.sin(lead.a || 0) * step * (BF_CELL_Y / BF_CELL_X);
   el.style.backgroundPosition = `${bfBg.x.toFixed(1)}px ${bfBg.y.toFixed(1)}px`;
 }
+/* 場地物件（工作 4）：火牆畫成弧上的火焰、陷阱一個圖示、減速區一個橢圓。座標跟怪一樣用 bfPolarPoint */
+function syncGroundUnits() {
+  const scene = document.getElementById('battle-scene');
+  if (!scene) return;
+  let layer = document.getElementById('bf-ground');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'bf-ground';
+    scene.appendChild(layer);
+  }
+  const units = (state && state.groundUnits) || [];
+  if (!units.length) { if (layer.innerHTML) layer.innerHTML = ''; return; }
+  const at = (d, a) => bfPolarPoint({ d, a });
+  let html = '';
+  for (const u of units) {
+    if (u.kind === 'wall') {
+      for (const k of [-1, -0.5, 0, 0.5, 1]) {
+        const p = at(u.d, (u.a || 0) + k * u.half);
+        html += `<span class="bf-gu bf-fire" style="left:${p.x}%;top:${p.y}%">🔥</span>`;
+      }
+      const p = at(u.d + 0.6, u.a);
+      html += `<span class="bf-gu bf-hits" style="left:${p.x}%;top:${p.y}%">${u.hits}</span>`;
+    } else if (u.kind === 'trap') {
+      const p = at(u.d, u.a);
+      html += `<span class="bf-gu bf-trap" style="left:${p.x}%;top:${p.y}%" title="${u.name}">✱</span>`;
+    } else if (u.kind === 'ice') {
+      for (const k of [-1, -0.5, 0, 0.5, 1]) {
+        const p = at(u.d, (u.a || 0) + k * u.half);
+        html += `<span class="bf-gu bf-ice" style="left:${p.x}%;top:${p.y}%;opacity:${(0.4 + 0.6 * u.hp / u.maxHp).toFixed(2)}">🧊</span>`;
+      }
+    } else if (u.kind === 'zone') {
+      const p = at(u.d, u.a);
+      html += `<span class="bf-gu bf-zone${u.poisonMult ? ' bf-poison' : ''}" style="left:${p.x}%;top:${p.y}%;width:${u.radius * 2 * BF_CELL_X}%;height:${u.radius * 2 * BF_CELL_Y}%"></span>`;
+    }
+  }
+  layer.innerHTML = html;
+}
 /* 詠唱條：掛在玩家立繪上方 */
 function syncCastBar(ps) {
   if (!ps) return;
@@ -2623,6 +2675,7 @@ function layoutBattlefield() {
   }
   const faceRight = !lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x;
   syncCastBar(ps);
+  syncGroundUnits();
   const walking = !town && bfPlayerWalking(lead);
   if (walking) bfScrollBackground(lead, dt);
   syncPlayerBattleAnim((stepped.moved || walking) && !town);
@@ -2990,8 +3043,14 @@ const CRIT_JITTER_X = 28;    // 起始位置的左右亂數範圍
    黃色數字才會落在跟白色飄字同一條線上。 */
 const CRIT_HEAD_OFFSET_Y = -10;
 const CRIT_NUM_HALF_H = 13;
-/* 星爆圖高 66。疊太近會糊成一團，56 又拉得太開，取中間。 */
-const CRIT_STACK_Y = 44;
+/* 同一拍連續的飄字（二刀左右手、多段）錯開出現的間隔。
+   用延後塞進 DOM 而不是 animation-delay：delay 期間元素已經停在起點顯示，看起來還是同時。
+   不再往上疊：各自往右下拋物線掉，時間錯開就分得開。 */
+const FLOAT_STAGGER_MS = 120;
+function appendFloatLater(el, step, onShow) {
+  const show = () => { document.body.appendChild(el); if (onShow) onShow(); };
+  if (step) setTimeout(show, step * FLOAT_STAGGER_MS); else show();
+}
 const CRIT_FRAMES = Array.from({ length: CRIT_FRAME_COUNT },
   (_, i) => `images/effects/crit/msg_frame_${String(i).padStart(3, '0')}.png`);
 // 先預載，否則第一次暴擊會因為還在下載而閃一下空白
@@ -3008,13 +3067,11 @@ function showCritEffect(dmgText, targetEl) {
 
   const wrap = document.createElement('div');
   wrap.className = 'crit-burst';
-  /* 二刀連擊兩段同一個 tick 送出。一般傷害用 _floatDelayMs 把第二顆往上挪，
-     暴擊以前固定在同一點，看起來像只打一下。 */
+  // 二刀左右手同一個 tick 送出：同一點出生，時間錯開
   const step = _floatDelayMs % 5;
   wrap.style.left = (cx + (Math.random() - 0.5) * CRIT_JITTER_X) + 'px';
-  wrap.style.top = (cy - step * CRIT_STACK_Y) + 'px';
+  wrap.style.top = cy + 'px';
   _lastFloatAnchor = { left: parseFloat(wrap.style.left), top: parseFloat(wrap.style.top), at: Date.now() };
-  if (step) wrap.style.animationDelay = (step * 30) + 'ms';
   _floatDelayMs++;
   wrap._resetTimer = setTimeout(() => { _floatDelayMs = 0; }, 200);
 
@@ -3029,16 +3086,16 @@ function showCritEffect(dmgText, targetEl) {
 
   wrap.appendChild(img);
   wrap.appendChild(num);
-  document.body.appendChild(wrap);
-
-  let frame = 0;
-  const timer = setInterval(() => {
-    frame++;
-    // 播完就停在最後一格（星芒已經散開），剩下的交給外層的淡出
-    if (frame >= CRIT_FRAME_COUNT) { clearInterval(timer); return; }
-    img.src = CRIT_FRAMES[frame];
-  }, CRIT_FRAME_MS);
-  setTimeout(() => wrap.remove(), CRIT_FLOAT_MS + 100);
+  appendFloatLater(wrap, step, () => {
+    let frame = 0;
+    const timer = setInterval(() => {
+      frame++;
+      // 播完就停在最後一格（星芒已經散開），剩下的交給外層的淡出
+      if (frame >= CRIT_FRAME_COUNT) { clearInterval(timer); return; }
+      img.src = CRIT_FRAMES[frame];
+    }, CRIT_FRAME_MS);
+    setTimeout(() => wrap.remove(), CRIT_FLOAT_MS + 100);
+  });
 }
 
 function triggerMonsterDie() {
@@ -3800,35 +3857,55 @@ function renderAutoBattleTab() {
     : '';
 
   // 攻擊技能下拉選項
-  /* 4 招優先序（3d）：第 1 格往後檢查，第一個條件成立的就放 */
-  const slotHtml = config.slots.map((sl, i) => {
-    const opts = attackSkills.map(sk =>
-      `<option value="${sk.id}" ${sl.skillId === sk.id ? 'selected' : ''}>[${sk.jobName}] ${sk.name} Lv${sk.lv}</option>`).join('');
-    return `
+  /* 4 招優先序（3d）：4 格橫向並列，點一格在下方設定；第 1 格往後檢查，第一個條件成立的就放 */
+  if (abSelSlot >= config.slots.length) abSelSlot = 0;
+  const slotCards = config.slots.map((sl, i) => {
+    const sk = sl.skillId && SKILLS[sl.skillId];
+    const lv = sk ? skillLv(sk.id) : 0;
+    const t = sk ? autoSkillTiming(sk, lv) : null;
+    return `<button class="ab-slot-card${i === abSelSlot ? ' sel' : ''}${sk ? '' : ' empty'}" onclick="selectAutoSkillSlot(${i})">
+        <span class="ab-slot-no">${i + 1}</span>
+        ${sk ? `<span class="ab-slot-icon el-${sk.element || 'neutral'}">${skillIconHtml(sk) || skillDisplayName(sk).slice(0, 1)}</span>
+          <span class="ab-slot-name">${skillDisplayName(sk)}</span>
+          <span class="ab-slot-meta">Lv${lv}${t.cast ? ' · 詠 ' + (t.cast / 1000).toFixed(1) + 's' : ' · 瞬發'}</span>
+          <span class="ab-slot-meta">延 ${(t.acd / 1000).toFixed(1)}s${t.cd ? ' · 冷 ' + (t.cd / 1000).toFixed(1) + 's' : ''}</span>
+          <span class="ab-slot-cd" id="ab-slot-cd-${i}"></span>` : '<span class="ab-slot-empty">＋<br>空格</span>'}
+      </button>`;
+  }).join('');
+  const cur = config.slots[abSelSlot];
+  const curOpts = attackSkills.map(sk =>
+    `<option value="${sk.id}" ${cur.skillId === sk.id ? 'selected' : ''}>[${sk.jobName}] ${sk.name} Lv${sk.lv}</option>`).join('');
+  const i = abSelSlot;
+  const slotHtml = `
+        <div class="ab-slots-row">${slotCards}</div>
         <div class="ab-skill-slot">
-          <div class="ab-skill-slot-label">第 ${i + 1} 招</div>
+          <div class="ab-skill-slot-label">第 ${i + 1} 格設定</div>
           <div class="ab-config-row">
             <label class="ab-config-label">選擇技能</label>
             <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'skillId', this.value || null)">
               <option value="">不使用技能</option>
-              ${opts}
+              ${curOpts}
             </select>
           </div>
-          ${sl.skillId ? `
+          ${cur.skillId ? `
           <div class="ab-config-row">
             <label class="ab-config-label">SP 保留 %</label>
-            <input type="range" class="ab-slider" min="0" max="90" value="${sl.spThreshold || 0}"
+            <input type="range" class="ab-slider" min="0" max="90" value="${cur.spThreshold || 0}"
               oninput="setAutoSkillSlot(${i}, 'spThreshold', parseInt(this.value), true);document.getElementById('sp-threshold-val-${i}').textContent=this.value+'%'">
-            <span id="sp-threshold-val-${i}" class="ab-slider-val">${sl.spThreshold || 0}%</span>
+            <span id="sp-threshold-val-${i}" class="ab-slider-val">${cur.spThreshold || 0}%</span>
           </div>
           <div class="ab-config-row">
             <label class="ab-config-label">怪物數量門檻</label>
-            <input type="range" class="ab-slider" min="1" max="5" value="${sl.minMobs || 1}"
+            <input type="range" class="ab-slider" min="1" max="5" value="${cur.minMobs || 1}"
               oninput="setAutoSkillSlot(${i}, 'minMobs', parseInt(this.value), true);document.getElementById('min-mobs-val-${i}').textContent=this.value+'隻'">
-            <span id="min-mobs-val-${i}" class="ab-slider-val">${sl.minMobs || 1}隻</span>
+            <span id="min-mobs-val-${i}" class="ab-slider-val">${cur.minMobs || 1}隻</span>
           </div>` : ''}
+          <div class="ab-slot-actions">
+            <button class="btn-small" ${i === 0 ? 'disabled' : ''} onclick="moveAutoSkillSlot(${i}, -1)">◀ 往左移</button>
+            <button class="btn-small" ${i === config.slots.length - 1 ? 'disabled' : ''} onclick="moveAutoSkillSlot(${i}, 1)">往右移 ▶</button>
+            <button class="btn-small ghost" ${cur.skillId ? '' : 'disabled'} onclick="clearAutoSkillSlot(${i})">✕ 清空</button>
+          </div>
         </div>`;
-  }).join('');
 
   // 輔助技能勾選
   const supportRows = supportSkills.map(sk => {
@@ -3848,7 +3925,7 @@ function renderAutoBattleTab() {
       <label class="support-skill-toggle">
         <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleAutoSupportSkill('${sk.id}', this.checked);">
         <span class="support-skill-info">
-          <span class="support-skill-name">${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} Lv${sk.lv}</span>
+          <span class="support-skill-name">${skillIconHtml(sk)}${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} Lv${sk.lv}</span>
           <span class="support-skill-desc">${sk.desc}</span>
           <span class="support-skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</span>
           ${healCfgHtml}
@@ -3860,56 +3937,17 @@ function renderAutoBattleTab() {
   el.innerHTML = `
     <h3 class="panel-title">⚔️ 自動戰鬥設定</h3>
 
-    <!-- 狀態概覽 -->
-    <div class="ab-status">
-      <div class="ab-hp">
-        <div class="ab-bar-label">HP ${Math.floor(state.hp)}/${state.maxHp}</div>
-        <div class="bar-track"><div class="bar-fill hp-fill" style="width:${pct(state.hp, state.maxHp)}%"></div></div>
-      </div>
-      <div class="ab-sp">
-        <div class="ab-bar-label">SP ${Math.floor(state.sp)}/${state.maxSp}</div>
-        <div class="bar-track"><div class="bar-fill sp-fill" style="width:${pct(state.sp, state.maxSp)}%"></div></div>
-      </div>
-      <div class="ab-info-row">
-        <span>ATK ${state.atk}</span>
-        <span>MATK ${state.matkMin}~${state.matkMax}</span>
-        <span>DEF ${state.def}</span>
-        <span>ASPD ${state.aspd}</span>
-      </div>
-    </div>
-
-    <!-- 遇怪模式 -->
-    <div class="ab-section">
-      <h4 class="ab-section-title">⚔️ 遇怪模式</h4>
-      <div class="ab-mode-btns">
-        <button class="btn-small ${(state.encounterMode || 'melee') === 'melee' ? 'active' : ''}" onclick="setEncounterMode('melee')">近戰模式（最多5隻）</button>
-        <button class="btn-small ${state.encounterMode === 'ranged' ? 'active' : ''}" onclick="setEncounterMode('ranged')">遠攻模式（1隻）</button>
-        <button class="btn-small ${state.encounterMode === 'off' ? 'active' : ''}" onclick="setEncounterMode('off')">不遇怪(無離線收益)</button>
-      </div>
-      <div class="ab-info-text">
-        ${state.encounterMode === 'off'
-          ? '不遇怪：不會生成怪物，場上的也會清掉。'
-          : state.encounterMode === 'ranged'
-            ? '遠攻：怪物死後才會再生下一隻。'
-            : '近戰：0隻時0.5秒補一批、1隻以上時3秒補一批，每批隨機 1~3 隻，場上最多5隻。'}
-      </div>
-    </div>
-
-    ${renderFarmModeSection()}
-
     ${sageConverterHtml()}
 
     <!-- 攻擊技能設定 -->
     <div class="ab-section">
-      <h4 class="ab-section-title">🗡️ 攻擊技能</h4>
-      <label class="auto-toggle"><input type="checkbox" ${state.autoSkill ? 'checked' : ''} onchange="state.autoSkill=this.checked;saveGame();"> 自動施放技能</label>
-      <div class="ab-info-text">由第 1 招往後檢查，第一個條件成立的就施放；常駐增益在下方「輔助技能」設定，不占欄位。</div>
-      <div class="ab-config-row">
-        <label class="ab-config-label" title="預估詠唱完成前會被怪打到（會被打斷）就先不放；已被貼身又沒別招時照放">
-          <input type="checkbox" ${config.smartCast !== false ? 'checked' : ''} onchange="setAutoSkillConfig('smartCast', this.checked)">
-          智能施法：預估會被打斷就先不放
-        </label>
+      <h4 class="ab-section-title">🗡️ 攻擊方式</h4>
+      <div class="ab-toggle-row">
+        <label class="auto-toggle" title="技能放不出來時走過去普攻；關掉時停在技能射程只放技能（法師類適用）"><input type="checkbox" ${state.autoAttack !== false ? 'checked' : ''} onchange="state.autoAttack=this.checked;saveGame();"> 自動普攻</label>
+        <label class="auto-toggle"><input type="checkbox" ${state.autoSkill ? 'checked' : ''} onchange="state.autoSkill=this.checked;saveGame();"> 自動施放技能</label>
       </div>
+      <div class="ab-info-text">由第 1 招往後檢查，第一個條件成立的就施放；常駐增益在下方「輔助技能」設定，不占欄位。</div>
+      <div class="ab-cast-status" id="ab-cast-status"></div>
       <div class="ab-attack-config">${slotHtml}
       </div>
     </div>
@@ -4018,9 +4056,62 @@ function renderAutoBattleTab() {
       <div class="ab-config-hint" style="margin-top:4px">效果較高的優先使用。限制依道具敘述：覺醒需 40 級且服事／祭司不可，菠色克需 85 級且限法師系／劍士系／商人系。</div>
     </div>
   `;
+  updateAutoSkillLive();
 }
 
 // 自動戰鬥配置設定
+let abSelSlot = 0;
+function selectAutoSkillSlot(i) { abSelSlot = i; renderAutoBattleTab(); }
+function moveAutoSkillSlot(i, dir) {
+  const slots = migrateAutoSkillConfig(state.autoSkillConfig).slots;
+  const j = i + dir;
+  if (j < 0 || j >= slots.length) return;
+  [slots[i], slots[j]] = [slots[j], slots[i]];
+  abSelSlot = j;
+  saveGame();
+  renderAutoBattleTab();
+}
+function clearAutoSkillSlot(i) {
+  migrateAutoSkillConfig(state.autoSkillConfig).slots[i] = emptyAutoSkillSlot();
+  saveGame();
+  renderAutoBattleTab();
+}
+/* 一招的詠唱／後延遲／冷卻（毫秒），照目前的 DEX、INT 與普攻間隔算 */
+function autoSkillTiming(sk, lv) {
+  const row = skillCastRow(sk.id);
+  return {
+    cast: lv ? skillCastTimeMs(sk, lv) : 0,
+    acd: Math.max(row ? castLv(row.afterCastDelay, lv) : 0, state.attackInterval || 0),
+    cd: row ? castLv(row.cooldown, lv) : 0,
+  };
+}
+/* 自動戰鬥分頁開著時每拍呼叫：只改狀態列與各格冷卻，不整頁重畫 */
+function updateAutoSkillLive() {
+  const box = document.getElementById('ab-cast-status');
+  if (!box) return;
+  const now = Date.now();
+  const c = state.casting;
+  let label = '待命', pct = 0, kind = 'idle';
+  if (c) {
+    const sk = SKILLS[c.skillId];
+    label = `🔮 詠唱「${sk ? skillDisplayName(sk) : c.skillId}」剩 ${Math.max(0, (c.endAt - now) / 1000).toFixed(1)} 秒`;
+    pct = (now - c.startAt) / Math.max(1, c.endAt - c.startAt) * 100;
+    kind = 'cast';
+  } else if (now < (state.acdUntil || 0)) {
+    const total = Math.max(1, state.acdUntil - (state.acdFrom || now));
+    label = `⏳ 後延遲 剩 ${((state.acdUntil - now) / 1000).toFixed(1)} 秒（所有技能共用）`;
+    pct = (1 - (state.acdUntil - now) / total) * 100;
+    kind = 'acd';
+  }
+  box.className = 'ab-cast-status ' + kind;
+  box.innerHTML = `<span>${label}</span><div class="ab-cast-track"><i style="width:${Math.min(100, Math.max(0, pct)).toFixed(0)}%"></i></div>`;
+  (state.autoSkillConfig && state.autoSkillConfig.slots || []).forEach((sl, i) => {
+    const el = document.getElementById('ab-slot-cd-' + i);
+    if (!el) return;
+    const left = sl.skillId ? (state.cooldowns && state.cooldowns[sl.skillId]) || 0 : 0;
+    el.textContent = left > 0 ? `冷卻 ${(left / 1000).toFixed(1)}s` : '';
+  });
+}
 /* quiet：拖拉滑桿時只存值、不重繪（重繪會讓滑桿失去焦點） */
 function setAutoSkillSlot(i, key, value, quiet) {
   state.autoSkillConfig = migrateAutoSkillConfig(state.autoSkillConfig);
@@ -4029,12 +4120,6 @@ function setAutoSkillSlot(i, key, value, quiet) {
   sl[key] = value;
   saveGame();
   if (!quiet) renderAutoBattleTab();
-}
-function setAutoSkillConfig(key, value) {
-  if (!state.autoSkillConfig) state.autoSkillConfig = { skillId: null, mode: 'once', spThreshold: 30 };
-  state.autoSkillConfig[key] = value;
-  saveGame();
-  renderAutoBattleTab();
 }
 
 // 輔助技能開關
@@ -4236,7 +4321,7 @@ function renderSkillsTab() {
 
         html += `<div class="skill-row ${lv > 0 ? 'learned' : ''}">
           <div class="skill-info">
-            <div class="skill-name">${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} ${statusTag} ${typeTag} ${elemTag}</div>
+            <div class="skill-name">${skillIconHtml(sk)}${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} ${statusTag} ${typeTag} ${elemTag}</div>
             <div class="skill-desc">${sk.desc}</div>
             <div class="skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</div>
           </div>

@@ -16,6 +16,8 @@ images/
 ├── items/        消耗品/素材圖，檔名 = 道具編號.png
 ├── maps/         地圖背景圖，檔名 = 地圖編號.png（例如 5001.png，建議 480×270 或同比例橫圖）
 ├── frames/       玩家角色的逐格動畫，見下面「角色動畫」
+├── skills/       原版技能圖示，檔名 = 技能 id.png（node scripts/gen_skill_icons.js 從 grf_ex 產生）
+│   └── status/   右側加成欄的原版狀態圖，檔名 = 技能 id.png（原版韓文檔名已改名）
 └── equip/
     ├── weapon/   武器圖，檔名 = 武器編號.png
     └── armor/    防具圖，檔名 = 防具編號.png
