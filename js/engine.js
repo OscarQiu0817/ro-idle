@@ -9861,28 +9861,16 @@ function repairQuestSkills() {
 // Keep old function name as alias for compatibility
 function learnSkill(skillId) { return levelUpSkill(skillId); }
 
-/* 技能冷卻的卡片修正（#17／#55）。
-
-   本作技能瞬發，官方那一大批「變動施法時間 ±N%」在這裡沒有對應的維度。
-   使用者決定**魔改成冷卻秒數增減**——兩者管的是同一件事（多久能放一次），
-   而且是本作唯一擋得住施放頻率的東西。
-
-     skillCdFlat              全技能 ±N 秒（劍魚 +1、迷幻之王 −1…）
-     skillCdFlat_<技能id>     指名單一技能 ±N 秒（小雪怪的冰箭術、熔岩魔的火箭術）
-
-   刻意用**秒數**不用百分比：官方那批寫的是百分比沒錯，但本作的冷卻從 1 秒到
-   數十秒都有，一律打 25% 會讓長冷卻技能爽賺、短冷卻技能幾乎沒感覺。
-   固定秒數對短冷卻技能的相對收益反而更大，跟「施法時間」的手感比較接近。
-
-   **下限 0.5 秒**：冷卻減到 0 等於無限連發，任何一張減冷卻的卡都會變成必帶。 */
+/* 沒有 rAthena 冷卻資料的技能（自動念咒等）退回 skills.js 的冷卻秒數。
+   舊的 skillCdFlat（卡片冷卻 ±秒）魔改已廢除（D2），裝備改用 js/item_cast_bonus.js 的官方語意。
+   **下限 0.5 秒**：避免無限連發。 */
 const MIN_COOLDOWN_MS = 500;
 function effectiveCooldownMs(skillId, baseCdSec) {
   const base = (baseCdSec || 0) * 1000;
   if (base <= 0) return base;                       // 本來就沒有冷卻的技能不給它加上冷卻
-  const delta = (getCardBonus('skillCdFlat') + getCardBonus('skillCdFlat_' + skillId)) * 1000;
-  // 布萊奇之詩（#68）：冷卻 −N%。乘在固定值增減之後，跟 #55 那批卡片同一條路
+  // 布萊奇之詩（#68）：冷卻 −N%
   const pct = Math.max(0, 1 - buffMult('skillcd').flatBonus / 100);
-  return Math.max(MIN_COOLDOWN_MS, (base + delta) * pct);
+  return Math.max(MIN_COOLDOWN_MS, base * pct);
 }
 
 /* 攻擊時機率觸發臨時 buff（凡貝爾克 CRI+100、依斯拉施法時間-50% 等）。
@@ -10088,7 +10076,14 @@ function skillCastTimeMs(sk, lv) {
   const dex = state._totalDex != null ? state._totalDex : (state.stats.dex || 0);
   const int_ = state._totalInt != null ? state._totalInt : (state.stats.int || 0);
   const statFactor = Math.max(0, 1 - Math.sqrt(Math.max(0, dex * 2 + int_) / 530));
-  return Math.round(castLv(row.castTime, lv) * statFactor + castLv(row.fixedCastTime, lv));
+  /* 裝備（工作 5a，js/item_cast_bonus.js）：
+     變動 ＝ (基礎 + 指定技能 ms) × 素質 × (1 + 全部% + 指定技能%)
+     固定 ＝ max(0, 基礎 + 全部 ms + 指定技能 ms) × (1 + 最大單一%) */
+  const vct = Math.max(0, castLv(row.castTime, lv) + getCardBonus('castVarMs_' + sk.id))
+    * statFactor * Math.max(0, 1 + (getCardBonus('castVarPct') + getCardBonus('castVarPct_' + sk.id)) / 100);
+  const fct = Math.max(0, castLv(row.fixedCastTime, lv) + getCardBonus('castFixedMs') + getCardBonus('castFixedMs_' + sk.id))
+    * Math.max(0, 1 + getCardBonus('castFixedPct') / 100);
+  return Math.round(vct + fct);
 }
 /* 技能射程（格）。rAthena 負值代表近身類（用絕對值）；0＝以自己為中心，不受距離限制 */
 function skillRangeCells(sk, lv) {
@@ -10097,7 +10092,7 @@ function skillRangeCells(sk, lv) {
 }
 function applyAfterCastDelay(skillId, lv) {
   const row = skillCastRow(skillId);
-  const acd = row ? castLv(row.afterCastDelay, lv) : 0;
+  const acd = (row ? castLv(row.afterCastDelay, lv) : 0) * Math.max(0, 1 + getCardBonus('acdPct') / 100);
   state.acdFrom = Date.now();
   state.acdUntil = state.acdFrom + Math.max(acd, state.attackInterval || 0);
 }
@@ -10107,7 +10102,7 @@ function beginCast(sk, lv, ct, opts) {
   const row = skillCastRow(sk.id);
   const now = Date.now();
   state.casting = { skillId: sk.id, lv, startAt: now, endAt: now + ct, opts: opts || null,
-    cancel: !row || row.castCancel !== false };
+    cancel: (!row || row.castCancel !== false) && !(getCardBonus('noCastCancel') > 0) };
   logMsg(`🔮 詠唱「${skillDisplayName(sk)}」（${(ct / 1000).toFixed(1)} 秒）`);
   return true;
 }
@@ -10257,7 +10252,8 @@ function castSkillInner(skillId, opts) {
     const cd = Array.isArray(sk.cooldown) ? sk.cooldown[lv - 1] : sk.cooldown;
     const castRow = !_allyActing && skillCastRow(skillId);
     const fcd = fieldCooldownSec(sk, lv);
-    state.cooldowns[skillId] = fcd != null ? fcd * 1000 : castRow ? castLv(castRow.cooldown, lv) : effectiveCooldownMs(skillId, cd);
+    state.cooldowns[skillId] = fcd != null ? fcd * 1000
+      : castRow ? Math.max(0, castLv(castRow.cooldown, lv) + getCardBonus('skillCdMs_' + skillId)) : effectiveCooldownMs(skillId, cd);
   }
   /* 技能音效與特效：確定放得出來（SP/鋅幣/冷卻都過了）才出聲、才播圖。
      **特效**換身中不播（不該讓玩家的立繪擺出施放姿勢），**音效**照播。 */
@@ -13718,7 +13714,11 @@ function condMet(when, host, lo) {
 
 function mergeBonus(target, bonus, scale) {
   if (!bonus) return;
-  for (const [k, v] of Object.entries(bonus)) target[k] = (target[k] || 0) + v * (scale == null ? 1 : scale);
+  for (const [k, v] of Object.entries(bonus)) {
+    const x = v * (scale == null ? 1 : scale);
+    // 固定詠唱 %：官方取身上最大的單一減免，不相加（D2）
+    target[k] = k === 'castFixedPct' ? Math.min(target[k] || 0, x) : (target[k] || 0) + x;
+  }
 }
 
 /* 全身裝備提供的加成總表（卡片無條件 + 卡片條件式 + 依精煉倍增 + 套裝）。

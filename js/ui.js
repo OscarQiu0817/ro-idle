@@ -5391,12 +5391,18 @@ function formatCardBonus(k, v, all) {
     const a = (typeof MON_AILMENTS !== 'undefined' && MON_AILMENTS[t]) ? MON_AILMENTS[t].icon + MON_AILMENTS[t].name : t;
     return v >= 100 ? `免疫${a}` : `${a}抗性 +${v}%`;
   }
-  // #17 第五批：官方的「變動施法時間 ±N%」魔改成冷卻秒數（本作技能瞬發）
-  if (k === 'skillCdFlat') return `全技能冷卻 ${v > 0 ? '+' : ''}${v} 秒`;
-  if (k.startsWith('skillCdFlat_')) {
-    const sk = (typeof findSkillAnywhere === 'function') ? findSkillAnywhere(k.slice(12)) : null;
-    return `${sk ? sk.name.split(' ')[0] : k.slice(12)} 冷卻 ${v > 0 ? '+' : ''}${v} 秒`;
-  }
+  // 工作 5a：詠唱／延遲／冷卻（js/item_cast_bonus.js）
+  const skName = id => { const sk = typeof findSkillAnywhere === 'function' ? findSkillAnywhere(id) : null; return sk ? sk.name.split(' ')[0] : id; };
+  const sec = ms => `${ms > 0 ? '+' : ''}${(ms / 1000).toFixed(ms % 1000 ? 1 : 0)} 秒`;
+  if (k === 'castVarPct') return `變動詠唱 ${signed(v, 1)}`;
+  if (k.startsWith('castVarPct_')) return `${skName(k.slice(11))} 變動詠唱 ${signed(v, 1)}`;
+  if (k.startsWith('castVarMs_')) return `${skName(k.slice(10))} 變動詠唱 ${sec(v)}`;
+  if (k === 'castFixedPct') return `固定詠唱 ${signed(v, 1)}（取最大單一）`;
+  if (k === 'castFixedMs') return `固定詠唱 ${sec(v)}`;
+  if (k.startsWith('castFixedMs_')) return `${skName(k.slice(12))} 固定詠唱 ${sec(v)}`;
+  if (k === 'acdPct') return `技能後延遲 ${signed(v, 1)}`;
+  if (k.startsWith('skillCdMs_')) return `${skName(k.slice(10))} 冷卻 ${sec(v)}`;
+  if (k === 'noCastCancel') return '詠唱不會被中斷';
   if (k === 'spawnSpeedPct') return `生怪速度 ${signed(v, 1)}`;
   // #17 第四批
   if (k.startsWith('armorEle_')) {
