@@ -35,7 +35,24 @@ const B2 = {
   bMagicAtkEle: ['magicEleDmg_', ELE], bIgnoreDefRaceRate: ['defIgnoreRace_', RACE], bExpAddRace: ['expRace_', RACE],
   bSkillAtk: ['skillDmg_', 'skill'], bVariableCastrate: ['castVarPct_', 'skill'], bSkillVariableCast: ['castVarMs_', 'skill'],
   bSkillFixedCast: ['castFixedMs_', 'skill'], bSkillCooldown: ['skillCdMs_', 'skill'],
+  bAddClass: ['', { Class_All: 'allTargetDmgPct', Class_Boss: 'bossDmgPct' }],
+  bSubClass: ['', { Class_Boss: 'bossDmgTakenPct', Class_Normal: 'normalDmgTakenPct' }],
 };
+/* 本作鍵是否由轉換程式負責（5d：負責的鍵以 rAthena 為準，手寫的移除） */
+const OWN_PREFIX = Object.values(B2).map(([p]) => p).filter(Boolean);
+const OWN_EXACT = new Set([...Object.values(B1), 'allTargetDmgPct', 'bossDmgPct', 'bossDmgTakenPct', 'normalDmgTakenPct']);
+/* 手寫資料裡的同義鍵 → 對應的轉換鍵（rAthena 那條轉不了時，連同義鍵一起保留） */
+const SYNONYM = { allEleDmg: 'eleDmg_', allEleDmgReducePct: 'eleReduce_', crit: 'critRate', aspd: 'aspdFlat' };
+function ownKey(k) {
+  if (OWN_EXACT.has(k) || k in SYNONYM) return true;
+  return OWN_PREFIX.some(p => k.startsWith(p));
+}
+/* 鍵的家族（判斷「這一類 rAthena 有沒有轉不了的條目」用） */
+function familyOf(k) {
+  if (k in SYNONYM) return SYNONYM[k];
+  const p = OWN_PREFIX.find(x => k.startsWith(x));
+  return p && !['skillDmg_', 'castVarPct_', 'castVarMs_', 'castFixedMs_', 'skillCdMs_'].includes(p) ? p : k;
+}
 
 function readBalanced(s, i, open, close) {
   let depth = 0;
@@ -97,6 +114,8 @@ function parseScript(src) {
       i = e + 1;
       const m = t.match(/^\.@(\w+)\s*=\s*getrefine\(\)$/);
       if (m) { vars[m[1]] = 'refine'; continue; }
+      const mg = t.match(/^\.@(\w+)\s*=\s*getenchantgrade\([^)]*\)$/);
+      if (mg) { vars[mg[1]] = 'grade'; continue; }
       const b = t.match(/^(bonus\d?)\s+(b\w+)\s*(?:,\s*([\s\S]+))?$/);
       if (b) out.push({ fn: b[1], name: b[2], args: b[3] ? splitArgs(b[3]) : [], conds, vars: { ...vars }, raw: t });
       else if (/^(bonus|autobonus|skill)\b/.test(t)) out.push({ fn: 'other', name: t.split(/[\s,]/)[0], args: [], conds, vars: { ...vars }, raw: t });
@@ -121,8 +140,10 @@ function splitArgs(s) {
 
 /* 運算式在精煉 R 下的值 */
 function compile(expr, vars) {
-  let e = String(expr).replace(/getrefine\(\)/g, 'R');
-  e = e.replace(/\.@(\w+)/g, (m, v) => vars[v] === 'refine' ? 'R' : '#');
+  /* 附魔階級（四轉時代的系統）本作沒有：一律當 0（無階級），條件不成立 */
+  let e = String(expr).replace(/getrefine\(\)/g, 'R').replace(/getenchantgrade\([^)]*\)/g, '0')
+    .replace(/ENCHANTGRADE_(NONE|D|C|B|A)\b/g, (m, x) => ({ NONE: 0, D: 1, C: 2, B: 3, A: 4 })[x]);
+  e = e.replace(/\.@(\w+)/g, (m, v) => vars[v] === 'refine' ? 'R' : vars[v] === 'grade' ? '0' : '#');
   const toks = e.match(/\d+|R|min|max|&&|\|\||==|!=|>=|<=|[-+*/%()?:<>!,]|\S/g) || [];
   if (toks.some(t => !/^(\d+|R|min|max|&&|\|\||==|!=|>=|<=|[-+*/%()?:<>!,])$/.test(t))) return null;
   const f = R => {
@@ -173,7 +194,16 @@ function keysOf(en, skills) {
 
 const REFINE_MAX = 20;
 /* 精煉表 → 資料：不隨精煉變的進 bonus；會變的拆成 condBonus（加總鍵給差值，castFixedPct 給區間絕對值） */
-function emit(rec, key, t) {
+/* 精煉每 +N 加 v（N=1..5，從 +0 起完全規律）→ { n, v }；不是就回 null */
+function periodic(t) {
+  for (let n = 1; n <= 5; n++) {
+    const v = t[n] - t[0];
+    if (!v) continue;
+    if (t.every((x, r) => x === t[0] + v * Math.floor(r / n))) return { n, v };
+  }
+  return null;
+}
+function emit(rec, key, t, style) {
   if (t.every(v => v === t[0])) { if (t[0]) (rec.bonus = rec.bonus || {})[key] = (rec.bonus[key] || 0) + t[0]; return; }
   rec.condBonus = rec.condBonus || [];
   const push = (when, v) => {
@@ -189,11 +219,21 @@ function emit(rec, key, t) {
     return;
   }
   if (t[0]) (rec.bonus = rec.bonus || {})[key] = (rec.bonus[key] || 0) + t[0];
+  const per = style && periodic(t);
+  if (per) {
+    if (per.n === 1) { (rec.perRefine = rec.perRefine || {})[key] = per.v; return; }
+    if (style === 'item') { const s = 'per' + per.n + 'Refine'; (rec[s] = rec[s] || {})[key] = per.v; return; }
+    // 卡片：宿主精煉每 +N 寫成 condBonus 的 perNRefine_ 鍵（engine 卡片路徑）
+    let e = rec.condBonus.find(c => !Object.keys(c.when).length);
+    if (!e) rec.condBonus.push(e = { when: {}, bonus: {} });
+    e.bonus['per' + per.n + 'Refine_' + key] = per.v;
+    return;
+  }
   for (let r = 1; r <= REFINE_MAX; r++) if (t[r] !== t[r - 1]) push({ refineMin: r }, t[r] - t[r - 1]);
 }
 function convert(entries, opt) {
   opt = opt || {};
-  const rec = {}, skipped = [], table = {};
+  const rec = {}, skipped = [], table = {}, skippedFam = new Set();
   for (const en of entries) {
     const ks = keysOf(en, opt.skills);
     if (!ks) { if (!opt.keys) skipped.push(en.raw); continue; }
@@ -202,13 +242,14 @@ function convert(entries, opt) {
       const fv = compile(expr, en.vars);
       const fc = en.conds.map(c => compile(c, en.vars));
       const bad = !fv || fc.some(f => !f) || (opt.refine === false && (fv.usesR || fc.some(f => f.usesR)));
-      if (bad) { skipped.push(en.raw + (en.conds.length ? '  if(' + en.conds.join(' && ') + ')' : '')); continue; }
+      if (bad) { skipped.push(en.raw + (en.conds.length ? '  if(' + en.conds.join(' && ') + ')' : '')); skippedFam.add(familyOf(key)); continue; }
       const t = table[key] = table[key] || new Array(REFINE_MAX + 1).fill(0);
       for (let r = 0; r <= REFINE_MAX; r++) if (fc.every(f => f(r))) t[r] += fv(r);
     }
   }
-  for (const [key, t] of Object.entries(table)) emit(rec, key, t);
-  return { rec, skipped };
+  for (const [key, t] of Object.entries(table)) emit(rec, key, t, opt.perStyle);
+  if (rec.condBonus && !rec.condBonus.length) delete rec.condBonus;
+  return { rec, skipped, skippedFam };
 }
 
-module.exports = { parseScript, compile, convert, keysOf, B1, B2, RACE, ELE, SIZE };
+module.exports = { parseScript, compile, convert, keysOf, ownKey, familyOf, B1, B2, RACE, ELE, SIZE };

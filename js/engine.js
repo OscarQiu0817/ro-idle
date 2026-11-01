@@ -2392,6 +2392,7 @@ function recomputeDerived(fullHeal) {
   state.cardBossDmgPct = getCardBonus('bossDmgPct');
   state.cardAllTargetDmgPct = getCardBonus('allTargetDmgPct');
   state.cardRangedDmgPct = getCardBonus('rangedDmgPct');
+  state.cardMeleeDmgPct = getCardBonus('meleeDmgPct');   // 近距離物理傷害（bShortAtkRate，5d）
   state.cardIgnoreSizePenalty = getCardBonus('ignoreSizePenalty') > 0;
   state.cardSplashAttack = getCardBonus('splashAttack') > 0;   // 巴風特卡片（#136）：普攻濺射
   state.cardBossDmgTakenPct = getCardBonus('bossDmgTakenPct');
@@ -6944,10 +6945,8 @@ function playerAttackInner() {
   }
   // 暴擊 1.5 倍，卡片的「暴擊時傷害增加N%」再乘上去（紙妖、無顱武士那類）
   if (isCrit) raw *= 1.5 * (1 + (state.cardCritDmgPct || 0) / 100);
-  // 遠距離物理傷害加成：官方限定遠程武器，本作以弓為準（邪骸弓箭手卡片）
-  if (state.cardRangedDmgPct && isBowWeapon(atkWeaponId)) {
-    raw *= 1 + state.cardRangedDmgPct / 100;
-  }
+  // 遠／近距離物理傷害加成：官方看攻擊距離，本作以弓為遠距離
+  raw *= rangeDmgMult(atkWeaponId);
 
   // 天使之怒被動：冷卻好時下一次攻擊必定雙倍傷害
   if (state.hasAngelusProc && Date.now() >= (state.angelusReadyAt || 0)) {
@@ -7115,7 +7114,7 @@ function playerAttackInner() {
     let leftRaw = weaponChainDamage(monDef, elemMult, hasMaxRoll, null, 'left');
     if (state.hasBerserk && state.hp < state.maxHp * 0.25) leftRaw *= 1.32;
     if (isCrit) leftRaw *= 1.5 * (1 + (state.cardCritDmgPct || 0) / 100);
-    if (state.cardRangedDmgPct && isBowWeapon(atkWeaponId)) leftRaw *= 1 + state.cardRangedDmgPct / 100;
+    leftRaw *= rangeDmgMult(atkWeaponId);
     leftRaw *= cardTargetDmgMult(monDef);
     leftRaw *= elementDmgMult(atkElement);
     leftRaw *= ailDmgTakenMult(target);
@@ -9862,7 +9861,7 @@ function repairQuestSkills() {
 function learnSkill(skillId) { return levelUpSkill(skillId); }
 
 /* 沒有 rAthena 冷卻資料的技能（自動念咒等）退回 skills.js 的冷卻秒數。
-   舊的 skillCdFlat（卡片冷卻 ±秒）魔改已廢除（D2），裝備改用 js/item_cast_bonus.js 的官方語意。
+   舊的 skillCdFlat（卡片冷卻 ±秒）魔改已廢除（D2），裝備改用 js/item_effects.js 的官方語意。
    **下限 0.5 秒**：避免無限連發。 */
 const MIN_COOLDOWN_MS = 500;
 function effectiveCooldownMs(skillId, baseCdSec) {
@@ -10076,7 +10075,7 @@ function skillCastTimeMs(sk, lv) {
   const dex = state._totalDex != null ? state._totalDex : (state.stats.dex || 0);
   const int_ = state._totalInt != null ? state._totalInt : (state.stats.int || 0);
   const statFactor = Math.max(0, 1 - Math.sqrt(Math.max(0, dex * 2 + int_) / 530));
-  /* 裝備（工作 5a，js/item_cast_bonus.js）：
+  /* 裝備（工作 5a，js/item_effects.js）：
      變動 ＝ (基礎 + 指定技能 ms) × 素質 × (1 + 全部% + 指定技能%)
      固定 ＝ max(0, 基礎 + 全部 ms + 指定技能 ms) × (1 + 最大單一%) */
   const vct = Math.max(0, castLv(row.castTime, lv) + getCardBonus('castVarMs_' + sk.id))
@@ -13609,8 +13608,12 @@ function skillSpCost(sk, lv) {
    兩個來源：冥想（被動，`state.healBonusPct`）與聖母之祈福（buff，「受到的治癒恢復量 +N%」）。
    本作沒有隊友，所以「受到的」就是自己受到的，兩者相乘。
    注意 `hpItemEffectBonusPct` 是**道具**專用（禪心給的），跟治癒術是兩回事，不要混。 */
+function rangeDmgMult(weaponId) {
+  return 1 + ((isBowWeapon(weaponId) ? state.cardRangedDmgPct : state.cardMeleeDmgPct) || 0) / 100;
+}
 function healOutputMult() {
-  const passive = 1 + ((state.healBonusPct || 0) / 100);
+  // 裝備的治癒量加成（bHealPower，5d）跟冥想相加
+  const passive = 1 + ((state.healBonusPct || 0) + getCardBonus('healPower')) / 100;
   return passive * buffMult('healrecv').mult;
 }
 
@@ -13895,6 +13898,36 @@ function effectiveGearBonuses() {
   return total;
 }
 function activeEquipSets() { effectiveGearBonuses(); return _activeSets; }
+/* 套裝進度（角色頁）：身上至少有一件成員的裝備套裝與套卡，含還沒湊齊的。
+   { id, name, have, total, active, missing:[名稱], bonus, cards }
+   active 跟 effectiveGearBonuses 的判定一致（成員到齊、when 成立）。 */
+function equipSetProgress() {
+  const lo = buildLoadout();
+  const has = i => lo.items.has(i) || lo.cards.has(i);
+  const nameOf = i => (CARDS[i] && CARDS[i].name) || (ITEMS[i] && ITEMS[i].name) || i;
+  const out = [];
+  const add = (id, name, members, bonus, cards, extraOk) => {
+    const have = members.filter(m => (Array.isArray(m) ? m : [m]).some(has)).length;
+    if (!have) return;
+    const missing = members.filter(m => !(Array.isArray(m) ? m : [m]).some(has))
+      .map(m => nameOf(Array.isArray(m) ? m[0] : m));
+    out.push({ id, name, have, total: members.length, active: have === members.length && extraOk, missing, bonus, cards });
+  };
+  for (const [id, def] of Object.entries(typeof EQUIP_SETS !== 'undefined' ? EQUIP_SETS : {})) {
+    if (!def.items) continue;
+    const isCards = def.items.every(m => (Array.isArray(m) ? m : [m]).every(i => CARDS[i]));
+    add(id, def.name, def.items, def.bonus || {}, isCards, !def.when || condMet(def.when, null, lo));
+  }
+  // 手寫套卡（rAthena 沒有對應、仍掛在主卡 condBonus 上的）
+  for (const [cid, c] of Object.entries(CARDS)) {
+    (c.condBonus || []).forEach((cb, i) => {
+      const w = cb.when || {};
+      if (!cb.setName || !w.withCards) return;
+      add('cardset_' + cid + '_' + i, cb.setName, [cid, ...w.withCards], cb.bonus || {}, true, true);
+    });
+  }
+  return out.sort((a, b) => (b.active - a.active) || (b.have / b.total - a.have / a.total) || a.name.localeCompare(b.name));
+}
 
 /* ---------------- 遺物（#113）----------------
    資料在 js/relics.js。這裡只做四件事：欄位、計件、加成、掉落。

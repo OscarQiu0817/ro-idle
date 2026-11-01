@@ -5284,6 +5284,11 @@ function describeCardBonus(card) {
       out.push(`每精煉 1 階：${formatCardBonus(k, v, card.perRefine)}`);
     }
   }
+  // 裝備的「精煉每 +N」（per2Refine…per5Refine）與「精煉²」
+  for (const n of [2, 3, 4, 5]) {
+    for (const [k, v] of Object.entries(card['per' + n + 'Refine'] || {})) out.push(`精煉每 +${n}：${formatCardBonus(k, v, {})}`);
+  }
+  for (const [k, v] of Object.entries(card.perRefineSquare || {})) out.push(`精煉²×：${formatCardBonus(k, v, {})}`);
   // melee：官方寫「近距離」的那幾張，只有手上不是弓的時候才會觸發
   const meleeTag = e => (e.melee ? '近戰' : '');
   (card.autoSpell || []).forEach(a => {
@@ -5391,7 +5396,7 @@ function formatCardBonus(k, v, all) {
     const a = (typeof MON_AILMENTS !== 'undefined' && MON_AILMENTS[t]) ? MON_AILMENTS[t].icon + MON_AILMENTS[t].name : t;
     return v >= 100 ? `免疫${a}` : `${a}抗性 +${v}%`;
   }
-  // 工作 5a：詠唱／延遲／冷卻（js/item_cast_bonus.js）
+  // 工作 5a：詠唱／延遲／冷卻（js/item_effects.js）
   const skName = id => { const sk = typeof findSkillAnywhere === 'function' ? findSkillAnywhere(id) : null; return sk ? sk.name.split(' ')[0] : id; };
   const sec = ms => `${ms > 0 ? '+' : ''}${(ms / 1000).toFixed(ms % 1000 ? 1 : 0)} 秒`;
   if (k === 'castVarPct') return `變動詠唱 ${signed(v, 1)}`;
@@ -5403,6 +5408,11 @@ function formatCardBonus(k, v, all) {
   if (k === 'acdPct') return `技能後延遲 ${signed(v, 1)}`;
   if (k.startsWith('skillCdMs_')) return `${skName(k.slice(10))} 冷卻 ${sec(v)}`;
   if (k === 'noCastCancel') return '詠唱不會被中斷';
+  // 5d：rAthena 轉換出來的其他鍵
+  if (k === 'atkPct') return `ATK ${signed(v, 1)}`;
+  if (k === 'meleeDmgPct') return `近距離物理傷害 ${signed(v, 1)}`;
+  if (k === 'healPower') return `治癒量 ${signed(v, 1)}`;
+  { const m = /^per(\d+)Refine_(.+)$/.exec(k); if (m) return `精煉每 +${m[1]}：${formatCardBonus(m[2], v, {})}`; }
   if (k === 'spawnSpeedPct') return `生怪速度 ${signed(v, 1)}`;
   // #17 第四批
   if (k.startsWith('armorEle_')) {
@@ -5458,7 +5468,8 @@ function itemDescParts(desc) {
   return { flavor: s, meta: '' };
 }
 /* 浮層敘述：一句一行，本服註記拆到下方。註記裡的 ** 是粗體，不印星號。 */
-function tooltipDescHtml(desc) {
+/* original：上面已經有從資料產生的效果（5d），原文只當參考——加標題、不附「本服實作」舊註記 */
+function tooltipDescHtml(desc, original) {
   let t = String(desc || '').replace(/<\/?(?:ITEM|URL|TIPBOX|ele|a)>/gi, '').trim();
   if (!t) return '';
   let note = '';
@@ -5469,9 +5480,9 @@ function tooltipDescHtml(desc) {
   if (si >= 0) { spec = t.slice(si).trim(); t = t.slice(0, si).trim(); }
   const lines = t.split(/(?<=。)/).map(s => s.trim()).filter(Boolean);
   let html = '';
-  if (lines.length) html += `<div class="tt-desc">${lines.map(shopEsc).join('<br>')}</div>`;
+  if (lines.length) html += `<div class="tt-desc${original ? ' tt-original' : ''}">${original ? '<div class="tt-label">原版說明</div>' : ''}${lines.map(shopEsc).join('<br>')}</div>`;
   if (spec) html += `<div class="tt-meta">${shopEsc(spec)}</div>`;
-  if (note) {
+  if (note && !original) {
     const cls = /未實作/.test(note) ? 'tt-note unimpl' : 'tt-note';
     const body = shopEsc(note).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
     html += `<div class="${cls}">${body}</div>`;
@@ -5491,7 +5502,10 @@ function itemTooltipHtml(itemId, opts) {
     type += ' · ' + (ELEMENT_ICONS[item.element] || '') + ELEMENT_NAMES[item.element];
   }
   html += `<div class="tt-type">${type}</div>`;
-  html += opts.descHtml != null ? opts.descHtml : tooltipDescHtml(item.desc);
+  /* 裝備的實際效果由資料產生（5d：效果以 rAthena 為準），原文說明放在下面當參考 */
+  const fx = opts.descHtml == null && (item.type === 'weapon' || item.type === 'armor') ? describeCardBonus(item) : [];
+  if (fx.length) html += `<div class="tt-fx">${fx.map(l => `<div>${shopEsc(l)}</div>`).join('')}</div>`;
+  html += opts.descHtml != null ? opts.descHtml : tooltipDescHtml(item.desc, fx.length > 0);
   const stats = [];
   const atk = statWithRefine(itemId, 'atk', refLevel);
   const def = statWithRefine(itemId, 'def', refLevel);
@@ -6711,19 +6725,7 @@ function renderCharacterTab() {
   const effectiveCritRate = Math.min(100, Math.round(state.critRate * critBuff.mult + critBuff.flatBonus));
   const effectiveHit = Math.round(state.hit * hitBuff.mult + hitBuff.flatBonus);
 
-  /* 生效中的裝備套裝（#20）。EQUIP_SETS 以前是空的，所以這一排從來沒東西可顯示，
-     現在有資料了就得讓玩家看得到——不然湊齊了也不知道有沒有生效。 */
-  let setListHtml = '';
-  if (typeof activeEquipSets === 'function') {
-    const sets = activeEquipSets() || [];
-    if (sets.length) {
-      setListHtml = '<div class="active-sets">' + sets.map(s => {
-        const bits = Object.entries(s.bonus || {})
-          .map(([k, v]) => formatCardBonus(k, v, s.bonus)).filter(Boolean).join('、');
-        return `<span class="set-tag" title="${bits || '依精煉階數加成'}">🧩 ${s.name}${bits ? '：' + bits : ''}</span>`;
-      }).join('') + '</div>';
-    }
-  }
+  const setListHtml = equipSetPanelHtml();
 
   const jobBonus = computeJobBonuses();
   el.innerHTML = `
@@ -6832,11 +6834,40 @@ function renderCharacterTab() {
         return `<div title="本作沒有移動，所以官方「移動速度上升」的效果一律換算成生怪加速。場上清空時補第一批比較快。">`
           + `<span>生怪間隔</span><b>${(gap / 1000).toFixed(2)} 秒</b><span class="dim">清場後 ${(first / 1000).toFixed(2)} 秒</span>${tag}${list}</div>`;
       })()}
-      <div><span>套裝</span><b>${setListHtml || '—'}</b></div>
+      <div class="set-row"><span>套裝</span>${setListHtml}</div>
     </div>
       </div>
     </div>
     <p class="stat-formula-hint">數值公式參考 RO 正式版邏輯調整：ATK=${state._atkUsesDex ? 'DEX+(DEX/10)²+STR/5+LUK/5（弓／樂器／鞭以 DEX 為主屬性）' : 'STR+(STR/10)²+DEX/5+LUK/5'}；HIT=175+等級+DEX；FLEE=100+等級+AGI；DEF 採比例減傷而非直接相減。屬性點數規則對齊官方對照表：每級獲得 floor((等級-1)/5)+3 點；加點消耗隨數值升高而增加（1~10 花2點、11~20花3點...以此類推）。</p>`;
+}
+
+/* 角色頁的套裝區：身上有任一件成員的裝備套裝與套卡。
+   生效中的金色；還沒湊齊的灰紅色，列出 (有/共) 與缺哪幾件。切換鈕只看生效中／全部。 */
+let setPanelShowAll = true;
+try { setPanelShowAll = localStorage.getItem('roSetPanelAll') !== '0'; } catch (_) {}
+function toggleSetPanel(all) {
+  setPanelShowAll = all;
+  try { localStorage.setItem('roSetPanelAll', all ? '1' : '0'); } catch (_) {}
+  renderCharacterTab();
+}
+function equipSetPanelHtml() {
+  if (typeof equipSetProgress !== 'function') return '—';
+  const list = equipSetProgress();
+  const on = list.filter(s => s.active).length;
+  const shown = setPanelShowAll ? list : list.filter(s => s.active);
+  const btn = (all, label) => `<button class="set-filter${setPanelShowAll === all ? ' on' : ''}" onclick="toggleSetPanel(${all})">${label}</button>`;
+  const rows = shown.map(s => {
+    const fx = Object.entries(s.bonus || {}).map(([k, v]) => formatCardBonus(k, v, s.bonus)).filter(Boolean).join('、') || '（效果未實裝）';
+    const miss = s.active ? '' : `<div class="set-miss">缺：${s.missing.map(shopEsc).join('、')}</div>`;
+    return `<div class="set-item${s.active ? ' on' : ''}">
+      <div class="set-head">${s.cards ? '🃏' : '🧩'} ${shopEsc(s.name)} <span class="set-count">(${s.have}/${s.total})</span></div>
+      <div class="set-fx">${shopEsc(fx)}</div>${miss}</div>`;
+  }).join('');
+  return `<div class="set-panel">
+    <div class="set-bar"><span class="dim">生效 ${on} 組${list.length > on ? `・未湊齊 ${list.length - on} 組` : ''}</span>
+      <span class="set-filters">${btn(false, '生效中')}${btn(true, '全部')}</span></div>
+    ${rows || `<div class="dim">${list.length ? '沒有生效中的套裝' : '身上沒有任何套裝的成員'}</div>`}
+  </div>`;
 }
 
 /* ---------------- 轉職樹（簽名視覺元素） ---------------- */
