@@ -1713,7 +1713,7 @@ function stopCastAnim() {
    讀存檔進來時 buff 還在的話也會自動亮起來（靠 onTickUI 每 tick 對齊）。
 ------------------------------------------------- */
 const SKILL_FX = {
-  twohandquicken: {
+  kn_twohandquicken: {
     jobs: ['knight'],
     sprite: gender => `images/effects/twohandquicken/knight_${gender}.png`,
     spriteMs: 900,
@@ -1829,7 +1829,7 @@ const SFX_WEAPON = {
 };
 
 // 三系箭術有專屬音效，而且要照等級連放（官方本來就是打幾發）
-const SFX_MAGIC_BOLT = { firebolt: '火箭術', coldbolt: '冰箭術', lightningbolt: '雷擊術' };
+const SFX_MAGIC_BOLT = { mg_firebolt: '火箭術', mg_coldbolt: '冰箭術', mg_lightningbolt: '雷擊術' };
 const SFX_BOLT_GAP_MS = 130;
 // 其餘法術照屬性分
 const SFX_MAGIC_BY_ELEMENT = { fire: '其餘火系', water: '其餘冰系', wind: '其餘雷系', earth: '石系' };
@@ -1839,7 +1839,7 @@ const SFX_HEAL_TYPES = ['heal', 'heal_over_time', 'field_heal'];
 /* 有專屬音檔的技能。放在 WAV/技能/ 底下，檔名直接寫死對應，
    跟三系箭術那組不同——這裡是一招一個檔，不照等級連放。 */
 const SFX_SKILL = {
-  twohandquicken: 'WAV/' + encodeURIComponent('技能') + '/knight_twohandquicken.wav',
+  kn_twohandquicken: 'WAV/' + encodeURIComponent('技能') + '/knight_twohandquicken.wav',
 };
 
 const SFX_STATUS = { poison: '中毒', stun: '暈眩', silence: '沉默' };
@@ -3981,7 +3981,7 @@ function toggleAutoSupportSkill(skillId, enabled) {
   if (!state.autoSupportSkills) state.autoSupportSkills = {};
   state.autoSupportSkills[skillId] = enabled;
   // 隱匿（盜賊）與偽裝（刺客）效果重疊，自動施放只能二選一
-  const fleeExclusivePair = ['hiding', 'cloaking'];
+  const fleeExclusivePair = ['tf_hiding', 'as_cloaking'];
   if (enabled && fleeExclusivePair.includes(skillId)) {
     const other = fleeExclusivePair.find(id => id !== skillId);
     state.autoSupportSkills[other] = false;
@@ -6327,7 +6327,7 @@ function renderInventoryTab() {
     let vendingHtml = '';
     // 職業鏈判定（#149）：轉去鐵匠／神匠／鍊金／創造者之後 jobId 就不是 merchant 了，
     // 只認 'merchant' 的話這個入口會整個消失——玩家回報「找不到露天商店」時人在神匠
-    if (jobLineHas(state.jobId, 'merchant') && state.learnedSkills && state.learnedSkills['vending']) {
+    if (jobLineHas(state.jobId, 'merchant') && state.learnedSkills && state.learnedSkills['mc_vending']) {
       const cfg = state.vendingConfig || { items: [] };
       const itemNames = cfg.items.length
         ? cfg.items.map(id => ITEMS[id] ? ITEMS[id].name : id).join('、')
@@ -7528,7 +7528,7 @@ function renderVendingWindow() {
 function renderVendingWindowInner() {
   const body = document.getElementById('vending-body');
   if (!body || !state) return;
-  const sk = findSkillById('vending');
+  const sk = findSkillById('mc_vending');
   const sellMult = (sk && sk.sellMultiplier) || 10;
   const cdSec = (sk && sk.internalCooldown) || 60;
   const picked = vendingList();

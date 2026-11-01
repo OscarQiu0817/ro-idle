@@ -20,7 +20,7 @@ const JOB_TREE = {
     next: ['swordsman', 'mage', 'archer', 'merchant', 'thief', 'acolyte', 'supernovice'],
     bonusLevels: { str:[8], agi:[5], vit:[6], int:[9], dex:[3], luk:[2] },
     skills: [
-      'novice_firstaid', 'novice_basicskill', 'novice_hpboost', 'novice_flee',
+      'nv_firstaid',
     ],
     desc: '每個冒險者的起點，尚未踏上任何職業道路。'
   },
@@ -61,9 +61,9 @@ const JOB_TREE = {
     nextLocked: [],
     bonusLevels: { str:[2,14,33,40,47,49,50], agi:[30,46], vit:[6,18,38,42], int:[], dex:[10,22,36], luk:[26,44] },
     skills: [
-      'berserk_sword', 'fatalblow', 'hpmove', 'bash',
-      'magnumbreak', 'provoke', 'endure', 'increasehp',
-      'swordmastery', 'twoswordmastery',
+      'sm_autoberserk', 'sm_fatalblow', 'sm_movingrecovery', 'sm_bash',
+      'sm_magnum', 'sm_provoke', 'sm_endure', 'sm_recovery',
+      'sm_sword', 'sm_twohand',
     ],
     desc: '以劍與盾為伴的近戰戰士，堅韌不拔。'
   },
@@ -76,10 +76,10 @@ const JOB_TREE = {
     nextLocked: [],
     bonusLevels: { str:[], agi:[18,26,40,47], vit:[], int:[2,14,22,33,38,44,46,50], dex:[6,10,36], luk:[30,42,49] },
     skills: [
-      'sight', 'energycoat', 'firebolt', 'fireball',
-      'firewall', 'lightningbolt', 'thunderstorm', 'coldbolt',
-      'frostdiver', 'stonecurse', 'napalmbeat', 'soulstrike',
-      'safetywall', 'spregen',
+      'mg_sight', 'mg_energycoat', 'mg_firebolt', 'mg_fireball',
+      'mg_firewall', 'mg_lightningbolt', 'mg_thunderstorm', 'mg_coldbolt',
+      'mg_frostdiver', 'mg_stonecurse', 'mg_napalmbeat', 'mg_soulstrike',
+      'mg_safetywall', 'mg_srecovery',
     ],
     desc: '操控元素之力的智慧使者，SP 是最強武器。'
   },
@@ -93,8 +93,8 @@ const JOB_TREE = {
     nextLocked: [],
     bonusLevels: { str:[6,38,40], agi:[26,33,49], vit:[46], int:[10,47], dex:[2,14,18,30,36,42,50], luk:[22,44] },
     skills: [
-      'createarrow', 'chargearrow', 'owleye', 'vultureeye',
-      'improveconc', 'doublestrafe', 'arrowshower',
+      'ac_makingarrow', 'ac_chargearrow', 'ac_owl', 'ac_vulture',
+      'ac_concentration', 'ac_double', 'ac_shower',
     ],
     desc: '遠距離精準打擊的專家，先發制人。'
   },
@@ -107,9 +107,9 @@ const JOB_TREE = {
     nextLocked: [],
     bonusLevels: { str:[10,22,40,44,49], agi:[33], vit:[2,18,30,47], int:[26], dex:[6,14,38,42,50], luk:[36,46] },
     skills: [
-      'vending', 'itemappraisal', 'loudexclamation', 'cartattack',
-      'discount', 'overcharge', 'pushcart', 'mammonite',
-      'weightup',
+      'mc_vending', 'mc_identify', 'mc_loud', 'mc_cartrevolution',
+      'mc_discount', 'mc_overcharge', 'mc_pushcart', 'mc_mammonite',
+      'mc_inccarry',
     ],
     desc: '精打細算的鍛造與交易好手。'
   },
@@ -122,8 +122,8 @@ const JOB_TREE = {
     nextLocked: [],
     bonusLevels: { str:[6,30,38,47], agi:[2,33,36,50], vit:[14,44], int:[18], dex:[10,22,42,49], luk:[26,40,46] },
     skills: [
-      'detoxify', 'sandman', 'backsliding', 'steal',
-      'doubleattack', 'improvedodge', 'hiding', 'envenom',
+      'tf_detoxify', 'tf_sprinklesand', 'tf_backsliding', 'tf_steal',
+      'tf_double', 'tf_miss', 'tf_hiding', 'tf_poison',
     ],
     desc: '身法敏捷、擅長暗殺的邊緣行走者。'
   },
@@ -138,10 +138,10 @@ const JOB_TREE = {
     skills: [
     /* 官方 15 支，順序照 `ro_skill_data/js_data/sk_pr.js` 的 AL_*。
        只有神聖之光是 `maxLv: 0`＝不靠加點拿的，本作用 `isQuest` 對應。 */
-      'heal', 'cure', 'increaseagi', 'decreaseagi',
-      'divineprotection', 'angelic', 'angelusbarrier', 'blessing',
-      'signumcrusis', 'holywater', 'ruwach', 'teleport',
-      'warpportal', 'pneuma', 'holylight',
+      'al_heal', 'al_cure', 'al_incagi', 'al_decagi',
+      'al_dp', 'al_demonbane', 'al_angelus', 'al_blessing',
+      'al_crucis', 'al_holywater', 'al_ruwach', 'al_teleport',
+      'al_warp', 'al_pneuma', 'al_holylight',
     ],
     desc: '侍奉光明神的治療者，慈悲亦堅定。'
   },
@@ -154,9 +154,9 @@ const JOB_TREE = {
     next: [], nextLocked: ['lordknight'],
     bonusLevels: { str:[4,10,15,21,27,33,46,47], agi:[13,38], vit:[1,3,8,12,17,18,23,29,36,43], int:[], dex:[11,19,31,40,48,49], luk:[5,20,28,37] },
     skills: [
-      'riding', 'charge', 'cavaliermastery', 'bowlingbash',
-      'pierce', 'twohandquicken', 'spearmastery', 'spearstab',
-      'spearboomerang', 'brandishspear', 'counter',
+      'kn_riding', 'kn_chargeatk', 'kn_cavaliermastery', 'kn_bowlingbash',
+      'kn_pierce', 'kn_twohandquicken', 'kn_spearmastery', 'kn_spearstab',
+      'kn_spearboomerang', 'kn_brandishspear', 'kn_autocounter',
     ],
     desc: '身騎戰馬、統率戰場的貴族戰士。'
   },
@@ -168,10 +168,10 @@ const JOB_TREE = {
     next: [], nextLocked: ['highwizard'],
     bonusLevels: { str:[12], agi:[6,10,24,34,41,43,46,47], vit:[38], int:[1,4,9,18,22,29,31,33,40,45,48,50], dex:[2,5,13,26,32,39], luk:[15,36] },
     skills: [
-      'sense', 'firebolt_wiz', 'firepillar', 'meteorstorm',
-      'jupitel', 'lordofvermillion', 'waterball', 'icewall',
-      'frostdiver_wiz', 'stormgust', 'earthspike', 'heavensdrive',
-      'quagmire',
+      'wz_estimation', 'wz_sightrasher', 'wz_firepillar', 'wz_meteor',
+      'wz_jupitel', 'wz_vermilion', 'wz_waterball', 'wz_icewall',
+      'wz_frostnova', 'wz_stormgust', 'wz_earthspike', 'wz_heavendrive',
+      'wz_quagmire',
     ],
     desc: '掌握高階咒文的元素支配者。'
   },
@@ -183,10 +183,10 @@ const JOB_TREE = {
     next: [], nextLocked: ['sniper'],
     bonusLevels: { str:[6,10,11,44], agi:[12,19,20,31,39,47], vit:[17,23], int:[3,34,41,46], dex:[1,4,8,14,21,27,33,38,43,49], luk:[5,15,29,42] },
     skills: [
-      'falcondelivery', 'huntingmastery', 'blitzbeat', 'falconnastery',
-      'trap', 'skidtrap', 'flasher', 'sleeptrap',
-      'freezingtrap', 'blastmine', 'claymoretrap', 'magnumbreak_h',
-      'removetrap', 'researchtrap', 'animalslayer',
+      'ht_detecting', 'ht_falcon', 'ht_blitzbeat', 'ht_steelcrow',
+      'ht_landmine', 'ht_skidtrap', 'ht_flasher', 'ht_sandman',
+      'ht_freezingtrap', 'ht_blastmine', 'ht_anklesnare', 'ht_claymoretrap',
+      'ht_removetrap', 'ht_talkiebox', 'ht_beastbane',
     ],
     desc: '與獵鷹並肩作戰的森林狙擊手。'
   },
@@ -198,12 +198,12 @@ const JOB_TREE = {
     next: [], nextLocked: ['whitesmith'],
     bonusLevels: { str:[3,8,16,23,31,44], agi:[29,38], vit:[7,13,20,32,37,49], int:[21,34], dex:[1,4,5,9,12,19,26,28,36,39,40,47], luk:[11,46] },
     skills: [
-      'weaponrepair', 'ironworking', 'steelworking', 'elementalstone',
-      'oridecon', 'hiltbinding', 'findingore', 'daggercraft',
-      'swordcraft', 'axecraft', 'knucklecraft', 'macecraft',
-      'spearcraft', 'weaponresearch', 'hammerfall', 'adrenaline',
-      'skintemper', 'cartrevo', 'overthrust', 'overthrustbuff',
-      'maximize', 'weaponfusion', 'greed',
+      'bs_repairweapon', 'bs_iron', 'bs_steel', 'bs_enchantedstone',
+      'bs_orideocon', 'bs_hiltbinding', 'bs_findingore', 'bs_dagger',
+      'bs_sword', 'bs_axe', 'bs_knuckle', 'bs_mace',
+      'bs_spear', 'bs_weaponresearch', 'bs_hammerfall', 'bs_adrenaline',
+      'bs_skintemper', 'bs_weaponperfect', 'bs_overthrust',
+      'bs_maximize', 'bs_unfairlytrick', 'bs_greed',
     ],
     desc: '鎚起鎚起鎚落，鍛出無堅不摧的武器與力量。'
   },
@@ -215,9 +215,9 @@ const JOB_TREE = {
     next: [], nextLocked: ['assassincross'],
     bonusLevels: { str:[11,25,27,32,45,48], agi:[1,2,3,15,16,17,18,19,20,21], vit:[6,8], int:[4,14,38,42], dex:[9,24,30,31,40,41,46,50], luk:[] },
     skills: [
-      'rightmaster', 'leftmaster', 'katarmastery', 'cloaking',
-      'sonicblow', 'grimtooth', 'enchantweapon', 'poisonreact',
-      'venomdust', 'venominfusion', 'sonicblow_max', 'enchantblade',
+      'as_right', 'as_left', 'as_katar', 'as_cloaking',
+      'as_sonicblow', 'as_grimtooth', 'as_enchantpoison', 'as_poisonreact',
+      'as_venomdust', 'as_splasher', 'as_sonicaccel', 'as_venomknife',
     ],
     desc: '潛行於暗處、一擊致命的殺手。'
   },
@@ -232,11 +232,11 @@ const JOB_TREE = {
        `safetywall` 是**跟法師共用的同一支**——官方就是 `MG_SAFETYWALL`，
        兩個職業都學得到。以前祭司自己複製了一份叫 `darkbarrier`（#95 刪掉）。 */
     skills: [
-      'maceMastery', 'zenrecovery', 'sanctuary', 'magnificat',
-      'gloria', 'kyrie', 'impositio_manus', 'assumptio',
-      'aspersio', 'sanctuary_holy', 'safetywall', 'slowpoison',
-      'strecovery', 'resurrection', 'impositio', 'turnundead',
-      'angelus', 'asperio', 'suffragium',
+      'pr_macemastery', 'pr_sanctuary', 'pr_magnificat',
+      'pr_gloria', 'pr_kyrie', 'pr_impositio', 'pr_suffragium',
+      'pr_aspersio', 'pr_benedictio', 'mg_safetywall', 'pr_slowpoison',
+      'pr_strecovery', 'all_resurrection', 'pr_lexdivina', 'pr_turnundead',
+      'pr_lexaeterna', 'pr_magnus', 'pr_redemptio',
     ],
     desc: '光輝籠罩之地，皆為信徒的庇護所。'
   },
@@ -262,13 +262,13 @@ const JOB_TREE = {
        ＋官方另外給的 7 個借用技能（服事 4 個、騎士 3 個），本作全都已經存在，直接引用。
        `autoguard` / `grandcross` 兩個 id 沒有 cr_ 前綴是刻意的——有卡片指名它們。 */
     skills: [
-      'autoguard', 'cr_shieldcharge', 'cr_shieldboomerang', 'cr_defender',
-      'cr_reflectshield', 'cr_trust', 'cr_holycross', 'grandcross',
+      'cr_autoguard', 'cr_shieldcharge', 'cr_shieldboomerang', 'cr_defender',
+      'cr_reflectshield', 'cr_trust', 'cr_holycross', 'cr_grandcross',
       'cr_providence', 'cr_spearquicken', 'cr_shrink', 'cr_devotion',
       // 官方借用：服事的治癒術／天使之護／天使之擊／治療術
-      'heal', 'divineprotection', 'angelic', 'holywater',
+      'al_heal', 'al_dp', 'al_demonbane', 'al_holywater',
       // 官方借用：騎士的長矛熟練度／騎乘術／騎兵修練
-      'spearmastery', 'riding', 'cavaliermastery',
+      'kn_spearmastery', 'kn_riding', 'kn_cavaliermastery',
     ],
     desc: '以盾為誓，以聖光為刃。擋在最前面的那個人。'
   },
@@ -288,7 +288,7 @@ const JOB_TREE = {
     next: [], nextLocked: ['clown'],
     bonusLevels: { str:[3,28], agi:[2,10,11,24,30,35,48], vit:[17,33,43], int:[5,13,21,40,47], dex:[1,7,15,16,19,32,38,46,50], luk:[6,9,20,41] },
     skills: [
-      'ba_musicallesson', 'frostjoke', 'ba_dissonance', 'ba_whistle',
+      'ba_musicallesson', 'ba_frostjoker', 'ba_dissonance', 'ba_whistle',
       'ba_assassincross', 'ba_poembragi', 'ba_appleidun', 'ba_musicalstrike',
       'ba_pangvoice',
       // 詩舞共用
@@ -392,7 +392,7 @@ const JOB_TREE = {
       'sa_volcano', 'sa_deluge', 'sa_violentgale', 'sa_landprotector',
       'sa_castcancel', 'sa_freecast', 'sa_autospell', 'sa_magicrod',
       'sa_spellbreaker', 'sa_dispell', 'sa_abracadabra', 'sa_createcon',
-      'sa_elementfire', 'sa_elementwater', 'sa_elementwind', 'sa_elementearth',
+      'sa_elementfire', 'sa_elementwater', 'sa_elementwind', 'sa_elementground',
     ],
     // 官方賢者與巫師共用法師的技能樹，整份借過來（屬性附加的前置就是法師的三個箭術）
     borrowSkillsFrom: ['mage'],
@@ -506,7 +506,7 @@ const JOB_TREE = {
     next: [], nextLocked: ['mechanic'],
     bonusLevels: { str:[2,3,17,26,33,52], agi:[7,19,20,31,36,58,64], vit:[9,13,29,48,60,65], int:[4,15,22,34,50,61], dex:[1,6,12,23,32,38,41,47,55,56,62,70], luk:[8,16,28,39,44,45,66,67] },
     // 官方 8 個，三個空技能（金錢鑄造／金屬塊製造／攻擊塔製作）刪除——見 js/skills.js
-    skills: ['ws_weaponrefine', 'ws_cartboost', 'ws_cartterm', 'ws_meltdown', 'ws_overthrustmax'],
+    skills: ['ws_weaponrefine', 'ws_cartboost', 'ws_carttermination', 'ws_meltdown', 'ws_overthrustmax'],
     desc: '鐵砧上敲出來的不只是武器，還有一整個時代的重量。'
   },
   assassincross: {
@@ -621,7 +621,7 @@ const JOB_TREE = {
     next: [], nextLocked: ['geneticist'],
     bonusLevels: { str:[6,31,53,66], agi:[5,18,27,38,54,67], vit:[9,33,61], int:[7,13,22,30,46,59,68], dex:[1,10,15,23,35,41,42,43,47,49,56,57,63,70], luk:[3,8,20,25,34,45,51,52,60,64,69] },
     // 官方 6 個做 3 個（植物栽培／鍊金術／藥水合成刪除，理由見 js/skills.js 的創造者區塊）
-    skills: ['bc_slimpitcher', 'bc_aciddemonstration', 'bc_fullprotection'],
+    skills: ['cr_slimpitcher', 'cr_aciddemonstration', 'cr_fullprotection'],
     desc: '他不再問代價，因為代價早就付完了。'
   },
   stalker: {
@@ -818,8 +818,8 @@ const JOB_TREE = {
    所以 engine.js / ui.js 讀到的 job.skills 跟以前完全一樣。
 
    陣列元素可以是：
-     'bash'                     直接引用
-     { id: 'bash', maxLv: 5 }   引用並覆寫欄位（轉生職上限不同時用得到）
+     'sm_bash'                     直接引用
+     { id: 'sm_bash', maxLv: 5 }   引用並覆寫欄位（轉生職上限不同時用得到）
 
    技能物件是共用參照——超級新手借用一轉技能時指到的是同一份。
    全專案沒有任何地方會寫入技能物件（只讀 mult/spCost/desc 這些），所以共用是安全的；

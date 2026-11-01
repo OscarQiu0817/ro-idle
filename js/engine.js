@@ -1363,7 +1363,7 @@ function recomputeDerived(fullHeal) {
           // 武器限定的熟練度（單手劍／雙手劍／拳刃／鈍器／長矛）：沒拿對武器就不加
           if (!weaponReqMet(sk.requiresWeapon)) break;
           // 天使之擊：官方效果限定對惡魔/不死種族生效，改成攻擊時依目標種族判定，不再全體適用
-          if (sk.id === 'angelic') { state.angelicAtkBonus = Math.round(val); break; }
+          if (sk.id === 'al_demonbane') { state.angelicAtkBonus = Math.round(val); break; }
           state.atk += Math.round(val);
           state._atkMastery += Math.round(val);   // 熟練度加成不吃體型/屬性修正
           // 武器修理：附加固定暴擊率加成
@@ -1394,7 +1394,7 @@ function recomputeDerived(fullHeal) {
         case 'hitFlat': {
           state.hit += Math.round(val);
           // 蒼鷹之眼：額外附帶固定ASPD加成
-          if (sk.id === 'vultureeye' && sk.aspdFlat) {
+          if (sk.id === 'ac_vulture' && sk.aspdFlat) {
             const aspdBonus = Array.isArray(sk.aspdFlat) ? sk.aspdFlat[lv - 1] : sk.aspdFlat;
             state.passiveAspdFlat += aspdBonus;
           }
@@ -1403,7 +1403,7 @@ function recomputeDerived(fullHeal) {
         case 'fleeFlat': {
           // 殘影：轉職刺客系後改用較高的加成曲線
           let fleeVal = val;
-          if (sk.id === 'improvedodge' && sk.assassinMult && state.jobId === 'assassin') {
+          if (sk.id === 'tf_miss' && sk.assassinMult && state.jobId === 'assassin') {
             fleeVal = Array.isArray(sk.assassinMult) ? sk.assassinMult[lv - 1] : sk.assassinMult;
           }
           state.flee += Math.round(fleeVal);
@@ -1412,7 +1412,7 @@ function recomputeDerived(fullHeal) {
         // dexFlat 已在 recomputeDerived 開頭計算並加入 cDex，不再修改 state.stats.dex
         case 'defFlat': {
           // 天使之護：官方效果限定對惡魔/不死種族生效，改成被攻擊時依攻擊者種族判定，不再全體適用
-          if (sk.id === 'divineprotection') { state.divineDefBonus = Math.round(val); break; }
+          if (sk.id === 'al_dp') { state.divineDefBonus = Math.round(val); break; }
           // 技能給的 DEF+N 當硬防（跟裝備同性質）；state.def 之後會重新加總
           state.defHard = (state.defHard || 0) + Math.round(val);
           break;
@@ -1435,7 +1435,7 @@ function recomputeDerived(fullHeal) {
         }
         /* 騎乘術：技能敘述寫的是「生怪速度+25%」，那條在 spawnMonster() 裡看 hasRiding
            判斷（補怪間隔 3000→2250ms、清場後 500→375ms）。
-           **這句以前是錯的**：spawnMonster() 實際上是直接查 `learnedSkills['riding']`，
+           **這句以前是錯的**：spawnMonster() 實際上是直接查 `learnedSkills['kn_riding']`，
            hasRiding 寫了兩處、讀 0 處。#70 加武僧的弓身彈影時發現，
            兩個消費點都改成讀這個旗標了。
            原本這裡還有一行 state.maxMonsters = Math.max(state.maxMonsters || 1, 1)，
@@ -2169,7 +2169,7 @@ function recomputeDerived(fullHeal) {
         }
         case 'zenyCostReduction': {
           // 詭計的商術：目前僅套用於金錢攻擊(mammonite)，手推車終結技留待未來新職業加入後再接上
-          state.zenyCostReductionPct['mammonite'] = val;
+          state.zenyCostReductionPct['mc_mammonite'] = val;
           break;
         }
         case 'onHitStunProc': {
@@ -2243,7 +2243,7 @@ function recomputeDerived(fullHeal) {
           state.hasOnAttackAoeProc = true;
           state.onAttackAoeProcChance = Array.isArray(sk.procChance) ? sk.procChance[lv - 1] : sk.procChance;
           // 火柱攻擊在本作做成被動（普攻機率觸發），不走 castSkill，
-          // 所以卡片的 skillDmg_firepillar 要在這裡自己套上去
+          // 所以卡片的 skillDmg_wz_firepillar 要在這裡自己套上去
           {
             const fpBonus = 1 + getCardBonus('skillDmg_' + sk.id) / 100;
             state.onAttackAoeFlatDmg = Math.round((Array.isArray(sk.flatDmg) ? sk.flatDmg[lv - 1] : (sk.flatDmg || 0)) * fpBonus);
@@ -3910,7 +3910,7 @@ function tryCardAilments(trigger, mon) {
 }
 
 /* ---------------- 獵人陷阱：被動觸發（攻擊時機率/固定觸發，各自獨立冷卻）---------------- */
-const TRAP_SKILL_IDS = ['trap', 'skidtrap', 'flasher', 'sleeptrap', 'freezingtrap', 'blastmine', 'claymoretrap', 'magnumbreak_h'];
+const TRAP_SKILL_IDS = ['ht_landmine', 'ht_skidtrap', 'ht_flasher', 'ht_sandman', 'ht_freezingtrap', 'ht_blastmine', 'ht_anklesnare', 'ht_claymoretrap'];
 function tryTrapProcs(target, monDef) {
   if (!state.learnedSkills) return;
   if (!state.trapReadyAt) state.trapReadyAt = {};
@@ -3968,7 +3968,7 @@ function tryTrapProcs(target, monDef) {
 }
 
 /* ---------------- 冰凍術/石化術：被攻擊時機率反制暈眩並造成魔法傷害（各自獨立冷卻）---------------- */
-const MAGIC_STUN_SKILL_IDS = ['frostdiver', 'stonecurse'];
+const MAGIC_STUN_SKILL_IDS = ['mg_frostdiver', 'mg_stonecurse'];
 function tryMagicStunProcs(mon, monDef) {
   if (!state.learnedSkills) return;
   if (!state.magicStunReadyAt) state.magicStunReadyAt = {};
@@ -5000,8 +5000,8 @@ const GOSPEL_CURSES = [
       return `${n} 隻敵人中毒`;
     } },
   { name: '激怒', icon: '💢', run: mons => {
-      // 10 級挑釁＝DEF ×0.45（照 SKILLS.provoke 的 mult 最後一格，改了那邊這裡跟著走）
-      const pv = SKILLS.provoke;
+      // 10 級挑釁＝DEF ×0.45（照 SKILLS.sm_provoke 的 mult 最後一格，改了那邊這裡跟著走）
+      const pv = SKILLS.sm_provoke;
       const m10 = pv && Array.isArray(pv.mult) ? pv.mult[pv.mult.length - 1] : 0.45;
       const until = Date.now() + GOSPEL_EFFECT_SEC * 1000;
       mons.forEach(m => { m.debuffDef = m10; m.debuffDefEnd = until; });
@@ -5147,7 +5147,7 @@ function tryTarotCard(target, monDef) {
 /* 雙倍投擲（#76）：三系箭術施放後機率立刻再放一次。
    由 castSkill 在**確定放得出來之後**呼叫，所以不會出現「主體失敗但複製成功」。
    複製那一發走 free 施放：官方不另外消耗 SP，也不該再吃一次冷卻。 */
-const DOUBLECAST_SKILLS = ['firebolt', 'coldbolt', 'lightningbolt'];
+const DOUBLECAST_SKILLS = ['mg_firebolt', 'mg_coldbolt', 'mg_lightningbolt'];
 function tryDoubleCast(sk, lv) {
   if (!sk || !DOUBLECAST_SKILLS.includes(sk.id)) return;
   const b = state.buffs.find(x => x.type === 'doublecast');
@@ -5349,11 +5349,11 @@ function tryOnAttackAoeProc() {
 // 冰刃之牆：沒有護盾在身且冷卻完畢時，自動補上一層護盾
 function tryAutoShield() {
   if (!state.hasAutoShield) return;
-  if (state.shields && state.shields.some(sh => sh.id === 'icewall')) return;
+  if (state.shields && state.shields.some(sh => sh.id === 'wz_icewall')) return;
   if (Date.now() < (state.autoShieldReadyAt || 0)) return;
   state.autoShieldReadyAt = Date.now() + state.autoShieldCooldownSec * 1000;
   if (!state.shields) state.shields = [];
-  state.shields.push({ id: 'icewall', remainingHp: state.autoShieldCapacity, remainingCharges: state.autoShieldCharges, expiresAt: Date.now() + 999999 * 1000 });
+  state.shields.push({ id: 'wz_icewall', remainingHp: state.autoShieldCapacity, remainingCharges: state.autoShieldCharges, expiresAt: Date.now() + 999999 * 1000 });
   logMsg('🧊 冰刃之牆自動展開！');
 }
 
@@ -6194,8 +6194,8 @@ function skillHits(sk, lv, monDef, inst) {
   if (!sk || sk.alwaysHit) return true;
   let hit = effectiveHitWithBuff();
   // 超音速投擲被動：音速投擲命中率修正 +90%
-  if (sk.id === 'sonicblow' && state.hasSonicblowBoost) hit += 90;
-  if (sk.id === 'bash' && sk.hitBonus) {
+  if (sk.id === 'as_sonicblow' && state.hasSonicblowBoost) hit += 90;
+  if (sk.id === 'sm_bash' && sk.hitBonus) {
     hit += Array.isArray(sk.hitBonus) ? sk.hitBonus[lv - 1] : sk.hitBonus;
   }
   if (sk.hitBonusOnCast) {
@@ -6214,7 +6214,7 @@ function playerAtkMult() {
      雙劍挌擋（#58）—— 領主騎士被動，常駐但要拿雙手劍
    分開擲而不是把機率相加，是因為官方本來就是兩個獨立的判定，
    相加會在兩者都高的時候直接爆到 100%。 */
-/* 回傳**是哪個來源擋下的**（'autoguard' / 'parrying'）或 null。
+/* 回傳**是哪個來源擋下的**（'cr_autoguard' / 'parrying'）或 null。
    以前回 true/false 就夠用，但十字軍的退縮（#66）官方寫的是
    「以**自動防禦**成功防禦時，有 50% 機率使對方暈眩」——雙劍挌擋擋下的那次不算，
    所以呼叫端要分得出來。兩個呼叫點都只做真假判斷，字串一樣是 truthy，行為不變。 */
@@ -6235,11 +6235,11 @@ function playerBlocked(scope) {
     if (!b.blockCdSec) { pct += b.flatBonus; return; }
     if (now >= (b.blockReadyAt || 0)) timed.push(b);
   });
-  if (pct > 0 && Math.random() * 100 < pct) return 'autoguard';
+  if (pct > 0 && Math.random() * 100 < pct) return 'cr_autoguard';
   for (const b of timed) {
     if (Math.random() * 100 >= b.flatBonus) continue;
     b.blockReadyAt = now + b.blockCdSec * 1000;
-    return 'autoguard';
+    return 'cr_autoguard';
   }
   const parry = state.parryingChance || 0;
   if (parry > 0 && Math.random() * 100 < parry) return 'parrying';
@@ -6250,7 +6250,7 @@ function playerBlocked(scope) {
    官方是「再次使用時解除」的開關技能且 maxLv 0（未開放），
    使用者 2026-08-09 指定改成**被動、轉職自動獲得**。 */
 function tryShrinkStun(mon, monDef, blockedBy) {
-  if (blockedBy !== 'autoguard') return;
+  if (blockedBy !== 'cr_autoguard') return;
   if (!state.shrinkStunChance || !mon) return;
   if (Math.random() * 100 >= state.shrinkStunChance) return;
   applyStun(mon, state.shrinkStunSec || 1, true);
@@ -6843,13 +6843,13 @@ function playerAttackInner() {
   /* 二刀連擊：技能版官方限定短劍才會觸發（拿拳刃／劍都不會動）。
      黑蛇卡片給的那份不受武器限制——那張卡本來就是給拿不了短劍的職業用的，
      而且卡片說明寫「習得二刀連擊後依技能等級決定機率」，所以兩者取等級高的那個。 */
-  const daSkillLv = state.learnedSkills['doubleattack'] || 0;
+  const daSkillLv = state.learnedSkills['tf_double'] || 0;
   const daFromCard = !!state.hasSideWinderDoubleAttack;
   const daByWeapon = daSkillLv > 0 && isDaggerWeapon(atkWeaponId);
   const daLv = Math.max(daSkillLv, daFromCard ? 1 : 0);
   if (daLv > 0 && (daFromCard || daByWeapon)) {
     // 只靠卡片觸發時玩家可能根本不是盜賊系，findSkillById() 查不到，要直接翻技能表
-    const daSkill = findSkillById('doubleattack') || JOB_TREE.thief.skills.find(s => s.id === 'doubleattack');
+    const daSkill = findSkillById('tf_double') || JOB_TREE.thief.skills.find(s => s.id === 'tf_double');
     const daChance = daSkill && daSkill.doubleAttackChance ? daSkill.doubleAttackChance[daLv - 1] : 7;
     if (Math.random() * 100 < daChance) {
       const daMult = daSkill && daSkill.mult ? daSkill.mult[daLv - 1] : 1.0;
@@ -6922,9 +6922,9 @@ function playerAttackInner() {
   tryOnAttackAoeProc();
 
   // 塗毒：武器沾毒生效中，攻擊時機率使敵人中毒
-  const ewLv = state.learnedSkills['enchantweapon'] || 0;
-  if (ewLv > 0 && state.monsters.includes(target) && state.buffs.some(b => b.skillId === 'enchantweapon')) {
-    const ewSkill = findSkillById('enchantweapon');
+  const ewLv = state.learnedSkills['as_enchantpoison'] || 0;
+  if (ewLv > 0 && state.monsters.includes(target) && state.buffs.some(b => b.skillId === 'as_enchantpoison')) {
+    const ewSkill = findSkillById('as_enchantpoison');
     const ewChance = ewSkill.procChance != null ? ewSkill.procChance : 20;
     if (Math.random() * 100 < ewChance) {
       const ewDmgPct = ewSkill.mult[ewLv - 1];
@@ -6965,12 +6965,12 @@ function playerAttackInner() {
   }
 
   // 閃電衝擊被動：普攻時依LUK機率額外觸發一次獵鷹單體攻擊
-  const bbLv = state.learnedSkills['blitzbeat'] || 0;
+  const bbLv = state.learnedSkills['ht_blitzbeat'] || 0;
   if (bbLv > 0 && state.monsters.includes(target)) {
     const luk = state.stats.luk || 1;
     const bbChance = Math.min(30, 5 + (luk - 1) * 25 / 119);
     if (Math.random() * 100 < bbChance) {
-      const bbSkill = findSkillById('blitzbeat');
+      const bbSkill = findSkillById('ht_blitzbeat');
       const passiveMultVal = bbSkill.passiveMult[bbLv - 1];
       const bbElemMult = getElementMultiplierVsMonster(bbSkill.element || 'none', monDef, target);
       let bbDmg = mitigateDamage(skillBaseDamage(false, monDef, bbElemMult) * passiveMultVal, ...defOf(monDef));
@@ -9664,7 +9664,7 @@ function skillReady(skillId) {
    官方卡片有一大類是「攻擊時／受擊時，有一定機率自動施放某個技能」。
    資料寫在 CARDS[x].autoSpell（陣列，一張卡可以有多條）：
 
-     autoSpell: [{ on: 'attack', skill: 'firebolt', lv: 5, chance: 5 }]
+     autoSpell: [{ on: 'attack', skill: 'mg_firebolt', lv: 5, chance: 5 }]
 
      on      'attack' 普通攻擊命中之後／'hit' 被怪物打到之後
      skill   技能 id，不必是本職業的、玩家也不必學過
@@ -9977,11 +9977,11 @@ function castSkillInner(skillId, opts) {
       let skillMult = mult;
       let faExtraFlat = 0;   // 獵鷹突擊：鋼製喙那份固定傷害，加在防禦之後
       // 超音速投擲被動：音速投擲傷害+90%
-      if (sk.id === 'sonicblow' && state.hasSonicblowBoost) {
+      if (sk.id === 'as_sonicblow' && state.hasSonicblowBoost) {
         skillMult *= 1.9;
       }
       /* 依基本等級／INT 遞增的技能（轉生術、心靈震波）。
-         以前是寫死 `sk.id === 'turnundead'`，改成看欄位在不在——
+         以前是寫死 `sk.id === 'pr_turnundead'`，改成看欄位在不在——
          心靈震波官方也是「傷害隨基本等級與 INT 增加」，同一組欄位就夠用。 */
       if (sk.levelScaleMax || sk.intScaleMax) {
         const lvlBonusPct = (state.baseLevel / 99) * (sk.levelScaleMax || 0);
@@ -9994,7 +9994,7 @@ function castSkillInner(skillId, opts) {
         skillMult *= 1 + (def.defSoft || 0) * sk.targetSoftDefScale / 100;
       }
       // 聖靈召喚：對不死種族額外加成
-      if (sk.id === 'soulstrike' && def.race === 'undead' && sk.undeadBonusPct) {
+      if (sk.id === 'mg_soulstrike' && def.race === 'undead' && sk.undeadBonusPct) {
         const undeadPct = Array.isArray(sk.undeadBonusPct) ? sk.undeadBonusPct[lv - 1] : sk.undeadBonusPct;
         skillMult *= (1 + undeadPct / 100);
       }
@@ -10003,7 +10003,7 @@ function castSkillInner(skillId, opts) {
         skillMult *= sk.lowHpMult;
       }
       // 負重量上升：加成金錢攻擊／手推車攻擊／手推車終結技（#60 使用者指定也吃這個）
-      if ((sk.id === 'mammonite' || sk.id === 'cartattack' || sk.id === 'ws_cartterm') && state.cartDmgBonusMult) {
+      if ((sk.id === 'mc_mammonite' || sk.id === 'mc_cartrevolution' || sk.id === 'ws_carttermination') && state.cartDmgBonusMult) {
         skillMult *= (1 + state.cartDmgBonusMult);
       }
       /* 獵鷹突擊（#61）：官方**沒有給 ATK% 欄位**——它的傷害是從閃電衝擊推導的
@@ -10012,8 +10012,8 @@ function castSkillInner(skillId, opts) {
          鋼製喙的固定傷害也照同一個係數放大並加在防禦之後（跟閃電衝擊本體同一個位置）。
          結果是：把前置練滿，這招才會變強——官方的設計意圖就是這個。 */
       if (sk.id === 'sn_falconassault') {
-        const bLv = state.learnedSkills['blitzbeat'] || 0;
-        const bSk = SKILLS.blitzbeat;
+        const bLv = state.learnedSkills['ht_blitzbeat'] || 0;
+        const bSk = SKILLS.ht_blitzbeat;
         const bMult = (bLv && bSk) ? (bSk.mult[bLv - 1] || 0) : 0;
         skillMult *= bMult;
         faExtraFlat = (state.falconFlatBonus || 0) * (Array.isArray(sk.mult) ? sk.mult[lv - 1] : 1);
@@ -10051,8 +10051,8 @@ function castSkillInner(skillId, opts) {
         ...defOf(def, 1, useMag, target)) + raceFlatBonus(def) + faExtraFlat;
       target.hp -= dmg;
       // 單體技能以前完全不飄字（logMsg 的飄字規則只認「你…造成N點傷害」那種普攻句型）
-      const visHits = (sk.id === 'doublestrafe') ? 2
-        : (sk.id === 'firebolt' || sk.id === 'coldbolt' || sk.id === 'lightningbolt') ? lv : 1;
+      const visHits = (sk.id === 'ac_double') ? 2
+        : (sk.id === 'mg_firebolt' || sk.id === 'mg_coldbolt' || sk.id === 'mg_lightningbolt') ? lv : 1;
       if (typeof showSkillHitNumbers === 'function') showSkillHitNumbers(target.id, dmg, visHits, useMag ? skElement : null, skCrit);
       else if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, skCrit ? 'crit' : 'normal', useMag ? skElement : null);
       logMsg(`⚡ 「${sk.name}」Lv${lv} 造成 ${dmg} 點傷害！${skCrit ? '（暴擊！）' : ''}`);
@@ -10070,7 +10070,7 @@ function castSkillInner(skillId, opts) {
         logMsg(`💫 ${def.name} 被暈眩了！`);
       }
       // 攻擊弱點：狂擊命中時有機率使目標暈眩
-      if (sk.id === 'bash' && state.hasBashStunProc && target.hp > 0 && Math.random() * 100 < state.bashStunProcChance) {
+      if (sk.id === 'sm_bash' && state.hasBashStunProc && target.hp > 0 && Math.random() * 100 < state.bashStunProcChance) {
         applyStun(target, state.bashStunProcSec || 1, true);
         logMsg(`💫 攻擊弱點發動！${def.name} 暈眩了！`);
       }
@@ -10085,7 +10085,7 @@ function castSkillInner(skillId, opts) {
         }
       }
       // 衝鋒箭：命中時使敵人暈眩1~3秒（代表擊退）
-      if (sk.id === 'chargearrow' && target.hp > 0) {
+      if (sk.id === 'ac_chargearrow' && target.hp > 0) {
         const stunSec = 1 + Math.random() * 2;
         applyStun(target, stunSec, false);
         logMsg(`💫 ${def.name} 被擊退撞暈了，${stunSec.toFixed(1)}秒內無法攻擊！`);
@@ -10113,9 +10113,9 @@ function castSkillInner(skillId, opts) {
         const monEleDmgBonus = cardTargetDmgMult(monDef) - 1;
         // 負重量上升：加成手推車攻擊傷害
         let aoeMult = mult;
-        if (sk.id === 'cartattack' && state.cartDmgBonusMult) aoeMult *= (1 + state.cartDmgBonusMult);
+        if (sk.id === 'mc_cartrevolution' && state.cartDmgBonusMult) aoeMult *= (1 + state.cartDmgBonusMult);
         // 騎乘攻擊：依STR增加傷害（STR120封頂）
-        if (sk.id === 'brandishspear') {
+        if (sk.id === 'kn_brandishspear') {
           const strScaleMax = Array.isArray(sk.strScaleMax) ? sk.strScaleMax[lv - 1] : (sk.strScaleMax || 100);
           const strBonusPct = Math.min(1, state.stats.str / 120) * (strScaleMax / 100);
           aoeMult *= (1 + strBonusPct);
@@ -10145,7 +10145,7 @@ function castSkillInner(skillId, opts) {
         }
         let dmg = mitigateDamage(skillBaseDamage(useMag, monDef, monElemMult) * aoeMult * (1 + monEleDmgBonus) * ailDmgTakenMult(mon), ...defOf(monDef, 1, useMag, mon)) + raceFlatBonus(monDef);
         // 鋼製喙：閃電衝擊額外固定傷害（不受倍率影響）
-        if (sk.id === 'blitzbeat' && state.falconFlatBonus) dmg += state.falconFlatBonus;
+        if (sk.id === 'ht_blitzbeat' && state.falconFlatBonus) dmg += state.falconFlatBonus;
         if (dmg > aoeTopDmg) aoeTopDmg = dmg;
         noteMonsterDamage(mon, dmg);
         mon.hp -= dmg;
@@ -10715,7 +10715,7 @@ function castSkillInner(skillId, opts) {
     case 'buff_atk': {
       let dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       // 武器保有：凶砍持續時間+10%
-      if (sk.id === 'overthrustbuff' && state.hiltBindingDurationBonus) dur *= (1 + state.hiltBindingDurationBonus);
+      if (sk.id === 'bs_overthrust' && state.hiltBindingDurationBonus) dur *= (1 + state.hiltBindingDurationBonus);
       state.buffs.push({ type: 'atk', mult, msRemaining: dur * 1000, skillId: sk.id });
       /* `defMult`：官方有一批攻擊 buff 是「以防禦換攻擊」（集中攻擊 ATK+5~25%／DEF−5~25%）。
          代價跟效果推同一個持續時間，不然玩家可以只留好處。 */
@@ -10968,7 +10968,7 @@ function castSkillInner(skillId, opts) {
     case 'buff_aspd': {
       let dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       // 武器保有：速度激發持續時間+10%
-      if (sk.id === 'adrenaline' && state.hiltBindingDurationBonus) dur *= (1 + state.hiltBindingDurationBonus);
+      if (sk.id === 'bs_adrenaline' && state.hiltBindingDurationBonus) dur *= (1 + state.hiltBindingDurationBonus);
       state.buffs.push({ type: 'aspd', mult, msRemaining: dur * 1000 });
       // 雙手劍加速額外加成：暴擊率+命中
       if (sk.bonusCrit) {
@@ -11333,13 +11333,13 @@ function tryAutoCastSupportSkills() {
   }
 
   // 偽裝連動：勾選了自動偽裝，且偽裝生效中時，自動施放無影之牙
-  if (state.autoSupportSkills['cloaking']) {
-    const cloakActive = state.buffs.some(b => b.type === 'flee' && b.skillId === 'cloaking');
-    const gtLv = skillLv('grimtooth');
-    if (cloakActive && gtLv && skillReady('grimtooth') && state.monsters && state.monsters.length > 0) {
-      const gtSk = findSkillForUse('grimtooth');
+  if (state.autoSupportSkills['as_cloaking']) {
+    const cloakActive = state.buffs.some(b => b.type === 'flee' && b.skillId === 'as_cloaking');
+    const gtLv = skillLv('as_grimtooth');
+    if (cloakActive && gtLv && skillReady('as_grimtooth') && state.monsters && state.monsters.length > 0) {
+      const gtSk = findSkillForUse('as_grimtooth');
       const gtCost = skillSpCost(gtSk, gtLv);
-      if (state.sp >= gtCost) castSkill('grimtooth');
+      if (state.sp >= gtCost) castSkill('as_grimtooth');
     }
   }
 }
@@ -14078,12 +14078,12 @@ function tryAutoVending() {
      玩家回報「找不到露天商店的入口」時人在神匠。
      這跟 isBlacksmithLine() 當初踩到的是同一個坑。 */
   if (!jobLineHas(state.jobId, 'merchant')) return;
-  if (!state.learnedSkills || !state.learnedSkills['vending']) return;
+  if (!state.learnedSkills || !state.learnedSkills['mc_vending']) return;
   if (!state.vendingConfig || !state.vendingConfig.items || state.vendingConfig.items.length === 0) return;
   const readyAt = state.vendingReadyAt || 0;
   if (Date.now() < readyAt) return;
 
-  const sk = findSkillById('vending');
+  const sk = findSkillById('mc_vending');
   const cdSec = sk.internalCooldown || 60;
   const sellMult = sk.sellMultiplier || 10;
   state.vendingReadyAt = Date.now() + cdSec * 1000;
@@ -14429,8 +14429,8 @@ function loadGame() {
        含 `aquabenedicta`／`curestatus`（新式存檔不會有），用這兩個 key 當指標，
        沒有就整段跳過，順便避免重複搬。 */
     (function migrateAcolyteSkillIds() {
-      const MAP = { blessing: 'increaseagi', aquabenedicta: 'blessing',
-        cure: 'holywater', curestatus: 'cure' };
+      const MAP = { blessing: 'al_incagi', aquabenedicta: 'blessing',
+        cure: 'al_holywater', curestatus: 'cure' };
       const conv = id => (id && MAP[id]) || id;
       const remapObj = o => {
         if (!o) return o;
