@@ -164,6 +164,7 @@ function main() {
       const [cat, two] = RA_SUBTYPE_TO_CAT[ra.SubType];
       if (cat !== it.weaponCat) put(it.id, 'weaponCat', cat);
       put(it.id, 'twoHanded', two);
+      put(it.id, 'range', ra.Range || 1);   // 攻擊距離（格），3b 普攻射程用
     }
 
     if (loose.length) R.jobTooLoose.push({ ...row, jobs: loose, reqJob: it.reqJob || [], viaNovice: (it.reqJob || []).includes('novice') });

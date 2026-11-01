@@ -2493,6 +2493,33 @@ loadMobAnim();
    還有距離播走路，貼近後怪播攻擊。 */
 const BF_HOME = { x: 20, y: 64 };
 const BF_SPEED = 20;
+/* 3b：引擎的距離 d（格）× 方向角 a 換算成場景百分比。玩家站在 BF_HOME，怪從右半邊走來。 */
+const BF_CELL_X = 7;
+const BF_CELL_Y = 5;
+/* 玩家正在走向目標（目標不在普攻距離內）。引擎裡是目標距離縮短，畫面上改成：
+   玩家播走路動畫、背景往反方向捲動（鏡頭跟著角色，D1）。 */
+const bfBg = { x: 0, y: 0 };
+function bfPlayerWalking(lead) {
+  try {
+    return !!lead && Number.isFinite(lead.d) && lead.d > playerAttackRange() + 1e-6 && !playerImmobile();
+  } catch (e) { return false; }
+}
+function bfScrollBackground(lead, dt) {
+  const el = document.getElementById('map-bg-scroll');
+  const scene = document.getElementById('battle-scene');
+  if (!el || !scene || !dt) return;
+  const pxPerCell = scene.getBoundingClientRect().width * BF_CELL_X / 100;
+  const step = pxPerCell * (dt * 1000 / PLAYER_WALK_MS);
+  bfBg.x -= Math.cos(lead.a || 0) * step;
+  bfBg.y -= Math.sin(lead.a || 0) * step * (BF_CELL_Y / BF_CELL_X);
+  el.style.backgroundPosition = `${bfBg.x.toFixed(1)}px ${bfBg.y.toFixed(1)}px`;
+}
+function bfPolarPoint(mon) {
+  return {
+    x: bfClamp(bfPlayer.x + Math.cos(mon.a || 0) * mon.d * BF_CELL_X, 6, 94),
+    y: bfClamp(bfPlayer.y + Math.sin(mon.a || 0) * mon.d * BF_CELL_Y, 10, 90),
+  };
+}
 let bfPlayer = { x: BF_HOME.x, y: BF_HOME.y };
 let bfFaceRight = true;
 let bfLast = 0;
@@ -2554,8 +2581,9 @@ function layoutBattlefield() {
   const mons = (state && state.monsters) || [];
   let town = false;
   try { town = typeof isInTown === 'function' && isInTown(); } catch (e) { town = false; }
-  const close = !town && mons.length > 0 && !playerKeepsDistance();
   const lead = mons[0];
+  // 引擎有距離時，玩家走近已經表現在怪的距離上，人站在原位
+  const close = !town && mons.length > 0 && !playerKeepsDistance() && !(lead && Number.isFinite(lead.d));
   let goal = BF_HOME;
   if (close && lead && Number.isFinite(lead.bx) && Number.isFinite(lead.by)) {
     goal = approachPoint(bfPlayer, { x: lead.bx, y: lead.by }, 16);
@@ -2573,7 +2601,9 @@ function layoutBattlefield() {
     }
   }
   const faceRight = !lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x;
-  syncPlayerBattleAnim(stepped.moved && !town);
+  const walking = !town && bfPlayerWalking(lead);
+  if (walking) bfScrollBackground(lead, dt);
+  syncPlayerBattleAnim((stepped.moved || walking) && !town);
   pinComboTotal();
   faceBattlePlayer(faceRight);
   mons.forEach((mon, i) => {
@@ -2584,8 +2614,18 @@ function layoutBattlefield() {
     const slot = document.getElementById('monster-slot-' + mon.id);
     if (!slot || slot.classList.contains('dying')) return;
     const gap = 16 + (i % 3) * 6;
-    const meet = approachPoint({ x: mon.bx, y: mon.by }, bfPlayer, gap);
-    const mv = dt ? bfStep({ x: mon.bx, y: mon.by }, meet, dt) : { x: mon.bx, y: mon.by, moved: false };
+    let mv;
+    if (Number.isFinite(mon.d)) {
+      const p = bfPolarPoint(mon);
+      // 走路動畫看引擎狀態，不看這一格有沒有位移（引擎每 100ms 才走一步，逐格判斷會閃）
+      const mm = monMove(mon);
+      // 玩家的目標靠近是因為玩家在走，目標本身不播走路
+      const monWalking = !monInRange(mon) && !mm.immobile && (mm.aggressive || mon.hp < mon.maxHp);
+      mv = { x: p.x, y: p.y, moved: monWalking };
+    } else {
+      const meet = approachPoint({ x: mon.bx, y: mon.by }, bfPlayer, gap);
+      mv = dt ? bfStep({ x: mon.bx, y: mon.by }, meet, dt) : { x: mon.bx, y: mon.by, moved: false };
+    }
     const dx = mv.x - mon.bx;
     mon.bx = mv.x; mon.by = mv.y;
     const parent = slot.offsetParent || slot.parentElement;
@@ -2601,7 +2641,7 @@ function layoutBattlefield() {
     const nativeLeft = !!img._maDef;
     img.style.transform = (faceLeft !== nativeLeft) ? 'scaleX(-1)' : '';
     if (img._maDef && img._maAct !== 'hit' && img._maAct !== 'die') {
-      const arrived = Math.hypot(bfPlayer.x - mon.bx, bfPlayer.y - mon.by) <= gap + 0.6;
+      const arrived = Number.isFinite(mon.d) ? monInRange(mon) : Math.hypot(bfPlayer.x - mon.bx, bfPlayer.y - mon.by) <= gap + 0.6;
       mobAnimPlay(img, mv.moved ? 'walk' : (arrived ? 'attack' : 'idle'), false);
     }
   });
@@ -2777,7 +2817,8 @@ function syncPaperdoll(img, parts, moving) {
     applyPaperTransform(canvas, false);
     if (!mobAnimTimer) mobAnimTimer = setInterval(mobAnimTick, 33);
   }
-  if (_pd.once && (Date.now() - _pd.t0) < _pd.once) return;
+  // 要走路時立刻中斷揮擊：傷害在揮擊開頭就結算，目標常在揮擊途中已經死了（docs/GAMEPLAY_DIRECTION.md 待辦 T1）
+  if (_pd.once && !moving && (Date.now() - _pd.t0) < _pd.once) return;
   _pd.once = 0;
   _pd.atkFrom = 0;
   _pd.atkDelay = 0;
@@ -6928,6 +6969,9 @@ function renderMapBackground() {
   const img = document.getElementById('map-bg-img');
   if (!img) return;
   img.src = mapImgSrc(state.mapId);
+  // 拼貼背景：載入失敗時這層沒有圖，露出下面那張 img（含預設圖）
+  const scroll = document.getElementById('map-bg-scroll');
+  if (scroll) { scroll.style.backgroundImage = `url("${mapImgSrc(state.mapId)}")`; bfBg.x = 0; bfBg.y = 0; scroll.style.backgroundPosition = '0px 0px'; }
 }
 
 /* ---------------- 背景音樂 ----------------

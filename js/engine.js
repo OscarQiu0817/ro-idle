@@ -5678,6 +5678,10 @@ function gameTick() {
   tickRelicShield();          // 鐵匠遺物：每 5 秒補一面護盾（#113）
   // 近戰模式持續生怪，遠攻模式等怪物死後再生
   spawnMonster();
+  const moveNow = Date.now();
+  const moveDt = Math.min(1000, moveNow - (state._lastMoveTick || moveNow));
+  state._lastMoveTick = moveNow;
+  tickMonsterMovement(moveDt, moveNow);
   if (state.monsters.length > 0) {
     // 使用攻擊間隔控制攻擊頻率（累積時間差模式）
     const now = Date.now();
@@ -5692,6 +5696,12 @@ function gameTick() {
     // 緩緩移動那批：攻速下降＝攻擊間隔拉長（不直接改 state.attackInterval，
     // 那是 recomputeDerived 算出來的角色數值，改了會被下一次重算蓋掉又難追）
     const atkInterval = state.attackInterval / Math.max(0.2, 1 + pDebuff('aspdPct') / 100);
+    /* 目標不在普攻距離內：走過去（只縮短目標的距離），這段時間不累積攻擊 */
+    const tgt = state.monsters[0];
+    if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
+      if (!playerImmobile()) tgt.d = Math.max(playerAttackRange(), tgt.d - moveDt / PLAYER_WALK_MS);
+      state.attackAccumulator = 0;
+    }
     while (state.attackAccumulator >= atkInterval) {
       state.attackAccumulator -= atkInterval;
       // 昏迷／冰凍／石化／睡眠／混亂：不能攻擊。累積器照樣扣，不然解除的瞬間會一口氣連打
@@ -5709,6 +5719,8 @@ function gameTick() {
         const interval = ((monDef && monDef.atkInterval) ? monDef.atkInterval * 1000 : 1000)
           / (1 + monBuff(mon, 'aspdPct') / 100)
           / monDebuffAspd(mon);              // 勿忘我（#68）：攻速下降＝間隔拉長
+        // 還沒走到射程內：不攻擊，抵達後從頭計一次攻擊間隔
+        if (!monInRange(mon)) { mon.lastAttackTime = now; return; }
         if (now - mon.lastAttackTime >= interval) {
           mon.lastAttackTime = now;
           monsterAttackSingle(mon);
@@ -6329,7 +6341,59 @@ function spawnDelayMs(empty) {
 function rollMonsterSpot() {
   const bx = 36 + Math.random() * 54;
   const by = 18 + Math.random() * 64;
-  return { bx: bx, by: by, sx: bx, sy: by };
+  const pos = rollMonsterPos();
+  return { bx: bx, by: by, sx: bx, sy: by, d: pos.d, a: pos.a };
+}
+
+/* ---------------- 距離＋方向角（3b，docs/GAMEPLAY_DIRECTION.md D1）----------------
+   玩家在原點。每隻怪記距離 d（格）與方向角 a（弧度），出生後沿自己的方向直線走近，
+   進入射程才攻擊。移速、射程、受擊硬直、主動與否取自 js/mob_move.js（rAthena mob_db）。
+   玩家的目標（monsters[0]）不在普攻射程內時，玩家走過去＝只縮短那隻怪的距離。
+   技能尚未受距離限制（3c 處理）；隊友的攻擊也還不看距離。 */
+const SPAWN_DIST_MIN = 6;
+const SPAWN_DIST_MAX = 10;
+const SPAWN_ANGLE_MAX = 70 * Math.PI / 180;   // 怪從右半邊來（戰場畫面上玩家在左側）
+const PLAYER_WALK_MS = 150;                   // rAthena DEFAULT_WALK_SPEED：每格 150ms
+const DIST_EPS = 1e-6;
+const MOB_MOVE_DEFAULT = { range: 1, walkMs: 200, attackDelay: 1000, attackMotion: 0, damageMotion: 480, aggressive: true, immobile: false };
+/* 沒有 rAthena 對應的武器，依攻速分類給攻擊距離 */
+const WEAPON_RANGE_BY_CAT = { bow: 5, whip: 2, spear1: 3, spear2: 3, pistol: 7, rifle: 9, shotgun: 9, gatling: 9, grenade: 9 };
+
+function rollMonsterPos() {
+  return {
+    d: SPAWN_DIST_MIN + Math.random() * (SPAWN_DIST_MAX - SPAWN_DIST_MIN),
+    a: (Math.random() * 2 - 1) * SPAWN_ANGLE_MAX,
+  };
+}
+function monMove(mon) {
+  return (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[mon.defId]) || MOB_MOVE_DEFAULT;
+}
+/* 舊存檔的怪沒有 d：視為已在射程內，行為跟改版前一樣 */
+function monInRange(mon) {
+  return !Number.isFinite(mon.d) || mon.d <= monMove(mon).range + DIST_EPS;
+}
+/* 玩家普攻距離：武器的 range（js/item_identity.js），弓再加鷹眼等級 */
+function playerAttackRange() {
+  const wid = getEquipBaseItemId('weapon');
+  const item = wid && ITEMS[wid];
+  const cat = aspdCategoryOf(wid);
+  let r = (item && item.range) || WEAPON_RANGE_BY_CAT[cat] || 1;
+  if (cat === 'bow') r += skillLv('ac_vulture') || 0;
+  return r;
+}
+/* 每 tick：怪物走近。昏迷類異常、受擊硬直、不會動的怪不走；
+   被動怪要等被打（血量少於上限）才會靠過來。受擊硬直用血量下降偵測，不必改各傷害路徑。 */
+function tickMonsterMovement(dtMs, now) {
+  for (const mon of state.monsters) {
+    if (!Number.isFinite(mon.d)) continue;
+    const mv = monMove(mon);
+    if (mon._lastHp != null && mon.hp < mon._lastHp) mon.flinchUntil = now + mv.damageMotion;
+    mon._lastHp = mon.hp;
+    if (mv.immobile || mon.d <= mv.range + DIST_EPS) continue;
+    if (!mv.aggressive && mon.hp >= mon.maxHp) continue;
+    if ((mon.stunnedUntil && now < mon.stunnedUntil) || (mon.flinchUntil && now < mon.flinchUntil)) continue;
+    mon.d = Math.max(mv.range, mon.d - dtMs / mv.walkMs);
+  }
 }
 function spawnMonster() {
   const map = currentMap();
@@ -6394,7 +6458,7 @@ function spawnMonster() {
        喝水停頓、隊友放輔助的空檔，全部算進去才是真實的產出速度，
        而離線結算要的正是那個速度。 */
     const spot = rollMonsterSpot();
-    state.monsters.push({ defId, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy });
+    state.monsters.push({ defId, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
     applyDontForgetMe(state.monsters[state.monsters.length - 1]);
     codexRecordSeen(defId);
     /* 只有**正牌 MVP** 才帶小弟（#147）。以前是「在 MVP_MAP_DATA 裡就帶」，
@@ -6438,7 +6502,7 @@ function summonBossSlaves(bossDef) {
     if (!sdef) continue;
     state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
     const spot = rollMonsterSpot();
-    state.monsters.push({ defId: sid, hp: sdef.hp, maxHp: sdef.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy });
+    state.monsters.push({ defId: sid, hp: sdef.hp, maxHp: sdef.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
     applyDontForgetMe(state.monsters[state.monsters.length - 1]);
     codexRecordSeen(sid);
     names.push(sdef.icon + sdef.name);
@@ -6460,7 +6524,7 @@ function spawnExtraMonster() {
   if (!def) return;
   state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
   const spot = rollMonsterSpot();
-  state.monsters.push({ defId, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy });
+  state.monsters.push({ defId, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
   applyDontForgetMe(state.monsters[state.monsters.length - 1]);
   logMsg(`一隻 ${def.icon} ${def.name} 被衝鋒攻擊召喚了！`);
 }
