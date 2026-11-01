@@ -6076,7 +6076,7 @@ function refreshEquipViews() {
    只看 reqJob 的話，清單會列出按下去才被 equipBlockReason() 打回票的東西。 */
 function canJobEquip(def) {
   if (!def) return false;
-  if (def.reqJob && def.reqJob.length && !getAllLearnedJobs().some(j => def.reqJob.includes(j))) return false;
+  if (itemJobBlock(def)) return false;
   if (def.type === 'weapon' && typeof jobCanUseWeapon === 'function' && !jobCanUseWeapon(state.jobId, def.id)) return false;
   return true;
 }
@@ -7659,104 +7659,11 @@ function forgeIsOpen() {
   return !!win && !win.classList.contains('hidden');
 }
 
-/* 開著的時候材料與鋅幣會一直變（掛機照跑），數字不能停在打開的那一刻。
-   但每秒無條件重畫會把捲動位置洗掉，所以先比一個簽章：**只有真的變了才重畫**。
-   簽章收的就是面板上會印出來的那幾個數字。 */
-let _forgeSig = '';
-function refreshForgeIfChanged() {
-  const parts = [state.gold, getItemQty('iron'), getItemQty('steel')];
-  Object.values(CRAFT_ELEMENT_STONE).forEach(id => parts.push(getItemQty(id)));
-  Object.values(MATERIAL_CRAFT_RECIPES).forEach(r => r.consume.forEach(c => parts.push(getItemQty(c.item))));
-  const sig = parts.join(',');
-  if (sig === _forgeSig) return;
-  _forgeSig = sig;
-  showCraftingPanel();
-}
-
+/* 鍛造系統重製中（2026-11-01 移除客製武器鍛造），視窗只顯示未實裝。 */
+function refreshForgeIfChanged() {}
 function showCraftingPanel() {
   const el = document.getElementById('forge-body');
-  if (!el) return;
-  const chance = getCraftingSuccessChance();
-  const ironQty = getItemQty('iron');
-  const steelQty = getItemQty('steel');
-
-  let html = `<div class="wh-hint">成功率 ${chance.toFixed(1)}%（失敗材料照樣消耗）。目前持有：鐵x${ironQty}、鋼鐵x${steelQty}、鋅幣${state.gold.toLocaleString()}</div>`;
-
-  if (state.unlockedMaterialCrafts && state.unlockedMaterialCrafts.length > 0) {
-    html += `<h3 class="panel-title">原料鍛造</h3>`;
-    html += `<div class="empty-hint">失敗時材料照樣消耗。成功率與花費逐項標示。</div>`;
-    html += '<div class="card-list">';
-    Object.keys(MATERIAL_CRAFT_RECIPES).forEach(kind => {
-      const recipe = MATERIAL_CRAFT_RECIPES[kind];
-      if (!state.unlockedMaterialCrafts.includes(recipe.unlockCategory)) return;
-      const resultDef = ITEMS[recipe.result];
-      // 成功率與花費改成逐道配方（毒藥瓶是 25%，其餘沿用通用值）
-      const rate = materialCraftChance(recipe);
-      const cost = materialCraftCost(recipe);
-      const matText = recipe.consume.map(c => `${ITEMS[c.item] ? ITEMS[c.item].name : c.item}x${c.qty}（持有${getItemQty(c.item)}）`).join('、');
-      const canCraft = recipe.consume.every(c => getItemQty(c.item) >= c.qty) && state.gold >= cost;
-      html += `<div class="card-row${canCraft ? ' enabled' : ''}">
-        <div class="card-info">
-          <span class="card-icon">${resultDef ? resultDef.icon : '📦'}</span>
-          <div class="card-details">
-            <span class="card-name">${resultDef ? resultDef.name : recipe.result}　<span class="card-desc">成功率 ${rate}%</span></span>
-            <span class="card-desc">需要：${matText}、鋅幣${cost}</span>
-          </div>
-        </div>
-        <button class="btn-small" ${canCraft ? '' : 'disabled'} onclick="doCraftMaterial('${kind}')">鍛造</button>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  // 武器鍛造要學會對應的鍛造技能才有東西可列；只點了原料鍛造時不要留一個空標題
-  if (!(state.unlockedCraftCategories || []).length) {
-    if (!(state.unlockedMaterialCrafts || []).length) {
-      html += '<div class="empty-hint">還沒學會任何鍛造技能。到技能分頁點鐵匠的鍛造系技能就會出現在這裡。</div>';
-    }
-    el.innerHTML = html;
-    return;
-  }
-
-  html += `<h3 class="panel-title">武器鍛造</h3>`;
-  html += '<div class="card-list">';
-
-  state.unlockedCraftCategories.forEach(cat => {
-    const subtypes = Object.keys(CRAFT_SUBTYPE_CATEGORY).filter(st => CRAFT_SUBTYPE_CATEGORY[st] === cat);
-    subtypes.forEach(subtype => {
-      const mat = CRAFT_SUBTYPE_MATERIALS[subtype];
-      const subtypeName = CRAFT_SUBTYPE_NAMES[subtype] || subtype;
-      Object.keys(CRAFT_ELEMENT_STONE).forEach(element => {
-        const stoneId = CRAFT_ELEMENT_STONE[element];
-        const stoneQty = getItemQty(stoneId);
-        const elementName = CRAFT_ELEMENT_NAMES[element];
-        const stoneDef = ITEMS[stoneId];
-        const canCraft = ironQty >= mat.iron && steelQty >= mat.steel && stoneQty >= 1 && state.gold >= CRAFT_ZENY_COST;
-        html += `<div class="card-row${canCraft ? ' enabled' : ''}">
-          <div class="card-info">
-            <span class="card-icon">⚔️</span>
-            <div class="card-details">
-              <span class="card-name">${subtypeName}（${elementName}屬性）</span>
-              <span class="card-desc">需要：鐵x${mat.iron}、鋼鐵x${mat.steel}、${stoneDef ? stoneDef.name : stoneId}x1（持有${stoneQty}）、鋅幣${CRAFT_ZENY_COST}</span>
-            </div>
-          </div>
-          <button class="btn-small" ${canCraft ? '' : 'disabled'} onclick="doCraftWeapon('${subtype}','${element}')">鍛造</button>
-        </div>`;
-      });
-    });
-  });
-  html += '</div>';
-  el.innerHTML = html;
-}
-function doCraftWeapon(subtype, element) {
-  craftWeapon(subtype, element);
-  showCraftingPanel();
-  renderTopBar();
-}
-function doCraftMaterial(kind) {
-  craftMaterial(kind);
-  showCraftingPanel();
-  renderTopBar();
+  if (el) el.innerHTML = '<div class="empty-hint">鍛造系統未實裝。</div>';
 }
 
 function openRenameWindow() {

@@ -12663,6 +12663,27 @@ function aspdPotionBlockReason(itemId){ return getAspdPotionBlockReason(itemId);
       （初心者表裡沒有 bow → 新手不能拿弓；法師只有 dagger/rod → 不能拿劍與弓）
    還有等級限制 reqLevel。回傳 null 表示可以裝，否則回傳擋下來的原因。
 ------------------------------------------------- */
+/* 職業／階級／性別限制（不含等級與武器分類）。回傳 null＝可以，否則回傳原因。
+   reqJobs（js/item_identity.js 由 rAthena 產生）：精確比對目前職業；三轉以上用最近的範圍內祖先
+   （ITEM_JOB_SCOPE 只到進階二轉）。沒有 reqJobs 的道具沿用舊的 reqJob 整條鏈比對。 */
+function itemJobKey(jobId) {
+  if (typeof ITEM_JOB_SCOPE === 'undefined') return jobId;
+  let j = jobId;
+  while (j && !ITEM_JOB_SCOPE.includes(j)) j = JOB_TREE[j] && JOB_TREE[j].parent;
+  return j || jobId;
+}
+function itemJobBlock(d) {
+  if (d.reqJobs) {
+    if (!d.reqJobs.includes(itemJobKey(state.jobId))) return `${currentJob().name}無法裝備這件道具。`;
+  } else if (d.reqJob && d.reqJob.length) {
+    if (!getAllLearnedJobs().some(j => d.reqJob.includes(j))) return `${currentJob().name}無法裝備這件道具。`;
+  }
+  if (d.reqUpper && !((state.rebirthCount || 0) > 0)) return '轉生後才能裝備。';
+  if (d.reqGender && d.reqGender !== (state.gender === 'female' ? 'Female' : 'Male')) {
+    return d.reqGender === 'Male' ? '限男性角色裝備。' : '限女性角色裝備。';
+  }
+  return null;
+}
 function equipBlockReason(itemId) {
   const d = ITEMS[itemId];
   if (!d) return '道具不存在。';
@@ -12670,12 +12691,8 @@ function equipBlockReason(itemId) {
   if (reqLv && state.baseLevel < reqLv) {
     return `需要基本等級 ${reqLv}（目前 ${state.baseLevel}）。`;
   }
-  if (d.reqJob && d.reqJob.length) {
-    const chain = getAllLearnedJobs();
-    if (!chain.some(j => d.reqJob.includes(j))) {
-      return `${currentJob().name}無法裝備這件道具。`;
-    }
-  }
+  const jobBlock = itemJobBlock(d);
+  if (jobBlock) return jobBlock;
   if (d.type === 'weapon' && !jobCanUseWeapon(state.jobId, itemId)) {
     // WEAPON_TYPE_LABELS 定義在 ui.js，引擎單獨跑（測試）時可能不存在
     const label = (typeof WEAPON_TYPE_LABELS !== 'undefined' && WEAPON_TYPE_LABELS[d.weaponType]) || '這類武器';
@@ -14087,100 +14104,15 @@ function tryAutoVending() {
   if (soldAny) saveGame();
 }
 
-/* ---------------- 鐵匠鍛造系統 ---------------- */
-const CRAFT_SUBTYPE_MATERIALS = {
-  dagger:   { iron: 3, steel: 1 },
-  sword1h:  { iron: 5, steel: 2 },
-  sword2h:  { iron: 8, steel: 3 },
-  axe1h:    { iron: 5, steel: 2 },
-  axe2h:    { iron: 8, steel: 3 },
-  knuckle:  { iron: 4, steel: 1 },
-  mace:     { iron: 5, steel: 2 },
-  spear1h:  { iron: 6, steel: 2 },
-  spear2h:  { iron: 9, steel: 3 },
-};
-const CRAFT_SUBTYPE_CATEGORY = {
-  dagger: 'dagger', sword1h: 'sword', sword2h: 'sword', axe1h: 'axe', axe2h: 'axe',
-  knuckle: 'knuckle', mace: 'mace', spear1h: 'spear', spear2h: 'spear',
-};
-const CRAFT_ELEMENT_STONE = { wind: 'gemstone_wind', water: 'gemstone_water', fire: 'gemstone_fire', earth: 'gemstone_earth' };
-const CRAFT_ZENY_COST = 10000;
-const CRAFT_CATEGORY_NAMES = { dagger: '短劍', sword: '劍', axe: '斧頭', knuckle: '拳套', mace: '鈍器', spear: '長矛' };
-const CRAFT_SUBTYPE_NAMES = { dagger: '短劍', sword1h: '單手劍', sword2h: '雙手劍', axe1h: '單手斧頭', axe2h: '雙手斧頭', knuckle: '拳套', mace: '鈍器', spear1h: '單手長矛', spear2h: '雙手長矛' };
-const CRAFT_ELEMENT_NAMES = { wind: '風', water: '水', fire: '火', earth: '地' };
-
-// 鍛造成功率：基礎15% + DEX(滿120給+20%) + LUK(滿120給+10%) + 神之金屬研究加成
-function getCraftingSuccessChance() {
-  const dexBonus = Math.min(20, (state.stats.dex || 0) / 120 * 20);
-  const lukBonus = Math.min(10, (state.stats.luk || 0) / 120 * 10);
-  return 15 + dexBonus + lukBonus + (state.craftBonusPct || 0);
-}
-
 /* 這個職業算不算鐵匠。**不能只認 `blacksmith`**——轉職到神匠（whitesmith）之後
    jobId 就變了，同一個角色會突然不算鐵匠，鍛造出來的武器前綴掉回「鐵匠」。
    走 parent 鏈（jobLineHas 在 data.js），之後再加鐵匠線的三轉也不必動這裡。 */
 function isBlacksmithLine(jobId) { return jobLineHas(jobId, 'blacksmith'); }
 
-// 掃描帳號內所有存檔欄位，找出鐵匠角色名字：剛好1位就用他的名字，2位以上顯示「某人」
-function getAccountBlacksmithName() {
-  const names = [];
-  for (let i = 0; i < MAX_SLOTS; i++) {
-    try {
-      const raw = localStorage.getItem(getSlotKey(i));
-      if (!raw) continue;
-      const s = JSON.parse(raw);
-      if (s && isBlacksmithLine(s.jobId) && s.name) names.push(s.name);
-    } catch (e) { /* 忽略壞檔 */ }
-  }
-  if (names.length === 0) return '鐵匠';
-  if (names.length === 1) return names[0];
-  return '某人';
-}
-
-// 取得道具顯示名稱：鐵匠鍛造武器會自動加上「XX製作的」前綴
+// 取得道具顯示名稱
 function getItemDisplayName(itemId) {
   const def = ITEMS[itemId];
-  if (!def) return itemId;
-  if (typeof itemId !== 'string' || !itemId.startsWith('crafted_')) return def.name;
-  return getAccountBlacksmithName() + '製作的' + def.name;
-}
-
-function craftWeapon(subtype, element) {
-  const category = CRAFT_SUBTYPE_CATEGORY[subtype];
-  if (!category || !state.unlockedCraftCategories.includes(category)) {
-    logMsg('⚠️ 尚未學會這個鍛造技能！');
-    return false;
-  }
-  const stoneId = CRAFT_ELEMENT_STONE[element];
-  const mat = CRAFT_SUBTYPE_MATERIALS[subtype];
-  if (!stoneId || !mat) return false;
-
-  if (getItemQty('iron') < mat.iron || getItemQty('steel') < mat.steel || getItemQty(stoneId) < 1) {
-    logMsg('⚠️ 材料不足，無法鍛造！');
-    return false;
-  }
-  if (state.gold < CRAFT_ZENY_COST) {
-    logMsg('⚠️ 鋅幣不足，無法鍛造！');
-    return false;
-  }
-
-  // 消耗材料（不論成功與否）
-  removeItem('iron', mat.iron);
-  removeItem('steel', mat.steel);
-  removeItem(stoneId, 1);
-  state.gold -= CRAFT_ZENY_COST;
-
-  const chance = getCraftingSuccessChance();
-  const success = Math.random() * 100 < chance;
-  if (success) {
-    const itemId = 'crafted_' + subtype + '_' + element;
-    addItem(itemId, 1);
-    logMsg(`🔨 鍛造成功！獲得了 ${getItemDisplayName(itemId)}！`);
-  } else {
-    logMsg('🔨 鍛造失敗了……材料已經消耗。');
-  }
-  saveGame();
-  return success;
+  return def ? def.name : itemId;
 }
 
 /* ---------------- 原料鍛造（鐵/鋼/屬性原石）---------------- */

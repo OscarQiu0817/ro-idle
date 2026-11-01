@@ -98,8 +98,8 @@
 
 | # | 工作 | 依賴 | 產出 |
 |---|---|---|---|
-| 1 | 一維戰鬥原型 | — | `proto/combat1d/`，見下節 |
-| 2 | 道具身分層管線 | — | `scripts/gen_items.js` → 職業／部位／類型／孔數／中文名 |
+| 1 | 一維戰鬥原型 ✅ | — | `proto/combat1d/`，見下節 |
+| 2 | 道具身分層管線 ✅ | — | `scripts/gen_item_identity.js` → `js/item_identity.js`，見 `docs/ITEM_IDENTITY.md` |
 | 3 | 戰鬥核心整合：距離、詠唱與打斷、4 招技能欄 | 1 | `engine.js` |
 | 4 | 場地技：火牆、泥沼、陷阱、擊退 | 3 | — |
 | 5 | 道具效果層：詠唱／延遲加成、套裝、附魔 | 3、D6、D7 | — |
