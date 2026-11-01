@@ -5682,6 +5682,7 @@ function gameTick() {
   const moveDt = Math.min(1000, moveNow - (state._lastMoveTick || moveNow));
   state._lastMoveTick = moveNow;
   tickMonsterMovement(moveDt, moveNow);
+  tickCasting(moveNow);
   if (state.monsters.length > 0) {
     // 使用攻擊間隔控制攻擊頻率（累積時間差模式）
     const now = Date.now();
@@ -5698,9 +5699,13 @@ function gameTick() {
     const atkInterval = state.attackInterval / Math.max(0.2, 1 + pDebuff('aspdPct') / 100);
     /* 目標不在普攻距離內：走過去（只縮短目標的距離），這段時間不累積攻擊 */
     const tgt = state.monsters[0];
-    if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
-      if (!playerImmobile()) tgt.d = Math.max(playerAttackRange(), tgt.d - moveDt / PLAYER_WALK_MS);
+    const engage = playerEngageRange();
+    if (state.casting) state.attackAccumulator = 0;   // 詠唱中不普攻、不走路
+    else if (tgt && Number.isFinite(tgt.d) && tgt.d > engage + DIST_EPS) {
+      if (!playerImmobile()) tgt.d = Math.max(engage, tgt.d - moveDt / PLAYER_WALK_MS);
       state.attackAccumulator = 0;
+    } else if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
+      state.attackAccumulator = 0;   // 站在技能射程上，普攻打不到
     }
     while (state.attackAccumulator >= atkInterval) {
       state.attackAccumulator -= atkInterval;
@@ -6379,6 +6384,19 @@ function playerAttackRange() {
   const cat = aspdCategoryOf(wid);
   let r = (item && item.range) || WEAPON_RANGE_BY_CAT[cat] || 1;
   if (cat === 'bow') r += skillLv('ac_vulture') || 0;
+  return r;
+}
+/* 玩家要走到多近才停：普攻距離，或自動戰鬥設定的攻擊技能（SP 夠放的）裡最遠的射程 */
+function playerEngageRange() {
+  let r = playerAttackRange();
+  const cfg = state.autoSkillConfig;
+  if (!state.autoSkill || !cfg) return r;
+  for (const id of [cfg.skillId, cfg.skillId2]) {
+    const sk = id && findSkillForUse(id);
+    const lv = sk && skillLv(sk.id);
+    if (!lv || !skillNeedsMonster(sk) || state.sp < skillSpCost(sk, lv)) continue;
+    r = Math.max(r, skillRangeCells(sk, lv));
+  }
   return r;
 }
 /* 每 tick：怪物走近。昏迷類異常、受擊硬直、不會動的怪不走；
@@ -7219,6 +7237,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
     logMsg(`✨ ${nameOf()} 造成了 ${dmg} 點傷害！`);
     if (typeof showPlayerFloat === 'function') showPlayerFloat('-' + dmg, 'normal');
     playerAilBreakOnDamage();
+    castBreakOnDamage(dmg);
     pDebuffConsumeOnce('dmgTakenPct');
     // 吸血（NPC_BLOODDRAIN）：造成多少傷害就補自己多少
     if (sk.drainHp) {
@@ -7482,6 +7501,7 @@ function monsterAttackSingle(mon) {
   state.hp -= dmg;
   // 同上：睡眠「被打就醒」以前也只寫在技能那條路徑，普攻打不醒
   playerAilBreakOnDamage();
+  castBreakOnDamage(dmg);
   pDebuffConsumeOnce('dmgTakenPct');
   const berserkMsg = (state.hasBerserk && state.hp < state.maxHp * 0.25) ? '（狂暴中：ATK+32% DEF-55%）' : '';
   logMsg(`${monDef.name} 對你造成 ${dmg} 點傷害。${berserkMsg}`);
@@ -9846,7 +9866,85 @@ function findSkillAnywhere(skillId) {
 /* 技能施放：整段的訊息都算「技能」欄（見 withLogLane）。
    castSkill 有二十幾個 return 點，包在外層才不會漏掉任何一條路徑。 */
 function castSkill(skillId, opts) {
-  return withLogLane('skill', () => castSkillInner(skillId, opts));
+  return withLogLane('skill', () => {
+    const free = !!(opts && opts.free);
+    if (_allyActing || free) return castSkillInner(skillId, opts);
+    if (state.casting || Date.now() < (state.acdUntil || 0)) return false;
+    const sk = findSkillForUse(skillId);
+    const lv = sk ? skillLv(skillId) : 0;
+    const ct = lv ? skillCastTimeMs(sk, lv) : 0;
+    if (ct > 0) return beginCast(sk, lv, ct, opts);
+    const ok = castSkillInner(skillId, opts);
+    if (ok) applyAfterCastDelay(skillId, lv);
+    return ok;
+  });
+}
+
+/* ---------------- 詠唱（3c，docs/GAMEPLAY_DIRECTION.md D2）----------------
+   數值取自 js/skill_cast_data.js（rAthena skill_db）。只套用在玩家本人：
+   卡片的自動念咒（opts.free）與隊友仍是瞬發。
+     變動詠唱 VCT × max(0, 1 − √((DEX×2 + INT) / 530))，加上固定詠唱 FCT
+     後延遲 AfterCastActDelay，下限是普攻間隔（避免 0 延遲的技能每 tick 連放）
+     冷卻 Cooldown（取代原本卡片的「冷卻 ±秒」魔改）
+     受擊打斷：怪物普攻或技能命中就中斷（技能 CastCancel:false 免疫）；昏迷類異常也會中斷
+   SP 在詠唱完成、技能真的放出時才扣（被打斷不扣）。裝備的詠唱加成留到效果層。 */
+function skillCastRow(skillId) {
+  return (typeof SKILL_CAST !== 'undefined' && SKILL_CAST[skillId]) || null;
+}
+function castLv(arr, lv) {
+  if (!arr || !arr.length) return 0;
+  return arr[Math.min(lv, arr.length) - 1] || 0;
+}
+function skillCastTimeMs(sk, lv) {
+  const row = skillCastRow(sk.id);
+  if (!row) return 0;
+  const dex = state._totalDex != null ? state._totalDex : (state.stats.dex || 0);
+  const int_ = state._totalInt != null ? state._totalInt : (state.stats.int || 0);
+  const statFactor = Math.max(0, 1 - Math.sqrt(Math.max(0, dex * 2 + int_) / 530));
+  return Math.round(castLv(row.castTime, lv) * statFactor + castLv(row.fixedCastTime, lv));
+}
+/* 技能射程（格）。rAthena 負值代表近身類（用絕對值）；0＝以自己為中心，不受距離限制 */
+function skillRangeCells(sk, lv) {
+  const row = skillCastRow(sk.id);
+  return row ? Math.abs(castLv(row.range, lv)) : 0;
+}
+function applyAfterCastDelay(skillId, lv) {
+  const row = skillCastRow(skillId);
+  const acd = row ? castLv(row.afterCastDelay, lv) : 0;
+  state.acdUntil = Date.now() + Math.max(acd, state.attackInterval || 0);
+}
+function beginCast(sk, lv, ct, opts) {
+  if (!skillReady(sk.id) || state.sp < skillSpCost(sk, lv)) return false;
+  if (playerSilenced() || playerImmobile()) return false;
+  const row = skillCastRow(sk.id);
+  const now = Date.now();
+  state.casting = { skillId: sk.id, lv, startAt: now, endAt: now + ct, opts: opts || null,
+    cancel: !row || row.castCancel !== false };
+  logMsg(`🔮 詠唱「${skillDisplayName(sk)}」（${(ct / 1000).toFixed(1)} 秒）`);
+  return true;
+}
+/* gameTick 每拍呼叫：時間到就放出；昏迷類異常中斷 */
+function tickCasting(now) {
+  const c = state.casting;
+  if (!c) return;
+  if (playerImmobile()) { interruptCast('無法行動'); return; }
+  if (now < c.endAt) return;
+  state.casting = null;
+  const ok = withLogLane('skill', () => castSkillInner(c.skillId, c.opts || undefined));
+  if (ok) applyAfterCastDelay(c.skillId, c.lv);
+}
+function interruptCast(why) {
+  const c = state.casting;
+  if (!c) return;
+  state.casting = null;
+  const sk = SKILLS[c.skillId];
+  logMsg(`💢 詠唱「${sk ? skillDisplayName(sk) : c.skillId}」被打斷了（${why}）`);
+  if (typeof showPlayerFloat === 'function') showPlayerFloat('詠唱中斷', 'miss');
+}
+/* 怪物的普攻與技能命中玩家時呼叫（跟睡眠被打醒同一個位置） */
+function castBreakOnDamage(dmg) {
+  if (_allyActing || !state.casting || !(dmg > 0)) return;
+  if (state.casting.cancel) interruptCast('受到攻擊');
 }
 function castSkillInner(skillId, opts) {
   const free = !!(opts && opts.free);
@@ -9967,7 +10065,8 @@ function castSkillInner(skillId, opts) {
   // 自動念咒不寫冷卻：那是玩家自己那份資源，不該被卡片的觸發吃掉
   if (!free) {
     const cd = Array.isArray(sk.cooldown) ? sk.cooldown[lv - 1] : sk.cooldown;
-    state.cooldowns[skillId] = effectiveCooldownMs(skillId, cd);
+    const castRow = !_allyActing && skillCastRow(skillId);
+    state.cooldowns[skillId] = castRow ? castLv(castRow.cooldown, lv) : effectiveCooldownMs(skillId, cd);
   }
   /* 技能音效與特效：確定放得出來（SP/鋅幣/冷卻都過了）才出聲、才播圖。
      **特效**換身中不播（不該讓玩家的立繪擺出施放姿勢），**音效**照播。 */
@@ -11320,6 +11419,13 @@ function tryAutoCastSkill() {
      商人一路上場的金錢攻擊與手推車攻擊都是這條回退自己跑出來的。
      技能一律以自動戰鬥頁面的設定為準，回退整條移除。 */
   if (!config.skillId && !config.skillId2) return;
+  if (state.casting || Date.now() < (state.acdUntil || 0)) return;
+  let smartSkipped = null;   // 智能施法跳過的第一招（被貼身又沒別招可放時的退路）
+  const castable = (sk, lv) => {
+    if (skillNeedsMonster(sk) && !autoSkillInRange(sk, lv)) return false;
+    if (smartCastBlocks(sk, lv)) { if (!smartSkipped) smartSkipped = sk; return false; }
+    return true;
+  };
 
   // 第一招：SP 達到門檻 + 有怪物就施放
   if (config.skillId) {
@@ -11330,7 +11436,7 @@ function tryAutoCastSkill() {
         const spCost = skillSpCost(sk, lv);
         const isAttack = skillNeedsMonster(sk);
         if (state.sp >= spCost && spPct >= config.spThreshold && !wastesResourceInTown(sk, lv)) {
-          if (!isAttack || monsterCount > 0) {
+          if ((!isAttack || monsterCount > 0) && castable(sk, lv)) {
             castSkill(sk.id);
             return;
           }
@@ -11346,13 +11452,53 @@ function tryAutoCastSkill() {
       const lv2 = skillLv(sk2.id);
       if (lv2 && skillReady(sk2.id) && weaponReqMet(sk2.requiresWeapon) && equipReqMet(sk2.requiresEquip)) {
         const spCost2 = skillSpCost(sk2, lv2);
-        if (state.sp >= spCost2 && spPct >= config.spThreshold2 && monsterCount >= config.monsterCount2 && !wastesResourceInTown(sk2, lv2)) {
+        if (state.sp >= spCost2 && spPct >= config.spThreshold2 && monsterCount >= config.monsterCount2 && !wastesResourceInTown(sk2, lv2)
+            && castable(sk2, lv2)) {
           castSkill(sk2.id);
           return;
         }
       }
     }
   }
+  // 退路：已經有會打斷的怪貼身、又沒有別招可放，照放被跳過的那招（不然只能站著挨打）
+  if (smartSkipped && playerCornered()) castSkill(smartSkipped.id);
+}
+
+/* 攻擊技能的目標（monsters[0]）要在技能射程內；射程 0＝以自己為中心，不看距離 */
+function autoSkillInRange(sk, lv) {
+  const tgt = state.monsters && state.monsters[0];
+  const r = skillRangeCells(sk, lv);
+  return !tgt || !r || !Number.isFinite(tgt.d) || tgt.d <= r + DIST_EPS;
+}
+/* 智能施法（自動戰鬥設定，預設開）：預估詠唱完成前會被打到就先不放 */
+function smartCastBlocks(sk, lv) {
+  const cfg = state.autoSkillConfig || {};
+  if (cfg.smartCast === false) return false;
+  const row = skillCastRow(sk.id);
+  if (!row || row.castCancel === false) return false;
+  const ct = skillCastTimeMs(sk, lv);
+  return ct > 0 && firstHitMs() < ct;
+}
+/* 最快多久會有怪打到玩家（毫秒） */
+function firstHitMs() {
+  const now = Date.now();
+  let best = Infinity;
+  for (const mon of state.monsters || []) {
+    const mv = monMove(mon);
+    const def = MONSTERS[mon.defId];
+    const wait = Math.max(0, (mon.stunnedUntil || 0) - now, (mon.flinchUntil || 0) - now);
+    let ms;
+    if (monInRange(mon)) {
+      const interval = (def && def.atkInterval ? def.atkInterval * 1000 : 1000);
+      ms = Math.max(wait, interval - (now - (mon.lastAttackTime || now)));
+    } else if (mv.immobile || (!mv.aggressive && mon.hp >= mon.maxHp)) continue;
+    else ms = wait + (mon.d - mv.range) * mv.walkMs;
+    best = Math.min(best, ms);
+  }
+  return best;
+}
+function playerCornered() {
+  return (state.monsters || []).some(mon => monInRange(mon));
 }
 
 // 自動施放輔助技能

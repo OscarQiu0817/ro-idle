@@ -289,6 +289,12 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .map-bg-layer { position: absolute; inset: 0; z-index: 0; }
 .map-bg-layer img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: saturate(0.8) brightness(0.75); }
 /* 3b：可捲動的拼貼背景（玩家走路時往反方向捲）。圖載入成功就蓋住下面那張 img */
+/* 3c：詠唱條（玩家立繪上方） */
+.player-castbar { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); width: 80px;
+  text-align: center; pointer-events: none; z-index: 3; }
+.player-castbar .pcb-name { display: block; font-size: 11px; color: #fff; text-shadow: 0 0 3px #000; white-space: nowrap; }
+.player-castbar .pcb-track { height: 6px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.4); border-radius: 3px; overflow: hidden; }
+.player-castbar .pcb-track i { display: block; height: 100%; width: 0; background: #e8c34b; }
 #map-bg-scroll { position: absolute; inset: 0; z-index: 1; background-repeat: repeat; background-size: auto 100%;
   opacity: 0.4; filter: saturate(0.8) brightness(0.75); }
 .battle-panel > .monster-area, .battle-panel > .combat-log { position: relative; z-index: 1; }

@@ -2514,6 +2514,27 @@ function bfScrollBackground(lead, dt) {
   bfBg.y -= Math.sin(lead.a || 0) * step * (BF_CELL_Y / BF_CELL_X);
   el.style.backgroundPosition = `${bfBg.x.toFixed(1)}px ${bfBg.y.toFixed(1)}px`;
 }
+/* 詠唱條：掛在玩家立繪上方 */
+function syncCastBar(ps) {
+  if (!ps) return;
+  let bar = ps.querySelector('.player-castbar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'player-castbar';
+    bar.innerHTML = '<span class="pcb-name"></span><div class="pcb-track"><i></i></div>';
+    ps.appendChild(bar);
+  }
+  const c = state.casting;
+  if (!c) { bar.style.display = 'none'; return; }
+  const sk = SKILLS[c.skillId];
+  bar.style.display = '';
+  // 玩家容器比角色圖高：從腳底（容器底部）往上算角色高度，放在頭頂
+  bar.style.bottom = 'auto';
+  bar.style.top = (ps.offsetHeight - BATTLE_CHAR_H - 26) + 'px';
+  bar.querySelector('.pcb-name').textContent = sk ? skillDisplayName(sk) : c.skillId;
+  const pct = Math.min(100, Math.max(0, (Date.now() - c.startAt) / Math.max(1, c.endAt - c.startAt) * 100));
+  bar.querySelector('.pcb-track i').style.width = pct.toFixed(0) + '%';
+}
 function bfPolarPoint(mon) {
   return {
     x: bfClamp(bfPlayer.x + Math.cos(mon.a || 0) * mon.d * BF_CELL_X, 6, 94),
@@ -2601,6 +2622,7 @@ function layoutBattlefield() {
     }
   }
   const faceRight = !lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x;
+  syncCastBar(ps);
   const walking = !town && bfPlayerWalking(lead);
   if (walking) bfScrollBackground(lead, dt);
   syncPlayerBattleAnim((stepped.moved || walking) && !town);
@@ -3876,6 +3898,12 @@ function renderAutoBattleTab() {
             <span id="sp-threshold-val" class="ab-slider-val">${config.spThreshold}%</span>
           </div>
           ` : ''}
+        </div>
+        <div class="ab-config-row">
+          <label class="ab-config-label" title="預估詠唱完成前會被怪打到（會被打斷）就先不放；已被貼身又沒別招時照放">
+            <input type="checkbox" ${config.smartCast !== false ? 'checked' : ''} onchange="setAutoSkillConfig('smartCast', this.checked)">
+            智能施法：預估會被打斷就先不放
+          </label>
         </div>
         <!-- 第二招 -->
         <div class="ab-skill-slot">
