@@ -2,6 +2,7 @@
    node scripts/gen_proto_data.js */
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 const yaml = require('js-yaml');
 const { loadGameData, ROOT } = require('./lib/game_data');
 
@@ -110,10 +111,21 @@ function main() {
     maps.push({ id: map.id, name: map.name, spawns });
   }
 
+  /* 試玩頁的頭飾選單：有紙娃娃圖層的頭飾 */
+  const pdCtx = { window: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'paperdoll_layers.js'), 'utf8'), pdCtx);
+  const pd = pdCtx.window.PAPERDOLL;
+  const hats = Object.values(g.ITEMS)
+    .filter(it => it.armorType === 'headgear' && pd.view[String(it.imgId)] && pd.clip['hat/' + pd.view[String(it.imgId)] + '/male'])
+    .sort((a, b) => a.imgId - b.imgId)
+    .filter((it, i, arr) => i === 0 || pd.view[String(it.imgId)] !== pd.view[String(arr[i - 1].imgId)])
+    .slice(0, 80)
+    .map(it => ({ name: it.name.replace(/\s*\[\d\]$/, ''), view: pd.view[String(it.imgId)] }));
+
   const out = path.join(ROOT, 'proto', 'combat1d', 'data.json');
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, JSON.stringify({ source: 'rAthena skill_db.yml / mob_db_re.yml', skills, mobs, maps }, null, 1));
-  console.log('skills', Object.keys(skills).length, 'mobs', Object.keys(mobs).length, 'maps', maps.length, '→', path.relative(ROOT, out));
+  fs.writeFileSync(out, JSON.stringify({ source: 'rAthena skill_db.yml / mob_db_re.yml', skills, mobs, maps, hats }, null, 1));
+  console.log('skills', Object.keys(skills).length, 'mobs', Object.keys(mobs).length, 'maps', maps.length, 'hats', hats.length, '→', path.relative(ROOT, out));
 }
 
 main();

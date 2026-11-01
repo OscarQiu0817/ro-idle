@@ -2,7 +2,9 @@
    - 玩家在原點，怪只記距離 d（格，連續值）
    - 詠唱：VCT × max(0, 1 − √((DEX×2+INT)/530)) + FCT；受擊打斷（CastCancel / 不可中斷除外）
    - 4 招優先序；傷害公式為簡化版，只用來看節奏 */
-const DATA = require('./data.json');
+/* Node：require data.json；瀏覽器（demo.html）：先把 data.json 放到 window.COMBAT1D_DATA 再載入本檔 */
+const IS_NODE = typeof module !== 'undefined' && module.exports;
+const DATA = IS_NODE ? require('./data.json') : window.COMBAT1D_DATA;
 
 const TICK = 50;
 const PLAYER_MOVE_MS = 150;       // 玩家每格毫秒（rAthena DEFAULT_WALK_SPEED）
@@ -62,6 +64,9 @@ function createSim(cfg) {
       hpPots: 0, spPots: 0, castMs: 0, idleMs: 0, moveMs: 0, wallHits: 0, skillUse: {} },
     log: cfg.trace ? [] : null,
   };
+  /* 給畫面層用的事件（demo.html）；Node 跑數據時不設 */
+  const emit = cfg.onEvent || (() => {});
+  let uid = 0;
   const trace = msg => { if (S.log && S.t < cfg.trace) S.log.push((S.t / 1000).toFixed(2) + 's ' + msg); };
 
   function spawn() {
@@ -69,8 +74,10 @@ function createSim(cfg) {
     let r = R() * total;
     const pick = map.spawns.find(s => (r -= s.weight) < 0) || map.spawns[0];
     const def = DATA.mobs[pick.mob];
-    S.mobs.push({ def, hp: def.hp, d: 6 + R() * 4, a: R() * Math.PI * 2, aggro: def.aggressive, moveAcc: 0,
-      nextAtk: 0, flinchUntil: 0 });
+    const mob = { uid: ++uid, def, hp: def.hp, d: 6 + R() * 4, a: R() * Math.PI * 2, aggro: def.aggressive, moveAcc: 0,
+      nextAtk: 0, flinchUntil: 0 };
+    S.mobs.push(mob);
+    emit('spawn', { mob });
   }
 
   function hitChance(attHit, defFlee) { return Math.min(1, Math.max(0.05, (80 + attHit - defFlee) / 100)); }
@@ -91,7 +98,8 @@ function createSim(cfg) {
     mob.aggro = true;
     mob.flinchUntil = S.t + mob.def.damageMotion;
     S.m.dmgDealt += dmg;
-    if (mob.hp <= 0) trace('擊殺 ' + mob.def.name + '（' + tag + '）');
+    emit('mobHit', { mob, dmg, tag });
+    if (mob.hp <= 0) { trace('擊殺 ' + mob.def.name + '（' + tag + '）'); emit('kill', { mob }); }
   }
 
   function knockback(mob, n) { if (n && !mob.def.boss) mob.d = Math.min(MAX_D, mob.d + n); }
@@ -169,6 +177,7 @@ function createSim(cfg) {
     S.cd[id] = S.t + lvVal(sk.cooldown, lv);
     S.m.skillUse[id] = (S.m.skillUse[id] || 0) + 1;
     trace('施放 ' + id);
+    emit('skill', { id, plan });
     if (id === 'MG_FIREWALL') {
       const wall = { d: plan.center.d, a: plan.center.a, half: plan.half, hits: FIREWALL_HITS, until: S.t + lvVal(sk.duration, lv) };
       S.walls.push(wall);
@@ -280,6 +289,7 @@ function createSim(cfg) {
           S.m.castsTimed++;
           S.cast = { id: slot.id, lv: slot.lv, plan, ct, endAt: S.t + ct, cancel, pushes: 0 };
           trace('詠唱 ' + slot.id + ' ' + ct + 'ms');
+          emit('castStart', { id: slot.id, ct });
         } else {
           executeSkill(slot.id, slot.lv, plan);
           S.acdUntil = S.t + lvVal(sk.afterCastDelay, slot.lv);
@@ -291,7 +301,9 @@ function createSim(cfg) {
     const tgt = nearest();
     if (!tgt) { S.m.idleMs += TICK; return; }
     if (tgt.d <= P.weaponRange + 1e-9 && P.autoAttack) {
+      emit('playerAttack', { target: tgt });
       if (R() <= hitChance(hit, 100 + tgt.def.lv + tgt.def.agi)) damageMob(tgt, physDmg(tgt, 1), '普攻');
+      else emit('miss', { mob: tgt });
       S.actUntil = S.t + P.aspdMs;
       return;
     }
@@ -324,16 +336,19 @@ function createSim(cfg) {
     }
     if (S.t < m.nextAtk) return;
     m.nextAtk = S.t + m.def.attackDelay;
-    if (R() > hitChance(175 + m.def.lv + m.def.dex, flee)) return;
+    emit('mobAttack', { mob: m });
+    if (R() > hitChance(175 + m.def.lv + m.def.dex, flee)) { emit('playerMiss', { mob: m }); return; }
     const hardDef = (4000 + P.def) / (4000 + 10 * P.def);
     const dmg = Math.max(1, Math.floor(m.def.atk * (0.8 + R() * 0.4) * hardDef - st.vit / 2));
     S.hp -= dmg;
     S.m.dmgTaken += dmg;
+    emit('playerHit', { mob: m, dmg });
     if (S.cast && S.cast.cancel) {
       if (RULE === 'pushback') {
         if (S.cast.pushes < 3) { S.cast.pushes++; S.cast.endAt += Math.round(S.cast.ct * 0.2); }
       } else if (canInterrupt(m)) {
         trace('詠唱被 ' + m.def.name + ' 打斷');
+        emit('interrupt', { mob: m });
         S.cast = null;
         S.m.interrupts++;
       }
@@ -365,6 +380,7 @@ function createSim(cfg) {
     S.m.kills += before - S.mobs.length;
     if (S.hp <= 0) {
       trace('死亡');
+      emit('death', {});
       S.m.deaths++;
       S.hp = P.maxHp; S.sp = P.maxSp; S.cast = null; S.mobs = []; S.walls = [];
       S.deadUntil = S.t + DEATH_DOWNTIME_MS;
@@ -378,4 +394,5 @@ function createSim(cfg) {
   };
 }
 
-module.exports = { createSim, DATA };
+if (IS_NODE) module.exports = { createSim, DATA };
+else window.Combat1D = { createSim, DATA };

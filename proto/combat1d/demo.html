@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一維戰鬥原型 試玩</title>
+<style>
+  body { margin: 0; background: #14110d; color: #e8dcc4; font: 14px/1.5 "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 12px 16px; }
+  h1 { font-size: 18px; margin: 0 0 8px; font-weight: 500; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 8px 0; }
+  .bar label { display: flex; gap: 6px; align-items: center; }
+  select, button { background: #2a241c; color: #e8dcc4; border: 1px solid #5a4a36; border-radius: 6px; padding: 4px 8px; font: inherit; }
+  button:hover { background: #3a3126; }
+  canvas { display: block; width: 100%; height: auto; border-radius: 10px; background: #000; image-rendering: pixelated; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
+  .stat { background: #221d16; border-radius: 8px; padding: 6px 10px; }
+  .stat b { display: block; font-size: 18px; font-weight: 500; }
+  .stat span { font-size: 12px; color: #a8987c; }
+  #log { height: 120px; overflow: auto; background: #1b1712; border-radius: 8px; padding: 6px 10px; font-size: 12px; color: #b9aa8e; margin-top: 8px; }
+  .note { font-size: 12px; color: #8c7d63; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>一維戰鬥原型 試玩（距離＋方向角）</h1>
+  <div class="bar">
+    <label>職業 <select id="cls"></select></label>
+    <label>性別 <select id="gender"><option value="male">男</option><option value="female">女</option></select></label>
+    <label>頭飾 <select id="hat"><option value="0">（無）</option></select></label>
+    <label>地圖 <select id="map"></select></label>
+    <label>速度 <select id="speed"><option>1</option><option>2</option><option>4</option></select>×</label>
+    <label>打斷 <select id="rule"><option value="any">官方（任何命中）</option><option value="melee">只有近戰</option><option value="pushback">受擊延長</option></select></label>
+    <label><input type="checkbox" id="smart" checked> 智能施法</label>
+    <label><input type="checkbox" id="phen"> 不可中斷</label>
+    <button id="reset">重來</button>
+  </div>
+  <canvas id="cv" width="960" height="560"></canvas>
+  <div class="stats" id="stats"></div>
+  <div id="log"></div>
+  <p class="note">傷害公式為簡化版，只用來看節奏與機制。怪物與角色圖為遊戲內素材；地面為通用背景。</p>
+</div>
+<script>window.PAPERDOLL_BASE = '../../';</script>
+<script src="../../js/paperdoll_layers.js"></script>
+<script src="../../js/paperdoll.js"></script>
+<script src="../../js/mob_anim_index.js"></script>
+<script src="classes.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>

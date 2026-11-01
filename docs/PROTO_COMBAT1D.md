@@ -11,6 +11,13 @@ MAX_FIELD=3 node proto/combat1d/run.js any
 node proto/combat1d/run.js trace      # 巫師前 30 秒事件
 ```
 
+**試玩頁**：`python -m http.server 8000` 後開 `http://localhost:8000/proto/combat1d/demo.html`。
+
+- 同一份 `sim.js` 在瀏覽器跑，畫面層只讀模擬狀態與事件（`onEvent`）
+- 角色用紙娃娃（`js/paperdoll.js`），可換職業、性別、頭飾；怪物用 `images/mob_anim/`
+- 可切換地圖、速度、打斷規則、智能施法、不可中斷
+- 職業設定在 `proto/combat1d/classes.js`，`run.js` 與試玩頁共用
+
 ## 模型
 
 | 項目 | 做法 |
