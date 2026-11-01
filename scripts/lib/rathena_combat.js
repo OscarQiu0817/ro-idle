@@ -52,6 +52,7 @@ function pickMobMove(m) {
     damageMotion: m.DamageMotion || 480,
     aggressive: AGGRESSIVE_AI.has(ai),
     immobile: IMMOBILE_AI.has(ai),
+    eleLv: m.ElementLevel || 1,   // 屬性等級（怪物資訊顯示用；抗性已在 MONSTERS.elementResistance）
   };
 }
 

@@ -2017,15 +2017,16 @@ function renderMonster() {
 
   state.monsters.forEach((mon, idx) => {
     const def = MONSTERS[mon.defId];
-    const elemIcon = ELEMENT_ICONS[def.element] || '⚪';
     const isTarget = idx === 0;
     const big = !!(def && (def.isMvp || def.isBoss));
-    const size = big ? 100 : (isTarget ? 70 : 56);
+    // T2：照原圖大小（mobBoxSize）；沒有動畫表的等靜態圖載入後再定（mobStaticSize）
+    const box = mobBoxSize(def) || [56, 56];
 
     html += `
       <div class="monster-slot ${isTarget ? 'target' : ''}" id="monster-slot-${mon.id}" style="transform:translate(-50%,-50%);">
-        <img src="${monsterImgSrc(mon.defId)}" data-def="${mon.defId}" alt="${def.name}" style="width:${size}px;height:${size}px;" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">
-        <div class="monster-name" style="font-size:${isTarget ? '12' : '10'}px;">${def.name} Lv.${def.level} <span class="monster-element elem-${def.element}">${elemIcon}</span></div>
+        <img src="${monsterImgSrc(mon.defId)}" data-def="${mon.defId}" alt="${def.name}" style="width:${box[0]}px;height:${box[1]}px;" onload="mobStaticSize(this)" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">
+        <div class="monster-name" style="font-size:${isTarget ? '12' : '10'}px;">${def.name} Lv.${def.level}</div>
+        <div class="monster-tags">${monsterTagsHtml(def)}</div>
         <div class="monster-hp-bar" style="width:${big ? 80 : (isTarget ? 60 : 48)}px;"><div id="monster-hp-bar-${mon.id}" class="monster-hp-fill" style="width:${pct(mon.hp, mon.maxHp)}%"></div></div>
         <div id="monster-hp-text-${mon.id}" style="font-size:10px;color:var(--ink-dim);">${Math.floor(mon.hp)}/${mon.maxHp}</div>
         <div id="monster-ail-${mon.id}" class="monster-ail"></div>
@@ -2395,6 +2396,36 @@ function mobAnimBind(img) {
   };
   im.onerror = () => { mobAnimMiss[id] = 1; };
   im.src = MOB_ANIM_DIR + id + '.png';
+}
+/* 怪物資訊第二行：[種族][屬性等級][體型]。屬性等級來自 rAthena ElementLevel（MOB_MOVE.eleLv） */
+function monsterTagsHtml(def) {
+  if (!def) return '';
+  const mv = typeof MOB_MOVE !== 'undefined' && MOB_MOVE[def.id];
+  const lv = (mv && mv.eleLv) || 1;
+  const tags = [];
+  if (def.race) tags.push(`<span class="mtag">${RACE_LABELS[def.race] || def.race}</span>`);
+  tags.push(`<span class="mtag elem-${def.element || 'none'}">${ELEMENT_NAMES[def.element] || '無'}${lv}</span>`);
+  if (def.size) tags.push(`<span class="mtag">${SIZE_LABELS[def.size] || def.size}</span>`);
+  return tags.join('');
+}
+/* 怪物顯示大小（T2）。原版客戶端照圖檔像素畫怪、不縮放，所以原圖多大遊戲裡就多大。
+   全部乘同一個倍率：讓客戶端約 88px 高的人型對上戰場紙娃娃的 BATTLE_CHAR_H，怪與角色的比例就跟原版一樣。
+   太大的 MVP 封頂 MOB_MAX_H，免得蓋住整個戰場。 */
+const MOB_PX_SCALE = BATTLE_CHAR_H / 88;
+const MOB_MAX_H = 150;
+function mobBoxSize(def) {
+  const d = MOB_ANIM && def && MOB_ANIM[String(def.imgId)];
+  if (!d || !d.fit) return null;
+  const k = Math.min(MOB_PX_SCALE, MOB_MAX_H / d.fit[1]);
+  return [Math.max(8, Math.round(d.fit[0] * k)), Math.max(8, Math.round(d.fit[1] * k))];
+}
+/* 沒有動畫表的怪：靜態圖載入後照原圖像素定大小（佔位圖維持 56） */
+function mobStaticSize(img) {
+  if (img._maDef || img._maProbe || !img.naturalHeight) return;
+  if (/_placeholder/.test(img.src)) return;
+  const k = Math.min(MOB_PX_SCALE, MOB_MAX_H / img.naturalHeight);
+  img.style.width = Math.round(img.naturalWidth * k) + 'px';
+  img.style.height = Math.round(img.naturalHeight * k) + 'px';
 }
 function mobAnimApply(img, d, id) {
   mobAnimEnsureRows(d);
