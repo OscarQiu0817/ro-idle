@@ -2867,6 +2867,14 @@ function monsterBaseAtk(monDef, roll, mon) {
   return base * farmMult('atk') * (1 + (mon ? monBuff(mon, 'atkPct') : 0) / 100) * monDebuffAtk(mon);
 }
 
+/* 怪物魔攻（rAthena Renewal status_base_matk：INT＋等級＋Attack2×0.7~1.3，資料在 MOB_MOVE）。
+   怪物的魔法技能用這個，不再拿物攻 ×1.2 代替。打寶模式的傷害倍率一樣吃。 */
+function monsterBaseMatk(monDef, mon) {
+  const mv = (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[monDef.id]) || {};
+  const v = mon && monBuff(mon, 'maxRoll') > 0 ? 1.3 : 0.7 + Math.random() * 0.6;
+  const base = (mv.int != null ? mv.int : (monDef.mobInt || 0)) + (monDef.level || 0) + (mv.matk || 0) * v;
+  return base * farmMult('atk');
+}
 /* 怪物身上的物攻減益（#60 野蠻凶砍）。
 
    跟 `mon.debuffDef`（破壞防禦在用的物防減益）是對稱的一組，
@@ -7377,7 +7385,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
        只擋魔法，物理走下面的 applyPlayerReflect（那個是「照比例彈一部分」，兩回事）。 */
     if (sk.magic && state.cardMagicReflectChance > 0
         && Math.random() * 100 < state.cardMagicReflectChance) {
-      const back = Math.max(1, Math.round(monsterBaseAtk(monDef, undefined, mon) * sk.mult * 1.2
+      const back = Math.max(1, Math.round(monsterBaseMatk(monDef, mon) * sk.mult
         * getElementMultiplierVsMonster(el, monDef, mon)));
       noteMonsterDamage(mon, back);
       mon.hp -= back;
@@ -7387,9 +7395,9 @@ function monsterCastSkillInner(mon, monDef, sk) {
       if (mon.hp <= 0) killMonster(monDef, mon);
       return;
     }
-    let raw = monsterBaseAtk(monDef, undefined, mon) * sk.mult * (sk.magic ? 1.2 : 1);
-    if (sk.magic) raw *= stripMult(mon, 'matk');   // 卸除頭盔（#69）
-    raw *= ailAtkMult(mon);                                   // 詛咒讓怪物 ATK 下降
+    // 魔法技能吃怪物魔攻、物理技能吃物攻（詛咒只降 ATK）
+    let raw = sk.magic ? monsterBaseMatk(monDef, mon) * sk.mult * stripMult(mon, 'matk')   // 卸除頭盔（#69）
+      : monsterBaseAtk(monDef, undefined, mon) * sk.mult * ailAtkMult(mon);
     // 防守側的屬性是玩家的鎧甲屬性（#17）。沒有鎧甲屬性卡時就是 none，行為跟以前一樣
     raw *= getElementMultiplier(el, state.playerElement || 'none');
     // 卡片的屬性/種族/體型減傷跟普攻共用同一組
@@ -10651,7 +10659,6 @@ function castSkillInner(skillId, opts) {
       if (sk.effect === 'strip') {
         (sk.strips || []).forEach(st => {
           let kind = st.kind, m = st.mult;
-          if (kind === 'matk' && !(def.matk > 0)) { kind = 'atk'; m = st.fallbackMult || 0.9; }
           applyStrip(target, st.key || sk.id, kind, m, dur);
         });
         logMsg(`🗡️ 「${sk.name}」得手！${def.name} 的能力下降（${dur} 秒）。`);

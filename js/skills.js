@@ -1205,8 +1205,8 @@ const SKILLS = {
     id: 'rg_striphelm', name: '卸除頭盔 Strip Helm', maxLv: 5, type: 'debuff_single', effect: 'strip',
     spCost: [12, 14, 16, 18, 20], cooldown: [0, 0, 0, 0, 0],
     successChance: [10, 15, 20, 25, 30], duration: [75, 90, 105, 120, 135],
-    strips: [{ kind: 'matk', mult: 0.75, fallbackMult: 0.9 }],
-    desc: '10%~30% 機率使目標 INT −40%（本作換算成魔法攻擊力 −25%，沒有魔攻的怪改成攻擊力 −10%），持續 75~135 秒。'
+    strips: [{ kind: 'matk', mult: 0.75 }],
+    desc: '10%~30% 機率使目標 INT −40%（本作換算成魔法攻擊力 −25%，影響怪物的魔法技能），持續 75~135 秒。'
   },
   rg_stripshield: {
     id: 'rg_stripshield', name: '卸除盾牌 Strip Shield', maxLv: 5, type: 'debuff_single', effect: 'strip',
@@ -2371,7 +2371,7 @@ const SKILLS = {
     id: 'st_fullstrip', name: '所有卸除 Full Strip', maxLv: 5, type: 'debuff_single', effect: 'strip',
     spCost: [22, 24, 26, 28, 30], cooldown: [0, 0, 0, 0, 0],
     successChance: [7, 9, 11, 13, 15], duration: [75, 90, 105, 120, 135],
-    strips: [{ key: 'rg_stripweapon', kind: 'atk', mult: 0.75 }, { key: 'rg_striphelm', kind: 'matk', mult: 0.75, fallbackMult: 0.9 },
+    strips: [{ key: 'rg_stripweapon', kind: 'atk', mult: 0.75 }, { key: 'rg_striphelm', kind: 'matk', mult: 0.75 },
       { key: 'rg_stripshield', kind: 'def', mult: 0.85 }, { key: 'rg_striparmor', kind: 'def', mult: 0.9 }],
     desc: '7%~15% 機率同時卸除目標的武器、頭盔、盾牌、鎧甲，持續 75~135 秒。'
   },

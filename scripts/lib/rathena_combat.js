@@ -55,6 +55,8 @@ function pickMobMove(m) {
     eleLv: m.ElementLevel || 1,   // 屬性等級（怪物資訊顯示用；抗性已在 MONSTERS.elementResistance）
     baseExp: m.BaseExp || 0,       // 官方經驗（T4），engine 載入時覆寫 MONSTERS.exp／jobExp
     jobExp: m.JobExp || 0,
+    int: m.Int || 1,               // 魔攻用（Renewal：INT＋等級＋Attack2×0.7~1.3）
+    matk: m.Attack2 || 0,
   };
 }
 
