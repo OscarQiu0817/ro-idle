@@ -180,3 +180,7 @@
 | T17 ✅ | 怪物屬性／種族／體型跟 rAthena 對齊 | 照 mob_db_re 改 2,214 隻（屬性不同 1,246、種族 1,573、體型 1,556），抗性表改用 rAthena attr_fix（屬性等級 × 攻擊屬性 × 防守屬性，`grf_ex/attr_fix.yml`）；資料進 `js/mob_move.js`，engine 載入時覆寫。屬性剋制、種族卡、體型修正的效果都會跟著變 | 2026-11-02 |
 | T18 ✅ | 怪物魔攻 | 照 rAthena Renewal：INT＋等級＋Attack2×0.7~1.3（Attack2、INT 從 mob_db_re 進 `js/mob_move.js`）；怪物魔法技能改用魔攻，不再拿物攻 ×1.2；卸除頭盔改成只降魔攻。116 隻會放魔法的怪裡 98 隻的魔法變弱（中位數約原本 0.39 倍，例：胡狼頭神 1412→646） | 2026-11-02 |
 | T19 | 成就＋討伐合併成新手引導任務 | 參考 RO 伊甸園的引導任務：照等級／職業階段給一串目標（討伐、轉職、裝備、技能），完成領獎；現有成就與討伐紀錄改成任務的進度來源。需先盤點現有成就與討伐的資料與獎勵 | 待討論 |
+| T20 | 世界聊天室串接收尾 | 遊戲端已接（`chat/`）。剩 world-chat 那邊：Turnstile widget 加 `oscarqiu0817.github.io`（Dashboard 手動）、線上關測試頁（`ENABLE_TEST_UI`）、白名單拿掉 workers.dev。見 world-chat `CLAUDE.md`「延後的需求」 | 隨時 |
+| T21 | 裝備分享到聊天室 | 訊息帶 itemId＋精煉＋卡片快照，名稱／稀有度由 server 查裝備定義表填（不信任 client 文字）。world-chat 已預留 `type`、`payload`；要提供給 server 的：裝備定義表格式、精煉規則。有雲端存檔（T23）後改讀 server 真實資料 | T20 |
+| T22 | 意見回饋 | world-chat 規劃 `POST /feedback`（存 D1，與聊天分開）；遊戲端做回饋表單 | T20 |
+| T23 | 遊戲後端：帳號密碼＋雲端存檔＋server 權威 | 討論結論在 world-chat `docs/GAME-SERVER-PLAN.md`：Worker＋D1、client 只送操作、分段結算、在線共用種子掉落、離線二項分布、強化由 server 擲骰。對本 repo 的影響：公式／掉落表／亂數要拆成前端與 Worker 共用的模組（目前是全域 script、`Math.random`）；機率改整數；server 用「擊殺時間」估算，跟 v2 的即時戰鬥模擬差很多，要先決定 server 算到多細（與 3e 離線結算一起想）。開始前要提供：存檔結構、戰鬥／經驗公式、怪物與掉落表、精煉規則、玩家操作清單。未決：同步頻率、離線上限、忘記密碼、舊存檔匯入、帳號與聊天 `playerId` 綁定、是否同一個 Worker | v2 定版後 |
