@@ -21,7 +21,11 @@ const SKILLS = {
   sm_sword: {"id":"sm_sword","name":"單手劍熟練度 Sword Mastery","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[4,8,12,16,20,24,28,32,36,40],"requiresWeapon":"sword","desc":"劍與短劍 ATK +4~40（需裝備單手劍或短劍才生效）。"},
   sm_twohand: {"id":"sm_twohand","name":"雙手劍熟練度 Two-Handed Sword Mastery","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[4,8,12,16,20,24,28,32,36,40],"requiresWeapon":"sword2","desc":"雙手劍 ATK +4~40（需裝備雙手劍才生效）。"},
   mg_sight: {"id":"mg_sight","name":"火狩","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"fleeFlat","spCost":[0],"cooldown":[0],"mult":[10],"desc":"被動技能，永久提升迴避+10。"},
-  mg_energycoat: {"id":"mg_energycoat","name":"能量外套","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"energyCoatUnlock","spCost":[0],"cooldown":[0],"mult":[1],"dmgReductionPct":[30],"spCostPct":[3],"desc":"被動技能，解鎖後可在自動戰鬥頁面勾選啟動：啟動時減傷30%，但每次受到攻擊消耗3%最大SP；可設定SP%下限，低於門檻時暫停生效。"},
+  mg_energycoat: {
+    id: 'mg_energycoat', name: '能量外套', maxLv: 1, isQuest: true,
+    type: 'buff_energycoat', spCost: [30], cooldown: [0], duration: [300],
+    desc: '受到物理或魔法傷害時依目前 SP 減傷：SP 每 20% 一階，減傷 6%~30%，每次消耗最大 SP 的 1%~3%；SP 不夠就解除。持續 300 秒。'
+  },
   mg_firebolt: {"id":"mg_firebolt","name":"火箭術","maxLv":10,"type":"magic","element":"fire","spCost":[12,14,16,18,20,22,24,26,28,30],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[1,2,3,4,5,6,7,8,9,10],"desc":"發射火箭，造成火屬性魔法傷害MATK100%~1000%（依等級）。"},
   mg_fireball: {"id":"mg_fireball","name":"火球術","maxLv":10,"type":"magic_aoe","element":"fire","spCost":[25,25,25,25,25,25,25,25,25,25],"cooldown":[2,2,2,2,2,2,2,2,2,2],"mult":[1.6,1.8,2,2.2,2.4,2.6,2.8,3,3.2,3.4],"desc":"投擲火球，對範圍造成火屬性魔法傷害MATK160%~340%（依等級）。"},
   mg_firewall: {"id":"mg_firewall","name":"火焰之壁","maxLv":10,"type":"ground_wall","element":"fire","fieldCd":2,"maxUnits":3,"spCost":[40,40,40,40,40,40,40,40,40,40],"cooldown":[0,0,0,0,0,0,0,0,0,0],"mult":[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5],"wallHits":[3,4,5,6,7,8,9,10,11,12],"wallCells":3,"desc":"在最近敵人的方向放下 3 格寬的火牆（持續 5~14 秒），越過的敵人受到 MATK 50% 火屬性傷害並被擊退 2 格；每道牆可擋 Lv+2 次，已站在牆上的敵人立刻受到傷害。"},
@@ -87,16 +91,16 @@ const SKILLS = {
   wz_estimation: {"id":"wz_estimation","name":"怪物情報","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"fleeFlat","spCost":[0],"cooldown":[0],"mult":[10],"intBonus":[5],"desc":"被動技能，永久提升迴避+10、INT+5。"},
   wz_sightrasher: {"id":"wz_sightrasher","name":"火之獵殺","maxLv":10,"type":"passive","passiveStat":"onHitAoeProc","element":"fire","spCost":[0],"cooldown":[0],"requires":{"skillId":"mg_sight","level":1},"procChance":[100,100,100,100,100,100,100,100,100,100],"mult":[1.2,1.4,1.6,1.8,2,2.2,2.4,2.6,2.8,3],"internalCooldown":[5,5,5,5,5,5,5,5,5,5],"desc":"被動技能，需先學會火狩。被攻擊時觸發，對場上全體敵人造成火屬性魔法傷害120%~300%（依等級），冷卻5秒。"},
   wz_firepillar: {"id":"wz_firepillar","name":"火柱攻擊","maxLv":10,"type":"ground_trap","trapEffect":"damage","trapMagic":true,"ignoreDef":true,"element":"fire","fieldCd":1,"maxUnits":5,"costItems":["blue_gemstone"],"costQty":1,"costMinLv":6,"spCost":[75,75,75,75,75,75,75,75,75,75],"cooldown":[0,0,0,0,0,0,0,0,0,0],"mult":[0.6,0.8,1,1.2,1.4,1.6,1.8,2,2.2,2.4],"trapHits":[3,4,5,6,7,8,9,10,11,12],"desc":"在敵人來路上立起火柱（持續 30 秒，場上最多 5 根），敵人踩到時爆發 Lv+2 段火焰，總計 MATK 60%~240% 火屬性傷害、無視魔法防禦；Lv1~5 打 3×3、Lv6~10 打 5×5。Lv6 以上消耗 1 個藍色魔力礦石。"},
-  wz_meteor: {"id":"wz_meteor","name":"隕石術","maxLv":10,"type":"field_aoe_magic","element":"fire","fieldTickIntervalSec":1,"spCost":[20,24,30,34,40,44,50,54,60,64],"cooldown":[5,5,5,5,5,5,5,5,5,5],"mult":[1.25,1.67,2.08,2.5,2.92,3.33,3.75,4.17,4.58,5],"duration":[3,3,3,3,3,3,3,3,3,3],"stunChance":[30,30,30,30,30,30,30,30,30,30],"stunSec":[2,2,2,2,2,2,2,2,2,2],"desc":"從天降下隕石，持續3秒每秒對範圍造成火屬性魔法傷害125%~500%（依等級），每次都有30%機率使敵人暈眩2秒。"},
+  wz_meteor: {"id":"wz_meteor","name":"隕石術","maxLv":10,"type":"field_aoe_magic","fieldRadius":3,"element":"fire","fieldTickIntervalSec":1,"spCost":[20,24,30,34,40,44,50,54,60,64],"cooldown":[5,5,5,5,5,5,5,5,5,5],"mult":[1.25,1.67,2.08,2.5,2.92,3.33,3.75,4.17,4.58,5],"duration":[3,3,3,3,3,3,3,3,3,3],"stunChance":[30,30,30,30,30,30,30,30,30,30],"stunSec":[2,2,2,2,2,2,2,2,2,2],"desc":"在目標位置降下隕石（7×7），持續3秒每秒對範圍內造成火屬性魔法傷害125%~500%（依等級），每次都有30%機率使敵人暈眩2秒。"},
   wz_jupitel: {"id":"wz_jupitel","name":"雷鳴術","maxLv":10,"type":"magic","element":"wind","spCost":[20,23,26,29,32,35,38,41,44,47],"cooldown":[8,8,8,8,8,8,8,8,8,8],"mult":[3,4,5,6,7,8,9,10,11,12],"stunOnHit":true,"stunSec":[3,3,3,3,3,3,3,3,3,3],"desc":"無視地形的雷電打擊，造成風屬性魔法傷害300%~1200%（依等級），並使目標暈眩3秒。"},
   wz_vermilion: {"id":"wz_vermilion","name":"怒雷強擊","maxLv":10,"type":"magic_aoe","element":"wind","spCost":[34,36,38,40,42,44,46,48,50,52],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[5,6,7,8,9,10,11,12,13,14],"stunChance":[60,60,60,60,60,60,60,60,60,60],"stunSec":[1,1,1,1,1,1,1,1,1,1],"desc":"從天空降下雷電，對範圍造成風屬性魔法傷害500%~1400%（依等級），並有60%機率使敵人暈眩1秒。"},
   wz_waterball: {"id":"wz_waterball","name":"水球術","maxLv":5,"type":"magic","element":"water","spCost":[20,20,20,20,20],"cooldown":[5,5,5,5,5],"mult":[2.5,4.375,6.25,8.125,10],"desc":"投擲水球攻擊敵人，造成水屬性魔法傷害250%~1000%（依等級）。"},
   wz_icewall: {"id":"wz_icewall","name":"冰刃之牆","maxLv":10,"type":"ground_icewall","element":"water","fieldCd":2,"maxUnits":2,"spCost":[20,20,20,20,20,20,20,20,20,20],"cooldown":[0,0,0,0,0,0,0,0,0,0],"iceHp":[400,600,800,1000,1200,1400,1600,1800,2000,2200],"desc":"在自己與最近敵人之間立起 5 格寬的冰牆，擋住從那個方向走來的敵人；敵人要繞路（約走 3 格的時間）才過得去。冰牆耐久 400~2200、每秒融化 50（持續 8~44 秒）。"},
   wz_frostnova: {"id":"wz_frostnova","name":"霜凍之術","maxLv":1,"type":"passive","passiveStat":"onHitAoeStunProc","element":"water","spCost":[0],"cooldown":[0],"procChance":[100],"mult":[1],"stunChance":[30],"stunSec":[1],"internalCooldown":[10],"desc":"被動技能，被攻擊時觸發，對場上全體敵人造成水屬性魔法傷害100%，並各有30%機率使其暈眩1秒，冷卻10秒。"},
-  wz_stormgust: {"id":"wz_stormgust","name":"暴風雪","maxLv":10,"type":"field_aoe_magic","element":"water","fieldTickIntervalSec":1,"spCost":[40,40,40,40,40,42,42,42,42,42],"cooldown":[6,6,6,6,6,6,6,6,6,6],"mult":[1,1.44,1.89,2.33,2.78,3.22,3.67,4.11,4.56,5],"duration":[4,4,4,4,4,4,4,4,4,4],"stunChance":[60,60,60,60,60,60,60,60,60,60],"stunSec":[1,1,1,1,1,1,1,1,1,1],"desc":"召喚暴風雪，持續4秒每秒對範圍造成水屬性魔法傷害100%~500%（依等級），每次都有60%機率使敵人暈眩1秒。"},
+  wz_stormgust: {"id":"wz_stormgust","name":"暴風雪","maxLv":10,"type":"field_aoe_magic","fieldRadius":4,"element":"water","fieldTickIntervalSec":1,"spCost":[40,40,40,40,40,42,42,42,42,42],"cooldown":[6,6,6,6,6,6,6,6,6,6],"mult":[1,1.44,1.89,2.33,2.78,3.22,3.67,4.11,4.56,5],"duration":[4,4,4,4,4,4,4,4,4,4],"stunChance":[60,60,60,60,60,60,60,60,60,60],"stunSec":[1,1,1,1,1,1,1,1,1,1],"desc":"在目標位置召喚暴風雪（9×9），每一跳擊退2格，持續4秒每秒對範圍內造成水屬性魔法傷害100%~500%（依等級），每次都有60%機率使敵人暈眩1秒。"},
   wz_earthspike: {"id":"wz_earthspike","name":"地震術","maxLv":5,"type":"magic","element":"earth","spCost":[14,18,22,26,30],"cooldown":[6,6,6,6,6],"mult":[2,4,6,8,10],"desc":"造成地屬性魔法傷害200%~1000%（依等級）。"},
   wz_heavendrive: {"id":"wz_heavendrive","name":"崩裂術","maxLv":5,"type":"field_aoe_magic","element":"earth","fieldTickIntervalSec":1,"spCost":[24,24,24,24,24],"cooldown":[6,6,6,6,6],"mult":[1,2,3,4,5],"duration":[3,3,3,3,3],"stunChance":[80,80,80,80,80],"stunSec":[0.5,0.5,0.5,0.5,0.5],"desc":"從天降下石塊，持續3秒每秒對範圍造成地屬性魔法傷害100%~500%（依等級），每次都有80%機率使敵人暈眩0.5秒。"},
-  wz_quagmire: {"id":"wz_quagmire","name":"泥沼地","maxLv":5,"type":"ground_zone","element":"earth","fieldCd":3,"maxUnits":1,"spCost":[5,10,15,20,25],"cooldown":[0,0,0,0,0],"slowPct":[50,50,50,50,50],"zoneRadius":2,"desc":"在最近敵人的位置產生 5×5 泥沼（持續 5~25 秒），區域內敵人移動速度減半。（官方另有降低 AGI／DEX，本作尚未實作）"},
+  wz_quagmire: {"id":"wz_quagmire","name":"泥沼地","maxLv":5,"type":"ground_zone","element":"earth","fieldCd":3,"maxUnits":1,"spCost":[5,10,15,20,25],"cooldown":[0,0,0,0,0],"slowPct":[50,50,50,50,50],"statCut":[10,20,30,40,50],"zoneRadius":2,"desc":"在最近敵人的位置產生 5×5 泥沼（持續 5~25 秒），區域內敵人移動速度減半、AGI／DEX −10~50（迴避與命中等量下降）。"},
   ht_detecting: {"id":"ht_detecting","name":"獵鷹尋敵","maxLv":4,"type":"passive","passiveStat":"critRate","spCost":[0],"cooldown":[0],"mult":[1,2,3,4],"desc":"被動技能，永久提升暴擊率+1%~4%。"},
   ht_falcon: {"id":"ht_falcon","name":"馴鷹術","maxLv":1,"type":"passive","passiveStat":"huntingMastery","spCost":[0],"cooldown":[0],"mult":[1],"desc":"被動技能，本身無直接效果，需先學習才能點閃電衝擊。"},
   ht_blitzbeat: {"id":"ht_blitzbeat","name":"閃電衝擊","maxLv":5,"type":"damage_aoe","alwaysHit":true,"element":"wind","spCost":[18,18,18,18,18],"cooldown":[3,3,3,3,3],"mult":[1,2,3,4,5],"passiveMult":[0.4,0.8,1.2,1.6,2],"requires":{"skillId":"ht_falcon","level":1},"desc":"主動：召喚獵鷹範圍攻擊，ATK 100%~500%（依等級）。被動：普攻時依LUK機率額外觸發一次獵鷹單體攻擊，ATK最高40%~200%（依等級）。需先學會馴鷹術。"},
@@ -141,7 +145,7 @@ const SKILLS = {
   as_sonicblow: {"id":"as_sonicblow","name":"音速投擲","maxLv":10,"type":"damage","element":"neutral","spCost":[16,16,16,16,16,18,18,18,18,18],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[3,4,5,6,7,8,9,10,11,12],"lowHpThreshold":0.5,"lowHpMult":1.5,"requiresWeapon":"katar","desc":"拳刃專屬技能，極速攻擊造成ATK 300%~1200%傷害；目標HP低於50%時傷害額外+50%。冷卻3秒，無法連續施放（需裝備拳刃才能施放）。"},
   as_grimtooth: {"id":"as_grimtooth","name":"無影之牙","maxLv":5,"type":"damage_aoe","element":"neutral","spCost":[14,14,14,14,14],"cooldown":[3,3,3,3,3],"mult":[1.2,1.4,1.6,1.8,2],"desc":"偽裝專屬技能，對目標與周圍怪物造成ATK 120%~200%範圍傷害。偽裝生效中會自動施放。"},
   as_enchantpoison: {"id":"as_enchantpoison","name":"塗毒","maxLv":10,"type":"buff_poison","element":"poison","spCost":[12,12,12,12,12,14,14,14,14,14],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55],"duration":[30,45,60,75,90,105,120,135,150,165],"procChance":[3,3.5,4,4.5,5,5.5,6,6.5,7,7.5],"desc":"輔助技能，施放後武器沾毒（持續30~165秒），生效中攻擊有3%~7.5%機率使敵人中毒3秒，每秒造成ATK 10%~55%傷害（不會疊加）。毒屬性怪物免疫。"},
-  as_poisonreact: {"id":"as_poisonreact","name":"毒性反彈","maxLv":10,"type":"passive","passiveStat":"poisonReact","element":"poison","spCost":[0],"cooldown":[0],"mult":[1,1.2,1.4,1.6,1.8,2,2.2,2.4,2.6,2.8],"internalCooldown":10,"desc":"被動技能，被毒屬性怪物攻擊時觸發反擊，造成ATK 100%~280%傷害（依等級，冷卻10秒）。目前遊戲中沒有毒屬性怪物，之後新增後才會實際觸發。"},
+  as_poisonreact: {"id":"as_poisonreact","name":"毒性反彈","maxLv":10,"type":"buff_gate","passiveStat":"poisonReact","element":"poison","spCost":[25,30,35,40,45,50,55,60,45,45],"cooldown":[0],"mult":[1.3,1.6,1.9,2.2,2.5,2.8,3.1,3.4,3.7,4],"internalCooldown":10,"duration":[20,25,30,35,40,45,50,55,60,60],"desc":"持續 20~60 秒內，被毒屬性攻擊時反擊，造成 ATK 130%~400% 傷害（冷卻 10 秒）。（官方另有被其他攻擊時施放施毒，本作尚未做）"},
   as_venomdust: {"id":"as_venomdust","name":"病毒散播","maxLv":10,"type":"ground_zone","element":"poison","fieldCd":1,"maxUnits":3,"costItems":["red_gemstone"],"costQty":1,"spCost":[20,20,20,20,20,20,20,20,20,20],"cooldown":[0,0,0,0,0,0,0,0,0,0],"poisonMult":[0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55],"zoneRadius":1.5,"desc":"在最近敵人腳下散出 3×3 毒霧（持續 5~50 秒，場上最多 3 處），霧裡的敵人持續中毒，每秒受到 ATK 10%~55% 傷害。消耗 1 個紅色魔力礦石。"},
   as_splasher: {"id":"as_splasher","name":"毒性感染","maxLv":10,"type":"passive","passiveStat":"venominfusionProc","element":"poison","spCost":[0],"cooldown":[0],"mult":[0.2,0.4,0.6,0.8,1,1.2,1.4,1.6,1.8,2],"procChance":20,"internalCooldown":10,"desc":"被動技能，攻擊已中毒的敵人時有20%機率引爆，對全體敵人造成ATK 20%~200%範圍傷害（依等級，冷卻10秒）。"},
   as_sonicaccel: {"id":"as_sonicaccel","name":"超音速投擲","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"sonicblowBoost","element":"neutral","spCost":[0],"cooldown":[0],"mult":[1],"desc":"被動技能，使用音速投擲時命中率修正+90%、傷害+90%。"},
@@ -151,7 +155,13 @@ const SKILLS = {
   pr_magnificat: {"id":"pr_magnificat","name":"聖母之頌歌","maxLv":5,"type":"buff_sprate","party":true,"spCost":[40,40,40,40,40],"cooldown":[45,45,45,45,45],"mult":[2,2,2,2,2],"duration":[30,45,60,75,90],"desc":"使全體SP自然恢復速度變為2倍，持續30~90秒。"},
   pr_gloria: {"id":"pr_gloria","name":"幸運之頌歌","maxLv":5,"type":"buff_lukflat","party":true,"spCost":[20,20,20,20,20],"cooldown":[30,30,30,30,30],"lukBonus":[30,30,30,30,30],"duration":[10,15,20,25,30],"desc":"使全體LUK+30，持續10~30秒（依等級）。"},
   pr_kyrie: {"id":"pr_kyrie","name":"霸邪之陣","maxLv":10,"type":"buff_shield","party":true,"spCost":[20,20,20,20,20,20,20,20,20,20],"cooldown":[15,15,15,15,15,15,15,15,15,15],"shieldCapacityPct":[12,14,16,18,20,22,24,26,28,30],"shieldCharges":[5,6,6,7,7,8,8,9,9,10],"duration":[120,120,120,120,120,120,120,120,120,120],"desc":"為全體設置護盾，耐久度為最大HP的12%~30%，可抵擋5~10次物理傷害，最多持續2分鐘（依等級）。"},
-  pr_suffragium: {"id":"pr_suffragium","name":"犧牲祈福","maxLv":3,"type":"passive","passiveStat":"aspdFlat","spCost":[0],"cooldown":[0],"mult":[1,2,3],"desc":"被動技能，永久提升ASPD+1~3（依等級）。"},
+  pr_suffragium: {
+    id: 'pr_suffragium', name: '犧牲祈福', maxLv: 3,
+    type: 'buff_castcut', party: true,
+    spCost: [8, 8, 8], cooldown: [0, 0, 0],
+    castCutPct: [10, 15, 20], duration: [60, 60, 60],
+    desc: '使全隊的變動詠唱時間 −10%~20%，持續 60 秒。'
+  },
   pr_benedictio: {"id":"pr_benedictio","name":"聖之祈福","maxLv":5,"type":"buff_elearmor","element":"holy","party":true,"spCost":[20,20,20,20,20],"cooldown":[15,15,15,15,15],"duration":[40,80,120,160,200],"desc":"使全體玩家的防禦屬性變為聖屬性，持續40~200秒（依等級）。"},
   pr_aspersio: {"id":"pr_aspersio","name":"撒水祈福","maxLv":5,"type":"buff_holyweapon","party":true,"spCost":[14,18,22,26,30],"zenyCost":[1500,1500,1500,1500,1500],"cooldown":[15,15,15,15,15],"duration":[60,90,120,150,180],"desc":"消耗1500鋅幣，使全體武器附加聖屬性，持續60~180秒（依等級）。"},
   pr_slowpoison: {"id":"pr_slowpoison","name":"緩毒術","maxLv":4,"type":"buff_ailimmune","ailType":"poison","party":true,"spCost":[6,8,10,12],"cooldown":[10,10,10,10],"duration":[10,20,30,40],"desc":"使全體免疫中毒異常，持續10~40秒（依等級）。"},
@@ -159,7 +169,7 @@ const SKILLS = {
   pr_lexdivina: {"id":"pr_lexdivina","name":"沉默之術","maxLv":1,"type":"passive","passiveStat":"onAttackSilenceProc","spCost":[0],"cooldown":[0],"procChance":[20],"internalCooldown":[10],"silenceSec":8,"desc":"被動技能，普通攻擊有20%機率使敵人沉默，冷卻10秒。"},
   pr_turnundead: {"id":"pr_turnundead","name":"轉生術","maxLv":10,"type":"magic","element":"holy","spCost":[15,15,15,15,15,17,17,17,17,17],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[1,1.22,1.44,1.67,1.89,2.11,2.33,2.56,2.78,3],"levelScaleMax":100,"intScaleMax":50,"desc":"對目標造成100%~300%聖屬性魔法傷害（依等級），並依基本等級(最高+100%，99級)與INT(最高+50%，INT99)增加傷害。（對不死種族秒殺的部分因遊戲無種族系統，暫不實作）"},
   pr_lexaeterna: {"id":"pr_lexaeterna","name":"天使之怒","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"angelusProc","spCost":[0],"cooldown":[0],"angelusCooldownSec":10,"desc":"被動技能，每10秒下一次攻擊會造成雙倍傷害。"},
-  pr_magnus: {"id":"pr_magnus","name":"十字驅魔攻擊","maxLv":10,"type":"field_aoe_magic","element":"holy","fieldTickIntervalSec":3,"spCost":[40,42,44,46,48,50,52,54,56,58],"cooldown":[15,15,15,15,15,15,15,15,15,15],"mult":[1,2,3,4,5,6,7,8,9,10],"duration":[12,12,12,12,12,12,12,12,12,12],"desc":"在原地造成持續範圍聖屬性魔法傷害，每3秒一次，共持續12秒，每次傷害為MATK 100%~1000%（依等級）。"},
+  pr_magnus: {"id":"pr_magnus","name":"十字驅魔攻擊","maxLv":10,"type":"field_aoe_magic","fieldRadius":3,"element":"holy","fieldTickIntervalSec":3,"spCost":[40,42,44,46,48,50,52,54,56,58],"cooldown":[15,15,15,15,15,15,15,15,15,15],"mult":[1,2,3,4,5,6,7,8,9,10],"duration":[12,12,12,12,12,12,12,12,12,12],"desc":"在目標位置造成持續範圍（約7×7）聖屬性魔法傷害，每3秒一次，共持續12秒，每次傷害為MATK 100%~1000%（依等級）。"},
   pr_redemptio: {"id":"pr_redemptio","name":"捨身取義","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"onDeathRevive2","spCost":[0],"cooldown":[0],"revivePct":[50],"internalCooldown":[300],"desc":"被動技能，HP歸零時原地復活並恢復50%HP，冷卻300秒（若復活術可用會優先觸發復活術）。"},
 
   /* ---- 卡片自動念咒／賦予技能需要的技能本體（#22）----
@@ -224,10 +234,11 @@ const SKILLS = {
   },
   lk_parrying: {
     id: 'lk_parrying', name: '雙劍挌擋 Parrying', maxLv: 10,
-    type: 'passive', passiveStat: 'parryingProc',
-    spCost: [0], cooldown: [0], requiresWeapon: 'sword2',
-    mult: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
-    desc: '被動技能，需裝備雙手劍。有 10%~55% 機率完全擋下敵人的物理攻擊（魔法不擋）。'
+    type: 'buff_gate', passiveStat: 'parryingProc',
+    spCost: [50, 50, 50, 50, 50, 50, 50, 50, 50, 50], cooldown: [0], requiresWeapon: 'sword2',
+    mult: [23, 26, 29, 32, 35, 38, 41, 44, 47, 50],
+    duration: [15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
+    desc: '需裝備雙手劍。持續 15~60 秒內有 23%~50% 機率擋下敵人的物理攻擊。'
   },
   /* 傷害增壓與巧打依使用者指定改成**普攻觸發的被動**（原本是主動技）。
      兩者共用 `onAttackStrikeProc` 這個型別：普攻命中後擲一次，中了就補一段傷害＋異常狀態，
@@ -328,13 +339,12 @@ const SKILLS = {
      裝備ATK 倍率沿用官方 280~400%，持續與冷卻改成 10 秒 / 30 秒。 */
   asc_edp: {
     id: 'asc_edp', name: '致命塗毒 Enchant Deadly Poison', maxLv: 5,
-    type: 'passive', passiveStat: 'edpProc', element: 'poison',
-    spCost: [0], cooldown: [0],
-    mult: [2.8, 3.1, 3.4, 3.7, 4.0],   // 裝備（武器）ATK 倍率
-    poisonDmgMult: [2, 2, 2, 2, 2],    // 毒屬性傷害 +100%
-    duration: [10, 10, 10, 10, 10],
-    internalCooldown: [30, 30, 30, 30, 30],
-    desc: '被動技能，攻擊已中毒的敵人時發動（身上需有毒藥瓶，不會消耗）：裝備ATK ×280%~400%、毒屬性傷害 +100%，持續 10 秒，冷卻 30 秒。'
+    type: 'buff_edp', element: 'poison',
+    spCost: [60, 70, 80, 90, 100], cooldown: [0, 0, 0, 0, 0],
+    costItems: ['poison_bottle'], costQty: 1,
+    weaponAtkMult: [2.8, 3.1, 3.4, 3.7, 4.0],
+    duration: [40, 60, 80, 100, 120],
+    desc: '消耗毒藥瓶×1，裝備 ATK ×280%~400%，持續 40~120 秒。'
   },
 
   /* 官方：遠距離物理單體，ATK 150%~1500%，傷害隨基本等級與 INT 增加，
@@ -389,11 +399,9 @@ const SKILLS = {
      改成**生怪加速**；使用者指定做成會自己續的被動：60 秒持續、10 秒冷卻。 */
   ws_cartboost: {
     id: 'ws_cartboost', name: '手推車加速 Cart Boost', maxLv: 1,
-    type: 'passive', passiveStat: 'cartBoost', element: 'neutral',
-    spCost: [0], cooldown: [0],
-    mult: [1.2],
-    duration: [60], internalCooldown: [10],
-    desc: '被動技能，自動發動：生怪速度 +20%，持續 60 秒，結束後 10 秒再次發動。與騎乘術、月夜貓卡片相乘。'
+    type: 'buff_spawnspeed', element: 'neutral',
+    spCost: [20], cooldown: [0], spawnMult: [1.2], duration: [60],
+    desc: '移動速度 +20%（本作換算成生怪速度 +20%），持續 60 秒。'
   },
 
   /* 官方傷害是「推車重量 ÷ 15~÷6」。本作沒有負重系統，使用者指定改成固定倍率
@@ -690,13 +698,11 @@ const SKILLS = {
      加了冷卻就變成「每 5 秒吃掉最痛的那一下」，跟致命塗毒那批觸發式被動同一種節奏。 */
   cr_defender: {
     id: 'cr_defender', name: '光之盾 Defender', maxLv: 5,
-    type: 'passive', passiveStat: 'defenderPassive', requiresEquip: 'shield',
-    spCost: [0], cooldown: [0],
-    mult: [10, 20, 30, 35, 40],          // 觸發機率 %（成功＝這一擊完全不痛）
-    internalCooldown: [5, 5, 5, 5, 5],
-    aspdPenalty: [20, 15, 10, 5, 0],     // 攻速 −N%（常駐，不受冷卻影響）
-    desc: '被動技能，需裝備盾牌。被攻擊時有 10%~40% 機率完全免除該次傷害（內部冷卻 5 秒），'
-        + '攻擊速度則常駐 −20%~0%（等級越高懲罰越小）。'
+    type: 'buff_defender', requiresEquip: 'shield',
+    spCost: [30, 30, 30, 30, 30], cooldown: [0, 0, 0, 0, 0],
+    rangedCutPct: [20, 35, 50, 65, 80], aspdPenalty: [20, 15, 10, 5, 0],
+    duration: [180, 180, 180, 180, 180],
+    desc: '需裝備盾牌。受到的遠距離物理傷害 −20%~80%，代價是攻擊速度 −20%~0%，持續 180 秒。（官方另有移動速度 −1/3，本作沒有移動）'
   },
   /* 官方 maxLv 0（未開放）的開關技能，效果是「自動防禦成功時 50% 機率暈眩對方」。
      使用者 2026-08-09 指定改成**被動、轉職自動獲得**（`autoGrant`）——
@@ -1612,14 +1618,14 @@ const SKILLS = {
      挑哪一個魔法存在 `state.sageAutoSpellId`，UI 照抄襲那個下拉選單再做一個。 */
   sa_autospell: {
     id: 'sa_autospell', name: '自動念咒 Auto Spell', maxLv: 10,
-    type: 'passive', passiveStat: 'sageAutoSpell',
-    spCost: [0], cooldown: [0],
+    type: 'buff_gate', passiveStat: 'sageAutoSpell', gateConfigAlways: true,
+    spCost: [35, 35, 35, 35, 35, 35, 35, 35, 35, 35], cooldown: [0],
     requires: { skillId: 'sa_freecast', level: 4 },
     mult: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
     spCostPct: 67, internalCooldown: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-    desc: '被動技能。自選一個已學會的魔法，普通攻擊有 2%~20% 機率自動施放'
-        + '（獨立冷卻 3 秒，不受該魔法本身的冷卻影響）。SP 只花原本的 2/3，'
-        + '發動等級上限是本技能等級的一半。'
+    duration: [120, 150, 180, 210, 240, 270, 300, 330, 360, 390],
+    desc: '自選一個已學會的魔法，持續 120~390 秒內普通攻擊有 2%~20% 機率自動施放'
+        + '（獨立冷卻 3 秒）。SP 只花原本的 2/3，發動等級上限是本技能等級的一半。'
   },
   /* 魔法懲罰：官方是「在被單體魔法擊中前一刻施展，擋下傷害並吸 SP」。
      本作沒有詠唱、也沒有「擊中前一刻」這個時機，但**怪物真的會放技能**（#45），
@@ -2101,12 +2107,10 @@ const SKILLS = {
      使用者 2026-08-14 指定改成被動：直接加在雙倍投擲的機率上。 */
   pf_memorize: {
     id: 'pf_memorize', name: '速讀術 Memorize', maxLv: 1,
-    type: 'passive', passiveStat: 'memorize',
-    spCost: [0], cooldown: [0],
-    requires: [{ skillId: 'sa_advancedbook', level: 5 }, { skillId: 'sa_freecast', level: 5 },
-               { skillId: 'sa_autospell', level: 1 }],
-    mult: [20],
-    desc: '被動技能。雙倍投擲的觸發機率 +20%。（官方是變動詠唱減半，本作沒有詠唱時間）'
+    type: 'buff_memorize',
+    spCost: [1], cooldown: [0], charges: 5, duration: [600],
+    requires: [{ skillId: 'sa_advancedbook', level: 5 }, { skillId: 'sa_freecast', level: 5 }, { skillId: 'sa_autospell', level: 1 }],
+    desc: '接下來 5 次施展技能時，變動詠唱時間減半（用完或 600 秒後消失）。'
   },
   /* 官方 detail 的兩欄是「SP 消耗 1~5」與「轉換率 10%~50%」，desc 寫「將自身 10% 的 HP 轉換成 SP」。
      所以本作的讀法是：**消耗當前 HP 的 10%，換到的 SP = 消耗量 × 轉換率**。

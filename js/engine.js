@@ -1356,7 +1356,10 @@ function recomputeDerived(fullHeal) {
   {
     passiveSourceSkills().forEach(sk => {
       const lv = skillLv(sk.id);
-      if (!lv || sk.type !== 'passive') return;
+      // buff_gate（T9 增益還原）：官方是放了才有的增益，原本的被動效果只在 buff 期間生效
+      const gated = sk.type === 'buff_gate' && state.buffs.some(b => b.type === 'gate' && b.skillId === sk.id);
+      // gateConfigAlways：設定值（自動念咒選的魔法）不管 buff 在不在都要算，畫面才選得到；觸發另外看 active
+      if (!lv || (sk.type !== 'passive' && !gated && !sk.gateConfigAlways)) return;
       const val = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
       // 取這個等級的欄位值（陣列就取第 lv-1 格，純數字就直接用，沒寫就給預設）
       const at = (k, d) => (Array.isArray(sk[k]) ? sk[k][lv - 1] : (sk[k] != null ? sk[k] : d));
@@ -1795,7 +1798,7 @@ function recomputeDerived(fullHeal) {
         }
         case 'sageAutoSpell': {
           state.sageAutoSpell = {
-            name: sk.name, chance: val, lv,
+            name: sk.name, chance: val, lv, active: sk.type !== 'buff_gate' || gated,
             spCostPct: sk.spCostPct || 67,
             cdSec: Array.isArray(sk.internalCooldown) ? sk.internalCooldown[lv - 1] : (sk.internalCooldown || 3),
           };
@@ -3106,6 +3109,7 @@ function hitChancePctVsMonster(playerHit, monDef, inst) {
     // 緊密的約束（#69）：怪物的迴避下降，一樣是點數
     if (inst.debuffFlee && Date.now() < (inst.debuffFleeEnd || 0)) threshold -= inst.debuffFlee;
     else if (inst.debuffFlee) { delete inst.debuffFlee; delete inst.debuffFleeEnd; }
+    threshold -= quagmireCut(inst);   // 泥沼地：AGI −10×lv → 迴避等量下降
   }
   return Math.min(100, Math.max(5, Math.round(100 - (threshold - playerHit))));
 }
@@ -4835,7 +4839,7 @@ function trySageProcs(target, monDef) {
      使用者指定**獨立冷卻 3 秒、不吃該魔法自己的冷卻**——
      不然挑到隕石術（20 秒冷卻）就等於這個被動幾乎不會動。 */
   const as = state.sageAutoSpell;
-  if (as && state.sageAutoSpellId && target && target.hp > 0) {
+  if (as && as.active && state.sageAutoSpellId && target && target.hp > 0) {
     const chance = as.chance + (state.freeCastAutoSpellPct || 0);
     const lv = sageAutoSpellLv(state.sageAutoSpellId);
     const sk = lv ? findSkillAnywhere(state.sageAutoSpellId) : null;
@@ -5476,11 +5480,13 @@ function tickFieldEffects() {
             pushCombatLog(`  → 「${f.name}」對 ${def.name} 造成 ${dmg} 點傷害！`);
             if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', 'holy');
             if (mon.hp <= 0) killMonster(def, mon);
+            else if (f.knockback) pushBack(mon, f.knockback);   // 官方擊退 2 格（T9）
           }
         }
       } else if (f.kind === 'aoe_holydmg') {
         if (state.monsters && state.monsters.length > 0) {
-          state.monsters.forEach(mon => {
+          const inside = mon => !f.center || !Number.isFinite(mon.d) || planarDist(mon, f.center) <= f.radius + DIST_EPS;
+          state.monsters.filter(inside).forEach(mon => {
             const monDef = MONSTERS[mon.defId];
             const elemMult = getElementMultiplierVsMonster(f.element || 'holy', monDef, mon);
             const dmg = mitigateDamage(state.matk * f.mult * elemMult, ...defOf(monDef, 1, true)) * (f.ticksThisRound || 1);
@@ -5488,6 +5494,7 @@ function tickFieldEffects() {
             mon.hp -= dmg;
             wakeIfFrozen(mon);
             if (f.stunChance && Math.random() * 100 < f.stunChance) applyStun(mon, f.stunSec || 1, true);
+            if (f.knockback && mon.hp > 0) pushBack(mon, f.knockback);
             pushCombatLog(`  → 「${f.name}」對 ${monDef.name} 造成 ${dmg} 點傷害！`);
             // 場地魔法（隕石術、十字驅魔…）每一跳也照屬性上色
             if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', f.element || 'holy');
@@ -6557,6 +6564,15 @@ function iceWallBlocks(mon, nd, mv, now) {
   mon.d = Math.max(nd, ice.d);
   return true;
 }
+/* 泥沼地（T9，SC_QUAGMIRE）：區域內的怪 AGI／DEX −10×lv。本作怪物沒有 AGI／DEX 欄位，
+   直接換算成迴避與命中的點數（官方 FLEE＝lv+AGI、HIT＝lv+DEX，1 點換 1 點） */
+function quagmireCut(mon) {
+  let cut = 0;
+  for (const z of state.groundUnits || []) {
+    if (z.kind === 'zone' && z.statCut && Number.isFinite(mon.d) && planarDist(mon, z) <= z.radius) cut = Math.max(cut, z.statCut);
+  }
+  return cut;
+}
 /* 減速區：在區域內的怪每格要多花的倍率（取最慢的一個） */
 function zoneSlowMult(mon) {
   let mult = 1;
@@ -7329,7 +7345,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
       if (typeof showPlayerFloat === 'function') showPlayerFloat('免傷', 'miss');
       return;
     }
-    let hitDebuff = 0;
+    let hitDebuff = quagmireCut(mon);   // 泥沼地：DEX −10×lv → 命中等量下降
     const blindMult = ailHitMult(mon);
     // 同理：黑暗打折的是怪物的 HIT，fleeReq = 怪物HIT + 75，先剝掉偏移再折
   if (blindMult < 1) hitDebuff += Math.round(((monDef.fleeReq || monsterHitOf(monDef)) - REQ_FLEE_OFFSET) * (1 - blindMult));
@@ -7550,9 +7566,9 @@ function monsterAttackSingle(mon) {
     }
   }
   // 噴砂被動造成的命中下降：等同降低這隻怪的fleeReq門檻，玩家更容易迴避
-  let hitDebuff = 0;
+  let hitDebuff = quagmireCut(mon);   // 泥沼地：DEX −10×lv → 命中等量下降
   if (mon.debuffHit && mon.debuffHitEnd && Date.now() < mon.debuffHitEnd) {
-    hitDebuff = mon.debuffHit;
+    hitDebuff += mon.debuffHit;
   } else {
     delete mon.debuffHit;
     delete mon.debuffHitEnd;
@@ -7657,15 +7673,7 @@ function monsterAttackSingle(mon) {
      會讓實際倍率大於寫出來的數字（實測 ×2 會變成 ×2.5）。 */
   let dmg = Math.max(1, Math.round(mitigatePlayerIncoming(raw, hardDef, softDef) * playerDmgTakenMult()));
   dmg = rejectSwordAbsorb(dmg, mon, monDef);    // 霸王魂（#79）
-  // 能量外套：啟動中減傷並消耗SP，SP%低於下限時暫停生效
-  if (state.hasEnergyCoatUnlock && state.energyCoatEnabled) {
-    const spPct = state.maxSp > 0 ? (state.sp / state.maxSp) * 100 : 0;
-    if (spPct >= (state.energyCoatSpFloorPct || 0)) {
-      dmg = Math.round(dmg * (1 - (state.energyCoatDmgReductionPct || 0) / 100));
-      const spCost = Math.round(state.maxSp * ((state.energyCoatSpCostPct || 0) / 100));
-      state.sp = Math.max(0, state.sp - spCost);
-    }
-  }
+  dmg = energyCoatCut(state, dmg);
   // 護盾（霸邪之陣/暗之障壁）：吸收近距離物理傷害，直到耐久或次數耗盡
   dmg = fogWallCut(state, dmg, monMove(mon).range >= RANGED_ATTACK_CELLS);
   dmg = absorbWithShields(state, dmg, undefined, undefined, monMove(mon).range >= RANGED_ATTACK_CELLS);
@@ -9056,8 +9064,23 @@ function shareBuffsWithAllies(fresh, freshShields, sk) {
    不然「玩家的盾擋一次扣一次、隊友的盾永遠不破」這種事不會有人發現。 */
 /* 薄霧牆：遠程普攻 −75%（至少 1） */
 function fogWallCut(holder, dmg, ranged) {
-  if (!ranged || !(holder.buffs || []).some(b => b.type === 'fogwall')) return dmg;
-  return Math.max(1, Math.round(dmg * FOGWALL_RANGED_MULT));
+  if (!ranged) return dmg;
+  const bs = holder.buffs || [];
+  if (bs.some(b => b.type === 'fogwall')) dmg = Math.max(1, Math.round(dmg * FOGWALL_RANGED_MULT));
+  // 光之盾（T9，CR_DEFENDER）：遠距離物理傷害 −20~80%
+  const def = bs.find(b => b.type === 'defender');
+  if (def) dmg = Math.max(1, Math.round(dmg * (1 - def.flatBonus / 100)));
+  return dmg;
+}
+/* 能量外套（T9，SC_ENERGYCOAT，Renewal）：依目前 SP 每 20% 一階，減傷 6~30%、每次扣最大 SP 的 1~3%；SP 扣不起就解除 */
+function energyCoatCut(holder, dmg) {
+  const b = (holder.buffs || []).find(x => x.type === 'energycoat');
+  if (!b || !holder.maxSp) return dmg;
+  const per = Math.floor(Math.max(0, Math.floor(100 * holder.sp / holder.maxSp) - 1) / 20);
+  const cost = Math.floor((10 + 5 * per) * holder.maxSp / 1000);
+  if (holder.sp < cost) { holder.buffs = holder.buffs.filter(x => x !== b); return dmg; }
+  holder.sp -= cost;
+  return Math.max(1, Math.round(dmg * (1 - 6 * (1 + per) / 100)));
 }
 function absorbWithShields(holder, dmg, who, lane, ranged) {
   if (!holder.shields || !holder.shields.length) return dmg;
@@ -9383,7 +9406,7 @@ function setAutoReviveAlly(v) { state.autoReviveAlly = !!v; saveGame(); }
    那些是玩家自己的裝備與被動，隊友有沒有要看他自己的快照——目前只吃
    隊友自己的 FLEE 與 DEF，其餘等第五階段（輔助共享）再談。 */
 function monsterAttackAlly(mon, monDef, ally) {
-  const dodge = dodgeChancePctFromMonster(ally.flee || 0, monDef, 0);
+  const dodge = dodgeChancePctFromMonster(ally.flee || 0, monDef, quagmireCut(mon));
   if (Math.random() * 100 < dodge) {
     pushCombatLog(`  → ${ally._allyName} 迴避了 ${monDef.name} 的攻擊！`, 'ally');
     if (typeof renderLog === 'function') renderLog();
@@ -9396,6 +9419,7 @@ function monsterAttackAlly(mon, monDef, ally) {
   let dmg = Math.max(1, Math.round(mitigatePlayerIncoming(raw, ally.defHard || 0, ally.defSoft || 0)));
   // 霸邪之陣分給隊友的盾（#95）：跟玩家走完全同一套消耗規則
   dmg = fogWallCut(ally, dmg, monMove(mon).range >= RANGED_ATTACK_CELLS);
+  dmg = energyCoatCut(ally, dmg);
   dmg = absorbWithShields(ally, dmg, ally._allyName, 'ally', monMove(mon).range >= RANGED_ATTACK_CELLS);
   if (dmg > 0) allyTakeDamage(ally, dmg, monDef.name);
   pushCombatLog(`  → ${monDef.name} 攻擊 ${ally._allyName}，造成 ${dmg} 點傷害！`, 'ally');
@@ -10103,7 +10127,8 @@ function skillCastTimeMs(sk, lv) {
   /* 裝備（工作 5a，js/item_effects.js）：
      變動 ＝ (基礎 + 指定技能 ms) × 素質 × (1 + 全部% + 指定技能%)
      固定 ＝ max(0, 基礎 + 全部 ms + 指定技能 ms) × (1 + 最大單一%) */
-  const vct = Math.max(0, castLv(row.castTime, lv) + getCardBonus('castVarMs_' + sk.id))
+  const memo = (state.buffs || []).some(b => b.type === 'memorize') ? 0.5 : 1;   // 速讀術：下 5 次變動詠唱減半
+  const vct = memo * Math.max(0, castLv(row.castTime, lv) + getCardBonus('castVarMs_' + sk.id))
     * statFactor * Math.max(0, 1 + (getCardBonus('castVarPct') + getCardBonus('castVarPct_' + sk.id) - buffMult('castcut').flatBonus) / 100);
   const fct = Math.max(0, castLv(row.fixedCastTime, lv) + getCardBonus('castFixedMs') + getCardBonus('castFixedMs_' + sk.id))
     * Math.max(0, 1 + getCardBonus('castFixedPct') / 100);
@@ -10125,6 +10150,9 @@ function beginCast(sk, lv, ct, opts) {
   if (playerSilenced() || playerImmobile()) return false;
   const row = skillCastRow(sk.id);
   const now = Date.now();
+  // 速讀術：每次開始詠唱扣一次（變動詠唱已在 skillCastTimeMs 減半）
+  const memo = state.buffs.find(b => b.type === 'memorize');
+  if (memo && --memo.charges <= 0) state.buffs = state.buffs.filter(b => b !== memo);
   state.casting = { skillId: sk.id, lv, startAt: now, endAt: now + ct, opts: opts || null,
     cancel: (!row || row.castCancel !== false) && !(getCardBonus('noCastCancel') > 0) };
   logMsg(`🔮 詠唱「${skillDisplayName(sk)}」（${(ct / 1000).toFixed(1)} 秒）`);
@@ -11012,7 +11040,7 @@ function castSkillInner(skillId, opts) {
       if (!state.activeFieldEffects) state.activeFieldEffects = [];
       // party 的話每一跳也回給隊友（#131）。回復量記施術者的，跟官方的範圍治療一致
       state.activeFieldEffects.push({ kind: 'selfheal', name: sk.name, amount: healAmt, party: !!sk.party,
-        undeadDmg: !!sk.undeadDmg, skillId: sk.id, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
+        undeadDmg: !!sk.undeadDmg, knockback: (skillCastRow(sk.id) && castLv(skillCastRow(sk.id).knockback, lv)) || 0, skillId: sk.id, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
       const paid = !free && sk.costItems ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！`);
       break;
@@ -11024,7 +11052,13 @@ function castSkillInner(skillId, opts) {
       const stunChance = Array.isArray(sk.stunChance) ? sk.stunChance[lv - 1] : sk.stunChance;
       const stunSec = Array.isArray(sk.stunSec) ? sk.stunSec[lv - 1] : sk.stunSec;
       if (!state.activeFieldEffects) state.activeFieldEffects = [];
-      state.activeFieldEffects.push({ kind: 'aoe_holydmg', name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
+      /* T9：放在目標所在的位置、只打範圍內的怪（fieldRadius 格）；怪走進來會被打、走出去就沒事。
+         擊退照 rAthena Knockback（暴風雪 2 格），每一跳都推。 */
+      const tgt = state.monsters[0];
+      const center = sk.fieldRadius && tgt && Number.isFinite(tgt.d) ? { d: tgt.d, a: tgt.a || 0 } : null;
+      const row = skillCastRow(sk.id);
+      state.activeFieldEffects.push({ kind: 'aoe_holydmg', name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000,
+        center, radius: sk.fieldRadius || 0, knockback: row ? castLv(row.knockback, lv) || 0 : 0 });
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動！`);
       break;
     }
@@ -11071,7 +11105,7 @@ function castSkillInner(skillId, opts) {
       if (!state.groundUnits) state.groundUnits = [];
       const poisonMult = lvArr(sk.poisonMult, lv) || 0;
       state.groundUnits.push({ kind: 'zone', skillId: sk.id, name: sk.name, d: tgt.d, a: tgt.a || 0,
-        radius: sk.zoneRadius || 2, slow: (lvArr(sk.slowPct, lv) || 0) / 100, poisonMult,
+        radius: sk.zoneRadius || 2, slow: (lvArr(sk.slowPct, lv) || 0) / 100, poisonMult, statCut: lvArr(sk.statCut, lv) || 0,
         endsAt: Date.now() + (row ? castLv(row.duration, lv) : 5000) });
       const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(poisonMult ? `☠️ 「${sk.name}」Lv${lv}：${(tgt.d).toFixed(1)} 格處散出毒霧${paid ? `（消耗${paid.label}）` : ''}`
@@ -11160,6 +11194,56 @@ function castSkillInner(skillId, opts) {
       const amt = Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult());
       state.hp = Math.min(state.maxHp, state.hp + amt);
       logMsg(`💫 「${sk.name}」Lv${lv} 持續恢復HP。`);
+      break;
+    }
+    /* ---- T9：原作者改成被動的增益，還原成官方的主動增益（效果結束、冷卻好就由輔助技能自動補） ---- */
+    case 'buff_gate': {
+      // 原本的被動效果（passiveStat）只在這個 buff 期間生效，見 recomputeDerived 的 gated
+      const dur = lvArr(sk.duration, lv);
+      state.buffs.push({ type: 'gate', mult: 1, msRemaining: dur * 1000, skillId: sk.id });
+      recomputeDerived(false);
+      logMsg(`✨ 「${sk.name}」Lv${lv} 發動，持續 ${dur} 秒。`);
+      break;
+    }
+    case 'buff_defender': {
+      const dur = lvArr(sk.duration, lv);
+      const cut = lvArr(sk.rangedCutPct, lv), slow = lvArr(sk.aspdPenalty, lv) || 0;
+      state.buffs.push({ type: 'defender', mult: 1, flatBonus: cut, msRemaining: dur * 1000, skillId: sk.id });
+      if (slow) state.buffs.push({ type: 'aspd', mult: 1 - slow / 100, msRemaining: dur * 1000, skillId: sk.id });
+      recomputeDerived(false);
+      logMsg(`🛡️ 「${sk.name}」Lv${lv}：遠距離物理傷害 −${cut}%${slow ? `、攻速 −${slow}%` : ''}，持續 ${dur} 秒。`);
+      break;
+    }
+    case 'buff_castcut': {
+      const dur = lvArr(sk.duration, lv), v = lvArr(sk.castCutPct, lv);
+      state.buffs.push({ type: 'castcut', mult: 1, flatBonus: v, msRemaining: dur * 1000, skillId: sk.id });
+      logMsg(`✨ 「${sk.name}」Lv${lv}：變動詠唱 −${v}%，持續 ${dur} 秒。`);
+      break;
+    }
+    case 'buff_memorize': {
+      state.buffs = state.buffs.filter(b => b.type !== 'memorize');
+      state.buffs.push({ type: 'memorize', mult: 1, charges: sk.charges || 5, msRemaining: (lvArr(sk.duration, lv) || 600) * 1000, skillId: sk.id });
+      logMsg(`📖 「${sk.name}」：接下來 ${sk.charges || 5} 次詠唱的變動詠唱減半。`);
+      break;
+    }
+    case 'buff_edp': {
+      const dur = lvArr(sk.duration, lv), m = lvArr(sk.weaponAtkMult, lv);
+      state.buffs.push({ type: 'weaponatk', mult: m, msRemaining: dur * 1000, skillId: sk.id });
+      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      recomputeDerived(false);
+      logMsg(`☠️ 「${sk.name}」Lv${lv}${paid ? `（消耗${paid.label}）` : ''}：裝備 ATK ×${m}，持續 ${dur} 秒。`);
+      break;
+    }
+    case 'buff_spawnspeed': {
+      const dur = lvArr(sk.duration, lv), m = lvArr(sk.spawnMult, lv);
+      state.buffs.push({ type: 'spawnspeed', mult: m, msRemaining: dur * 1000, skillId: sk.id });
+      logMsg(`🛒 「${sk.name}」：移動速度 +${Math.round((m - 1) * 100)}%（本作換算成生怪加速），持續 ${dur} 秒。`);
+      break;
+    }
+    case 'buff_energycoat': {
+      const dur = lvArr(sk.duration, lv);
+      state.buffs.push({ type: 'energycoat', mult: 1, msRemaining: dur * 1000, skillId: sk.id });
+      logMsg(`🔷 「${sk.name}」：受到傷害時依 SP 減傷 6~30%，持續 ${dur} 秒。`);
       break;
     }
     /* 神威祈福（T5，SC_IMPOSITIO）：武器 ATK／MATK 各 +5×lv，固定值 */
@@ -11518,6 +11602,8 @@ function castSkillInner(skillId, opts) {
           if (mhSum[id].n >= 2) showComboTotal(id, mhSum[id].dmg);
         });
       }
+      // 擊退（T9，rAthena Knockback；怪物互擊）：打到的怪往後推
+      applyKnockback(sk, lv, state.monsters.filter(m => mhSum[m.id]));
       break;
     }
     case 'damage_multi': {
