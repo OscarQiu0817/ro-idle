@@ -23819,7 +23819,7 @@ const CARDS = {
   "s_wolf_card_e": {"id":"s_wolf_card_e","name":"沃爾夫·雷根布爾格卡片","icon":"⚔️","slot":"weapon","bonus":{"raceDmg_insect":15},"desc":"對昆蟲型魔物的物理與魔法傷害+15%。｜與保羅·雷哈特卡片一起裝備時，ATK+5%、MATK+5%。（官方另有對中型敵人傷害+5%，本作沒有體型增傷這個機制）","condBonus":[{"when":{"withCards":["s_poe_card_e"]},"bonus":{"atkPct":5,"matkPct":5},"setName":"雷根布爾格套卡"}]},
   "s_poe_card_e": {"id":"s_poe_card_e","name":"保羅·雷哈特卡片","icon":"⚔️","slot":"weapon","bonus":{"raceDmg_plant":15},"desc":"對植物型魔物的物理與魔法傷害+15%。"},
   "lucky_riceball_c": {"id":"lucky_riceball_c","name":"肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":2,"matkPct":2,"hpPct":1},"desc":"ATK+2%、MATK+2%、MaxHP+1%。"},
-  "up_lucky_riceball_c": {"id":"up_lucky_riceball_c","name":"強化肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":10,"matkPct":10,"hpPct":8},"desc":"ATK+10%、MATK+10%、MaxHP+8%。（官方另有技能後延遲−5%，本服未實作）"},
+  "up_lucky_riceball_c": {"id":"up_lucky_riceball_c","name":"強化肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":10,"matkPct":10,"hpPct":8,"acdPct":-5},"desc":"技能後延遲−5%、ATK+10%、MATK+10%、MaxHP+8%。"},
   "md_airboat_card5": {"id":"md_airboat_card5","name":"融化波利卡片","icon":"🃏","slot":"headgear","bonus":{"hpPct":10},"desc":"MaxHP+10%。｜VIT 100 以上時，地與毒屬性攻擊的抗性+1%；VIT 130 以上時再+3%。","condBonus":[{"when":{"statMin":{"vit":100}},"bonus":{"eleReduce_earth":1,"eleReduce_poison":1}},{"when":{"statMin":{"vit":130}},"bonus":{"eleReduce_earth":3,"eleReduce_poison":3}}]},
   "md_airboat_card6": {"id":"md_airboat_card6","name":"不明生物體卡片","icon":"🃏","slot":"accessory","bonus":{"eleDmg_poison":30,"eleDmg_shadow":30,"eleReduce_holy":-10},"desc":"毒屬性與暗屬性魔法傷害+30%，對聖屬性攻擊的抗性−10%。"},
   "bakonawa_card": {"id":"bakonawa_card","monsterId":"bakonawa_1","name":"Bakonawa卡片","icon":"🛡️","slot":"armor","bonus":{"str":4},"desc":"STR +4(原版另有 1 項條件效果尚未實作)"},
@@ -30166,7 +30166,7 @@ var GRANT_SKILL_FIX = {
   var NOTE = ' （本服實作更新 2026-09-15:與闇●超魔導師 凱特莉娜卡片同時裝備時 對首領傷害+30%、'
            + '與神秘魔力石帽子同時裝備時 毀滅彗星傷害+30%、與神秘徐風之耳語同時裝備時 INT+20 與毒素爆破冷卻-0.5 秒 已補上並生效;'
            + '戴兩個這件飾品也只算一次。'
-           + '尚未實作:固定詠唱、毒耐性弱化技能;「闇●智者 西里亞卡片」(首領西里亞教授的卡,不是本服的「闇●智者卡片」)、「思念體破壞因子研究記錄(魔法師)」與「席琳的胸針」本服沒有這三件。）';
+           + '尚未實作:毒耐性弱化技能;「闇●智者 西里亞卡片」(首領西里亞教授的卡,不是本服的「闇●智者卡片」)、「思念體破壞因子研究記錄(魔法師)」與「席琳的胸針」本服沒有這三件。）';
   it.desc = String(it.desc || '') + NOTE;
   console.log('[data] RECORDMAGE2-SETS 思念體忿恨因子研究記錄(魔法師) 補上 3 組搭配');
 })();

@@ -32,7 +32,8 @@ const B1 = {
 const B2 = {
   bAddRace: ['raceDmg_', RACE], bAddEle: ['eleDmg_', ELE], bAddSize: ['sizeDmg_', SIZE],
   bSubRace: ['raceDmgReduce_', RACE], bSubEle: ['eleReduce_', ELE], bSubSize: ['sizeDmgReduce_', SIZE],
-  bMagicAtkEle: ['magicEleDmg_', ELE], bIgnoreDefRaceRate: ['defIgnoreRace_', RACE], bExpAddRace: ['expRace_', RACE],
+  bMagicAtkEle: ['magicEleDmg_', ELE], bMagicAddRace: ['magicRaceDmg_', RACE], bMagicAddSize: ['magicSizeDmg_', SIZE],
+  bIgnoreDefRaceRate: ['defIgnoreRace_', RACE], bExpAddRace: ['expRace_', RACE],
   bSkillAtk: ['skillDmg_', 'skill'], bVariableCastrate: ['castVarPct_', 'skill'], bSkillVariableCast: ['castVarMs_', 'skill'],
   bSkillFixedCast: ['castFixedMs_', 'skill'], bSkillCooldown: ['skillCdMs_', 'skill'],
   bAddClass: ['', { Class_All: 'allTargetDmgPct', Class_Boss: 'bossDmgPct' }],
@@ -252,4 +253,45 @@ function convert(entries, opt) {
   return { rec, skipped, skippedFam };
 }
 
-module.exports = { parseScript, compile, convert, keysOf, ownKey, familyOf, B1, B2, RACE, ELE, SIZE };
+/* 自動念咒（T16）：bonus3/4/5 bAutoSpell（普攻時）、bAutoSpellWhenHit（被打時）→ [{ on, skill, lv, chance, when?, useLearnedLv? }]
+   機率 rAthena 是千分比。等級或機率隨精煉變 → 依精煉分段（when.refineMin／refineMax）。
+   max(getskilllv("同技能"),N) → lv N＋useLearnedLv（學得更高就用學到的等級）。
+   技能或魔法觸發的（flag 帶 BF_MAGIC／BF_SKILL／BF_MISC）本作沒有對應時機，跟其他轉不了的一起列缺口。
+   bonus4 bAutoSpellOnSkill,施放的技能,接著放的技能,lv,機率 → on:'chain'（engine 的連鎖念咒，元素劍那種）。 */
+const AUTOSPELL_ON = { bAutoSpell: 'attack', bAutoSpellWhenHit: 'hit', bAutoSpellOnSkill: 'chain' };
+function autoSpellsOf(entries, skills, refineOk) {
+  const list = [], skipped = [];
+  for (const en of entries) {
+    if (!(en.name in AUTOSPELL_ON) || !/^bonus[345]$/.test(en.fn)) continue;
+    const chain = en.name === 'bAutoSpellOnSkill';
+    const after = chain ? String(en.args[0] || '').replace(/"/g, '').toLowerCase() : null;
+    if (chain && (!skills || !skills[after])) { skipped.push(en.raw); continue; }
+    const [skArg, lvArg, rateArg, flag, other] = chain ? en.args.slice(1) : en.args;
+    const id = String(skArg || '').replace(/"/g, '').toLowerCase();
+    if (!skills || !skills[id] || /BF_(MAGIC|SKILL|MISC)/.test(String(flag || '') + ' ' + String(other || ''))) { skipped.push(en.raw); continue; }
+    let lvExpr = lvArg, learned = false;
+    const m = String(lvArg || '').match(/^max\(getskilllv\("(\w+)"\),\s*(\d+)\)$/);
+    if (m && m[1].toLowerCase() === id) { lvExpr = m[2]; learned = true; }
+    const fl = compile(lvExpr, en.vars), fr = compile(rateArg, en.vars), fc = en.conds.map(c => compile(c, en.vars));
+    if (!fl || !fr || fc.some(f => !f) || (!refineOk && (fl.usesR || fr.usesR || fc.some(f => f.usesR)))) { skipped.push(en.raw); continue; }
+    const maxLv = skills[id].maxLv || 99;   // 等級隨精煉長的（電鰻 +20 → Lv20）照官方封頂在技能上限
+    const at = r => (fc.every(f => f(r)) ? [Math.min(maxLv, fl(r)), fr(r)] : null);
+    for (let a = 0; a <= REFINE_MAX;) {
+      const cur = JSON.stringify(at(a));
+      let b = a;
+      while (b < REFINE_MAX && JSON.stringify(at(b + 1)) === cur) b++;
+      const v = at(a);
+      if (v && v[0] > 0 && v[1] > 0) {
+        const e = { on: AUTOSPELL_ON[en.name], skill: id, lv: v[0], chance: v[1] / 10 };
+        if (chain) e.after = after;
+        if (learned) e.useLearnedLv = true;
+        if (a > 0 || b < REFINE_MAX) e.when = b === REFINE_MAX ? { refineMin: a } : { refineMin: a, refineMax: b };
+        list.push(e);
+      }
+      a = b + 1;
+    }
+  }
+  return { list, skipped };
+}
+
+module.exports = { parseScript, compile, convert, keysOf, autoSpellsOf, ownKey, familyOf, B1, B2, RACE, ELE, SIZE };

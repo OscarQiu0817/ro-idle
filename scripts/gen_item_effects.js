@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const { loadGameData, ROOT } = require('./lib/game_data');
 const { loadItemDb } = require('./lib/rathena');
-const { parseScript, convert, ownKey, familyOf } = require('./lib/item_script');
+const { parseScript, convert, autoSpellsOf, ownKey, familyOf } = require('./lib/item_script');
 
 const WRITE = process.argv.includes('--write');
 const DIFF = process.argv.includes('--diff') ? process.argv[process.argv.indexOf('--diff') + 1] : null;
@@ -45,7 +45,14 @@ function build() {
     if (!ra) continue;
     card ? stat.cards++ : stat.items++;
     const d = card || it;
-    const { rec, skipped, skippedFam } = convert(parseScript(ra.Script), { skills: SKILLS, perStyle: card ? 'card' : 'item' });
+    const entries = parseScript(ra.Script);
+    const conv = convert(entries, { skills: SKILLS, perStyle: card ? 'card' : 'item' });
+    const { rec, skippedFam } = conv;
+    /* 自動念咒：rAthena 有寫、而且整件都轉得了 → 以 rAthena 為準（取代手寫）；有任何一條轉不了 → 手寫整組保留。
+       rAthena 沒寫的不動手寫（可能是台服敘述才有的） */
+    const as = autoSpellsOf(entries, SKILLS, true);
+    const asDone = as.skipped.length ? new Set() : new Set(entries.filter(e => /^bAutoSpell(WhenHit|OnSkill)?$/.test(e.name)).map(e => e.raw));
+    const skipped = conv.skipped.filter(l => !asDone.has(l));
     if (skipped.length) gaps.push({ id: it.id, name: it.name, lines: skipped });
     const keep = k => skippedFam.has(familyOf(k));
     const patch = {};
@@ -88,6 +95,19 @@ function build() {
         else if (!weapon && k === 'def') patch.def = ra.Defense || null;
         else if (d[k] != null && !keep(k)) patch[k] = null;
       }
+    }
+    if (asDone.size) {
+      /* 手寫裡 rAthena 表達不了的保留：搭配某張卡／某件裝備才觸發的（官方寫在 item_combo），
+         以及台服敘述的細節旗標（只限近戰、學得更高用學到的等級、改放高階版） */
+      const hand = d.autoSpell || [];
+      as.list.forEach(e => {
+        const h = hand.find(x => x.on === e.on && x.skill === e.skill && !(x.when && (x.when.withCards || x.when.withItems)));
+        if (!h) return;
+        ['melee', 'useLearnedLv', 'upgradeIf'].forEach(f => { if (h[f]) e[f] = h[f]; });
+      });
+      const combo = hand.filter(x => x.when && (x.when.withCards || x.when.withItems));
+      const list = as.list.concat(combo);
+      patch.autoSpell = list.length ? list : null;
     }
     for (const k of Object.keys(d)) if (RETIRED.test(k)) patch[k] = null;
     // 沒變的欄位不寫

@@ -5472,11 +5472,26 @@ function describeCardBonus(card) {
   for (const [k, v] of Object.entries(card.perRefineSquare || {})) out.push(`精煉²×：${formatCardBonus(k, v, {})}`);
   // melee：官方寫「近距離」的那幾張，只有手上不是弓的時候才會觸發
   const meleeTag = e => (e.melee ? '近戰' : '');
+  const skName = id => { const sk = (typeof findSkillAnywhere === 'function') ? findSkillAnywhere(id) : null; return sk ? sk.name.split(' ')[0] : id; };
+  const asWhen = a => (a.on === 'hit' ? '受擊時' : a.on === 'chain' ? `施放${skName(a.after)}後` : '攻擊時');
+  /* rAthena 等級或機率隨精煉變的，資料是一段精煉一筆（T16）；同一招合成一行寫範圍 */
+  const onlyRefine = a => a.when && Object.keys(a.when).every(k => k === 'refineMin' || k === 'refineMax');
+  const groups = new Map();
   (card.autoSpell || []).forEach(a => {
-    const sk = (typeof findSkillAnywhere === 'function') ? findSkillAnywhere(a.skill) : null;
-    const when = a.on === 'hit' ? '受擊時' : '攻擊時';
-    const cond = a.when ? describeCondition(a.when) + '，' : '';
-    out.push(`${cond}${meleeTag(a)}${when} ${a.chance}% 自動念咒：${sk ? sk.name.split(' ')[0] : a.skill} Lv${a.lv}`);
+    const key = onlyRefine(a) ? [a.on, a.skill, a.after, a.melee].join('|') : Symbol();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(a);
+  });
+  const span = (xs, unit) => { const lo = Math.min(...xs), hi = Math.max(...xs); return lo === hi ? lo + unit : `${lo}${unit}~${hi}${unit}`; };
+  groups.forEach(list => {
+    const a = list[0];
+    if (list.length === 1) {
+      const cond = a.when ? describeCondition(a.when) + '，' : '';
+      out.push(`${cond}${meleeTag(a)}${asWhen(a)} ${a.chance}% 自動念咒：${skName(a.skill)} Lv${a.lv}`);
+      return;
+    }
+    const from = Math.min(...list.map(x => x.when.refineMin || 0));
+    out.push(`${from ? `精煉 +${from} 以上，` : ''}${meleeTag(a)}${asWhen(a)} ${span(list.map(x => x.chance), '%')} 自動念咒：${skName(a.skill)} Lv${span(list.map(x => x.lv), '')}（依精煉）`);
   });
   (card.ailment || []).forEach(a => {
     const when = a.on === 'hit' ? '受擊時' : (a.on === 'magic' ? '魔法命中時' : '攻擊時');
@@ -5558,6 +5573,8 @@ function formatCardBonus(k, v, all) {
   if (k === 'regenTickHp') return `每 10 秒回復 ${v} HP`;
   if (k === 'regenTickSp') return `每 10 秒回復 ${v} SP`;
   if (k.startsWith('magicEleDmg_')) return `${ELEMENT_NAMES[k.slice(12)] || k.slice(12)}屬性魔法傷害 ${signed(v, 1)}`;
+  if (k.startsWith('magicRaceDmg_')) return `對${RACE_LABELS[k.slice(13)] || k.slice(13)}魔法傷害 ${signed(v, 1)}`;
+  if (k.startsWith('magicSizeDmg_')) return `對${SIZE_LABELS[k.slice(13)] || k.slice(13)}魔法傷害 ${signed(v, 1)}`;
   // 這一條必須排在 familyDmg_ 前面比對，否則前綴會被前者先吃掉
   if (k.startsWith('raceDmgTaken_')) {
     const r = k.slice(14);

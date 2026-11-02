@@ -6928,7 +6928,10 @@ function skillBaseDamage(useMag, monDef, elemMult, sk) {
      手上又有 monDef」的地方，放別處都得再開一條平行的管線。 */
   if (useMag) {
     const dragon = (state.dragonMatkPct && monDef && monDef.race === 'dragon') ? state.dragonMatkPct : 0;
-    return state.matk * elemMult * (1 + dragon / 100);
+    // 裝備的魔法對種族／體型增傷（rAthena bMagicAddRace／bMagicAddSize，T16），只算魔法
+    const race = monDef && monDef.race ? getCardBonus('magicRaceDmg_' + monDef.race) : 0;
+    const size = monDef && monDef.size ? getCardBonus('magicSizeDmg_' + monDef.size) : 0;
+    return state.matk * elemMult * (1 + dragon / 100) * (1 + race / 100) * (1 + size / 100);
   }
   return weaponChainDamage(monDef, elemMult, state.buffs.some(b => b.type === 'maxroll'), sk);
 }
