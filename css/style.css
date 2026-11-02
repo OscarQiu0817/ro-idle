@@ -331,7 +331,7 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .player-castbar .pcb-track { height: 6px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.4); border-radius: 3px; overflow: hidden; }
 .player-castbar .pcb-track i { display: block; height: 100%; width: 0; background: #e8c34b; }
 #map-bg-scroll { position: absolute; inset: 0; z-index: 1; background-repeat: repeat; background-size: auto 100%;
-  opacity: 0.4; filter: saturate(0.8) brightness(0.75); }
+  opacity: 0.64; /* 原本兩層 0.4 疊起來約 0.64，下層 img 改成載得到就藏，亮度維持 */ filter: saturate(0.8) brightness(0.75); }
 .battle-panel > .monster-area, .battle-panel > .combat-log { position: relative; z-index: 1; }
 .btn-mute {
   position: absolute; top: 10px; right: 12px; z-index: 2;

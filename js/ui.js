@@ -2624,13 +2624,41 @@ const bfBg = { x: 0, y: 0 };
 function bfPlayerWalking() {
   return !!state && Date.now() - (state._walkAt || 0) < 250;
 }
-/* 背景照引擎的世界座標（state.worldX／worldY，格）反向捲 */
+/* 走路補間：引擎每 100ms（TICK_MS）才更新一次位置，畫面直接套會一頓一頓。
+   畫面在兩次更新之間線性補間（落後一拍換連續移動，跟官方客戶端自己算中間位置同概念）。
+   目標點一變就從「目前畫出來的位置」起跑，補間長度＝兩次更新的實際間隔 ×1.2（tick 晚到也不會停頓）；一次跳超過 snap（換圖、讀檔）直接跳 */
+function bfLerpAt(ip, now) {
+  const u = Math.min(1, (now - ip.t0) / ip.dur);
+  return { x: ip.fx + (ip.tx - ip.fx) * u, y: ip.fy + (ip.ty - ip.fy) * u };
+}
+function bfLerp(ip, x, y, now, snap) {
+  if (!ip.t0 || Math.hypot(x - ip.tx, y - ip.ty) > snap) {
+    Object.assign(ip, { fx: x, fy: y, tx: x, ty: y, t0: now, dur: 100 });
+  } else if (x !== ip.tx || y !== ip.ty) {
+    const c = bfLerpAt(ip, now);
+    Object.assign(ip, { fx: c.x, fy: c.y, tx: x, ty: y, dur: Math.min(240, Math.max(60, (now - ip.t0) * 1.2)), t0: now });
+  }
+  return bfLerpAt(ip, now);
+}
+const bfMonIp = new WeakMap();   // 怪的補間狀態（不放進 mon：mon 會進存檔）
+function bfMonLerp(mon, p, now) {
+  let ip = bfMonIp.get(mon);
+  if (!ip) bfMonIp.set(mon, ip = {});
+  return bfLerp(ip, p.x, p.y, now, 15);
+}
+/* 背景照引擎的世界座標（state.worldX／worldY，格）反向捲；捲的是補間後的世界座標。
+   bfWorldLag＝引擎位置 − 畫面位置：場地物件不會自己動，加上這段落差就跟背景同步 */
 let bfWorldSeen = null;
+const bfWorldIp = {};
+let bfWorldLag = { x: 0, y: 0 };
 function bfScrollBackground() {
   const el = document.getElementById('map-bg-scroll');
   const scene = document.getElementById('battle-scene');
   if (!el || !scene || !state) return;
-  const wx = state.worldX || 0, wy = state.worldY || 0;
+  const ex = state.worldX || 0, ey = state.worldY || 0;
+  const w = bfLerp(bfWorldIp, ex, ey, Date.now(), 30);
+  bfWorldLag = { x: ex - w.x, y: ey - w.y };
+  const wx = w.x, wy = w.y;
   if (!bfWorldSeen) bfWorldSeen = { x: wx, y: wy };
   const dx = wx - bfWorldSeen.x, dy = wy - bfWorldSeen.y;
   bfWorldSeen = { x: wx, y: wy };
@@ -2670,8 +2698,12 @@ function syncGroundUnits() {
     scene.appendChild(layer);
   }
   const units = (state && state.groundUnits) || [];
-  if (!units.length) { if (layer.innerHTML) layer.innerHTML = ''; return; }
-  const at = (d, a) => bfPolarPoint({ d, a });   // 畫面外的場地物件由 .battle-scene 的 overflow 裁掉
+  if (!units.length) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
+  // 畫面外的場地物件由 .battle-scene 的 overflow 裁掉；加上補間落差（bfWorldLag）才不會比背景先跳
+  const at = (d, a) => {
+    const x = d * Math.cos(a) + bfWorldLag.x, y = d * Math.sin(a) + bfWorldLag.y;
+    return bfPolarPoint({ d: Math.hypot(x, y), a: Math.atan2(y, x) });
+  };
   let html = '';
   for (const u of units) {
     if (u.kind === 'wall') {
@@ -2694,7 +2726,7 @@ function syncGroundUnits() {
       html += `<span class="bf-gu bf-zone${u.poisonMult ? ' bf-poison' : ''}" style="left:${p.x}%;top:${p.y}%;width:${u.radius * 2 * BF_CELL_X}%;height:${u.radius * 2 * BF_CELL_Y}%"></span>`;
     }
   }
-  layer.innerHTML = html;
+  if (layer._html !== html) { layer.innerHTML = html; layer._html = html; }
 }
 /* 詠唱條：掛在玩家立繪上方 */
 function syncCastBar(ps) {
@@ -2808,8 +2840,8 @@ function layoutBattlefield() {
   const faceRight = walking ? Math.cos(state._walkDir || 0) >= 0
     : (!lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x);
   syncCastBar(ps);
+  bfScrollBackground();   // 先算補間落差，場地物件要用
   syncGroundUnits();
-  bfScrollBackground();
   layoutAllySprites(faceRight);
   syncPlayerBattleAnim((stepped.moved || walking) && !town);
   pinComboTotal();
@@ -2825,12 +2857,13 @@ function layoutBattlefield() {
     let mv;
     if (Number.isFinite(mon.d)) {
       const p = bfPolarPoint(mon);
+      const q = bfMonLerp(mon, p, now);   // 兩次引擎更新之間補間
       slot.style.visibility = p.off ? 'hidden' : '';   // 走出畫面就不畫，走進來再出現
       // 走路動畫看引擎狀態，不看這一格有沒有位移（引擎每 100ms 才走一步，逐格判斷會閃）
       const mm = monMove(mon);
       // 玩家的目標靠近是因為玩家在走，目標本身不播走路
       const monWalking = !monInRange(mon) && !mm.immobile && (mm.aggressive || mon.hp < mon.maxHp);
-      mv = { x: p.x, y: p.y, moved: monWalking };
+      mv = { x: q.x, y: q.y, moved: monWalking };
     } else {
       const meet = approachPoint({ x: mon.bx, y: mon.by }, bfPlayer, gap);
       mv = dt ? bfStep({ x: mon.bx, y: mon.by }, meet, dt) : { x: mon.bx, y: mon.by, moved: false };
@@ -3163,7 +3196,11 @@ function mobAnimTick() {
   drawAllyDolls();
 }
 
-if (!bfTimer) bfTimer = setInterval(layoutBattlefield, 50);
+// 跟螢幕更新同步（原本 setInterval 50ms＝20fps，走路補間要每幀畫才順）；先排下一幀，出錯也不斷
+if (!bfTimer) {
+  const bfLoop = () => { bfTimer = requestAnimationFrame(bfLoop); layoutBattlefield(); };
+  bfTimer = requestAnimationFrame(bfLoop);
+}
 
 function triggerMonsterHit(isCrit) {
   const slot = document.querySelector('.monster-slot.target:not(.dying)');
@@ -7264,6 +7301,14 @@ function renderMapBackground() {
   // 拼貼背景：載入失敗時這層沒有圖，露出下面那張 img（含預設圖）
   const scroll = document.getElementById('map-bg-scroll');
   if (scroll) { scroll.style.backgroundImage = `url("${mapImgSrc(state.mapId)}")`; bfBg.x = 0; bfBg.y = 0; scroll.style.backgroundPosition = '0px 0px'; }
+  /* 兩層都半透明：下面那張固定的 img 會透出來，看起來像一層跟著玩家的背景。
+     拼貼層的圖載得到就藏掉 img，載不到才露出 img（預設圖） */
+  img.style.visibility = '';
+  if (scroll) {
+    const src = mapImgSrc(state.mapId), probe = new Image();
+    probe.onload = () => { if (img.src.endsWith(src) || img.getAttribute('src') === src) img.style.visibility = 'hidden'; };
+    probe.src = src;
+  }
 }
 
 /* ---------------- 背景音樂 ----------------
