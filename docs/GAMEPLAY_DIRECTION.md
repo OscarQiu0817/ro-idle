@@ -176,7 +176,7 @@
 | T13 | 道具分享到對話框 | 對話框指戰鬥紀錄或另做聊天區待定 | C 組 |
 | T14 | 同帳號隊伍同步移動（傳送之陣動畫） | 依賴工作 7 | D 組 |
 | T15 | 範圍外道具清理（D6） | 還有大量要求等級 130 以上的裝備 | 隨時 |
-| T16 | 5d 剩餘：魔法對種族／體型傷害、自動念咒轉換；刪除過時的資料修補紀錄 | 見 `docs/ITEM_EFFECT_GAPS.md`。修補紀錄在 `js/data.js` 尾端約 3,000 行、60 個區塊，先分三類（只加註記／修資料／已被 5d 取代），先刪已被取代的 | 隨時 |
+| T16 | 5d 剩餘：魔法對種族／體型傷害、自動念咒轉換；刪除過時的資料修補紀錄 | 見 `docs/ITEM_EFFECT_GAPS.md`。修補紀錄在 `js/data.js` 尾端約 3,000 行、60 個區塊，先分三類（只加註記／修資料／已被 5d 取代），先刪已被取代的。第一批已刪（2026-11-03）：逐一拿掉區塊重跑、最終資料不變的 10 塊（CARDSET-IMPORT、DUP-CONDBONUS、OSWORDLT-FILLIN、ORCHERO-STUN-FIX、POISONNOTE、IMPLNOTE-ZH、CARDSLOTNOTE、SPLASHNOTE、REFINE9GAP、HEROPENDANT，共 366 行）。下一批：與 v2 機制矛盾的舊註記（CASTNOTE／CASTNOTE2／CASTCDNOTE 說「沒有詠唱」、DELAYNOTE 說「沒有後延遲」），會改到道具說明文字 | 隨時 |
 | T17 ✅ | 怪物屬性／種族／體型跟 rAthena 對齊 | 照 mob_db_re 改 2,214 隻（屬性不同 1,246、種族 1,573、體型 1,556），抗性表改用 rAthena attr_fix（屬性等級 × 攻擊屬性 × 防守屬性，`grf_ex/attr_fix.yml`）；資料進 `js/mob_move.js`，engine 載入時覆寫。屬性剋制、種族卡、體型修正的效果都會跟著變 | 2026-11-02 |
 | T18 ✅ | 怪物魔攻 | 照 rAthena Renewal：INT＋等級＋Attack2×0.7~1.3（Attack2、INT 從 mob_db_re 進 `js/mob_move.js`）；怪物魔法技能改用魔攻，不再拿物攻 ×1.2；卸除頭盔改成只降魔攻。116 隻會放魔法的怪裡 98 隻的魔法變弱（中位數約原本 0.39 倍，例：胡狼頭神 1412→646） | 2026-11-02 |
 | T19 | 成就＋討伐合併成新手引導任務 | 參考 RO 伊甸園的引導任務：照等級／職業階段給一串目標（討伐、轉職、裝備、技能），完成領獎；現有成就與討伐紀錄改成任務的進度來源。需先盤點現有成就與討伐的資料與獎勵 | 待討論 |
@@ -184,5 +184,5 @@
 | T21 | 裝備分享到聊天室 | 訊息帶 itemId＋精煉＋卡片快照，名稱／稀有度由 server 查裝備定義表填（不信任 client 文字）。world-chat 已預留 `type`、`payload`；要提供給 server 的：裝備定義表格式、精煉規則。有雲端存檔（T23）後改讀 server 真實資料 | T20 |
 | T22 | 意見回饋 | world-chat 規劃 `POST /feedback`（存 D1，與聊天分開）；遊戲端做回饋表單 | T20 |
 | T23 | 遊戲後端：帳號密碼＋雲端存檔＋server 權威 | 討論結論在 world-chat `docs/GAME-SERVER-PLAN.md`：Worker＋D1、client 只送操作、分段結算、在線共用種子掉落、離線二項分布、強化由 server 擲骰。對本 repo 的影響：公式／掉落表／亂數要拆成前端與 Worker 共用的模組（目前是全域 script、`Math.random`）；機率改整數；server 用「擊殺時間」估算，跟 v2 的即時戰鬥模擬差很多，要先決定 server 算到多細（與 3e 離線結算一起想）。開始前要提供：存檔結構、戰鬥／經驗公式、怪物與掉落表、精煉規則、玩家操作清單。未決：同步頻率、離線上限、忘記密碼、舊存檔匯入、帳號與聊天 `playerId` 綁定、是否同一個 Worker | v2 定版後 |
-| T24 | 技能特效與範圍標記 | 雙手劍加速那組非官方特效已拿掉（2026-11-02），`SKILL_FX` 機制保留。先做低成本的：場地魔法範圍圈（照 `fieldRadius`，固定在地上、跟背景一起捲）、石化灰色濾鏡、冰凍冰塊圖。再做正式特效：素材在 grf `data	exture\effect\`（貼圖、`.str`）與 `data\sprite\이팩트\`（spr/act）；技能→特效對照參考 roBrowser `SkillEffect.js`、`EffectTable.js`。spr/act 型可沿用現有解析；`.str` 與程式畫的 3D 效果（隕石、暴風雪）要另寫播放或手工近似 | 隨時 |
+| T24 | 技能特效與範圍標記 | 雙手劍加速那組非官方特效已拿掉（2026-11-02），`SKILL_FX` 機制保留。先做低成本的：場地魔法範圍圈（照 `fieldRadius`，固定在地上、跟背景一起捲）、石化灰色濾鏡、冰凍冰塊圖。再做正式特效：素材在 grf `data\texture\effect\`（貼圖、`.str`）與 `data\sprite\이팩트\`（spr/act）；技能→特效對照參考 roBrowser `SkillEffect.js`、`EffectTable.js`。spr/act 型可沿用現有解析；`.str` 與程式畫的 3D 效果（隕石、暴風雪）要另寫播放或手工近似 | 隨時 |
 | T25 | v2 上線並保留 v1.2 | GitHub Pages 一個 repo 一個站，但可放子資料夾：用 Actions 把 `main` 放根目錄、`v2-dev` 放 `/v2/`。**先改 v2 存檔鍵**（目前與 v1.2 同為 `ro_idle_save_slot_`、`ro_idle_warehouse`，同網域 localStorage 共用會互相覆蓋）；要沿用舊角色就做「從 v1.2 匯入複本」 | 上線前 |

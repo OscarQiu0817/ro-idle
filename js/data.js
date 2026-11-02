@@ -28631,46 +28631,6 @@ const HUNT_QUESTS = [
 const ATTENDANCE_REWARDS = [["comp_battle_bubble",1],["e_token_of_siegfried",1],["comp_insurance",5],["comp_insurance",5],["white_slim_potion_box_",1],["yggdrasil_seed_box_",1],["comp_megaphone",3],["e_small_life_potion",5],["comp_m_defscroll",5],["mysterious_egg",1],["battle_manual100",2],["comp_small_mana_potion",3],["comp_regenerate_potion",5],["comp_bubble_gum",5],["comp_regenerate_potion",5],["e_med_life_potion",5],["e_med_life_potion",5],["e_med_life_potion",5],["guarantee_armor_7up",1],["mysterious_egg",1]];
 /* ==== ATT-IMPORT END ==== */
 
-/* ==== CARDSET-IMPORT BEGIN(tools/import_cardset_combos.py 生成) ==== */
-/* ==== 卡片套裝:匯入自 99Max item_combo 含卡片的那批(tools/import_cardset_combos.py 生成)
-     走引擎既有的 CARDS condBonus + setName(cardset)機制,不新增機制。 ==== */
-(function () {
-  const add = (cid, e) => { const c = CARDS[cid]; if (c) (c.condBonus = c.condBonus || []).push(e); };
-  add("succubus_card", {when:{"withItems":["brooch_greed"]},bonus:{"vit":-3,"hpRegenPct":-20,"hp":1000},setName:"貪慾胸針＋惡魔女僕卡片"});
-  add("incubus_card", {when:{"withItems":["brooch_greed"]},bonus:{"int":-3,"spRegenPct":-20,"sp":150},setName:"貪慾胸針＋惡魔侍者卡片"});
-  add("gajomart_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_plant":-10,"expRace_plant":5},setName:"野豬皮手套＋狂暴鬼火卡片"});
-  add("gullinbursti_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_fish":-10,"expRace_fish":5},setName:"野豬皮手套＋狂暴野豬卡片"});
-  add("mini_demon_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_brute":-10,"expRace_brute":5},setName:"野豬皮手套＋狂暴小惡魔卡片"});
-  add("skeleton_general_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_insect":-10,"expRace_insect":5},setName:"野豬皮手套＋邪骸戰士長卡片"});
-  add("cookie_xmas_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_angel":-10,"expRace_angel":5},setName:"野豬皮手套＋XMAS甜餅人卡片"});
-  add("am_mut_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_humanoid":-10,"expRace_humanoid":5},setName:"野豬皮手套＋狂暴小土人卡片"});
-  add("ancient_worm_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_demon":-10,"expRace_demon":5},setName:"野豬皮手套＋狂暴蜈蚣卡片"});
-  add("explosion_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_dragon":-10,"expRace_dragon":5},setName:"野豬皮手套＋爆炎蝙蝠卡片"});
-  add("zombie_prisoner_card", {when:{"withItems":["limnil_glove"]},bonus:{"raceDmgReduce_undead":-10,"expRace_undead":5},setName:"野豬皮手套＋腐屍戰俘卡片"});
-  add("poring_card", {when:{"withCards":["mastering_card"]},bonus:{"flee":18},setName:"波利卡片＋波利之王卡片"});
-  add("lunatic_card", {when:{"withCards":["eclipse_card"]},bonus:{"flee":18},setName:"瘋兔卡片＋藍瘋兔卡片"});
-  add("chonchon_card", {when:{"withCards":["dragon_fly_card"]},bonus:{"flee":18},setName:"蒼蠅卡片＋龍蠅卡片"});
-  add("roda_frog_card", {when:{"withCards":["toad_card"]},bonus:{"flee":18},setName:"羅達蛙卡片＋蛙王卡片"});
-  add("wolf_card", {when:{"withCards":["vagabond_wolf_card"]},bonus:{"flee":18},setName:"狼卡片＋流浪之狼卡片"});
-  add("munak_card", {when:{"withCards":["bon_gun_card","hyegun_card"]},bonus:{"allStat":1},setName:"殭屍卡片＋妖道卡片＋妖君卡片"});
-  add("crab_card", {when:{"withItems":["king_prawn_hat"]},bonus:{"eleDmg_water":10},setName:"卡拉蟹卡片＋大蝦帽子"});
-  add("aster_card", {when:{"withItems":["king_prawn_hat"]},bonus:{"eleDmg_water":10},setName:"海星卡片＋大蝦帽子"});
-  add("shellfish_card", {when:{"withItems":["king_prawn_hat"]},bonus:{"eleDmg_water":10},setName:"貝殼魔靈卡片＋大蝦帽子"});
-  add("mobster_card", {when:{"withItems":["shiver_katar"]},bonus:{"critDmgPct":5},setName:"戰慄拳刃＋流氓卡片"});
-  add("sedora_card", {when:{"withItems":["shiver_katar"]},bonus:{"critDmgPct":5},setName:"戰慄拳刃＋塞杜拉卡片"});
-  add("crab_card", {when:{"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":8},setName:"章魚料理廚刀＋卡拉蟹卡片"});
-  add("crab_card", {when:{"withCards":["aster_card","shellfish_card"],"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":16},setName:"章魚料理廚刀＋卡拉蟹卡片＋海星卡片＋貝殼魔靈卡片"});
-  add("aster_card", {when:{"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":8},setName:"章魚料理廚刀＋海星卡片"});
-  add("shellfish_card", {when:{"withItems":["octo_kitchen_knife"]},bonus:{"eleDmg_water":8},setName:"章魚料理廚刀＋貝殼魔靈卡片"});
-  add("sting_card", {when:{"withItems":["sting_silk_ribbon"]},bonus:{"sizeDmgReduce_small":10,"sizeDmgReduce_medium":10,"sizeDmgReduce_large":10},setName:"Sting Silk Ribbon＋史汀卡片"});
-  add("mastering_card", {when:{"withItems":["phoenix_muffler"]},bonus:{"flee":20,"hpPct":10,"mdef":10},setName:"Phoenix Muffler＋波利之王卡片"});
-  add("snake_card", {when:{"withItems":["snake_encyclopedia"]},bonus:{"aspdPct":5},setName:"蛇類百科全集＋青蛇卡片"});
-  add("side_winder_card", {when:{"withItems":["snake_encyclopedia"]},bonus:{"aspdPct":5},setName:"蛇類百科全集＋黑蛇卡片"});
-  add("snake_card", {when:{"withCards":["side_winder_card"],"withItems":["snake_encyclopedia"]},bonus:{"aspdPct":1},setName:"蛇類百科全集＋青蛇卡片＋黑蛇卡片"});
-  add("c_cursed_butler", {when:{"withCards":["zombie_card"]},bonus:{"hpPct":15},setName:"詛咒僕人卡片＋腐屍卡片"});
-})();
-/* ==== CARDSET-IMPORT END ==== */
-
 /* ==== TITLE-IMPORT BEGIN(tools/import_titles.py 生成) ==== */
 /* ==== 稱號:匯入自 99Max title_bonus.yml(tools/import_titles.py 生成)
      解鎖=成就點數門檻(上游綁腳本成就拿不到,改點數階梯)。 ==== */
@@ -29056,24 +29016,6 @@ const DUP_ALIGN = {"mysteltainn_":{"element":"shadow"},"tale_fing_":{"element":"
 })();
 /* ==== DUP-ALIGN END ==== */
 
-/* ==== DUP-CONDBONUS BEGIN(tools/biocrown.js 生成,勿手改) ==== */
-/* 同名同說明的兩個編號中，**一邊有 condBonus、另一邊完全沒有**的情形。
-
-   典型是生體研究頭冠家族：一邊帶著官方的「搭配XX武器時…」那組加成，
-   另一邊只有 reqJob。照既定規則**只補「給予」不補「限制」**——
-   把 condBonus 補給缺的那一半，reqJob 不動（補上去等於限縮現在穿著的玩家）。
-
-   其餘欄位有任何值衝突的都不在這裡（那代表不只是缺漏）。 */
-const DUP_CONDBONUS = {"seraphimcoronet":{"perStat_int_8_atk":5,"perStat_int_8_healPct":1,"condBonus":[{"when":{"statMin":{"int":108}},"bonus":{"atk":50,"healPct":5}},{"when":{"statMin":{"int":120}},"bonus":{"atk":125,"healPct":10}}]},"angelporing_boots":{"condBonus":[{"when":{"withAnyItem":["poring_sunglasses_k_","poring_sunglasses_k"]},"bonus":{"fixedCast":-0.4}}]},"bio_weapon_helm_lg":{"condBonus":[{"when":{"withAnyItem":["farthezan"]},"bonus":{"skillCdFlat":-1.5}}]},"bio_weapon_helm_wl":{"condBonus":[{"when":{"withAnyItem":["staff_of_miracle"]},"bonus":{"eleDmg_ghost":3}},{"when":{"withAnyItem":["gravitation_staff"]},"bonus":{"eleDmg_none":3}}]},"bio_weapon_helm_so":{"condBonus":[{"when":{"withAnyItem":["boltigin"]},"bonus":{"matkPct":2}},{"when":{"withAnyItem":["psychic_spear_rod"]},"bonus":{"magicEleDmg_wind":3}},{"when":{"withAnyItem":["dust_grave"]},"bonus":{"magicEleDmg_water":3}}]},"bio_weapon_helm_sc":{"condBonus":[{"when":{"withAnyItem":["jack_the_knife"]},"bonus":{"skillCdFlat":-1}},{"when":{"withAnyItem":["platinum_dagger"]},"bonus":{"allEleDmg":5}},{"when":{"withAnyItem":["rapid_fire_c_bow"]},"bonus":{"rangedDmgPct":10}}]}};
-(function applyDupCondBonus() {
-  if (typeof ITEMS === 'undefined') return;
-  for (var id in DUP_CONDBONUS) {
-    var it = ITEMS[id]; if (!it) continue;
-    var add = DUP_CONDBONUS[id];
-    for (var k in add) if (it[k] === undefined || (k === 'condBonus' && (!it[k] || !it[k].length))) it[k] = add[k];
-  }
-})();
-/* ==== DUP-CONDBONUS END ==== */
 /* ==== BIOCROWN-WL BEGIN(acc361 #3114) ==== */
 /* 生體研究寶瓶頭冠：敘述宣告四階精煉＋三段套裝，本服只做了「每+2」而且做錯
    （寫成 MATK+2 點，敘述是 MATK+2%）。玩家 acc361 回報「只有+2生效、各階段
@@ -30154,57 +30096,6 @@ var GRANT_SKILL_FIX = {
 })();
 /* ==== INTARMOR-FIX END ==== */
 
-/* ==== OSWORDLT-FILLIN ====
-   斬魔劍-LT [2]:補回敘述裡官方有、本服漏匯的五段。來源 #3795/#3815/#3866(acc891)。
-
-   補的(欄位全是引擎既有機制,數值照敘述原文):
-     ATK+5% → bonus.atkPct / 每+3 暴擊傷害+5% → per3Refine.critDmgPct
-     +7 音速衝擊波+20%、攻擊後延遲-10% → skillDmg_rk_sonicwave、aspdPct(照塔諾斯遠程頭盔的寫法)
-     +9 音速衝擊波再+20% / +11 近距離/遠距離物理傷害+15% → meleeDmgPct、rangedDmgPct
-     +9 近戰時很高機率觸發音速衝擊波Lv2 → autoSpell(on:attack, lv2, chance 10, useLearnedLv)
-       ⚠ 敘述沒給機率。10 是本服既有慣例:全庫敘述寫「很高/高機率」的兩件都填 10。
-       ⚠ useLearnedLv = 「習得更高等級時以習得等級觸發」(雙發神弓 #138 同一條)。
-
-   不補:POW/P.ATK(本服沒有這兩項)、風暴衝擊(本服沒有這招)、各階級追加能力(沒有階級系統)。
-   CRI+25 本服是無條件給、官方是 +11 才給 —— 那是多給,改掉等於削弱玩家,不在這裡動。
-
-   ⚠ 要放在 SETNOTE / CARDDESCSYNC 之前,讓後面的註記產生器看到補完後的樣子。
-   逐項與實穿驗證見 testoswordlt.js。 */
-(function () {
-  var it = ITEMS['oriental_sword_lt'];
-  if (!it) { console.log('[data] OSWORDLT-FILLIN 找不到 oriental_sword_lt,略過'); return; }
-  if ((it.bonus && it.bonus.atkPct) || (it.per3Refine && it.per3Refine.critDmgPct)) {
-    console.log('[data] OSWORDLT-FILLIN 已補過,略過'); return;
-  }
-
-  it.bonus = it.bonus || {};
-  it.bonus.atkPct = 5;
-
-  it.per3Refine = it.per3Refine || {};
-  it.per3Refine.critDmgPct = 5;
-
-  it.condBonus = (it.condBonus || []).concat([
-    { when: { refineMin: 7 },  bonus: { skillDmg_rk_sonicwave: 20, aspdPct: 10 } },
-    { when: { refineMin: 9 },  bonus: { skillDmg_rk_sonicwave: 20 } },
-    { when: { refineMin: 11 }, bonus: { meleeDmgPct: 15, rangedDmgPct: 15 } }
-  ]);
-
-  it.autoSpell = (it.autoSpell || []).concat([
-    { on: 'attack', skill: 'rk_sonicwave', lv: 2, chance: 10, useLearnedLv: true,
-      when: { refineMin: 9 } }
-  ]);
-
-  var NOTE = ' （本服實作更新 2026-09-11:ATK+5%、精煉每+3 暴擊傷害+5%、'
-           + '+7 音波斬傷害+20%與攻擊後延遲-10%、+9 音波斬傷害再+20%與近戰時觸發音波斬(Lv2,習得更高等級時以習得等級;機率 10%)、'
-           + '+11 近距離/遠距離物理傷害+15% 已補上並生效。'
-           + '尚未實作:POW/P.ATK(本服沒有這兩項能力值)、風暴衝擊傷害(本服沒有這個技能)、各階級追加能力。'
-           + '另:CRI+25 本服目前不需精煉就有。）';
-  it.desc = String(it.desc || '') + NOTE;
-
-  console.log('[data] OSWORDLT-FILLIN 斬魔劍-LT 補上 5 段效果');
-})();
-/* ==== OSWORDLT-FILLIN END ==== */
-
 /* ==== BLUEFIRELT-FILLIN ====
    紅蓮劍-LT [2]:補回官方有、本服漏匯的效果。來源 feedback #369(莉拉)。
    官方依據:rAthena 一鍵端 item_db_equip.yml Sword_Of_Bluefire_LT(500039)的 Script,與敘述原文一致:
@@ -30423,23 +30314,6 @@ var GRANT_SKILL_FIX = {
   console.log('[data] FENRIR-CARD-FIX 潘利爾卡片改回 MATK+50、每精煉 MATK+5');
 })();
 /* ==== FENRIR-CARD-FIX END ==== */
-
-/* ==== ORCHERO-STUN-FIX ====
-   獸人英雄卡片（官方 Orc_Hero_Card 4143）。來源 acc559 #4247（說明寫防止暈眩，插卡視窗有寫、物品說明卻只列 VIT+3）。
-
-   官方腳本：bonus bVit,3; bonus2 bResEff,Eff_Stun,10000 ⇒ VIT+3、眩暈抗性 100%（完全免疫）。
-   本服 CARDS.orc_hero_card 只匯入了 {vit:3}，防暈眩那一半沒有 ⇒ 物品說明（describeCardBonus 只列引擎吃到的加成）
-   也就只顯示 VIT+3，跟插卡視窗（顯示卡片自己的敘述）對不上。
-   補上 ailResist_stun:100（引擎 recomputeDerived 讀 ailResist_ 前綴，100 以上＝免疫；flame_skull_card 已在用同一個鍵）。
-   只在仍缺這個鍵時才補。驗證見 testorchero.js。 */
-(function () {
-  if (typeof CARDS === 'undefined' || !CARDS.orc_hero_card) { console.log('[data] ORCHERO-STUN-FIX 找不到 CARDS.orc_hero_card,略過'); return; }
-  var c = CARDS.orc_hero_card;
-  if (!c.bonus || c.bonus.vit !== 3 || c.bonus.ailResist_stun !== undefined) { console.log('[data] ORCHERO-STUN-FIX 資料已不是舊的缺漏版本,略過'); return; }
-  c.bonus.ailResist_stun = 100;
-  console.log('[data] ORCHERO-STUN-FIX 獸人英雄卡片補上眩暈抗性 100%');
-})();
-/* ==== ORCHERO-STUN-FIX END ==== */
 
 /* ==== SETNOTE BEGIN ==== */
 /* acc361 #1572／#1573：「敘述沒提到套裝效果是否生效，沒寫就是有生效嗎？」
@@ -31013,27 +30887,6 @@ var GRANT_SKILL_FIX = {
 }
 /* ==== DEATHNOTE END ==== */
 
-/* ==== POISONNOTE BEGIN ==== */
-/* acc431 #1493：毒性反彈的敘述說「目前遊戲中沒有毒屬性怪物」——**那是錯的**。
-   實際掃描：毒屬性怪 131 隻，其中 29 隻真的會在地圖上出現
-   （毒魔菇 Lv26、波波利 Lv30、大斧哥布靈 Lv44、艾斯蜘蛛 Lv47、麥斯特 Lv49、
-     弓箭哥布靈 Lv55、黑蛇 Lv70、艾吉歐蜈蚣 Lv75、藍鼠 Lv82、梅納海葵 Lv85、
-     毒液魔 Lv87、天邪鬼 Lv91…）。
-   技能本身也早就接上了（engine.js #8036）。敘述停在還沒有毒怪的年代，
-   照著它讀的人會以為這個技能是廢的。 */
-{
-  const _S = (typeof SKILLS !== 'undefined') ? SKILLS.as_poisonreact : null;
-  if (_S && /目前遊戲中沒有毒屬性怪物/.test(String(_S.desc || ''))) {
-    _S.desc = '被動技能，被毒屬性怪物攻擊時觸發反擊，造成ATK 100%~280%傷害'
-      + '（依等級，內部冷卻10秒）。'
-      + '（本服實作：**已生效**。全服有 29 隻毒屬性怪會實際出現在地圖上，'
-      + '例如毒魔菇Lv26、波波利Lv30、艾斯蜘蛛Lv47、黑蛇Lv70、藍鼠Lv82、天邪鬼Lv91。'
-      + '反擊要「被牠打到」才會觸發，站著挨打才有輸出，不是主動技。）';
-    console.log('[data] POISONNOTE 更正毒性反彈的敘述');
-  }
-}
-/* ==== POISONNOTE END ==== */
-
 /* ==== BOXDUP BEGIN ==== */
 /* acc111 #1518：兩個道具都叫「神秘箱子」，開箱獎池一模一樣，
    但售價差 5,000 倍（5,000z vs 1z）。玩家分不出手上哪一疊值錢。
@@ -31136,69 +30989,6 @@ var GRANT_SKILL_FIX = {
   if (typeof console !== 'undefined' && console.log) console.log('[data] 兌換券未實作註記 ' + _exn + ' 件');
 }
 /* ==== EXCHNOTE END ==== */
-/* ==== IMPLNOTE-ZH BEGIN ==== */
-/* 把「（本服實作:xxx）」裡的**內部欄位名**翻成中文（feedback #269 卡冊啦）。
-
-   🔴 問題：那些註記直接印欄位名給玩家看，而 `atk+5`（固定 +5）與
-   `atkPct+5`（+5%）長得幾乎一樣 —— 玩家問「是只有+5嗎還是5%」。
-   光是這一對就有 249 件（atk 164 ／ atkPct 85），另外 hp/hpPct、sp/spPct 也同樣。
-
-   ⚠ 只改文字，一個數值都沒動。
-   ⚠ **沒有對照的鍵一律原樣保留** —— 寧可讓玩家看到英文，也不要翻錯。
-   ⚠ 百分比類的鍵翻譯時要把 `%` 補上去，那正是這則回報的重點。 */
-{
-  const _ZH = {
-    /* 固定值 */
-    atk: '攻擊力', matk: '魔法攻擊力', def: '防禦力', mdef: '魔法防禦力',
-    hp: '最大 HP', sp: '最大 SP', hit: '命中', flee: '迴避',
-    critRate: '暴擊率', perfectDodge: '完全迴避', healPower: '治癒量',
-    str: 'STR', agi: 'AGI', vit: 'VIT', int: 'INT', dex: 'DEX', luk: 'LUK',
-    allStat: '全素質',
-    /* 百分比（一定要帶 %，這就是 #269 問的重點） */
-    atkPct: ['攻擊力', '%'], matkPct: ['魔法攻擊力', '%'],
-    hpPct: ['最大 HP', '%'], spPct: ['最大 SP', '%'],
-    aspdPct: ['攻擊速度', '%'], critDmgPct: ['暴擊傷害', '%'],
-    rangedDmgPct: ['遠距離傷害', '%'], meleeDmgPct: ['近距離傷害', '%'],
-    allTargetDmgPct: ['對所有目標傷害', '%'],
-  };
-  const _one = (seg) => {
-    const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*([+\-])\s*([0-9.]+)\s*$/.exec(seg);
-    if (!m) return seg;                       /* 認不出來就原樣保留 */
-    const zh = _ZH[m[1]];
-    if (!zh) return seg;                      /* 沒有對照也原樣保留 */
-    const name = Array.isArray(zh) ? zh[0] : zh;
-    const unit = Array.isArray(zh) ? zh[1] : '';
-    return name + ' ' + m[2] + m[3] + unit;
-  };
-  let _n = 0;
-  const _fix = (d) => d.replace(/（本服實作[:：]([^）]*)）/g, (all, body) => {
-    /* 「，另有 N 項…」那截是說明文字，不要動它 */
-    const cut = body.indexOf('，');
-    const head = cut >= 0 ? body.slice(0, cut) : body;
-    const tail = cut >= 0 ? body.slice(cut) : '';
-    const conv = head.split('、').map(_one).join('、');
-    if (conv === head) return all;            /* 沒有任何一段翻得動就別改 */
-    return '（本服實作：' + conv + tail + '）';
-  });
-  for (const id in ITEMS) {
-    const it = ITEMS[id];
-    const d = String((it && it.desc) || '');
-    if (d.indexOf('本服實作') < 0) continue;
-    const nd = _fix(d);
-    if (nd !== d) { it.desc = nd; _n++; }
-  }
-  if (typeof CARDS !== 'undefined') {
-    for (const id in CARDS) {
-      const cd = CARDS[id];
-      const d = String((cd && cd.desc) || '');
-      if (d.indexOf('本服實作') < 0) continue;
-      const nd = _fix(d);
-      if (nd !== d) { cd.desc = nd; }
-    }
-  }
-  console.log('[data] IMPLNOTE-ZH 把「本服實作」的欄位名翻成中文 ' + _n + ' 件');
-}
-/* ==== IMPLNOTE-ZH END ==== */
 /* ==== CASTNOTE2 BEGIN ==== */
 /* 補既有 CASTNOTE 沒涵蓋到的那一批。
 
@@ -31337,88 +31127,6 @@ var GRANT_SKILL_FIX = {
   console.log('[data] STONENOTE 標明附魔石當卡片插 ' + _sn + ' 顆');
 }
 /* ==== STONENOTE END ==== */
-/* ==== CARDSLOTNOTE BEGIN ==== */
-/* 卡片敘述寫的部位跟**實際能插的欄位**不一致時，補一句說明（acc498 #2014）。
-
-   全庫掃描：424 張一致、**1 張不一致**（法老王卡片：敘述寫「頭盔」、實際只能插鎧甲）、
-   272 張敘述沒寫部位。
-
-   ⚠ 官方的法老王卡片確實是頭飾卡，所以是**本服的資料**把它放到鎧甲。
-     改 slot 會動到玩家已經插好的卡與可插位置 —— 那是規則變動，只回報，不自己改。
-     這裡只把敘述講清楚，讓玩家不會照著錯的部位去規劃。
-
-   ⚠ 寫成掃描而不是寫死一張：以後若有新的不一致會自動被涵蓋，
-     不必再等玩家一張一張來問。 */
-{
-  const _D2S = {
-    '頭盔': 'headgear', '頭飾': 'headgear',
-    '鎧甲': 'armor', '衣服': 'armor', '盔甲': 'armor',
-    '盾牌': 'shield', '肩部飾品': 'garment', '披肩': 'garment', '披風': 'garment',
-    '鞋子': 'footgear', '飾品': 'accessory', '裝飾品': 'accessory', '武器': 'weapon',
-  };
-  const _ZH = { headgear: '頭飾', armor: '鎧甲', shield: '盾牌', garment: '披肩',
-                footgear: '鞋子', accessory: '飾品', weapon: '武器', any: '任意欄位' };
-  const _RE = /裝備\s*[:：]\s*([^\s。，]{1,10})/;
-  let _n = 0;
-  if (typeof CARDS !== 'undefined' && typeof ITEMS !== 'undefined') {
-    for (const id in CARDS) {
-      const it = ITEMS[id];
-      if (!it || !it.desc) continue;
-      const m = _RE.exec(it.desc);
-      if (!m) continue;
-      const want = _D2S[m[1]];
-      if (!want) continue;
-      const raw = CARDS[id].slot;
-      const real = raw === 'head' ? 'headgear' : raw;      // 同一部位的兩種寫法
-      if (!real || real === 'any' || real === want) continue;
-      it.desc += ' （⚠ 本服實際插槽：這張卡**只能插在' + (_ZH[real] || real)
-        + '**，上面敘述寫的「' + m[1] + '」是官方原文，本服不同。'
-        + '插卡位置不影響加成判定，但你必須有一件' + (_ZH[real] || real) + '才插得下。）';
-      _n++;
-    }
-  }
-  console.log('[data] CARDSLOTNOTE 標明實際插槽與敘述不符 ' + _n + ' 張');
-}
-/* ==== CARDSLOTNOTE END ==== */
-
-/* ==== SPLASHNOTE BEGIN ==== */
-/* 世界頻道 1307：「賭徒之印+紅心王牌且 LUK120 普通攻擊打全體嗎?」
-
-   會。實測（場上 5 隻怪、普攻 12 次取最多打到幾隻）：
-     只有一件 ／ 兩件但 LUK 119　　　　　→ 都只打到 1 隻
-     兩件都戴 ＋ **點出來的** LUK 120　→ **5 隻全打到**
-     點 119、靠裝備墊到 124　　　　　　　→ 只打到 1 隻（門檻不看裝備加的）
-   而 applySplashDamage() 是 `mon.hp -= dmg`：**每一隻吃到的傷害一樣，不打折**。
-
-   🔴 但敘述寫的是「一般攻擊擴散 9 格」—— **本作沒有格子這個概念**，
-   玩家看不出那是「打到場上每一隻」還是「只打附近幾隻」。
-   巴風特卡片（同樣給 splashAttack）早就有這段說明，紅心王牌沒有。
-
-   ⚠ 這裡不寫死道具 id：以後任何給 splashAttack 的裝備／卡片都會自動標到。 */
-{
-  let _n = 0;
-  const _hasSplash = (o) => !!((o.bonus && o.bonus.splashAttack)
-    || (o.condBonus || []).some(c => c && c.bonus && c.bonus.splashAttack));
-  /* 濺射是不是綁在「素質門檻」的條件上 —— 是的話要多講一句「看點出來的」 */
-  const _statGated = (o) => (o.condBonus || []).some(c =>
-    c && c.bonus && c.bonus.splashAttack && c.when && c.when.statMin);
-  const _mark = (o) => {
-    if (!o || !_hasSplash(o)) return;
-    const _d = String(o.desc || '');
-    if (_d.indexOf('沒有格子') >= 0 || _d.indexOf('場上每一隻') >= 0) return;   // 冪等＋已寫過的不重複
-    o.desc = _d.trim() + ' （\u2139\uFE0F本服實作：敘述說的「擴散／範圍 N 格」——'
-      + '**本作沒有格子的概念**，實際效果是**普通攻擊同時打到場上每一隻怪**，'
-      + '而且每一隻吃到的傷害跟主目標一樣、不打折。⚠ 只有普通攻擊，技能不受影響。'
-      + (_statGated(o) ? '⚠ 素質門檻看的是**你自己點出來的**點數，裝備加上去的不算。' : '')
-      + '）';
-    _n++;
-  };
-  for (const _id in ITEMS) _mark(ITEMS[_id]);
-  if (typeof CARDS !== 'undefined') for (const _id in CARDS) _mark(CARDS[_id]);
-  console.log('[data] SPLASHNOTE 普攻濺射說明 ' + _n + ' 件');
-}
-/* ==== SPLASHNOTE END ==== */
-
 /* ==== CARDPCTNOTE BEGIN ==== */
 /* acc370 #2101：官方寫「MATK+10%」，本服資料卻是固定值 +10。
 
@@ -31690,80 +31398,6 @@ var GRANT_SKILL_FIX = {
   console.log('[data] SUMSTATNOTE 標註「兩項素質相加的門檻不會成立」 ' + _ss + ' 件');
 }
 /* ==== SUMSTATNOTE END ==== */
-
-/* ==== REFINE9GAP BEGIN ==== */
-/* 「精煉+N以上時」這一段沒有被匯入（acc361 #3652「時光超越者斗篷精煉好像沒生效」）。
-
-   時光超越者斗篷的敘述有三段精煉階梯，本服的實作狀況是：
-     精煉每+2 → per2Refine + per2RefineExtra　共 6 項　✅ 已實作
-     精煉每+4 → per4Refine　共 14 項　　　　　　　　　✅ 已實作
-     精煉+9以上 → ATK+7%、MATK+7%　　　　　　　　　　🔴 一項都沒有
-
-   ⚠ 這是「同一件的相鄰階梯都做完了、只有這一段漏掉」的半匯入，不是新增機制：
-     值是官方敘述裡寫死的、無條件的，key 也都是現成的（atkPct / matkPct），
-     而且同系列的時光超越湧現鎧甲早就用 {when:{refineMin:N}} 這個寫法了。
-   ⚠ 只補「敘述有寫、程式沒有」的，既有的一律不動、不刪、不改數值。 */
-(function () {
-  var REFINE9 = {
-    /* id: [[精煉門檻, 加成], ...] */
-    'temporal_cape_tw': [[9, { atkPct: 7, matkPct: 7 }]]
-  };
-  var _r9 = 0, _skip = 0;
-  for (var id in REFINE9) {
-    var it = ITEMS[id];
-    if (!it) { _skip++; continue; }
-    it.condBonus = it.condBonus || [];
-    REFINE9[id].forEach(function (pair) {
-      var rmin = pair[0], bonus = pair[1];
-      /* 已經有同門檻同 key 的就不要重複加（重跑本檔不會疊加） */
-      var dup = it.condBonus.some(function (c) {
-        if (!c || !c.when || c.when.refineMin !== rmin) return false;
-        if (c.when.withItems || c.when.withAnyItem || c.when.withCards || c.when.statMin) return false;
-        return Object.keys(bonus).every(function (k) { return c.bonus && c.bonus[k] != null; });
-      });
-      if (dup) { _skip++; return; }
-      it.condBonus.push({ when: { refineMin: rmin }, bonus: bonus });
-      _r9++;
-    });
-  }
-  console.log('[data] REFINE9GAP 補上「精煉+N以上」漏掉的階梯 ' + _r9 + ' 條（跳過 ' + _skip + '）');
-})();
-/* ==== REFINE9GAP END ==== */
-
-/* ==== HEROPENDANT BEGIN ==== */
-/* 英雄吊墜的 ATK+10% 漏掉了（acc219 #3738「英雄吊墜功能沒有顯示出來」）。
-
-   12 件職業吊墜的敘述**全部**寫著「ATK+10%，MATK+10%」，但資料裡：
-     英雄吊墜(風鷹)   { matkPct:10, atkPct:10 }   ← 只有這件兩半都有
-     其餘 11 件        { matkPct:10 }             ← atkPct 整個漏掉
-
-   於是龍騎士、十字影刃、機械大師、聖裁者、帝國衛士、生物學家…這些**純物理職業**
-   戴上去等於什麼都沒有 —— 這就是玩家說「功能沒有顯示出來」的原因。
-
-   ⚠ 這是典型的半匯入，符合可以直接補的三個條件：
-     ① 無條件（ATK+10% 是本體加成，沒有任何前提）
-     ② 同一族已經有一件做對（風鷹那件證明了原本該長什麼樣）
-     ③ 數字對得上（敘述與已實作的那件都是 10%）
-   ⚠ 只補「敘述有寫、而且已經有 matkPct:10 但缺 atkPct」的那幾件。
-     其餘欄位（變動詠唱、搭配武器的那一大串）**不動** —— 那些是另一回事。 */
-(function () {
-  var _hp = 0, _skip = 0, _names = [];
-  for (var id in ITEMS) {
-    var it = ITEMS[id];
-    if (!it || !it.name) continue;
-    if (String(it.name).indexOf('英雄吊墜') < 0) continue;
-    var b = it.bonus;
-    if (!b) { _skip++; continue; }
-    /* 敘述真的有寫 ATK+10% 才補（不要憑名字猜） */
-    if (String(it.desc || '').indexOf('ATK+10%') < 0) { _skip++; continue; }
-    if (b.atkPct) { _skip++; continue; }              // 已經有了（風鷹那件）
-    if (b.matkPct !== 10) { _skip++; continue; }      // 形狀跟預期不同就別動
-    b.atkPct = 10;
-    _hp++; _names.push(it.name);
-  }
-  console.log('[data] HEROPENDANT 補上漏掉的 atkPct ' + _hp + ' 件（跳過 ' + _skip + '）');
-})();
-/* ==== HEROPENDANT END ==== */
 
 /* ==== ZEROIMPLNOTE BEGIN ==== */
 /* 敘述承諾了數值、但**一個數值欄位都沒接上**的裝備（feedback #336）。
