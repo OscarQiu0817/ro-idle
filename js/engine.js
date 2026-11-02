@@ -5749,16 +5749,18 @@ function gameTick() {
       state.attackAccumulator = 0;   // 自動普攻關：站定只放技能
     }
     else if (tgt && Number.isFinite(tgt.d) && tgt.d > engage + DIST_EPS) {
-      if (!playerImmobile()) tgt.d = Math.max(engage, tgt.d - moveDt / PLAYER_WALK_MS);
+      // 走向目標：玩家真的移動（其他怪、場地物件一起平移），目標距離剛好縮短 step
+      if (!playerImmobile()) playerMoveBy(Math.min(tgt.d - engage, moveDt / PLAYER_WALK_MS), tgt.a || 0);
       state.attackAccumulator = 0;
     } else if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
       state.attackAccumulator = 0;   // 站在技能射程上，普攻打不到
     }
+    tickPendingSwing(now);   // T1：上一下揮擊到點了就結算
     while (state.attackAccumulator >= atkInterval) {
       state.attackAccumulator -= atkInterval;
       // 昏迷／冰凍／石化／睡眠／混亂：不能攻擊。累積器照樣扣，不然解除的瞬間會一口氣連打
       if (playerImmobile()) continue;
-      playerAttack();
+      startPlayerSwing(now, atkInterval);
       if (state.monsters.length === 0) break;
     }
 
@@ -5781,6 +5783,8 @@ function gameTick() {
     }
   } else {
     state._prevHadMonsters = false;
+    _pendingSwing = null;
+    tickRoam(moveDt, moveNow);   // 沒怪：漫遊找怪
   }
   saveGameThrottled();
   onTickUI();
@@ -6401,11 +6405,13 @@ function rollMonsterSpot() {
 /* ---------------- 距離＋方向角（3b，docs/GAMEPLAY_DIRECTION.md D1）----------------
    玩家在原點。每隻怪記距離 d（格）與方向角 a（弧度），出生後沿自己的方向直線走近，
    進入射程才攻擊。移速、射程、受擊硬直、主動與否取自 js/mob_move.js（rAthena mob_db）。
-   玩家的目標（monsters[0]）不在普攻射程內時，玩家走過去＝只縮短那隻怪的距離。
-   技能尚未受距離限制（3c 處理）；隊友的攻擊也還不看距離。 */
+   走動（D1 修訂，2026-11-02）：玩家會移動——走向目標、沒怪時漫遊。玩家仍是原點，
+   移動時把場上所有東西（怪、場地物件、場地魔法的中心）往反方向平移（playerMoveBy），
+   世界座標累計在 state.worldX／worldY，畫面拿來捲背景。怪從四面八方出生，漫遊中偏向前方。
+   隊友的攻擊仍不看距離（畫面上跟在玩家身邊）。 */
 const SPAWN_DIST_MIN = 6;
 const SPAWN_DIST_MAX = 10;
-const SPAWN_ANGLE_MAX = 70 * Math.PI / 180;   // 怪從右半邊來（戰場畫面上玩家在左側）
+const ROAM_TURN_MS = [6000, 12000];           // 漫遊多久換一次方向
 const PLAYER_WALK_MS = 150;                   // rAthena DEFAULT_WALK_SPEED：每格 150ms
 const DIST_EPS = 1e-6;
 const MOB_MOVE_DEFAULT = { range: 1, walkMs: 200, attackDelay: 1000, attackMotion: 0, damageMotion: 480, aggressive: true, immobile: false };
@@ -6413,12 +6419,45 @@ const MOB_MOVE_DEFAULT = { range: 1, walkMs: 200, attackDelay: 1000, attackMotio
 const WEAPON_RANGE_BY_CAT = { bow: 5, whip: 2, spear1: 3, spear2: 3, pistol: 7, rifle: 9, shotgun: 9, gatling: 9, grenade: 9 };
 
 function rollMonsterPos() {
+  // 漫遊中：出在前方 ±90°（往前走會遇到怪）；其餘四面八方
+  const roaming = state && state.roamDir != null && Date.now() - (state._walkAt || 0) < 2000;
+  const a = roaming ? state.roamDir + (Math.random() - 0.5) * Math.PI : (Math.random() * 2 - 1) * Math.PI;
   return {
     d: SPAWN_DIST_MIN + Math.random() * (SPAWN_DIST_MAX - SPAWN_DIST_MIN),
-    a: (Math.random() * 2 - 1) * SPAWN_ANGLE_MAX,
+    a: Math.atan2(Math.sin(a), Math.cos(a)),
   };
 }
-/* 怪物經驗改照官方（T4，rAthena mob_db_re 的 BaseExp／JobExp，存在 MOB_MOVE） */
+/* 玩家往 ang 方向走 step 格：場上所有東西反向平移（玩家永遠是原點） */
+function playerMoveBy(step, ang) {
+  if (!(step > 0)) return;
+  const dx = step * Math.cos(ang), dy = step * Math.sin(ang);
+  const shift = p => {
+    if (!p || !Number.isFinite(p.d)) return;
+    const x = p.d * Math.cos(p.a || 0) - dx, y = p.d * Math.sin(p.a || 0) - dy;
+    p.d = Math.hypot(x, y);
+    p.a = Math.atan2(y, x);
+  };
+  (state.monsters || []).forEach(shift);
+  (state.groundUnits || []).forEach(u => {
+    shift(u);
+    if (u.cells) u.half = Math.min(Math.PI, u.cells / 2 / Math.max(0.5, u.d));   // 牆寬 N 格 ≈ N ÷ 距離
+  });
+  (state.activeFieldEffects || []).forEach(f => shift(f.center));
+  state.worldX = (state.worldX || 0) + dx;
+  state.worldY = (state.worldY || 0) + dy;
+  state._walkAt = Date.now();
+  state._walkDir = ang;
+}
+/* 沒怪可打時漫遊：照 roamDir 走，隔一段時間換方向。城鎮、無法行動、詠唱中不走 */
+function tickRoam(dt, now) {
+  if (isInTown() || playerImmobile() || state.casting) return;
+  if (state.roamDir == null || now >= (state.roamTurnAt || 0)) {
+    state.roamDir = Math.random() * Math.PI * 2 - Math.PI;
+    state.roamTurnAt = now + ROAM_TURN_MS[0] + Math.random() * (ROAM_TURN_MS[1] - ROAM_TURN_MS[0]);
+  }
+  playerMoveBy(dt / PLAYER_WALK_MS, state.roamDir);
+}
+/* 怪物經驗（T4）與屬性／種族／體型（T17）改照官方，資料在 MOB_MOVE（rAthena mob_db_re） */
 (function applyOfficialMobExp() {
   if (typeof MOB_MOVE === 'undefined') return;
   for (const [id, mv] of Object.entries(MOB_MOVE)) {
@@ -6426,6 +6465,11 @@ function rollMonsterPos() {
     if (!m || mv.baseExp == null) continue;
     m.exp = mv.baseExp;
     m.jobExp = mv.jobExp;
+    // T17：屬性／種族／體型與屬性抗性也照 rAthena（mob_db_re ＋ attr_fix）
+    if (mv.element) m.element = mv.element;
+    if (mv.race) m.race = mv.race;
+    if (mv.size) m.size = mv.size;
+    if (mv.eleRes) m.elementResistance = mv.eleRes;
   }
 })();
 function monMove(mon) {
@@ -6601,7 +6645,13 @@ function zoneSlowMult(mon) {
 
 /* 每 tick：怪物走近。昏迷類異常、受擊硬直、不會動的怪不走；
    被動怪要等被打（血量少於上限）才會靠過來。受擊硬直用血量下降偵測，不必改各傷害路徑。 */
+/* 玩家走遠之後，被留在後面、沒打過的怪直接消失（不然會一直佔著場上名額，新的怪補不進來） */
+const MON_DESPAWN_DIST = 20;
 function tickMonsterMovement(dtMs, now) {
+  for (let i = state.monsters.length - 1; i >= 0; i--) {   // 原地移除：別處可能拿著同一個陣列
+    const m = state.monsters[i];
+    if (Number.isFinite(m.d) && m.d > MON_DESPAWN_DIST && m.hp >= m.maxHp) state.monsters.splice(i, 1);
+  }
   for (const mon of state.monsters.slice()) {   // 撞火牆可能打死怪（會從陣列移除），用副本迭代
     if (!Number.isFinite(mon.d) || mon.hp <= 0) continue;
     const mv = monMove(mon);
@@ -6906,6 +6956,35 @@ function playExtraHitSound(isCrit) {
 /* 回傳「這一擊有沒有真的打出去」。隊友的立繪動畫要看這個——
    第一版在呼叫前就把 `_swingAt` 蓋上去，弓箭手沒箭時只是揮空氣，
    畫面上照樣播攻擊動作但戰鬥訊息一行都沒有（使用者 2026-08-15 回報的正是這個）。 */
+/* T1：普攻動畫播完才結算傷害（以前揮擊一開始就扣血，怪常在動畫打到前就倒了）。
+   揮擊開始先播動畫、記下目標，到點（下一個 tick 檢查）才跑 playerAttack()。
+   長度由畫面給（attackSwingMs，跟動畫同一套算法）；沒有畫面（測試、harness）用攻擊間隔與 SWING_HIT_MS 取小。
+   只管玩家的即時普攻：隊友（每秒批次）、離線結算仍直接 playerAttack()。
+   不存進 state：存檔不必帶，讀檔後落空即可。 */
+const SWING_HIT_MS = 400;
+let _pendingSwing = null;   // { at, tgt }
+let _swingResolving = false;
+function startPlayerSwing(now, interval) {
+  if (_pendingSwing) resolvePlayerSwing();   // 高攻速補拍：上一下還沒到點就輪到下一下，先結算，DPS 不掉
+  const tgt = state.monsters[0];
+  if (!tgt) return;
+  const ms = typeof attackSwingMs === 'function' ? attackSwingMs(interval) : Math.min(interval, SWING_HIT_MS);
+  if (!(ms > 0)) { playerAttack(); return; }
+  if (typeof playAttackAnim === 'function') playAttackAnim();
+  _pendingSwing = { at: now + ms, tgt };
+}
+function resolvePlayerSwing() {
+  const sw = _pendingSwing;
+  _pendingSwing = null;
+  if (!sw || state.monsters[0] !== sw.tgt) return;   // 目標已死或換了：這下落空
+  _swingResolving = true;
+  try { playerAttack(); } finally { _swingResolving = false; }
+}
+function tickPendingSwing(now) {
+  if (!_pendingSwing) return;
+  if (state.casting || playerImmobile()) { _pendingSwing = null; return; }   // 被定住或開始詠唱：揮擊作廢
+  if (now >= _pendingSwing.at) resolvePlayerSwing();
+}
 function playerAttack() {
   // playerAttack 有十幾個 return 點，包一層才不用逐一改成 return true
   return playerAttackInner() !== false;
@@ -6930,7 +7009,7 @@ function playerAttackInner() {
   /* 攻擊動畫（音效分兩種：被閃過放揮空、打中放命中，各自在下面觸發）。
      **動畫換身中不播**——隊友也是走這支 playerAttack()，不擋的話隊友每揮一下
      都會讓玩家的立繪播一次攻擊動作。音效則照播，音量走 allySfxVolume()。 */
-  if (!_allyActing && typeof playAttackAnim === 'function') playAttackAnim();
+  if (!_allyActing && !_swingResolving && typeof playAttackAnim === 'function') playAttackAnim();   // 揮擊開始時已播過（T1）
   const target = state.monsters[0]; // 攻擊第一隻怪物
   const monDef = MONSTERS[target.defId];
   // 官方RO規則：普通攻擊一律使用物理ATK（不看職業），只有主動施放的技能才會用MATK
@@ -8909,11 +8988,12 @@ function alliesTick() {
        跑在攻擊之前：先開 buff 再打，跟玩家的慢心跳順序一致。
        `withAlly` 期間 `saveGame()` 會自己跳過（見 saveGame 的註解）——
        castSkill 尾端就有一次，沒有那道保險這裡會把玩家的存檔蓋成隊友。 */
+    const engaged = state.monsters.length > 0 && now - (state._walkAt || 0) > 300;   // 玩家站定在打
     try {
       withAlly(ally, () => {
         tickCasting(now);   // 隊友的詠唱也要跑完（T8）
         tryAutoCastSupportSkills();   // 輔助先（見 tryAutoCastSkill 開頭）
-        if (state.autoSkill) tryAutoCastSkill();
+        if (state.autoSkill && engaged) tryAutoCastSkill();
         /* 隊友自己掛上的場域效果也要跳（#131）。以前這段只長在 gameTick() 裡，
            而 gameTick 只跑玩家那一份——隊友祭司放的光耀之堂掛上去就沒人理，
            一跳都不會發生（放了完全沒作用，連他自己都沒回到血）。 */
@@ -8923,6 +9003,8 @@ function alliesTick() {
     if (ally._downed) return;   // 自傷類技能（聖十字審判、HP轉換）可能把自己放倒
     // 詠唱中不普攻（官方規則，跟玩家一樣）；累積的攻擊時間也不留，免得詠唱完一口氣補刀
     if (ally.casting) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
+    // 玩家還在走（追怪或漫遊）時隊友也不打，等玩家開打才一起打（隊友攻擊不看距離，至少節奏跟玩家一致）
+    if (!engaged) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
     if (!ally._lastAttackAt) ally._lastAttackAt = now - 1000;
     ally._atkAccum = (ally._atkAccum || 0) + (now - ally._lastAttackAt);
     ally._lastAttackAt = now;
@@ -11150,7 +11232,7 @@ function castSkillInner(skillId, opts) {
       const w = tgt.d <= 1.5 ? Math.max(1, tgt.d) : Math.min(3, tgt.d - 0.5);
       const row = skillCastRow(sk.id);
       const wall = { kind: 'wall', skillId: sk.id, name: sk.name, d: w, a: tgt.a || 0,
-        half: Math.min(Math.PI, (sk.wallCells || 3) / 2 / w), hits: lvArr(sk.wallHits, lv) || (lv + 2),
+        cells: sk.wallCells || 3, half: Math.min(Math.PI, (sk.wallCells || 3) / 2 / w), hits: lvArr(sk.wallHits, lv) || (lv + 2),
         mult, element: skElement, magic: true, endsAt: Date.now() + (row ? castLv(row.duration, lv) : 5000) };
       if (!state.groundUnits) state.groundUnits = [];
       state.groundUnits.push(wall);
@@ -11200,7 +11282,7 @@ function castSkillInner(skillId, opts) {
       if (!state.groundUnits) state.groundUnits = [];
       const hp = lvArr(sk.iceHp, lv) || 400;
       state.groundUnits.push({ kind: 'ice', uid: Date.now() + Math.random(), skillId: sk.id, name: sk.name, d, a: tgt.a || 0,
-        half: Math.min(Math.PI, 5 / 2 / d), hp, maxHp: hp, meltAt: Date.now(), endsAt: Infinity });
+        cells: 5, half: Math.min(Math.PI, 5 / 2 / d), hp, maxHp: hp, meltAt: Date.now(), endsAt: Infinity });
       logMsg(`🧊 「${sk.name}」Lv${lv}：在 ${d.toFixed(1)} 格處立起冰牆（耐久 ${hp}）`);
       break;
     }

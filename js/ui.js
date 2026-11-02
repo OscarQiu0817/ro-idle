@@ -606,7 +606,12 @@ function syncAllyDoll(i, ally, fig) {
   }
   const fighting = state.monsters && state.monsters.length && !ally._downed;
   const fieldSide = typeof inSafeZone === 'function' ? !inSafeZone() : !!fighting;
-  if (fieldSide && paperdollFrameCount(parts[0], 'ready_s')) doll.rest = 'ready_s';
+  // 玩家在走（追怪、漫遊）時隊友跟著播走路
+  // 跟玩家一樣用側面走路（walk_s），面向由 layoutAllySprites 翻轉
+  const walking = !ally._downed && bfPlayerWalking();
+  if (walking && paperdollFrameCount(parts[0], 'walk_s')) doll.rest = 'walk_s';
+  else if (walking && paperdollFrameCount(parts[0], 'walk')) doll.rest = 'walk';
+  else if (fieldSide && paperdollFrameCount(parts[0], 'ready_s')) doll.rest = 'ready_s';
   else if (fieldSide && paperdollFrameCount(parts[0], 'idle_s')) doll.rest = 'idle_s';
   else doll.rest = 'idle';
   if (doll.once && (Date.now() - doll.t0) < doll.once) return;
@@ -655,7 +660,11 @@ function drawAllyDolls() {
     const from = swinging ? (doll.atkFrom || 0) : 0;
     const n = swinging ? Math.min(from + n0, nFrames - 1) : (n0 % nFrames);
     if (!paperdollFrame(parts[0], act, n)) continue;
-    if (canvas._plFrame === n && canvas._plAct === act) continue;
+    // 隊友跟著玩家轉向（layoutAllySprites 設 bfAllyFaceRight）；同一格但方向變了也要重套
+    if (canvas._plFrame === n && canvas._plAct === act) {
+      if (canvas._face !== bfAllyFaceRight) { canvas._face = bfAllyFaceRight; applyPaperTransform(canvas, facingFlip(act, bfAllyFaceRight)); }
+      continue;
+    }
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -663,7 +672,8 @@ function drawAllyDolls() {
     if (res && res.ready) {
       canvas._plFrame = n;
       canvas._plAct = act;
-      applyPaperTransform(canvas, facingFlip(act, true));
+      canvas._face = bfAllyFaceRight;
+      applyPaperTransform(canvas, facingFlip(act, bfAllyFaceRight));
     }
   }
 }
@@ -2601,7 +2611,8 @@ loadMobAnim();
    怪沿自己到玩家的方向走近，停在攻擊距離。人在怪的左邊就朝右，在右邊就朝左。
    近戰的人也朝怪走近。弓、樂器、鞭、槍、法杖、書，或正在自動放的魔法，人留在左側。
    還有距離播走路，貼近後怪播攻擊。 */
-const BF_HOME = { x: 20, y: 64 };
+/* D1 修訂（2026-11-02）：玩家站在場景中央，怪從四面八方來；玩家走動時背景反向捲（鏡頭跟著角色） */
+const BF_HOME = { x: 50, y: 60 };
 const BF_SPEED = 20;
 /* 3b：引擎的距離 d（格）× 方向角 a 換算成場景百分比。玩家站在 BF_HOME，怪從右半邊走來。 */
 const BF_CELL_X = 7;
@@ -2609,20 +2620,44 @@ const BF_CELL_Y = 5;
 /* 玩家正在走向目標（目標不在普攻距離內）。引擎裡是目標距離縮短，畫面上改成：
    玩家播走路動畫、背景往反方向捲動（鏡頭跟著角色，D1）。 */
 const bfBg = { x: 0, y: 0 };
-function bfPlayerWalking(lead) {
-  try {
-    return !!lead && Number.isFinite(lead.d) && lead.d > playerAttackRange() + 1e-6 && !playerImmobile();
-  } catch (e) { return false; }
+/* 引擎有沒有在讓玩家走（走向目標或漫遊），看 playerMoveBy 留下的時間戳 */
+function bfPlayerWalking() {
+  return !!state && Date.now() - (state._walkAt || 0) < 250;
 }
-function bfScrollBackground(lead, dt) {
+/* 背景照引擎的世界座標（state.worldX／worldY，格）反向捲 */
+let bfWorldSeen = null;
+function bfScrollBackground() {
   const el = document.getElementById('map-bg-scroll');
   const scene = document.getElementById('battle-scene');
-  if (!el || !scene || !dt) return;
+  if (!el || !scene || !state) return;
+  const wx = state.worldX || 0, wy = state.worldY || 0;
+  if (!bfWorldSeen) bfWorldSeen = { x: wx, y: wy };
+  const dx = wx - bfWorldSeen.x, dy = wy - bfWorldSeen.y;
+  bfWorldSeen = { x: wx, y: wy };
+  if (!dx && !dy) return;
+  if (Math.hypot(dx, dy) > 30) return;   // 換圖、讀檔那種大跳不捲
   const pxPerCell = scene.getBoundingClientRect().width * BF_CELL_X / 100;
-  const step = pxPerCell * (dt * 1000 / PLAYER_WALK_MS);
-  bfBg.x -= Math.cos(lead.a || 0) * step;
-  bfBg.y -= Math.sin(lead.a || 0) * step * (BF_CELL_Y / BF_CELL_X);
+  bfBg.x -= dx * pxPerCell;
+  bfBg.y -= dy * pxPerCell * (BF_CELL_Y / BF_CELL_X);
   el.style.backgroundPosition = `${bfBg.x.toFixed(1)}px ${bfBg.y.toFixed(1)}px`;
+}
+/* 隊友跟在玩家身後兩側（面向的反方向退一步、上下錯開） */
+const BF_ALLY_OFFSET = [{ back: 9, side: -11 }, { back: 9, side: 11 }];
+let bfAllyFaceRight = true;
+function layoutAllySprites(faceRight) {
+  bfAllyFaceRight = !!faceRight;
+  const sign = faceRight ? 1 : -1;
+  for (let i = 0; i < 2; i++) {
+    const el = document.getElementById('ally-sprite-' + i);
+    if (!el || !el.offsetParent) continue;
+    const o = BF_ALLY_OFFSET[i];
+    const local = sceneToLocal(el.offsetParent, bfClamp(bfPlayer.x - sign * o.back, 4, 96), bfClamp(bfPlayer.y + o.side, 8, 94));
+    if (!local) continue;
+    el.style.left = (local.x - el.offsetWidth / 2) + 'px';
+    el.style.top = (local.y - el.offsetHeight) + 'px';
+    const fig = el.querySelector('.ally-figure');
+    if (fig) fig.classList.toggle('face-left', !faceRight);
+  }
 }
 /* 場地物件（工作 4）：火牆畫成弧上的火焰、陷阱一個圖示、減速區一個橢圓。座標跟怪一樣用 bfPolarPoint */
 function syncGroundUnits() {
@@ -2636,7 +2671,7 @@ function syncGroundUnits() {
   }
   const units = (state && state.groundUnits) || [];
   if (!units.length) { if (layer.innerHTML) layer.innerHTML = ''; return; }
-  const at = (d, a) => bfPolarPoint({ d, a });
+  const at = (d, a) => bfPolarPoint({ d, a });   // 畫面外的場地物件由 .battle-scene 的 overflow 裁掉
   let html = '';
   for (const u of units) {
     if (u.kind === 'wall') {
@@ -2682,11 +2717,11 @@ function syncCastBar(ps) {
   const pct = Math.min(100, Math.max(0, (Date.now() - c.startAt) / Math.max(1, c.endAt - c.startAt) * 100));
   bar.querySelector('.pcb-track i').style.width = pct.toFixed(0) + '%';
 }
+/* 不夾在邊框：畫面外的東西就是在畫面外（off＝超出可見範圍，呼叫端隱藏） */
 function bfPolarPoint(mon) {
-  return {
-    x: bfClamp(bfPlayer.x + Math.cos(mon.a || 0) * mon.d * BF_CELL_X, 6, 94),
-    y: bfClamp(bfPlayer.y + Math.sin(mon.a || 0) * mon.d * BF_CELL_Y, 10, 90),
-  };
+  const x = bfPlayer.x + Math.cos(mon.a || 0) * mon.d * BF_CELL_X;
+  const y = bfPlayer.y + Math.sin(mon.a || 0) * mon.d * BF_CELL_Y;
+  return { x, y, off: x < 2 || x > 98 || y < 6 || y > 98 };
 }
 let bfPlayer = { x: BF_HOME.x, y: BF_HOME.y };
 let bfFaceRight = true;
@@ -2768,11 +2803,14 @@ function layoutBattlefield() {
       ps.style.top = (local.y - ps.offsetHeight) + 'px';
     }
   }
-  const faceRight = !lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x;
+  const walking = !town && bfPlayerWalking();
+  // 走路時面向走的方向；站著打怪時面向目標
+  const faceRight = walking ? Math.cos(state._walkDir || 0) >= 0
+    : (!lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x);
   syncCastBar(ps);
   syncGroundUnits();
-  const walking = !town && bfPlayerWalking(lead);
-  if (walking) bfScrollBackground(lead, dt);
+  bfScrollBackground();
+  layoutAllySprites(faceRight);
   syncPlayerBattleAnim((stepped.moved || walking) && !town);
   pinComboTotal();
   faceBattlePlayer(faceRight);
@@ -2787,6 +2825,7 @@ function layoutBattlefield() {
     let mv;
     if (Number.isFinite(mon.d)) {
       const p = bfPolarPoint(mon);
+      slot.style.visibility = p.off ? 'hidden' : '';   // 走出畫面就不畫，走進來再出現
       // 走路動畫看引擎狀態，不看這一格有沒有位移（引擎每 100ms 才走一步，逐格判斷會閃）
       const mm = monMove(mon);
       // 玩家的目標靠近是因為玩家在走，目標本身不播走路
@@ -2807,7 +2846,11 @@ function layoutBattlefield() {
     }
     const img = slot.querySelector('img');
     if (!img) return;
-    const faceLeft = Math.abs(dx) > 0.08 ? dx < 0 : bfPlayer.x <= mon.bx;
+    /* 怪一律面向玩家。玩家走動時全場平移，用位移判斷會一直左右翻；
+       跟玩家幾乎同一直線時（±2%）維持原本的朝向，不然也會抖 */
+    const rel = mon.bx - bfPlayer.x;
+    if (Math.abs(rel) > 2 || img._faceLeft == null) img._faceLeft = rel > 0;
+    const faceLeft = img._faceLeft;
     const nativeLeft = !!img._maDef;
     img.style.transform = (faceLeft !== nativeLeft) ? 'scaleX(-1)' : '';
     if (img._maDef && img._maAct !== 'hit' && img._maAct !== 'die') {
@@ -3051,6 +3094,18 @@ function playPlayerSheet(img, act) {
   img._plAct = act;
   img._plT0 = Date.now();
   img._plFrame = -1;
+}
+/* T1：給引擎的揮擊長度＝動畫播完的時間點，算法跟 playPlayerSheetAttack 相同 */
+function attackSwingMs(interval) {
+  if (bfPaper && _pd.parts) {
+    const act = paperdollActName('attack');
+    const n = paperdollFrameCount(_pd.parts[0], act);
+    if (n) return paperdollSwingTiming(act, n, interval).once;
+  }
+  const d = bfPl && bfPl.d;
+  const a = bfPlayerSheet && d && (d.actions.attack_s || d.actions.attack);
+  if (a) return Math.min(interval, a.frames * (a.delay || 100));
+  return Math.min(interval, 400);
 }
 function playPlayerSheetAttack() {
   if (bfPaper && _pd.parts) {

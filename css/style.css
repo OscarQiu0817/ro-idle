@@ -359,9 +359,8 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 }
 .btn-ally:hover { background: rgba(212,175,55,0.25); color: var(--ink); }
 /* 站在玩家的上下方、往後靠（left 小一點），縮小一號才不會搶掉玩家 */
-.ally-sprite { position: absolute; left: 4%; width: 84px; height: 112px; z-index: 1; overflow: visible; }
-#ally-sprite-0 { top: 8%; }
-#ally-sprite-1 { bottom: 8%; }
+/* 隊友位置由 layoutAllySprites() 跟著玩家擺（D1 修訂）；這裡只給尺寸 */
+.ally-sprite { position: absolute; left: 4%; top: 8%; width: 84px; height: 112px; z-index: 1; overflow: visible; }
 .ally-figure {
   position: relative; width: 100%; height: 100%;
   display: flex; flex-direction: column; justify-content: flex-end;
@@ -370,6 +369,7 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .ally-figure.downed .ally-paper,
 .ally-figure.downed img { filter: grayscale(1) brightness(.6); }
 .ally-figure img { width: 100%; height: 76%; object-fit: contain; image-rendering: pixelated; }
+.ally-figure.face-left img { transform: scaleX(-1); }
 .ally-paper { position: absolute; image-rendering: pixelated; pointer-events: none; }
 .ally-tag {
   position: relative; z-index: 2;
@@ -499,6 +499,7 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
   min-height: 0;
   height: auto;
   position: relative;
+  overflow: hidden;   /* 走出畫面的怪與場地物件不畫在外框上 */
 }
 .player-area {
   flex: 0 0 33%;

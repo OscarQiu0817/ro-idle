@@ -42,7 +42,17 @@ const AGGRESSIVE_AI = new Set(['04', '05', '09', '13', '20', '21', '24', '26']);
 const IMMOBILE_AI = new Set(['06', '10']);
 
 /* 怪物移動與攻擊節奏（mob_db_re.yml） */
-function pickMobMove(m) {
+/* T17：屬性／種族／體型照 rAthena，抗性表照 attr_fix（屬性等級 × 攻擊屬性 × 防守屬性） */
+const RA_ELE = { Neutral: 'none', Water: 'water', Earth: 'earth', Fire: 'fire', Wind: 'wind', Poison: 'poison', Holy: 'holy', Dark: 'shadow', Ghost: 'ghost', Undead: 'undead' };
+const RA_RACE = { Formless: 'formless', Undead: 'undead', Brute: 'brute', Plant: 'plant', Insect: 'insect', Fish: 'fish', Demon: 'demon', Demihuman: 'humanoid', Angel: 'angel', Dragon: 'dragon' };
+function eleResistance(attr, defEle, lv) {
+  const row = attr && attr.find(r => r.Level === lv);
+  if (!row) return null;
+  const out = {};
+  for (const [raAtk, atk] of Object.entries(RA_ELE)) out[atk] = (row[raAtk] || {})[defEle];
+  return out;
+}
+function pickMobMove(m, attr) {
   const ai = String(m.Ai == null ? '06' : m.Ai).padStart(2, '0');
   return {
     range: m.AttackRange || 1,
@@ -57,6 +67,10 @@ function pickMobMove(m) {
     jobExp: m.JobExp || 0,
     int: m.Int || 1,               // 魔攻用（Renewal：INT＋等級＋Attack2×0.7~1.3）
     matk: m.Attack2 || 0,
+    element: RA_ELE[m.Element || 'Neutral'] || 'none',
+    race: RA_RACE[m.Race || 'Formless'] || 'formless',
+    size: String(m.Size || 'Small').toLowerCase(),
+    eleRes: eleResistance(attr, m.Element || 'Neutral', m.ElementLevel || 1),
   };
 }
 

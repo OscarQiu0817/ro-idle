@@ -36,6 +36,7 @@ function main() {
 
   /* 怪物 */
   const mobBody = readYamlBody('mob_db_re.yml');
+  const attr = readYamlBody(path.join('grf_ex', 'attr_fix.yml'));   // 屬性相剋（T17）
   const byAegis = new Map(mobBody.map(m => [String(m.AegisName).toLowerCase(), m]));
   const byId = new Map(mobBody.map(m => [m.Id, m]));
   const move = {};
@@ -46,7 +47,7 @@ function main() {
     if (m) by.aegis++;
     else if (mon.imgId && byId.get(mon.imgId)) { m = byId.get(mon.imgId); by.imgId++; }
     if (!m) { noMob.push(mon.id); continue; }
-    move[mon.id] = pickMobMove(m);
+    move[mon.id] = pickMobMove(m, attr);
   }
   writeTable('mob_move.js', 'MOB_MOVE', 'db/re/mob_db.yml（mob_db_re.yml）', move);
 
