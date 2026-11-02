@@ -176,7 +176,7 @@
 | T13 | 道具分享到對話框 | 對話框指戰鬥紀錄或另做聊天區待定 | C 組 |
 | T14 | 同帳號隊伍同步移動（傳送之陣動畫） | 依賴工作 7 | D 組 |
 | T15 | 範圍外道具清理（D6） | 還有大量要求等級 130 以上的裝備 | 隨時 |
-| T16 | 5d 剩餘：魔法對種族／體型傷害、自動念咒轉換；刪除過時的資料修補紀錄 | 見 `docs/ITEM_EFFECT_GAPS.md`。修補紀錄在 `js/data.js` 尾端約 3,000 行、60 個區塊，先分三類（只加註記／修資料／已被 5d 取代），先刪已被取代的。第一批已刪（2026-11-03）：逐一拿掉區塊重跑、最終資料不變的 10 塊（CARDSET-IMPORT、DUP-CONDBONUS、OSWORDLT-FILLIN、ORCHERO-STUN-FIX、POISONNOTE、IMPLNOTE-ZH、CARDSLOTNOTE、SPLASHNOTE、REFINE9GAP、HEROPENDANT，共 366 行）。下一批：與 v2 機制矛盾的舊註記（CASTNOTE／CASTNOTE2／CASTCDNOTE 說「沒有詠唱」、DELAYNOTE 說「沒有後延遲」），會改到道具說明文字 | 隨時 |
+| T16 | 5d 剩餘：魔法對種族／體型傷害、自動念咒轉換；刪除過時的資料修補紀錄 | 見 `docs/ITEM_EFFECT_GAPS.md`。修補紀錄在 `js/data.js` 尾端約 3,000 行、60 個區塊，先分三類（只加註記／修資料／已被 5d 取代），先刪已被取代的。第一批已刪（2026-11-03）：逐一拿掉區塊重跑、最終資料不變的 10 塊（CARDSET-IMPORT、DUP-CONDBONUS、OSWORDLT-FILLIN、ORCHERO-STUN-FIX、POISONNOTE、IMPLNOTE-ZH、CARDSLOTNOTE、SPLASHNOTE、REFINE9GAP、HEROPENDANT，共 366 行）。第二批已刪（2026-11-03）：與 v2 矛盾的舊註記 CASTNOTE／CASTNOTE2／CASTCDNOTE／DELAYNOTE（說「技能瞬發、沒有詠唱／後延遲」，但 v2 已有詠唱與後延遲，castVarPct 404 件、acdPct 271 件生效中），另修 7 件手寫說明（效果已生效的拿掉「不生效」、仍缺的改成「未實作」）。剩：取消詠唱、自由施法兩招的「本作沒有詠唱」調整，有詠唱後可照官方重做（併入 T9 剩餘） | 隨時 |
 | T17 ✅ | 怪物屬性／種族／體型跟 rAthena 對齊 | 照 mob_db_re 改 2,214 隻（屬性不同 1,246、種族 1,573、體型 1,556），抗性表改用 rAthena attr_fix（屬性等級 × 攻擊屬性 × 防守屬性，`grf_ex/attr_fix.yml`）；資料進 `js/mob_move.js`，engine 載入時覆寫。屬性剋制、種族卡、體型修正的效果都會跟著變 | 2026-11-02 |
 | T18 ✅ | 怪物魔攻 | 照 rAthena Renewal：INT＋等級＋Attack2×0.7~1.3（Attack2、INT 從 mob_db_re 進 `js/mob_move.js`）；怪物魔法技能改用魔攻，不再拿物攻 ×1.2；卸除頭盔改成只降魔攻。116 隻會放魔法的怪裡 98 隻的魔法變弱（中位數約原本 0.39 倍，例：胡狼頭神 1412→646） | 2026-11-02 |
 | T19 | 成就＋討伐合併成新手引導任務 | 參考 RO 伊甸園的引導任務：照等級／職業階段給一串目標（討伐、轉職、裝備、技能），完成領獎；現有成就與討伐紀錄改成任務的進度來源。需先盤點現有成就與討伐的資料與獎勵 | 待討論 |

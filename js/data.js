@@ -968,7 +968,7 @@ const ITEMS = {
   "sting_card": {"id":"sting_card","imgId":4226,"name":"史汀卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"DEF+2 精煉9以上時，MDEF+5 系列: 卡片 裝備: 盾牌 重量: 1 ","buyPrice":20},
   "spring_rabbit_card": {"id":"spring_rabbit_card","imgId":4227,"name":"彈簧兔卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"每當擊殺動物系魔物時，有一定的機率會掉落肉或是魔物飼料。 吃下肉或是魔物飼料時，HP恢復量增加50%。 系列: 卡片 裝備: 飾品 重量: 1 ","buyPrice":20},
   "sleeper_card": {"id":"sleeper_card","imgId":4228,"name":"沙妖卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"擊殺魚貝系魔物時，有一定的機率得到'睡眠的箱子'。 系列: 卡片 裝備: 飾品 重量: 1 ","buyPrice":20},
-  "c_tower_manager_card": {"id":"c_tower_manager_card","imgId":4229,"name":"鐘塔守護者卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"INT+1。｜【鐘塔套卡】與鐘怪、古鐘魔、朽魔卡片一起裝備時，DEF+3、MDEF+3。（官方另有變動詠唱−5%，本作技能瞬發）","buyPrice":20},
+  "c_tower_manager_card": {"id":"c_tower_manager_card","imgId":4229,"name":"鐘塔守護者卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"INT+1。｜【鐘塔套卡】與鐘怪、古鐘魔、朽魔卡片一起裝備時，DEF+3、MDEF+3。","buyPrice":20},
   "shinobi_card": {"id":"shinobi_card","imgId":4230,"name":"火忍西怒畢卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"AGI+1 受到物理傷害時，可使用偽裝5技能。 若沒有練到偽裝3級而裝備時，要靠著牆壁時才會啟動的。 系列: 卡片 裝備: 飾品 重量: 1 ","buyPrice":20},
   "increase_soil_card": {"id":"increase_soil_card","imgId":4231,"name":"米糕卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"攻城時，從監護人魔物受到的傷害，減少50%。 系列: 卡片 裝備: 盾牌 重量: 1 ","buyPrice":20},
   "wild_ginseng_card": {"id":"wild_ginseng_card","imgId":4232,"name":"人參精卡片","type":"material","icon":"📦","weight":1,"sell":10,"desc":"每當擊殺植物系魔物時，有一定的機率會掉落紅色藥草、黃色藥草、白色藥草。 吃下藥草類物品時，HP恢復量增加50%。 系列: 卡片 裝備: 飾品 重量: 1 ","buyPrice":20},
@@ -23303,7 +23303,7 @@ const CARDS = {
   miyabi_ningyo_card: { id: 'miyabi_ningyo_card', monsterId: 'miyabi_ningyo', name: '米雅畢卡片', icon: '👢', slot: 'footgear', bonus: {"spPct":10}, desc: 'MaxSP +10%, 冰凍術的傷害，增加5%。' },
   stalactic_golem_card: { id: 'stalactic_golem_card', monsterId: 'stalactic_golem', name: '鐘乳巨石怪卡片', icon: '🃏', slot: 'headgear', bonus: {"def":1}, desc: 'DEF+1, 受到攻擊時，被眩暈的機率降低20%。' },
   sting_card: { id: 'sting_card', monsterId: 'sting', name: '史汀卡片', icon: '🛡️', slot: 'shield', bonus: {"def":2}, desc: 'DEF+2, 精煉9以上時，MDEF+5' },
-  "c_tower_manager_card": {"id":"c_tower_manager_card","monsterId":"c_tower_manager","name":"鐘塔守護者卡片","icon":"🃏","slot":"headgear","bonus":{"int":1},"desc":"INT+1。｜【鐘塔套卡】與鐘怪、古鐘魔、朽魔卡片一起裝備時，DEF+3、MDEF+3。（官方另有變動詠唱−5%，本作技能瞬發）","condBonus":[{"when":{"withCards":["alarm_card","clock_card","punk_card"]},"bonus":{"def":3,"mdef":3},"setName":"鐘塔套卡"}]},
+  "c_tower_manager_card": {"id":"c_tower_manager_card","monsterId":"c_tower_manager","name":"鐘塔守護者卡片","icon":"🃏","slot":"headgear","bonus":{"int":1},"desc":"INT+1。｜【鐘塔套卡】與鐘怪、古鐘魔、朽魔卡片一起裝備時，DEF+3、MDEF+3。","condBonus":[{"when":{"withCards":["alarm_card","clock_card","punk_card"]},"bonus":{"def":3,"mdef":3},"setName":"鐘塔套卡"}]},
   shinobi_card: { id: 'shinobi_card', monsterId: 'shinobi', name: '火忍西怒畢卡片', icon: '🃏', slot: 'accessory', bonus: {"agi":1}, desc: 'AGI+1, 受到物理傷害時，可使用偽裝5技能。, 若沒有練到偽裝3級而裝備時，要靠著牆壁時才會啟動的。' },
   baby_leopard_card: { id: 'baby_leopard_card', monsterId: 'baby_leopard', name: '小花豹卡片', icon: '🃏', slot: 'armor', bonus: {"luk":3}, desc: 'LUK+3, 當商人系列角色裝備時，鎧甲是不會受破損的。' },
   archangeling_card: { id: 'archangeling_card', monsterId: 'archangeling', name: '聖天使波利卡片', icon: '🃏', slot: 'headgear', bonus: {"hp":300}, desc: 'MaxHP +300, LUK77以上時，HP恢復力和SP恢復力上升100%' },
@@ -23812,14 +23812,14 @@ const CARDS = {
   b_harword_card: {"id":"b_harword_card","monsterId":"b_harword","name":"闇●神工匠 哈沃得卡片","icon":"⚔️","slot":"weapon","bonus":{"meltdownAtkChance":10,"meltdownDefChance":7},"desc":"物理攻擊時有 10% 機率降低目標物攻、7% 機率降低目標物防。（官方是破壞武器與防具，本作裝備不會損壞，照野蠻凶砍的慣例改成降對方攻防）"},
   b_magaleta_card: {"id":"b_magaleta_card","monsterId":"b_magaleta","name":"闇●神官 瑪嘉雷特卡片","icon":"🛡️","slot":"armor","bonus":{},"desc":"受到物理或魔法攻擊時，有一定機率對自身施展[聖母之祈福]Lv1。","autoSpell":[{"on":"hit","skill":"hp_assumptio","lv":1,"chance":5}]},
   b_shecil_card: {"id":"b_shecil_card","monsterId":"b_shecil","name":"闇●神射手 迪文卡片","icon":"⚔️","slot":"weapon","bonus":{"lifeStealChance":5,"lifeStealPct":20,"hpRegenPct":-100},"desc":"物理攻擊時有 5% 機率吸取傷害的 20% 為 HP，但 HP 自然回復 −100%。"},
-  b_katrinn_card: {"id":"b_katrinn_card","monsterId":"b_katrinn","name":"闇●超魔導師 凱特莉娜卡片","icon":"👑","slot":"headgear","bonus":{"mdefIgnorePct":100,"spRegenPct":-100},"desc":"無視一般魔物的魔法防禦力，但 SP 自然回復 −100%。（官方另有變動詠唱 +100%，本作沒有詠唱）"},
+  b_katrinn_card: {"id":"b_katrinn_card","monsterId":"b_katrinn","name":"闇●超魔導師 凱特莉娜卡片","icon":"👑","slot":"headgear","bonus":{"mdefIgnorePct":100,"spRegenPct":-100},"desc":"無視一般魔物的魔法防禦力，但 SP 自然回復 −100%。"},
   thanatos_card: {"id":"thanatos_card","monsterId":"thanatos","name":"魔劍士 達納托斯的記憶卡片","icon":"⚔️","slot":"weapon","bonus":{"defIgnorePct":100,"def":-30,"flee":-30,"spOnAttack":-1},"desc":"無視所有種族的物理防禦力，但 DEF−30、FLEE−30，且每次攻擊消耗 1 SP。"},
   "fenrir_card_": {"id":"fenrir_card_","name":"弱化的潘利爾卡片","icon":"🃏","slot":"headgear","bonus":{"matk":25},"desc":"MATK+25。"},
   "c_cursed_butler": {"id":"c_cursed_butler","name":"詛咒僕人卡片","icon":"🃏","slot":"accessory","bonus":{"hpRegenPct":30},"desc":"HP自然恢復力+30%。｜搭配腐屍卡片時，MaxHP+15%。","condBonus":[{"when":{"withCards":["orc_zombie_card"]},"bonus":{"hpPct":15}},{"when":{"withCards":["zombie_card"]},"bonus":{"hpPct":15},"setName":"詛咒僕人卡片＋腐屍卡片"}]},
   "s_wolf_card_e": {"id":"s_wolf_card_e","name":"沃爾夫·雷根布爾格卡片","icon":"⚔️","slot":"weapon","bonus":{"raceDmg_insect":15},"desc":"對昆蟲型魔物的物理與魔法傷害+15%。｜與保羅·雷哈特卡片一起裝備時，ATK+5%、MATK+5%。（官方另有對中型敵人傷害+5%，本作沒有體型增傷這個機制）","condBonus":[{"when":{"withCards":["s_poe_card_e"]},"bonus":{"atkPct":5,"matkPct":5},"setName":"雷根布爾格套卡"}]},
   "s_poe_card_e": {"id":"s_poe_card_e","name":"保羅·雷哈特卡片","icon":"⚔️","slot":"weapon","bonus":{"raceDmg_plant":15},"desc":"對植物型魔物的物理與魔法傷害+15%。"},
-  "lucky_riceball_c": {"id":"lucky_riceball_c","name":"肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":2,"matkPct":2,"hpPct":1},"desc":"ATK+2%、MATK+2%、MaxHP+1%。（官方另有技能後延遲−2%，本作技能瞬發）"},
-  "up_lucky_riceball_c": {"id":"up_lucky_riceball_c","name":"強化肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":10,"matkPct":10,"hpPct":8},"desc":"ATK+10%、MATK+10%、MaxHP+8%。（官方另有技能後延遲−5%，本作技能瞬發）"},
+  "lucky_riceball_c": {"id":"lucky_riceball_c","name":"肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":2,"matkPct":2,"hpPct":1},"desc":"ATK+2%、MATK+2%、MaxHP+1%。"},
+  "up_lucky_riceball_c": {"id":"up_lucky_riceball_c","name":"強化肉粽怪卡片","icon":"⚔️","slot":"weapon","bonus":{"atkPct":10,"matkPct":10,"hpPct":8},"desc":"ATK+10%、MATK+10%、MaxHP+8%。（官方另有技能後延遲−5%，本服未實作）"},
   "md_airboat_card5": {"id":"md_airboat_card5","name":"融化波利卡片","icon":"🃏","slot":"headgear","bonus":{"hpPct":10},"desc":"MaxHP+10%。｜VIT 100 以上時，地與毒屬性攻擊的抗性+1%；VIT 130 以上時再+3%。","condBonus":[{"when":{"statMin":{"vit":100}},"bonus":{"eleReduce_earth":1,"eleReduce_poison":1}},{"when":{"statMin":{"vit":130}},"bonus":{"eleReduce_earth":3,"eleReduce_poison":3}}]},
   "md_airboat_card6": {"id":"md_airboat_card6","name":"不明生物體卡片","icon":"🃏","slot":"accessory","bonus":{"eleDmg_poison":30,"eleDmg_shadow":30,"eleReduce_holy":-10},"desc":"毒屬性與暗屬性魔法傷害+30%，對聖屬性攻擊的抗性−10%。"},
   "bakonawa_card": {"id":"bakonawa_card","monsterId":"bakonawa_1","name":"Bakonawa卡片","icon":"🛡️","slot":"armor","bonus":{"str":4},"desc":"STR +4(原版另有 1 項條件效果尚未實作)"},
@@ -29238,38 +29238,6 @@ var DROPNOTE_TEXT = '（⚠本服說明：掉寶率加成**對卡片掉落不會
   if (typeof console !== 'undefined') console.log('[data] DROPNOTE 標註 ' + n + ' 件');
 })();
 /* ==== DROPNOTE END ==== */
-/* ==== CASTNOTE BEGIN(2026-09-01 生成,勿手改) ==== */
-/* 「固定詠唱」是死欄位（本作技能瞬發,沒有詠唱時間這個維度）,
-   但既有註記會把「精煉+11 有生效」整段講成有效 —— 而那一段裡就含著固定詠唱。
-   玩家 acc227(#1321) 要求核對 -LT 裝備的敘述與參數時查出。
-
-   ⚠ 只補文字,不動任何數值。
-   ⚠ 條件三個都要成立才加:帶 fixedCast、敘述真的提到詠唱、現有註記還沒講過詠唱
-     —— 否則會對敘述根本沒提詠唱的道具（例如羽毛貝雷帽）加上莫名其妙的說明。 */
-var CASTNOTE_TEXT = '（⚠本服說明：敘述中的「固定詠唱」**對本服不會生效**——'
-  + '本作技能瞬發，沒有詠唱時間這個維度。同一段裡的其他效果不受影響）';
-(function applyCastNote() {
-  if (typeof ITEMS === 'undefined') return;
-  var CONT = ['bonus', 'perRefine', 'per2Refine', 'per3Refine', 'per4Refine',
-    'perRefineSq', 'perRefineSquare', 'per2RefineExtra', 'perBaseLvEvery', 'perBaseLv10'];
-  var n = 0;
-  for (var id in ITEMS) {
-    var it = ITEMS[id];
-    var d = String(it.desc || '');
-    if (d.indexOf('詠唱') < 0) continue;                    /* 敘述沒提詠唱就不加 */
-    if (d.indexOf('固定詠唱」') >= 0) continue;              /* 已經加過 */
-    var objs = [];
-    for (var i = 0; i < CONT.length; i++) if (it[CONT[i]] && typeof it[CONT[i]] === 'object') objs.push(it[CONT[i]]);
-    if (Array.isArray(it.condBonus)) for (var j = 0; j < it.condBonus.length; j++) if (it.condBonus[j] && it.condBonus[j].bonus) objs.push(it.condBonus[j].bonus);
-    var hasFC = false;
-    for (var x = 0; x < objs.length; x++) if (objs[x].fixedCast !== undefined) { hasFC = true; break; }
-    if (!hasFC) continue;
-    it.desc = d + ' ' + CASTNOTE_TEXT;
-    n++;
-  }
-  if (typeof console !== 'undefined' && typeof window === 'undefined') console.log('[data] CASTNOTE 標註 ' + n + ' 件');
-})();
-/* ==== CASTNOTE END ==== */
 /* ==== PASSIVEMOB BEGIN(2026-09-01 生成,勿手改) ==== */
 /* 官方 `Ai: 06`＝不移動、不攻擊的怪（草／菇／卵／氣泡蟲／公會石／寶物箱那一類）,
    本服卻全部都會攻擊。玩家 acc558 從蟲蛹指出這件事,老闆批准修正。
@@ -29649,7 +29617,7 @@ var GRANT_SKILL_FIX = {
       + '⚠ 與超時空頭冠(大法師)的聯動仍未實作——本服沒有「讀另一件裝備精煉度」的條件）',
     's_circlet_of_time_so':
       '（本服實作：精煉每+4 無屬性／水屬性魔法傷害+5%、精煉+11 MATK+5% **已補上生效**。'
-      + '⚠ 「變動詠唱-3%」仍不會生效——本作技能瞬發，沒有詠唱這個維度）',
+      + '變動詠唱-3% 也已生效）',
     'temporal_ring_tw_lt':
       '（本服實作：ATK+7% **已補上生效**（原本敘述寫 ATK、MATK+7% 卻只做了 MATK）。'
       + '⚠ 六條「搭配○○時」目前**一條都拿不到**：光速瞬移／無感肌肉／暴走魔法／犀利鷹眼／幸運之日'
@@ -29813,30 +29781,6 @@ var GRANT_SKILL_FIX = {
   }
 })();
 /* ==== LOWFIX END ==== */
-
-/* ==== DELAYNOTE BEGIN ==== */
-/* acc498 #1459：官方敘述寫「技能後延遲／攻擊後延遲」，本作沒有這個機制
-   （只有技能冷卻時間）。這些道具原本連一句說明都沒有，玩家會照著錯的資訊
-   決定要不要衝精煉。分三種說法補上註記 —— 混成一句就等於騙人。
-   ⚠ 冪等：整個區塊由 tools/gen_delaynote.js 產生，改資料後重跑即可。 */
-{
-  const _DN = {
-    "A": "（本服實作：敘述的「技能後延遲／攻擊後延遲」本服沒有這個機制，已折算成**技能冷卻時間**，已補上生效）",
-    "B": "（⚠本服未實作：敘述的「技能後延遲／攻擊後延遲」本服沒有這個機制（本作只有技能冷卻時間），這一項不會生效）",
-    "C": "（⚠本服未實作：這件裝備敘述中的效果目前**一項都沒有實作**，只有基礎防禦／重量那些規格生效。「技能後延遲」本服更是沒有這個機制（本作只有技能冷卻時間）。衝精煉前請把這點算進去）"
-  };
-  const _DL = [["r_hunting_mail","A"],["airship_boots","B"],["r_hunting_boots","B"],["diabolus_robe","B"],["dance_shoes","B"],["expert_ring","C"],["body_power_up_ring","C"],["scuba_mask_k","B"],["velum_jamadhar","B"],["bf_staff4","B"],["thorn_staff_","B"],["gymnastics_ribbon","B"],["elite_archer_suit","B"],["elite_shooter_suit","B"],["new_wave_sunglasses_","C"],["rental_scuba_mask","B"],["c_baphoj_parachute_tw","C"],["muramasa_","B"],["cannonconverter_tw","A"],["victory_wing_ear_","B"],["booster_mask_a","C"],["twincannon_tw","A"],["signet_of_con_star","B"],["hs_cr_spear","B"],["2para_book2_sa","B"],["hs_sg_book","B"],["hs_wz_wand","B"],["hs_pr_holy_wand","B"],["hs_su_min_puppy_pool","B"],["hs_su_puppy_pool","B"],["3para_katar1_gc","B"],["crescent_armguard","B"],["sniping_suit","B"],["dark_knight_glove","B"],["rabbit_magic_hat","B"],["taurus_diadem","B"],["taurus_crown","B"],["k_rabbit_bonnet","B"],["pig_moneybox","B"],["sagittarius_crown","B"],["velum_damascus","B"],["excelion_suit","B"],["new_wave_sunglasses","C"],["baron_evil_eye","C"],["laser_of_eagle","B"],["shadow_booster","C"],["doram_balloon","B"],["c_bapho_j_parachute_tw","C"],["poring_letter_tw","B"],["excelion_wing","B"],["k_fallen_angel_wing","B"],["bs_item_m_s_20","C"],["fairy_leaf_powder","B"],["dictator_necklace_tw","B"],["cannon_converter_tw","A"],["luminous_blue_stone_tw","B"],["victory_wing_ear","B"],["lost_timespace_tw","A"],["change_timespace_tw","A"],["tree_of_sprout_str","A"],["tree_of_sprout_agi","A"],["tree_of_sprout_vit","A"],["twin_cannon_tw","A"],["temporal_sprout_tw","A"],["mind_of_valhalla_tw","B"],["temporal_ring_tw","A"],["record_merchant2_tw","B"],["record_thief2_tw","B"],["record_acher2_tw","B"],["garnet_pendant_lt","B"],["hs_biretta","B"],["old_moroc_acc","B"],["hs_nj_dagger","B"],["hs_nj_knife","B"]];
-  let _dn = 0;
-  for (const [id, kind] of _DL) {
-    const it = ITEMS[id];
-    if (!it || !_DN[kind]) continue;
-    if (/（\s*(?:⚠\s*)?本服/.test(String(it.desc || ""))) continue;   // 別人已經加過就不重複
-    it.desc = String(it.desc || "").trim() + " " + _DN[kind];
-    _dn++;
-  }
-  console.log('[data] DELAYNOTE 補上「技能後延遲」註記 ' + _dn + ' 件');
-}
-/* ==== DELAYNOTE END ==== */
 
 /* ==== PROCNOTE BEGIN ==== */
 /* acc498 #1556：官方敘述寫「以一定概率每秒HP恢復N、SP恢復M，總共各恢復X次」，
@@ -30132,7 +30076,7 @@ var GRANT_SKILL_FIX = {
            + '(三階累加,+11 時手推車加農砲共+40%)。'
            + '⚠ 對全體型+15% 只對有體型資料的魔物有效。'
            + '⚠ 遠距離物理傷害%(精煉每+3 那段)本服目前只作用在弓的普通攻擊,拿這把劍時沒有效果,技能也吃不到。'
-           + '尚未實作:變動詠唱(本作技能瞬發)、POW/P.ATK(本服沒有這兩項能力值)、各階級追加能力。）';
+           + '尚未實作:POW/P.ATK(本服沒有這兩項能力值)、各階級追加能力。）';
   it.desc = String(it.desc || '') + NOTE;
   console.log('[data] BLUEFIRELT-FILLIN 紅蓮劍-LT 補上 4 段效果');
 })();
@@ -30222,7 +30166,7 @@ var GRANT_SKILL_FIX = {
   var NOTE = ' （本服實作更新 2026-09-15:與闇●超魔導師 凱特莉娜卡片同時裝備時 對首領傷害+30%、'
            + '與神秘魔力石帽子同時裝備時 毀滅彗星傷害+30%、與神秘徐風之耳語同時裝備時 INT+20 與毒素爆破冷卻-0.5 秒 已補上並生效;'
            + '戴兩個這件飾品也只算一次。'
-           + '尚未實作:固定詠唱(本作技能瞬發)、毒耐性弱化技能;「闇●智者 西里亞卡片」(首領西里亞教授的卡,不是本服的「闇●智者卡片」)、「思念體破壞因子研究記錄(魔法師)」與「席琳的胸針」本服沒有這三件。）';
+           + '尚未實作:固定詠唱、毒耐性弱化技能;「闇●智者 西里亞卡片」(首領西里亞教授的卡,不是本服的「闇●智者卡片」)、「思念體破壞因子研究記錄(魔法師)」與「席琳的胸針」本服沒有這三件。）';
   it.desc = String(it.desc || '') + NOTE;
   console.log('[data] RECORDMAGE2-SETS 思念體忿恨因子研究記錄(魔法師) 補上 3 組搭配');
 })();
@@ -30989,59 +30933,6 @@ var GRANT_SKILL_FIX = {
   if (typeof console !== 'undefined' && console.log) console.log('[data] 兌換券未實作註記 ' + _exn + ' 件');
 }
 /* ==== EXCHNOTE END ==== */
-/* ==== CASTNOTE2 BEGIN ==== */
-/* 補既有 CASTNOTE 沒涵蓋到的那一批。
-
-   既有的 CASTNOTE（本檔上方）只標「**有 fixedCast 欄位**」的道具（20 件）。
-   但敘述裡寫著詠唱效果、資料上**連欄位都沒有**的還有 449 件：
-     「變動詠唱-10%」「詠唱不會中斷」「搖擺舞時詠唱-2秒」「固定詠唱-3%」…
-   那些連死欄位都稱不上 —— 資料裡根本沒有那個效果，玩家卻看得到承諾。
-   本作技能瞬發，沒有詠唱／變動施法時間這個維度，所以一律不會生效。
-
-   🔴 **這個區塊必須放在所有註記區塊的最後面。**
-     第一版插在 CARDCONDNOTE 前面，結果後面的 CARDPROCNOTE 會**重寫** desc
-     （不是附加），把這裡加的字整個蓋掉 —— 拉塔卡片就是這樣掉的
-     （預期 449 件、實際只標到 448）。是測試抓出來的。
-
-   🔴 **ITEMS 與 CARDS 要各自獨立判斷。**
-     第一版寫成「ITEMS 沒被略過時才順便改 CARDS」，
-     結果 8 張卡（潘利爾／劍魚／血蝴蝶／闇●超魔導師／阿克坦／依斯拉／小雪怪／熔巖魔）
-     ITEMS 側早就有說明、CARDS 側沒有，圖鑑兩邊講的不一樣。
-
-   ⚠ 只補文字，不動任何數值。
-   ⚠ 已經講過詠唱的一律略過，避免同一件事講兩遍或互相矛盾 ——
-     例如迷幻之王卡片寫的是「官方的變動施法時間一律改以冷卻秒數實作」，
-     再加一句「詠唱不會生效」會讓玩家以為那張卡沒用。 */
-{
-  const _C2_TEXT = '（⚠本服說明：敘述中與「詠唱／施法時間」有關的效果**不會生效**——'
-    + '本作技能瞬發，沒有詠唱這個維度。同一段裡的其他效果不受影響）';
-  /* ⚠ 「已經講過了」的寫法不只一種，漏一種就會重複標註。
-     這份清單是實測補出來的：第一版漏了「本服無詠唱機制」，
-     結果 Disguiser／Blue Moon Loli Ruri 那類卡片被標了兩次。 */
-  const _C2_DONE = ['固定詠唱」', '詠唱這個維度', '詠唱時間這個維度', '沒有詠唱',
-    '無詠唱', '不支援詠唱', '技能瞬發', '變動施法時間」'];
-  const _c2need = d => (d.indexOf('詠唱') >= 0 || d.indexOf('施法時間') >= 0)
-    && !_C2_DONE.some(p => d.indexOf(p) >= 0);
-  let _c2 = 0, _c2c = 0;
-  for (const id in ITEMS) {
-    const it = ITEMS[id];
-    const d = String((it && it.desc) || '');
-    if (!_c2need(d)) continue;
-    it.desc = d + ' ' + _C2_TEXT;
-    _c2++;
-  }
-  if (typeof CARDS !== 'undefined') {
-    for (const id in CARDS) {
-      const cd = CARDS[id];
-      const d = String((cd && cd.desc) || '');
-      if (!_c2need(d)) continue;
-      cd.desc = d + ' ' + _C2_TEXT;
-      _c2c++;
-    }
-  }
-  console.log('[data] CASTNOTE2 標註「詠唱效果不會生效」 道具 ' + _c2 + ' 件、卡片 ' + _c2c + ' 張');
-}
-/* ==== CASTNOTE2 END ==== */
 /* ⚠ 這一段必須排在**所有會重寫 desc 的產生器之後**。
    放在前面的話，後面那些會整段重寫 desc，把這裡加的字洗掉 ——
    實測就發生過：產生器數到 2 張，實際只有 1 張留著。
@@ -31169,77 +31060,6 @@ var GRANT_SKILL_FIX = {
   console.log('[data] CARDPCTNOTE 標註「百分比變成固定值／代價沒實作」的卡片 ' + _n + ' 張');
 }
 /* ==== CARDPCTNOTE END ==== */
-
-/* ==== CASTCDNOTE BEGIN ==== */
-/* acc201 #2144：血蝴蝶卡片敘述說「詠唱那段不生效」，
-   但資料裡的 skillCdFlat +1 是**生效中的代價** —— 敘述在騙人。
-
-   本作技能瞬發，官方的「詠唱時間 ±N%」這類項目被折算成
-   「全技能冷卻 ±N 秒」（skillCdFlat）。折算過的**就是有生效**，
-   可是卡片掛的還是通用那句「與詠唱有關的段落一律不會生效」。
-
-   🔴 三張是代價（劍魚 +1、血蝴蝶 +1、阿克坦 +2 秒）——
-   玩家照敘述以為沒事，插上去就白吃冷卻。
-   一張是好處（闇●超魔導師 -1 秒），不講的話玩家反而不知道它有多強。
-
-   ⚠ 只補敘述，數值一個都不動。
-   ⚠ 用規則自動掃，不寫死卡片 id：以後資料改了註記會跟著對。
-   ⚠ 裝備那邊本來就有「已經折算」的版本（奧爾里昂的鐵盤），這裡補的是卡片。 */
-{
-  let _n = 0;
-  const _MARK = '本服其實有折算成冷卻';
-  const _cdOf = (o) => (o && typeof o.skillCdFlat === 'number' && o.skillCdFlat !== 0)
-    ? o.skillCdFlat : null;
-  /* 指名單一技能的冷卻（skillCdFlat_<技能id>）也算 —— 第一版只看全技能的那個，
-     漏掉了熔巖魔卡片（火箭術 -1 秒）與小雪怪卡片（冰箭術 -1 秒）。
-     回傳 [秒數, 技能中文名]，敘述要講清楚是**哪一招**。 */
-  const _cdSkillOf = (o) => {
-    if (!o) return null;
-    for (const k in o) {
-      if (k.indexOf('skillCdFlat_') !== 0) continue;
-      const v = o[k];
-      if (typeof v !== 'number' || !v) continue;
-      const sid = k.slice('skillCdFlat_'.length);
-      const nm = (typeof SKILLS !== 'undefined' && SKILLS[sid] && SKILLS[sid].name)
-        ? String(SKILLS[sid].name).split(' ')[0] : sid;
-      return [v, nm];
-    }
-    return null;
-  };
-  for (const _cid in CARDS) {
-    const _c = CARDS[_cid], _it = ITEMS[_cid];
-    if (!_it || typeof _it.desc !== 'string') continue;
-    if (_it.desc.indexOf(_MARK) >= 0) continue;                 // 冪等
-    if (_it.desc.indexOf('不會生效') < 0) continue;              // 沒掛那句就不關它的事
-    let _cd = _cdOf(_c.bonus);
-    const _tiers = [];
-    (_c.condBonus || []).forEach((_x) => {
-      const _v = _cdOf(_x.bonus);
-      if (_v === null) return;
-      if (_cd === null) _cd = _v;
-      const _rf = _x.when && _x.when.refineMin;
-      _tiers.push((_rf ? '精煉 +' + _rf + ' 起 ' : '') + (_v > 0 ? '+' : '') + _v + ' 秒');
-    });
-    /* 全技能的沒有，就看有沒有指名單一技能的 */
-    let _one = null;
-    if (_cd === null) {
-      _one = _cdSkillOf(_c.bonus);
-      (_c.condBonus || []).forEach((_x) => { if (!_one) _one = _cdSkillOf(_x.bonus); });
-      if (_one) _cd = _one[0];
-    }
-    if (_cd === null) continue;
-    const _good = _cd < 0;
-    const _tierTxt = _tiers.length > 1 ? '（分段：' + _tiers.join('、') + '，會疊加）' : '';
-    const _what = _one ? ('**' + _one[1] + '的冷卻 ') : '**全技能冷卻 ';
-    _it.desc = _it.desc.trim() + ' （\u26a0' + _MARK + '：官方那段詠唱效果在本服折算成「' + _what
-      + (_cd > 0 ? '+' : '') + _cd + ' 秒**」' + _tierTxt + '，而且**確實生效中** —— '
-      + (_good ? '這是好處，別漏掉。' : '這是**代價**，插之前請把它算進去。')
-      + '上面那句「與詠唱有關的段落不會生效」指的是純詠唱項目。）';
-    _n++;
-  }
-  console.log('[data] CASTCDNOTE 標註「詠唱已折算成冷卻、確實生效」的卡片 ' + _n + ' 張');
-}
-/* ==== CASTCDNOTE END ==== */
 
 /* ==== SRCNOTE BEGIN ==== */
 /* 🔴 標出「本服目前拿不到」的裝備與卡片。
