@@ -2873,7 +2873,8 @@ function monsterBaseMatk(monDef, mon) {
   const mv = (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[monDef.id]) || {};
   const v = mon && monBuff(mon, 'maxRoll') > 0 ? 1.3 : 0.7 + Math.random() * 0.6;
   const base = (mv.int != null ? mv.int : (monDef.mobInt || 0)) + (monDef.level || 0) + (mv.matk || 0) * v;
-  return base * farmMult('atk');
+  const up = mon && mon.matkUp && Date.now() < (mon.matkUpEnd || 0) ? 1 + mon.matkUp / 100 : 1;   // 精神撼動
+  return base * farmMult('atk') * up;
 }
 /* 怪物身上的物攻減益（#60 野蠻凶砍）。
 
@@ -7272,6 +7273,7 @@ function playerAttackInner() {
    本作的怪物沒有 MATK 資料，魔法類就用 ATK × 倍率 再多給 20%，
    並且**跳過迴避判定**（官方魔法無視閃避）。 */
 function monsterCastSkill(mon, monDef, sk) {
+  if (mon.charmUntil && Date.now() < mon.charmUntil && !sk.buff) return;   // 眨眼之誘：迷惑中不對玩家放技能
   return withLogLane('skill', () => monsterCastSkillInner(mon, monDef, sk));
 }
 function monsterCastSkillInner(mon, monDef, sk) {
@@ -7540,6 +7542,7 @@ function monsterAttackSingle(mon) {
     if (target) { monsterAttackAlly(mon, monDef, target); return; }
   }
 
+  if (mon.charmUntil && Date.now() < mon.charmUntil) return;   // 眨眼之誘：迷惑中不攻擊玩家
   // 無法行動類的異常狀態（昏迷／冰凍／石化／睡眠／混亂）都寫在 stunnedUntil 上
   if (mon.stunnedUntil && Date.now() < mon.stunnedUntil) {
     const by = ailList(mon).filter(t => MON_AILMENTS[t].immobile)[0];
@@ -8104,6 +8107,7 @@ function monsterDamageKey() {
 function noteMonsterDamage(mon, dmg) {
   const n = Number(dmg) || 0;
   if (!mon || !(n > 0)) return;
+  if (mon.charmUntil) delete mon.charmUntil;   // 眨眼之誘：受到傷害就解除
   if (!mon._dmgBy) mon._dmgBy = {};
   const key = monsterDamageKey();
   mon._dmgBy[key] = (mon._dmgBy[key] || 0) + n;
@@ -10668,6 +10672,32 @@ function castSkillInner(skillId, opts) {
         target.decAgiUntil = Date.now() + dur * 1000;
         target.debuffFlee = lvArr(sk.agiCut, lv); target.debuffFleeEnd = target.decAgiUntil;
         logMsg(`🐢 「${sk.name}」：${def.name} 移動速度 −25%、AGI −${target.debuffFlee}（${dur} 秒）。`);
+      } else if (sk.effect === 'ailments') {
+        // 陣痛之聲：混亂、出血各自擲骰
+        (sk.ailments || []).forEach(a => { if (Math.random() * 100 < a.chance) applyAilment(target, def, a.type, dur ? { sec: dur } : undefined); });
+        logMsg(`📢 「${sk.name}」對 ${def.name} 發動！`);
+      } else if (sk.effect === 'charm') {
+        // 眨眼之誘：人型／天使／惡魔、等級不高於施術者、非首領；10 秒內不攻擊玩家，受傷就解除
+        if (def.isBoss || !['humanoid', 'angel', 'demon'].includes(def.race) || (def.level || 0) > (state.baseLevel || 0)) {
+          logMsg(`「${sk.name}」對 ${def.name} 無效。`); break;
+        }
+        target.charmUntil = Date.now() + dur * 1000;
+        logMsg(`💗 ${def.name} 被迷惑了，${dur} 秒內不會攻擊你（受到傷害會解除）。`);
+      } else if (sk.effect === 'dispel') {
+        const n = monBuffList(target).length;
+        target.mbuff = {};
+        logMsg(n ? `🌀 「${sk.name}」解除了 ${def.name} 的 ${n} 個增益。` : `🌀 「${sk.name}」：${def.name} 身上沒有增益。`);
+      } else if (sk.effect === 'mindbreaker') {
+        // 精神撼動：魔防 −12×lv%、魔攻 +20×lv%（怪物魔法技能變痛，見 monsterBaseMatk）
+        target.debuffMdef = 1 - lvArr(sk.mdefCutPct, lv) / 100; target.debuffMdefEnd = Date.now() + dur * 1000;
+        target.matkUp = lvArr(sk.matkUpPct, lv); target.matkUpEnd = target.debuffMdefEnd;
+        logMsg(`🧠 「${sk.name}」：${def.name} 魔防 −${lvArr(sk.mdefCutPct, lv)}%、魔攻 +${target.matkUp}%（${dur} 秒）。`);
+      } else if (sk.effect === 'confine') {
+        // 緊密的約束：目標定身、自己迴避 +50（首領無效）
+        if (def.isBoss) { logMsg(`「${sk.name}」對首領無效。`); break; }
+        target.rootUntil = Date.now() + dur * 1000;
+        state.buffs.push({ type: 'flee', mult: 1, flatBonus: sk.selfFlee || 50, msRemaining: dur * 1000, skillId: sk.id });
+        logMsg(`🔗 「${sk.name}」：${def.name} 無法移動，你的迴避 +${sk.selfFlee || 50}（${dur} 秒）。`);
       } else if (sk.effect === 'lexaeterna') {
         if (ailActive(target, 'freeze') || ailActive(target, 'stone')) { logMsg(`「${sk.name}」對冰凍／石化中的目標無效。`); break; }
         target.lexAeterna = true;

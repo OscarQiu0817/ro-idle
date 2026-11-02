@@ -773,11 +773,10 @@ const SKILLS = {
      使用者 2026-08-09 指定改成**被動、轉職自動獲得**（`autoGrant`）——
      一個 1 秒暈眩不值得花技能點，做成要點的等於做了個沒人點的技能。 */
   cr_shrink: {
-    id: 'cr_shrink', name: '退縮 Shrink', maxLv: 1,
-    type: 'passive', passiveStat: 'shrinkStun', autoGrant: true,
-    spCost: [0], cooldown: [0],
+    id: 'cr_shrink', name: '退縮 Shrink', maxLv: 1, autoGrant: true,
+    type: 'buff_gate', passiveStat: 'shrinkStun', spCost: [100], cooldown: [0], duration: [900],
     mult: [50], stunSec: [1],
-    desc: '被動技能，轉職時自動獲得。以自動防禦擋下攻擊時，有 50% 機率使對方暈眩 1 秒。'
+    desc: '持續 900 秒內，自動防禦成功擋下攻擊時 50% 機率使對方暈眩。'
   },
   /* 犧牲 Devotion (CR_DEVOTION) —— 官方是把隊友受到的傷害轉到自己身上。
      本作無隊友機制 → 改成**輔助型嘲諷**：提高怪物攻擊自身的機率。
@@ -931,12 +930,10 @@ const SKILLS = {
     desc: '需裝備樂器，消耗箭矢 1 枝。利用樂器發射箭矢造成 2 次遠距離物理傷害，每次 ATK 150%~310%。'
   },
   ba_pangvoice: {
-    id: 'ba_pangvoice', name: '陣痛之聲 Pang Voice', maxLv: 1,
-    type: 'passive', passiveStat: 'onAttackDualAilment', autoGrant: true,
-    spCost: [0], cooldown: [0], mult: [0],
-    procChance: [20], internalCooldown: [0],
+    id: 'ba_pangvoice', name: '陣痛之聲 Pang Voice', maxLv: 1, autoGrant: true,
+    type: 'debuff_single', effect: 'ailments', spCost: [40], cooldown: [0], duration: [10],
     ailments: [{ type: 'confusion', chance: 50 }, { type: 'bleed', chance: 50 }],
-    desc: '被動技能，轉職時自動獲得。普通攻擊有 20% 機率大吼，各 50% 機率使目標混亂與出血。'
+    desc: '向目標大吼，各 50% 機率使其混亂與出血。對首領無效。'
   },
 
   // ---- 舞孃自己的 9 個 ----
@@ -1015,12 +1012,10 @@ const SKILLS = {
     desc: '需裝備鞭子，消耗箭矢 1 枝。以鞭子纏住箭矢投擲，造成 2 次遠距離物理傷害，每次 ATK 150%~310%。'
   },
   dc_winkcharm: {
-    id: 'dc_winkcharm', name: '眨眼之誘 Wink of Charm', maxLv: 1,
-    type: 'passive', passiveStat: 'onAttackDualAilment', autoGrant: true,
-    spCost: [0], cooldown: [0], mult: [0],
-    procChance: [20], internalCooldown: [0],
-    ailments: [{ type: 'confusion', chance: 50 }, { type: 'bleed', chance: 50 }],
-    desc: '被動技能，轉職時自動獲得。普通攻擊有 20% 機率放電，各 50% 機率使目標混亂與出血。'
+    id: 'dc_winkcharm', name: '眨眼之誘 Wink of Charm', maxLv: 1, autoGrant: true,
+    type: 'debuff_single', effect: 'charm', spCost: [40], cooldown: [0], duration: [10],
+    successChance: [70],
+    desc: '70% 機率迷惑等級不高於自己的人型、天使、惡魔怪，10 秒內不攻擊你（受到傷害會解除）。對首領無效。'
   },
 
   // ---- 詩人與舞孃共用的 BD_ ----
@@ -1178,14 +1173,9 @@ const SKILLS = {
         + '13%~25% 機率使其暈眩或黑暗，被打中的目標 10 秒內受到的傷害 +30%（內部冷卻 10 秒）。'
   },
   rg_intimidate: {
-    id: 'rg_intimidate', name: '脅持 Intimidate', maxLv: 5,
-    type: 'passive', passiveStat: 'intimidateProc', element: 'neutral',
+    id: 'rg_intimidate', name: '脅持 Intimidate', maxLv: 5, type: 'passive', unimplemented: true,
     spCost: [0], cooldown: [0],
-    mult: [1.3, 1.6, 1.9, 2.2, 2.5],
-    procChance: [20, 20, 20, 20, 20],
-    internalCooldown: [5, 5, 5, 5, 5],
-    desc: '被動技能。普通攻擊有 20% 機率追加一次 ATK 130%~250% 的傷害（內部冷卻 5 秒）。'
-        + '（官方會把自己與目標一起傳送走，本作沒有位移，只保留傷害）'
+    desc: '（未實裝）帶著目標傳送到地圖其他地方，本作沒有地圖移動。可學習，作為其他技能的前置條件。'
   },
   /* 官方是「記住最後一個打到你的技能」。使用者 2026-08-10 改成
      **自己從全技能庫的攻擊技能裡挑一個**，等級上限就是抄襲的等級。 */
@@ -1237,13 +1227,9 @@ const SKILLS = {
     desc: '被動技能。在 NPC 商店購買物品的價格 −9%~25%。'
   },
   rg_closeconfine: {
-    id: 'rg_closeconfine', name: '緊密的約束 Close Confine', maxLv: 1,
-    type: 'passive', passiveStat: 'closeConfineProc', autoGrant: true,
-    spCost: [0], cooldown: [0], mult: [0],
-    procChance: [5], enemyFleeCut: [20], selfFlee: [10],
-    duration: [10], internalCooldown: [10],
-    desc: '被動技能，轉職時自動獲得。普通攻擊有 5% 機率纏住目標：'
-        + '目標迴避 −20、自身迴避 +10，持續 10 秒（內部冷卻 10 秒）。'
+    id: 'rg_closeconfine', name: '緊密的約束 Close Confine', maxLv: 1, autoGrant: true,
+    type: 'debuff_single', effect: 'confine', spCost: [40], cooldown: [0], duration: [10], selfFlee: 50,
+    desc: '捉緊目標，10 秒內目標無法移動，自己迴避 +50。對首領無效。'
   },
 
   /* ================= 武僧 MO_（#70）=================
@@ -1685,29 +1671,20 @@ const SKILLS = {
      無詠唱可打斷 → 只留「最大 HP 2%」那半，改成普攻觸發，再照使用者指定補上暈眩。
      **對首領階級無效**是官方就有的限制，照抄。 */
   sa_spellbreaker: {
-    id: 'sa_spellbreaker', name: '念咒拆除 Spell Breaker', maxLv: 5,
-    type: 'passive', passiveStat: 'spellBreaker',
+    id: 'sa_spellbreaker', name: '念咒拆除 Spell Breaker', maxLv: 5, type: 'passive', unimplemented: true, requires: { skillId: 'sa_magicrod', level: 1 },
     spCost: [0], cooldown: [0],
-    requires: { skillId: 'sa_magicrod', level: 1 },
-    mult: [5, 8, 12, 16, 20],
-    hpPct: 2, spGain: [10, 20, 30, 40, 50], stunSec: [1, 1, 1, 1, 1],
-    internalCooldown: [10, 9, 8, 6, 5],
-    desc: '被動技能。普通攻擊有 5%~20% 機率造成目標最大 HP 2% 的傷害、暈眩 1 秒並回復 10~50 SP'
-        + '（內部冷卻 10→5 秒）。對首領階級的目標**不造成傷害**（官方規則），暈眩照常判定。'
+    desc: '（未實裝）打斷目標詠唱並吸 SP，本作怪物沒有詠唱與 SP。可學習，作為其他技能的前置條件。'
   },
   /* 魔法效果解除：官方是主動技，消耗黃色魔力礦石×1，機率解除目標身上的強化效果。
      本作 #36 之後怪物真的會給自己上 buff（`mon.mbuff`），所以這一招有實際對象。
      使用者指定改成輔助型被動：普攻 20% 觸發，**怪身上沒有 buff 就不觸發也不消耗礦石**。 */
   sa_dispell: {
     id: 'sa_dispell', name: '魔法效果解除 Dispell', maxLv: 5,
-    type: 'passive', passiveStat: 'dispellProc',
-    spCost: [0], cooldown: [0],
-    requires: { skillId: 'sa_spellbreaker', level: 3 },
-    mult: [60, 70, 80, 90, 100],
-    procChance: [20, 20, 20, 20, 20], internalCooldown: [10, 10, 10, 10, 10],
+    type: 'debuff_single', effect: 'dispel', requires: { skillId: 'sa_spellbreaker', level: 3 },
+    spCost: [1, 1, 1, 1, 1], cooldown: [0, 0, 0, 0, 0],
+    successChance: [60, 70, 80, 90, 100],
     costItems: ['yellow_gemstone'], costQty: 1,
-    desc: '被動技能。普通攻擊有 20% 機率發動（內部冷卻 10 秒）：消耗黃色魔力礦石×1，'
-        + '以 60%~100% 機率解除目標身上的所有強化效果。目標身上沒有強化效果時不會發動，也不會消耗礦石。'
+    desc: '消耗黃色魔力礦石×1，60%~100% 機率解除目標身上的增益效果。'
   },
   /* 隨機技能：官方是消耗黃色魔力礦石×2 隨機發動一個技能。
      使用者指定池子限定**攻擊技能**、等級依本技能等級但不超過該技能自己的上限。
@@ -2168,42 +2145,30 @@ const SKILLS = {
   /* 官方是「與目標交換 SP，雙方各消耗一半」——**本作怪物沒有 SP 欄位**（681 隻有 mdef，0 隻有 sp），
      交換沒有對象。使用者 2026-08-14 指定改成普攻觸發的沉默。 */
   pf_soulchange: {
-    id: 'pf_soulchange', name: '心神互換 Soul Change', maxLv: 1,
-    type: 'passive', passiveStat: 'soulChange',
+    id: 'pf_soulchange', name: '心神互換 Soul Change', maxLv: 1, type: 'passive', unimplemented: true, requires: [{ skillId: 'sa_magicrod', level: 3 }, { skillId: 'sa_spellbreaker', level: 2 }],
     spCost: [0], cooldown: [0],
-    requires: [{ skillId: 'sa_magicrod', level: 3 }, { skillId: 'sa_spellbreaker', level: 2 }],
-    mult: [20], ailSec: [1], internalCooldown: [5],
-    desc: '被動技能。普攻時有 20% 機率使目標沉默 1 秒（內部冷卻 5 秒）。'
+    desc: '（未實裝）跟目標交換 SP，本作怪物沒有 SP。可學習，作為其他技能的前置條件。'
   },
   /* 官方「把目標 SP 變 0，Lv5 成功時造成該 SP 兩倍的魔法傷害，失敗時打自己，
      且只能在 PVP 與攻城戰使用」——本作三個前提都不成立（沒有 PVP、怪物沒有 SP）。
      使用者 2026-08-14 指定改成普攻觸發：沉默 + MATK 100%~200% 的魔法傷害。
      魔法傷害不判定命中（#76 的規則：MATK 必中）。 */
   pf_soulburn: {
-    id: 'pf_soulburn', name: '精神耗弱術 Soul Burn', maxLv: 5,
-    type: 'passive', passiveStat: 'soulBurn', element: 'ghost',
-    spCost: [0], cooldown: [0],
-    requires: [{ skillId: 'sa_castcancel', level: 5 }, { skillId: 'sa_magicrod', level: 3 },
+    id: 'pf_soulburn', name: '精神耗弱術 Soul Burn', maxLv: 5, type: 'passive', unimplemented: true, requires: [{ skillId: 'sa_castcancel', level: 5 }, { skillId: 'sa_magicrod', level: 3 },
                { skillId: 'sa_dispell', level: 3 }],
-    mult: [40, 50, 60, 70, 70], ailSec: [1],
-    dmgMult: [1.0, 1.25, 1.5, 1.75, 2.0],
-    internalCooldown: [10, 9, 8, 7, 5],
-    desc: '被動技能。普攻時有 40%~70% 機率使目標沉默 1 秒，成功時另外造成 MATK 100%~200% 的'
-        + '念屬性魔法傷害（內部冷卻 10~5 秒）。'
+    spCost: [0], cooldown: [0],
+    desc: '（未實裝）讓目標 SP 歸零，官方只能在 PvP／攻城戰使用。可學習，作為其他技能的前置條件。'
   },
   /* 官方是 MDEF −12%~−60% 且 MATK +20%~+100%。
      **MATK 那半沒有對象**——怪物資料裡沒有 matk 欄位，怪物技能的傷害不是從 MATK 算的。
      使用者 2026-08-14 指定的數值是 MDEF −6%~−30%（官方的一半），只留這半。 */
   pf_mindbreaker: {
     id: 'pf_mindbreaker', name: '精神撼動 Mind Breaker', maxLv: 5,
-    type: 'passive', passiveStat: 'mindBreaker',
-    spCost: [0], cooldown: [0],
-    requires: [{ skillId: 'mg_srecovery', level: 3 }, { skillId: 'pf_soulburn', level: 2 }],
-    mult: [30, 32, 35, 37, 40],
-    mdefCut: [6, 12, 18, 24, 30], duration: [10, 10, 10, 10, 10],
-    internalCooldown: [10, 9, 8, 7, 5],
-    desc: '被動技能。普攻時有 30%~40% 機率使目標的魔法防禦 −6%~−30%，持續 10 秒（內部冷卻 10~5 秒）。'
-        + '（官方另有「目標 MATK 上升」的負面代價，本作怪物沒有 MATK 欄位，那半不實作）'
+    type: 'debuff_single', effect: 'mindbreaker', requires: [{ skillId: 'mg_srecovery', level: 3 }, { skillId: 'pf_soulburn', level: 2 }],
+    spCost: [12, 15, 18, 21, 24], cooldown: [0, 0, 0, 0, 0],
+    successChance: [60, 65, 70, 75, 80], duration: [30, 30, 30, 30, 30],
+    mdefCutPct: [12, 24, 36, 48, 60], matkUpPct: [20, 40, 60, 80, 100],
+    desc: '60%~80% 機率使目標魔防 −12%~60%，但魔攻 +20%~100%（怪物的魔法技能會變痛），持續 30 秒。'
   },
 
   /* ---------------- 搞笑藝人／冷豔舞姬 CG_（#77）----------------
