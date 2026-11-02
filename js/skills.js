@@ -55,7 +55,12 @@ const SKILLS = {
   mc_mammonite: {"id":"mc_mammonite","name":"金錢攻擊","maxLv":10,"type":"damage","element":"neutral","spCost":[5,5,6,6,7,7,8,8,9,9],"cooldown":[2,2,2,2,2,2,2,2,2,2],"mult":[1.5,2,2.5,3,3.5,4,4.5,5,5.5,6],"zenyCost":[100,200,300,400,500,600,700,800,900,1000],"desc":"消耗100~1000鋅幣（依等級），造成ATK150%~600%傷害。"},
   mc_inccarry: {"id":"mc_inccarry","name":"負重量上升","maxLv":10,"type":"passive","passiveStat":"cartDmgBonus","element":"neutral","spCost":[0],"cooldown":[0],"mult":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],"desc":"永久提升金錢攻擊與手推車攻擊傷害，滿級+100%。"},
   tf_detoxify: {"id":"tf_detoxify","name":"解毒","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"autoDetox","spCost":[0],"cooldown":[0],"mult":[1],"internalCooldown":[30],"desc":"被動技能，玩家中毒時自動解除（冷卻30秒）。"},
-  tf_sprinklesand: {"id":"tf_sprinklesand","name":"噴砂","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"sandmanProc","spCost":[0],"cooldown":[0],"mult":[1],"procChance":[10],"hitDebuff":[20],"duration":[5],"desc":"被動技能，攻擊時有10%機率使敵人命中下降20，持續5秒。"},
+  tf_sprinklesand: {
+    id: 'tf_sprinklesand', name: '噴砂', maxLv: 1, isQuest: true,
+    type: 'damage', element: 'earth', spCost: [9], cooldown: [0], mult: [1.3],
+    inflict: { type: 'blind', chance: [20] },
+    desc: '對目標造成 130% 的地屬性近距離物理傷害，20% 機率使其黑暗。'
+  },
   tf_backsliding: {"id":"tf_backsliding","name":"後退迴避","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"backslideDodge","spCost":[0],"cooldown":[0],"mult":[1],"dodgeChance":[5],"desc":"被動技能，被攻擊時有5%機率向後閃避，完全免疫該次傷害。"},
   tf_steal: {"id":"tf_steal","name":"偷竊","maxLv":10,"type":"passive","passiveStat":"steal","spCost":[0],"cooldown":[0],"mult":[8,14,20,26,32,38,44,50,56,62],"desc":"被動技能，擊敗怪物時有 8%~62% 機率額外掉落一份該怪物的道具。"},
   tf_double: {"id":"tf_double","name":"二刀連擊","maxLv":10,"type":"passive","passiveStat":"doubleAttack","element":"neutral","spCost":[0],"cooldown":[0],"mult":[1,1,1,1,1,1,1,1,1,1],"doubleAttackChance":[7,14,21,28,35,42,49,56,63,70],"hitBonus":[1,2,3,4,5,6,7,8,9,10],"desc":"被動技能，裝備短劍時普攻有 7%~70% 機率造成二連擊（傷害與第一段相同），並永久提升命中 +1~10。拿其他武器不會觸發（黑蛇卡片給的那份不受此限）。"},
@@ -78,25 +83,55 @@ const SKILLS = {
   al_holywater: {"id":"al_holywater","name":"天使之淚","maxLv":1,"type":"passive","passiveStat":"autoDetox","spCost":[0],"cooldown":[0],"mult":[1],"internalCooldown":[10],"desc":"被動技能，身上有異常狀態時自動解除，冷卻10秒。（遊戲目前玩家唯一會有的異常狀態是中毒）"},
   al_holylight: {"id":"al_holylight","name":"神聖之光","maxLv":1,"isQuest":true,"type":"magic","element":"holy","spCost":[15],"cooldown":[3],"mult":[1.25],"desc":"對目標造成125%聖屬性魔法傷害。（官方還會解除目標的霸邪之陣，本作的怪物不會用那招）"},
   kn_riding: {"id":"kn_riding","name":"騎乘術 Peco Peco Ride","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"riding","element":"neutral","spCost":[0],"cooldown":[0],"mult":[1],"desc":"騎乘波利波利鳥，生怪速度+25%。"},
-  kn_chargeatk: {"id":"kn_chargeatk","name":"衝鋒攻擊 Charge Attack","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"chargeRandomProc","element":"neutral","spCost":[0],"cooldown":[0],"mult":[1.5],"internalCooldown":[5],"desc":"被動技能，場上敵人數≥2時，每5秒隨機對一隻造成ATK150%傷害。"},
+  kn_chargeatk: {
+    id: 'kn_chargeatk', name: '衝鋒攻擊 Charge Attack', maxLv: 1, isQuest: true,
+    type: 'damage', spCost: [40], cooldown: [0], mult: [7],
+    desc: '瞬間衝到目標面前，造成 ATK 700% 的近距離物理傷害並擊退 2 格。'
+  },
   kn_cavaliermastery: {"id":"kn_cavaliermastery","name":"騎兵修練 Cavalier Mastery","maxLv":1,"type":"passive","passiveStat":"cavalierBonus","element":"neutral","spCost":[0],"cooldown":[0],"mult":[5],"atkBonus":[10],"critBonus":[3],"desc":"被動技能，永久提升ATK+10、迴避+5、暴擊率+3%。"},
   kn_bowlingbash: {"id":"kn_bowlingbash","name":"怪物互擊 Bowling Bash","maxLv":10,"type":"damage_multihit","element":"neutral","spCost":[13,14,15,16,17,18,20,22,24,28],"cooldown":[5,5,5,5,5,5,5,5,5,5],"mult":[2,2.3,2.6,2.9,3.2,3.5,3.8,4.1,4.5,5],"mult2":[2,2,2,2,2,2,2,2,2,2],"desc":"強力一擊造成2段傷害：第一段ATK×200%~500%，第二段範圍ATK×200%。"},
   kn_pierce: {"id":"kn_pierce","name":"連刺攻擊 Pierce","maxLv":10,"type":"damage","element":"neutral","spCost":[10,10,10,12,12,12,15,15,15,20],"cooldown":[2,2,2,2,2,2,2,2,2,2],"mult":[2,2.44,2.89,3.33,3.78,4.22,4.67,5.11,5.56,6],"requiresWeapon":"spear","desc":"長矛專用技能，造成ATK×200%~600%傷害（需裝備矛類武器，體型加成待日後補上）。"},
   kn_twohandquicken: {"id":"kn_twohandquicken","name":"雙手劍加速 Twohand Quicken","maxLv":10,"type":"buff_aspd","element":"neutral","spCost":[14,18,22,26,30,34,38,42,46,50],"cooldown":[30,30,30,30,30,30,30,30,30,30],"mult":[1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3,1.3],"delayCutPct":[10,10,10,10,10,10,10,10,10,10],"duration":[30,60,90,120,150,180,210,240,270,300],"bonusCrit":[3,4,5,6,7,8,9,10,11,12],"bonusHit":[2,4,6,8,10,12,14,16,18,20],"requiresWeapon":"sword2","desc":"雙手劍專用技能，30秒~300秒內攻擊速度 +30%、追加攻擊後延遲 −10%、暴擊率+3~12、命中+2~20（需裝備雙手劍才能施放）。"},
   kn_spearmastery: {"id":"kn_spearmastery","name":"長矛熟練度 Spear Mastery","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[5,10,15,20,25,30,35,40,45,50],"requiresWeapon":"spear","desc":"長矛ATK+5~50（需裝備矛類武器才生效）。"},
-  kn_spearstab: {"id":"kn_spearstab","name":"長矛刺擊 Spear Stab","maxLv":1,"type":"passive","passiveStat":"spearCounterProc","element":"neutral","spCost":[0],"cooldown":[0],"procChance":[30],"mult":[2],"stunSec":[2],"internalCooldown":[10],"desc":"被動技能，需裝備矛類武器。被攻擊時有30%機率反擊，造成ATK200%傷害並使攻擊者暈眩2秒，冷卻10秒。"},
-  kn_spearboomerang: {"id":"kn_spearboomerang","name":"投擲長矛 Spear Boomerang","maxLv":1,"type":"passive","passiveStat":"spearBoomerangProc","element":"neutral","spCost":[0],"cooldown":[0],"mult":[2],"internalCooldown":[5],"desc":"被動技能，需裝備矛類武器。場上敵人數≥2時，每5秒隨機對一隻造成ATK200%傷害。"},
+  kn_spearstab: {
+    id: 'kn_spearstab', name: '長矛刺擊 Spear Stab', maxLv: 10,
+    type: 'damage', requiresWeapon: 'spear',
+    spCost: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    mult: [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0],
+    desc: '需裝備長矛。對目標造成 ATK 120%~300% 的遠距離物理傷害，並擊退 6 格。'
+  },
+  kn_spearboomerang: {
+    id: 'kn_spearboomerang', name: '投擲長矛 Spear Boomerang', maxLv: 5,
+    type: 'damage', requiresWeapon: 'spear',
+    spCost: [10, 10, 10, 10, 10], cooldown: [0, 0, 0, 0, 0],
+    mult: [1.5, 2.0, 2.5, 3.0, 3.5],
+    desc: '需裝備長矛。投擲長矛對目標造成 ATK 150%~350% 的遠距離物理傷害，射程 3~11 格。'
+  },
   kn_brandishspear: {"id":"kn_brandishspear","name":"騎乘攻擊 Brandish Spear","maxLv":1,"type":"damage_aoe","element":"neutral","spCost":[24],"cooldown":[3],"mult":[5],"strScaleMax":[100],"requiresWeapon":"spear","desc":"長矛專用技能，對全部敵人造成ATK500%傷害，並依STR增加傷害（STR120時+100%），需裝備矛類武器。"},
   kn_autocounter: {"id":"kn_autocounter","name":"反擊 Counter Attack","maxLv":10,"type":"passive","passiveStat":"counterAttack","element":"neutral","spCost":[0],"cooldown":[0],"mult":[15,18,21,24,27,29,31,33,35,35],"desc":"被攻擊時15%~35%機率完全迴避該次傷害並反擊一下必暴。"},
   wz_estimation: {"id":"wz_estimation","name":"怪物情報","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"fleeFlat","spCost":[0],"cooldown":[0],"mult":[10],"intBonus":[5],"desc":"被動技能，永久提升迴避+10、INT+5。"},
-  wz_sightrasher: {"id":"wz_sightrasher","name":"火之獵殺","maxLv":10,"type":"passive","passiveStat":"onHitAoeProc","element":"fire","spCost":[0],"cooldown":[0],"requires":{"skillId":"mg_sight","level":1},"procChance":[100,100,100,100,100,100,100,100,100,100],"mult":[1.2,1.4,1.6,1.8,2,2.2,2.4,2.6,2.8,3],"internalCooldown":[5,5,5,5,5,5,5,5,5,5],"desc":"被動技能，需先學會火狩。被攻擊時觸發，對場上全體敵人造成火屬性魔法傷害120%~300%（依等級），冷卻5秒。"},
+  wz_sightrasher: {
+    id: 'wz_sightrasher', name: '火之獵殺', maxLv: 10,
+    type: 'magic_aoe', element: 'fire',
+    requires: { skillId: 'mg_sight', level: 1 },
+    spCost: [35, 37, 39, 41, 43, 45, 47, 49, 51, 53], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    mult: [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0],
+    desc: '對自身周圍 15×15 造成 MATK 120%~300% 的火屬性魔法傷害並擊退。（官方要先開火狩，本作的火狩是被動，不另外要求）'
+  },
   wz_firepillar: {"id":"wz_firepillar","name":"火柱攻擊","maxLv":10,"type":"ground_trap","trapEffect":"damage","trapMagic":true,"ignoreDef":true,"element":"fire","fieldCd":1,"maxUnits":5,"costItems":["blue_gemstone"],"costQty":1,"costMinLv":6,"spCost":[75,75,75,75,75,75,75,75,75,75],"cooldown":[0,0,0,0,0,0,0,0,0,0],"mult":[0.6,0.8,1,1.2,1.4,1.6,1.8,2,2.2,2.4],"trapHits":[3,4,5,6,7,8,9,10,11,12],"desc":"在敵人來路上立起火柱（持續 30 秒，場上最多 5 根），敵人踩到時爆發 Lv+2 段火焰，總計 MATK 60%~240% 火屬性傷害、無視魔法防禦；Lv1~5 打 3×3、Lv6~10 打 5×5。Lv6 以上消耗 1 個藍色魔力礦石。"},
   wz_meteor: {"id":"wz_meteor","name":"隕石術","maxLv":10,"type":"field_aoe_magic","fieldRadius":3,"element":"fire","fieldTickIntervalSec":1,"spCost":[20,24,30,34,40,44,50,54,60,64],"cooldown":[5,5,5,5,5,5,5,5,5,5],"mult":[1.25,1.67,2.08,2.5,2.92,3.33,3.75,4.17,4.58,5],"duration":[3,3,3,3,3,3,3,3,3,3],"stunChance":[30,30,30,30,30,30,30,30,30,30],"stunSec":[2,2,2,2,2,2,2,2,2,2],"desc":"在目標位置降下隕石（7×7），持續3秒每秒對範圍內造成火屬性魔法傷害125%~500%（依等級），每次都有30%機率使敵人暈眩2秒。"},
   wz_jupitel: {"id":"wz_jupitel","name":"雷鳴術","maxLv":10,"type":"magic","element":"wind","spCost":[20,23,26,29,32,35,38,41,44,47],"cooldown":[8,8,8,8,8,8,8,8,8,8],"mult":[3,4,5,6,7,8,9,10,11,12],"stunOnHit":true,"stunSec":[3,3,3,3,3,3,3,3,3,3],"desc":"無視地形的雷電打擊，造成風屬性魔法傷害300%~1200%（依等級），並使目標暈眩3秒。"},
   wz_vermilion: {"id":"wz_vermilion","name":"怒雷強擊","maxLv":10,"type":"magic_aoe","element":"wind","spCost":[34,36,38,40,42,44,46,48,50,52],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[5,6,7,8,9,10,11,12,13,14],"stunChance":[60,60,60,60,60,60,60,60,60,60],"stunSec":[1,1,1,1,1,1,1,1,1,1],"desc":"從天空降下雷電，對範圍造成風屬性魔法傷害500%~1400%（依等級），並有60%機率使敵人暈眩1秒。"},
   wz_waterball: {"id":"wz_waterball","name":"水球術","maxLv":5,"type":"magic","element":"water","spCost":[20,20,20,20,20],"cooldown":[5,5,5,5,5],"mult":[2.5,4.375,6.25,8.125,10],"desc":"投擲水球攻擊敵人，造成水屬性魔法傷害250%~1000%（依等級）。"},
   wz_icewall: {"id":"wz_icewall","name":"冰刃之牆","maxLv":10,"type":"ground_icewall","element":"water","fieldCd":2,"maxUnits":2,"spCost":[20,20,20,20,20,20,20,20,20,20],"cooldown":[0,0,0,0,0,0,0,0,0,0],"iceHp":[400,600,800,1000,1200,1400,1600,1800,2000,2200],"desc":"在自己與最近敵人之間立起 5 格寬的冰牆，擋住從那個方向走來的敵人；敵人要繞路（約走 3 格的時間）才過得去。冰牆耐久 400~2200、每秒融化 50（持續 8~44 秒）。"},
-  wz_frostnova: {"id":"wz_frostnova","name":"霜凍之術","maxLv":1,"type":"passive","passiveStat":"onHitAoeStunProc","element":"water","spCost":[0],"cooldown":[0],"procChance":[100],"mult":[1],"stunChance":[30],"stunSec":[1],"internalCooldown":[10],"desc":"被動技能，被攻擊時觸發，對場上全體敵人造成水屬性魔法傷害100%，並各有30%機率使其暈眩1秒，冷卻10秒。"},
+  wz_frostnova: {
+    id: 'wz_frostnova', name: '霜凍之術', maxLv: 10,
+    type: 'magic_aoe', element: 'water',
+    spCost: [45, 43, 41, 39, 37, 35, 33, 31, 29, 27], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    mult: [0.73, 0.8, 0.87, 0.93, 1.0, 1.07, 1.13, 1.2, 1.27, 1.33],
+    inflict: { type: 'freeze', chance: [38, 43, 48, 53, 58, 63, 68, 73, 78, 83] },
+    desc: '對自身周圍 7×7 造成 MATK 73%~133% 的水屬性魔法傷害，38%~83% 機率使目標冰凍。'
+  },
   wz_stormgust: {"id":"wz_stormgust","name":"暴風雪","maxLv":10,"type":"field_aoe_magic","fieldRadius":4,"element":"water","fieldTickIntervalSec":1,"spCost":[40,40,40,40,40,42,42,42,42,42],"cooldown":[6,6,6,6,6,6,6,6,6,6],"mult":[1,1.44,1.89,2.33,2.78,3.22,3.67,4.11,4.56,5],"duration":[4,4,4,4,4,4,4,4,4,4],"stunChance":[60,60,60,60,60,60,60,60,60,60],"stunSec":[1,1,1,1,1,1,1,1,1,1],"desc":"在目標位置召喚暴風雪（9×9），每一跳擊退2格，持續4秒每秒對範圍內造成水屬性魔法傷害100%~500%（依等級），每次都有60%機率使敵人暈眩1秒。"},
   wz_earthspike: {"id":"wz_earthspike","name":"地震術","maxLv":5,"type":"magic","element":"earth","spCost":[14,18,22,26,30],"cooldown":[6,6,6,6,6],"mult":[2,4,6,8,10],"desc":"造成地屬性魔法傷害200%~1000%（依等級）。"},
   wz_heavendrive: {"id":"wz_heavendrive","name":"崩裂術","maxLv":5,"type":"field_aoe_magic","element":"earth","fieldTickIntervalSec":1,"spCost":[24,24,24,24,24],"cooldown":[6,6,6,6,6],"mult":[1,2,3,4,5],"duration":[3,3,3,3,3],"stunChance":[80,80,80,80,80],"stunSec":[0.5,0.5,0.5,0.5,0.5],"desc":"從天降下石塊，持續3秒每秒對範圍造成地屬性魔法傷害100%~500%（依等級），每次都有80%機率使敵人暈眩0.5秒。"},
@@ -245,24 +280,18 @@ const SKILLS = {
      各自有獨立的內部冷卻。改成被動之後 SP 成本沒有意義，一律 0。 */
   lk_headcrush: {
     id: 'lk_headcrush', name: '傷害增壓 Head Crush', maxLv: 5,
-    type: 'passive', passiveStat: 'onAttackStrikeProc', element: 'neutral',
-    spCost: [0], cooldown: [0],
-    procChance: [5, 10, 15, 20, 25], internalCooldown: [5, 5, 5, 5, 5],
+    type: 'damage', spCost: [23, 23, 23, 23, 23], cooldown: [0, 0, 0, 0, 0],
     mult: [1.4, 1.8, 2.2, 2.6, 3.0],
-    inflict: { type: 'bleed', chance: [100, 100, 100, 100, 100] },
-    desc: '被動技能。普通攻擊有 5%~25% 機率追加一次 ATK×140%~300% 的重擊並使目標出血（內部冷卻 5 秒）。'
+    inflict: { type: 'bleed', chance: [50, 50, 50, 50, 50] },
+    desc: '對目標造成 ATK 140%~300% 的遠距離物理傷害，50% 機率使其出血。'
   },
   lk_jointbeat: {
     id: 'lk_jointbeat', name: '巧打 Joint Beat', maxLv: 10,
-    type: 'passive', passiveStat: 'onAttackStrikeProc', element: 'neutral',
-    spCost: [0], cooldown: [0], requiresWeapon: 'spear',
-    procChance: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
-    internalCooldown: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
-    mult: [1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3.0, 3.3, 3.6, 4.0],
-    inflict: { type: 'stun+blind+curse+bleed', chance: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100] },
-    desc: '被動技能，需裝備矛類武器。普通攻擊有 3%~30% 機率追加一次 ATK×120%~400% 的關節打擊，'
-        + '並隨機造成昏迷／黑暗／詛咒／出血其中一種（內部冷卻 5 秒）。'
-        + '（官方是依部位給不同減益：腳踝降移速、手腕降攻速、膝肩腰頸各有效果；本作沒有部位概念，改成從性質最接近的四種異常狀態隨機挑一種）'
+    type: 'damage', requiresWeapon: 'spear',
+    spCost: [12, 12, 14, 14, 16, 16, 18, 18, 20, 20], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    mult: [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5],
+    inflict: { type: 'stun+blind+curse+bleed', chance: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55] },
+    desc: '需裝備長矛。對目標造成 ATK 60%~150% 的遠距離物理傷害，10%~55% 機率使其隨機陷入一種狀態（暈眩／黑暗／詛咒／出血）。'
   },
   lk_spiralpierce: {
     id: 'lk_spiralpierce', name: '螺旋擊刺 Spiral Pierce', maxLv: 5,
@@ -364,12 +393,11 @@ const SKILLS = {
      倍率與異常狀態機率照官方逐級值，沒有內部冷卻（20% 已經是節流）。 */
   asc_meteorassault: {
     id: 'asc_meteorassault', name: '黑暗瞬間 Meteor Assault', maxLv: 10,
-    type: 'passive', passiveStat: 'onAttackPhysAoeProc', element: 'neutral',
-    spCost: [0], cooldown: [0],
-    procChance: [20, 20, 20, 20, 20, 20, 20, 20, 20, 20],
+    type: 'damage_aoe',
+    spCost: [13, 16, 19, 22, 25, 28, 31, 34, 37, 40], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     mult: [3.2, 4.4, 5.6, 6.8, 8.0, 9.2, 10.4, 11.6, 12.8, 14.0],
     inflict: { type: 'stun+blind+bleed', chance: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55] },
-    desc: '被動技能，普通攻擊時 20% 機率對全體敵人造成 ATK 320%~1400% 傷害，並有 10%~55% 機率使目標陷入暈眩、黑暗或出血。'
+    desc: '對自身周圍 5×5 造成 ATK 320%~1400% 的近距離物理傷害，10%~55% 機率使目標隨機陷入暈眩／黑暗／出血。'
   },
 
   /* ---------------- 神匠 Whitesmith（#60）----------------
@@ -560,10 +588,8 @@ const SKILLS = {
      傷害源是 MATK、減傷走物理防禦——本作第一個把這兩件事拆開的技能。 */
   hw_magiccrasher: {
     id: 'hw_magiccrasher', name: '魔擊術 Magic Crasher', maxLv: 1,
-    type: 'passive', passiveStat: 'magicCrasherProc', element: 'neutral',
-    spCost: [0], cooldown: [0],
-    procChance: [20], internalCooldown: [5], mult: [1],
-    desc: '被動技能，普通攻擊時 20% 機率追加一發 MATK 100% 的傷害（吃物理防禦，不吃魔防）。冷卻 5 秒。'
+    type: 'damage', matkVsDef: true, spCost: [8], cooldown: [0], mult: [1],
+    desc: '對目標造成 MATK 100% 的遠距離物理傷害（吃物理防禦，不吃魔防）。'
   },
 
   // 官方：自身強化 60 秒，MATK +5%~50%

@@ -10447,8 +10447,9 @@ function castSkillInner(skillId, opts) {
         critFactor = 1 + (0.5 + (state.cardCritDmgPct || 0) / 100) * cdm;
       }
 
+      // matkVsDef：魔擊術（T9）——傷害用 MATK 算，但吃物理防禦
       const dmg = mitigateDamage(
-        skillBaseDamage(useMag, def, elemMult, sk) * skillMult * (1 + skEleDmgBonus)
+        skillBaseDamage(useMag || !!sk.matkVsDef, def, elemMult, sk) * skillMult * (1 + skEleDmgBonus)
           * elementDmgMult(skElement) * critFactor * ailDmgTakenMult(target),
         ...defOf(def, 1, useMag, target)) + raceFlatBonus(def) + faExtraFlat;
       target.hp -= dmg;
