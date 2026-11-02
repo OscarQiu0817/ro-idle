@@ -32,8 +32,20 @@ const SKILLS = {
   mg_lightningbolt: {"id":"mg_lightningbolt","name":"雷擊術","maxLv":10,"type":"magic","element":"wind","spCost":[12,14,16,18,20,22,24,26,28,30],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[1,2,3,4,5,6,7,8,9,10],"desc":"召喚雷電，造成風屬性魔法傷害MATK100%~1000%（依等級）。"},
   mg_thunderstorm: {"id":"mg_thunderstorm","name":"雷爆術","maxLv":10,"type":"magic_aoe","element":"wind","spCost":[29,34,39,44,49,54,59,64,69,74],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[1,2,3,4,5,6,7,8,9,10],"desc":"從天空降下雷電，對範圍造成風屬性魔法傷害MATK100%~1000%（依等級）。"},
   mg_coldbolt: {"id":"mg_coldbolt","name":"冰箭術","maxLv":10,"type":"magic","element":"water","spCost":[12,14,16,18,20,22,24,26,28,30],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":[1,2,3,4,5,6,7,8,9,10],"desc":"發射冰箭，造成水屬性魔法傷害MATK100%~1000%（依等級）。"},
-  mg_frostdiver: {"id":"mg_frostdiver","name":"冰凍術","maxLv":1,"type":"passive","passiveStat":"onHitMagicStunProc","element":"water","spCost":[0],"cooldown":[0],"procChance":[65],"stunSec":[10],"mult":[0.5],"internalCooldown":[10],"desc":"被動技能，被攻擊時有65%機率使攻擊者暈眩10秒，並造成MATK50%魔法傷害。之後若我方對其造成魔法傷害會提前喚醒。冷卻10秒。"},
-  mg_stonecurse: {"id":"mg_stonecurse","name":"石化術","maxLv":1,"type":"passive","passiveStat":"onHitMagicStunProc","element":"earth","spCost":[0],"cooldown":[0],"procChance":[30],"stunSec":[10],"mult":[0.5],"internalCooldown":[10],"desc":"被動技能，被攻擊時有30%機率使攻擊者暈眩10秒，並造成MATK50%魔法傷害。之後若我方對其造成魔法傷害會提前喚醒。冷卻10秒。"},
+  mg_frostdiver: {
+    id: 'mg_frostdiver', name: '冰凍術', maxLv: 10, type: 'magic', element: 'water',
+    spCost: [25, 24, 23, 22, 21, 20, 19, 18, 17, 16], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    mult: [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0],
+    inflict: { type: 'freeze', chance: [38, 41, 44, 47, 50, 53, 56, 59, 62, 65], sec: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30] },
+    desc: '對目標造成 MATK 110%~200% 的水屬性魔法傷害，38%~65% 機率使其冰凍 3~30 秒。'
+  },
+  mg_stonecurse: {
+    id: 'mg_stonecurse', name: '石化術', maxLv: 10, type: 'debuff_single', effect: 'ailment', ailment: 'stone', element: 'earth',
+    spCost: [25, 24, 23, 22, 21, 20, 19, 18, 17, 16], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    successChance: [24, 28, 32, 36, 40, 44, 48, 52, 56, 60],
+    costItems: ['red_gemstone'], costQty: 1,
+    desc: '消耗紅色魔力礦石×1，24%~60% 機率使目標石化。'
+  },
   mg_napalmbeat: {"id":"mg_napalmbeat","name":"心靈爆破","maxLv":10,"type":"magic_aoe","element":"shadow","spCost":[9,9,9,12,12,12,15,15,15,18],"cooldown":[1,1,1,1,1,1,1,1,1,1],"mult":[0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7],"desc":"對目標和周圍造成念屬性魔法傷害MATK80%~170%（依等級）。"},
   mg_soulstrike: {"id":"mg_soulstrike","name":"聖靈召喚","maxLv":10,"type":"magic","element":"neutral","spCost":[18,14,24,20,30,26,36,32,42,38],"cooldown":[10,9.4,8.9,8.3,7.8,7.2,6.7,6.1,5.6,5],"mult":[1,1.44,1.89,2.33,2.78,3.22,3.67,4.11,4.56,5],"undeadBonusPct":[5,10,15,20,25,30,35,40,45,50],"desc":"召喚聖靈攻擊，造成念屬性魔法傷害MATK100%~500%（依等級），對不死種族額外+5%~50%傷害。"},
   mg_safetywall: {"id":"mg_safetywall","name":"暗之障壁","maxLv":10,"type":"buff_shield","party":true,"shieldShared":true,"shieldBlocks":"melee","cdFromDuration":true,"costItems":["blue_gemstone"],"spCost":[30,30,30,35,35,35,40,40,40,40],"cooldown":[10,10,10,10,10,10,10,10,10,10],"shieldCapacityFlat":[300,600,900,1200,1500,1800,2100,2400,2700,3000],"shieldCharges":[2,3,4,5,6,7,8,9,10,11],"duration":[5,10,15,20,25,30,35,40,45,50],"desc":"消耗藍色魔力礦石×1。全隊共用一面障壁：耐久度300~3000，合計抵擋2~11次近戰攻擊，持續5~50秒；冷卻＝持續時間。"},
@@ -76,7 +88,14 @@ const SKILLS = {
   al_angelus: {"id":"al_angelus","name":"天使之障壁","maxLv":10,"type":"buff_angelus","party":true,"spCost":[23,26,29,32,35,38,41,44,47,50],"cooldown":[30,30,30,30,30,30,30,30,30,30],"defPct":[5,10,15,20,25,30,35,40,45,50],"maxHpFlat":[50,100,150,200,250,300,350,400,450,500],"duration":[30,60,90,120,150,180,210,240,270,300],"desc":"使全體的物理防禦力+5%~50%、最大HP+50~500，持續30~300秒（依等級）。"},
   al_heal: {"id":"al_heal","name":"治癒術","maxLv":10,"type":"heal","spCost":[12,14,16,18,20,22,24,26,28,30],"cooldown":[4,4,4,4,4,4,4,4,4,4],"mult":[1,1.3,1.6,1.9,2.2,2.5,2.8,3.1,3.4,3.7],"desc":"恢復自身HP。可在自動戰鬥頁面設定依HP%/SP%門檻自動施放。"},
   al_incagi: {"id":"al_incagi","name":"加速術","maxLv":10,"type":"buff_aspd","party":true,"spCost":[18,21,24,27,30,33,36,39,42,45],"hpCost":[15,15,15,15,15,15,15,15,15,15],"cooldown":[25,25,25,25,25,25,25,25,25,25],"mult":[1.01,1.02,1.03,1.04,1.05,1.06,1.07,1.08,1.09,1.1],"agiFlatBonus":[3,4,5,6,7,8,9,10,11,12],"duration":[60,80,100,120,140,160,180,200,220,240],"desc":"消耗15HP，使**全體**AGI+3~12、攻速+1%~10%，持續60~240秒（依等級）。（官方是指定隊員施放，本作沒有指定對象，改成全隊一起吃）"},
-  al_decagi: {"id":"al_decagi","name":"緩速術","maxLv":10,"type":"passive","passiveStat":"onHitStunProc","spCost":[0],"cooldown":[0],"procChance":[53,56,59,62,65,68,71,74,77,80],"stunSec":0.5,"internalCooldown":[10,9.4,8.9,8.3,7.8,7.2,6.7,6.1,5.6,5],"desc":"被動技能，被攻擊時有53%~80%機率使攻擊者暈眩0.5秒（依等級），冷卻10~5秒。"},
+  al_decagi: {
+    id: 'al_decagi', name: '緩速術', maxLv: 10, type: 'debuff_single', effect: 'decagi',
+    spCost: [15, 17, 19, 21, 23, 25, 27, 29, 31, 33], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    successChance: [53, 56, 59, 62, 65, 68, 71, 74, 77, 80],
+    agiCut: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    duration: [40, 50, 60, 70, 80, 90, 100, 110, 120, 130],
+    desc: '53%~80% 機率使目標緩速：AGI −3~12（迴避等量下降）、移動速度 −25%，持續 40~130 秒。'
+  },
   al_demonbane: {"id":"al_demonbane","name":"天使之擊","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[3,6,9,12,15,18,21,24,27,30],"desc":"對惡魔/不死種族攻擊時，固定傷害+3~30（依等級），不受DEF削減。"},
   al_blessing: {"id":"al_blessing","name":"天使之賜福","maxLv":10,"type":"buff_blessing","party":true,"spCost":[28,32,36,40,44,48,52,56,60,64],"cooldown":[30,30,30,30,30,30,30,30,30,30],"statBonus":[1,2,3,4,5,6,7,8,9,10],"hitBonus":[2,4,6,8,10,12,14,16,18,20],"duration":[60,80,100,120,140,160,180,200,220,240],"desc":"使**全體**STR/INT/DEX各+1~10、HIT+2~20，持續60~240秒（依等級）。（官方是指定隊員施放，本作沒有指定對象，改成全隊一起吃）異常狀態解除（詛咒/石化）暫擱置。"},
   al_crucis: {"id":"al_crucis","name":"天使之光","maxLv":10,"type":"debuff_def","spCost":[10,10,10,10,10,10,10,10,10,10],"cooldown":[20,19,18,17,16,14,13,12,11,10],"mult":[1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2],"duration":[10,10,10,10,10,10,10,10,10,10],"desc":"降低敵人防禦力，持續10秒，冷卻隨等級縮短（20~10秒）。"},
@@ -165,7 +184,13 @@ const SKILLS = {
   bs_mace: {"id":"bs_mace","name":"鈍器製作","maxLv":1,"type":"passive","passiveStat":"weaponCraft","craftCategory":"mace","spCost":[0],"cooldown":[0],"mult":[1],"desc":"被動技能，解鎖鈍器鍛造，基礎成功率15%（依DEX/LUK/神之金屬研究提升）。"},
   bs_spear: {"id":"bs_spear","name":"長矛製作","maxLv":1,"type":"passive","passiveStat":"weaponCraft","craftCategory":"spear","spCost":[0],"cooldown":[0],"mult":[1],"desc":"被動技能，解鎖單手長矛與雙手長矛鍛造，基礎成功率15%（依DEX/LUK/神之金屬研究提升）。"},
   bs_weaponresearch: {"id":"bs_weaponresearch","name":"武器研究","maxLv":10,"type":"passive","passiveStat":"atkFlat","element":"neutral","spCost":[0],"cooldown":[0],"mult":[2,4,6,8,10,12,14,16,18,20],"hitBonus":[2,4,6,8,10,12,14,16,18,20],"craftBonusExtra":[1,2,3,4,5,6,7,8,9,10],"desc":"永久提升ATK與HIT各+2~20，並提升鍛造武器成功率+1%~10%（依等級）。"},
-  bs_hammerfall: {"id":"bs_hammerfall","name":"大地之擊","maxLv":5,"type":"passive","passiveStat":"hammerfallProc","element":"earth","spCost":[0],"cooldown":[0],"singleStunChance":[10,12,15,18,20],"aoeStunChance":[5,6,7,8,10],"stunSec":[1,1,1,1,1],"requiresWeapon":"axemace","desc":"被動技能，裝備斧頭或鈍器攻擊時，10%~20%機率使目前敵人暈眩1秒，另有5%~10%機率使全體敵人暈眩1秒（依等級）。"},
+  bs_hammerfall: {
+    id: 'bs_hammerfall', name: '大地之擊', maxLv: 5, type: 'ailment_aoe', ailment: 'stun', element: 'earth',
+    requiresWeapon: 'axemace',
+    spCost: [10, 10, 10, 10, 10], cooldown: [0, 0, 0, 0, 0],
+    successChance: [30, 40, 50, 60, 70],
+    desc: '需裝備斧頭或鈍器。敲擊地面，使 5×5 內的敵人 30%~70% 機率暈眩。'
+  },
   bs_adrenaline: {"id":"bs_adrenaline","name":"速度激發","maxLv":5,"type":"buff_aspd","party":true,"spCost":[20,23,26,29,32],"cooldown":[30,60,90,120,150],"mult":[1.3,1.3,1.3,1.3,1.3],"partyBuffMult":{"aspd":[1.25,1.25,1.25,1.25,1.25]},"delayCutPct":[10,10,10,10,10],"bonusHit":[8,11,14,17,20],"duration":[30,60,90,120,150],"requiresWeapon":"axemace","partyRequiresWeapon":"axemace","desc":"斧頭／鈍器專用技能，使**全體拿斧頭或鈍器的人**攻擊速度增加（施術者 +30%、隊友 +25%）、追加攻擊後延遲 −10%，並提升HIT+8~20，持續30~150秒（依等級）。拿其他武器的隊友不受影響。"},
   bs_skintemper: {"id":"bs_skintemper","name":"強化火屬性","maxLv":5,"type":"passive","passiveStat":"fireResist","spCost":[0],"cooldown":[0],"mult":[4,8,12,16,20],"neutralResistMult":[1,2,3,4,5],"desc":"被動技能，增加對火屬性傷害的耐性+4%~20%，對無屬性傷害的耐性+1%~5%（依等級）。"},
   bs_weaponperfect: {"id":"bs_weaponperfect","name":"無視體型攻擊","maxLv":5,"type":"buff_ignoresize","party":true,"element":"neutral","spCost":[15,18,21,24,27],"cooldown":[30,40,50,60,70],"duration":[10,20,30,40,50],"desc":"使**全體**的攻擊不再受體型修正影響（只拿掉懲罰，本來就有的加成照留），持續10~50秒（依等級）。（官方為武器完全定義 Weapon Perfection）"},
@@ -201,9 +226,18 @@ const SKILLS = {
   pr_aspersio: {"id":"pr_aspersio","name":"撒水祈福","maxLv":5,"type":"buff_holyweapon","party":true,"spCost":[14,18,22,26,30],"zenyCost":[1500,1500,1500,1500,1500],"cooldown":[15,15,15,15,15],"duration":[60,90,120,150,180],"desc":"消耗1500鋅幣，使全體武器附加聖屬性，持續60~180秒（依等級）。"},
   pr_slowpoison: {"id":"pr_slowpoison","name":"緩毒術","maxLv":4,"type":"buff_ailimmune","ailType":"poison","party":true,"spCost":[6,8,10,12],"cooldown":[10,10,10,10],"duration":[10,20,30,40],"desc":"使全體免疫中毒異常，持續10~40秒（依等級）。"},
   all_resurrection: {"id":"all_resurrection","name":"復活術","maxLv":4,"type":"passive","passiveStat":"onDeathRevive1","spCost":[0],"cooldown":[0],"revivePct":[10,30,50,80],"internalCooldown":[120,100,80,60],"reviveSpCost":[60,60,60,60],"desc":"被動技能，全隊有人倒下時自動原地復活並恢復10%~80%HP（依等級），消耗SP60，冷卻120~60秒。"},
-  pr_lexdivina: {"id":"pr_lexdivina","name":"沉默之術","maxLv":1,"type":"passive","passiveStat":"onAttackSilenceProc","spCost":[0],"cooldown":[0],"procChance":[20],"internalCooldown":[10],"silenceSec":8,"desc":"被動技能，普通攻擊有20%機率使敵人沉默，冷卻10秒。"},
+  pr_lexdivina: {
+    id: 'pr_lexdivina', name: '沉默之術', maxLv: 10, type: 'debuff_single', effect: 'ailment', ailment: 'silence',
+    spCost: [20, 20, 20, 20, 20, 18, 16, 14, 12, 10], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    duration: [30, 35, 40, 45, 50, 60, 60, 60, 60, 60],
+    desc: '使目標沉默 30~60 秒（無法使用技能）。對首領無效。'
+  },
   pr_turnundead: {"id":"pr_turnundead","name":"轉生術","maxLv":10,"type":"magic","element":"holy","spCost":[15,15,15,15,15,17,17,17,17,17],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[1,1.22,1.44,1.67,1.89,2.11,2.33,2.56,2.78,3],"levelScaleMax":100,"intScaleMax":50,"desc":"對目標造成100%~300%聖屬性魔法傷害（依等級），並依基本等級(最高+100%，99級)與INT(最高+50%，INT99)增加傷害。（對不死種族秒殺的部分因遊戲無種族系統，暫不實作）"},
-  pr_lexaeterna: {"id":"pr_lexaeterna","name":"天使之怒","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"angelusProc","spCost":[0],"cooldown":[0],"angelusCooldownSec":10,"desc":"被動技能，每10秒下一次攻擊會造成雙倍傷害。"},
+  pr_lexaeterna: {
+    id: 'pr_lexaeterna', name: '天使之怒', maxLv: 1, isQuest: true, type: 'debuff_single', effect: 'lexaeterna',
+    spCost: [10], cooldown: [0],
+    desc: '目標下一次受到的傷害變成 2 倍。對冰凍或石化中的目標無效。'
+  },
   pr_magnus: {"id":"pr_magnus","name":"十字驅魔攻擊","maxLv":10,"type":"field_aoe_magic","fieldRadius":3,"element":"holy","fieldTickIntervalSec":3,"spCost":[40,42,44,46,48,50,52,54,56,58],"cooldown":[15,15,15,15,15,15,15,15,15,15],"mult":[1,2,3,4,5,6,7,8,9,10],"duration":[12,12,12,12,12,12,12,12,12,12],"desc":"在目標位置造成持續範圍（約7×7）聖屬性魔法傷害，每3秒一次，共持續12秒，每次傷害為MATK 100%~1000%（依等級）。"},
   pr_redemptio: {"id":"pr_redemptio","name":"捨身取義","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"onDeathRevive2","spCost":[0],"cooldown":[0],"revivePct":[50],"internalCooldown":[300],"desc":"被動技能，HP歸零時原地復活並恢復50%HP，冷卻300秒（若復活術可用會優先觸發復活術）。"},
 
@@ -215,7 +249,12 @@ const SKILLS = {
      其中三個現在做得到，是因為需要的東西後來才補上：解除增益要有 `mon.mbuff`（#45）、
      痊癒術要有 `state.playerAil`（#30）、冷笑話要有怪物異常狀態（#29）。
      這些在 #22 寫下時都還不存在。 */
-  ba_frostjoker: {"id":"ba_frostjoker","name":"冷笑話","maxLv":5,"type":"ailment_aoe","element":"water","ailment":"freeze","successChance":[15,20,25,30,35],"spCost":[10,10,10,10,10],"cooldown":[10,10,10,10,10],"desc":"講一個冷到結凍的笑話，對全部敵人各有15%~35%機率造成冰凍（依等級）。"},
+  ba_frostjoker: {
+    id: 'ba_frostjoker', name: '冷笑話', maxLv: 5, type: 'ailment_aoe', ailment: 'freeze', element: 'water',
+    spCost: [12, 14, 16, 18, 20], cooldown: [0, 0, 0, 0, 0],
+    successChance: [20, 25, 30, 35, 40],
+    desc: '說冷笑話使畫面內的敵人 20%~40% 機率冰凍。'
+  },
   pr_impositio: {"id":"pr_impositio","name":"神威祈福","maxLv":5,"type":"buff_impositio","party":true,"spCost":[20,20,20,20,20],"cooldown":[30,30,30,30,30],"watkFlat":[5,10,15,20,25],"duration":[120,120,120,120,120],"desc":"使全體武器 ATK／MATK +5~25，持續120秒。"},
   /* 自動防禦與聖十字審判是十字軍的技能，但 id **沒有 cr_ 前綴**——
      `clock_card` 與 `solace_card` 兩張卡片的 autoSpell 指名這兩個 id，
@@ -834,14 +873,6 @@ const SKILLS = {
     desc: '被動技能。最大SP +1%~10%；裝備樂器時 ATK +3~30、攻速 +1%~10%。'
         + '（官方的合奏移速加成，本作沒有移動，改成生怪加速 +2.5%~25%）'
   },
-  ba_frostjoker: {
-    id: 'ba_frostjoker', name: '冷笑話 Frost Joke', maxLv: 5,
-    type: 'passive', passiveStat: 'onAttackAoeAilment', element: 'water',
-    spCost: [0], cooldown: [0],
-    ailment: 'freeze', mult: [0],
-    procChance: [20, 25, 30, 35, 40], internalCooldown: [5, 5, 5, 5, 5],
-    desc: '被動技能。普通攻擊有 20%~40% 機率講一個冷到結凍的笑話，使全體敵人冰凍（內部冷卻 5 秒）。'
-  },
   ba_dissonance: {
     id: 'ba_dissonance', name: '不諧和音 Dissonance', maxLv: 5,
     type: 'passive', passiveStat: 'onAttackAoeMagic', element: 'neutral',
@@ -921,12 +952,10 @@ const SKILLS = {
         + '（官方的合奏移速加成，本作沒有移動，改成生怪加速 +2.5%~25%）'
   },
   dc_scream: {
-    id: 'dc_scream', name: '驚聲尖叫 Scream', maxLv: 5,
-    type: 'passive', passiveStat: 'onAttackAoeAilment', element: 'neutral',
-    spCost: [0], cooldown: [0],
-    ailment: 'stun', ailSec: [0.5, 0.5, 0.5, 0.5, 0.5], mult: [0],
-    procChance: [20, 25, 30, 35, 40], internalCooldown: [5, 5, 5, 5, 5],
-    desc: '被動技能。普通攻擊有 20%~40% 機率尖叫，使全體敵人暈眩 0.5 秒（內部冷卻 5 秒）。'
+    id: 'dc_scream', name: '驚聲尖叫', maxLv: 5, type: 'ailment_aoe', ailment: 'stun',
+    spCost: [12, 14, 16, 18, 20], cooldown: [0, 0, 0, 0, 0],
+    successChance: [30, 35, 40, 45, 50],
+    desc: '使畫面內的敵人 30%~50% 機率暈眩。'
   },
   dc_uglydance: {
     id: 'dc_uglydance', name: '醜陋之舞 Ugly Dance', maxLv: 5,
@@ -1173,46 +1202,32 @@ const SKILLS = {
      使用者 2026-08-10 指定的對應與機率如下，四個都是普攻 10%~30% 觸發的被動。
      四個各佔一格，所以會疊在一起（頭盔的 ATK 那條也能跟卸除武器疊）。 */
   rg_striphelm: {
-    id: 'rg_striphelm', name: '卸除頭盔 Strip Helm', maxLv: 5,
-    type: 'passive', passiveStat: 'stripProc',
-    spCost: [0], cooldown: [0],
-    mult: [10, 15, 20, 25, 30],
-    stripKind: 'matk', stripMult: [0.75, 0.75, 0.75, 0.75, 0.75], stripFallbackMult: 0.9,
-    stripLabel: '魔法攻擊力', stripDuration: [75, 90, 105, 120, 135],
-    internalCooldown: [5, 5, 5, 5, 5],
-    desc: '被動技能。普通攻擊有 10%~30% 機率使目標的 MATK −25%（沒有 MATK 的怪改為 ATK −10%，'
-        + '可與卸除武器疊加），持續 75~135 秒（內部冷卻 5 秒）。'
+    id: 'rg_striphelm', name: '卸除頭盔 Strip Helm', maxLv: 5, type: 'debuff_single', effect: 'strip',
+    spCost: [12, 14, 16, 18, 20], cooldown: [0, 0, 0, 0, 0],
+    successChance: [10, 15, 20, 25, 30], duration: [75, 90, 105, 120, 135],
+    strips: [{ kind: 'matk', mult: 0.75, fallbackMult: 0.9 }],
+    desc: '10%~30% 機率使目標 INT −40%（本作換算成魔法攻擊力 −25%，沒有魔攻的怪改成攻擊力 −10%），持續 75~135 秒。'
   },
   rg_stripshield: {
-    id: 'rg_stripshield', name: '卸除盾牌 Strip Shield', maxLv: 5,
-    type: 'passive', passiveStat: 'stripProc',
-    spCost: [0], cooldown: [0],
-    mult: [10, 15, 20, 25, 30],
-    stripKind: 'def', stripMult: [0.85, 0.85, 0.85, 0.85, 0.85],
-    stripLabel: '防禦力', stripDuration: [75, 90, 105, 120, 135],
-    internalCooldown: [5, 5, 5, 5, 5],
-    desc: '被動技能。普通攻擊有 10%~30% 機率使目標的防禦力 −15%，持續 75~135 秒（內部冷卻 5 秒）。'
+    id: 'rg_stripshield', name: '卸除盾牌 Strip Shield', maxLv: 5, type: 'debuff_single', effect: 'strip',
+    spCost: [12, 14, 16, 18, 20], cooldown: [0, 0, 0, 0, 0],
+    successChance: [10, 15, 20, 25, 30], duration: [75, 90, 105, 120, 135],
+    strips: [{ kind: 'def', mult: 0.85 }],
+    desc: '10%~30% 機率使目標裝備防禦力 −15%，持續 75~135 秒。'
   },
   rg_striparmor: {
-    id: 'rg_striparmor', name: '卸除鎧甲 Strip Armor', maxLv: 5,
-    type: 'passive', passiveStat: 'stripProc',
-    spCost: [0], cooldown: [0],
-    mult: [10, 15, 20, 25, 30],
-    stripKind: 'def', stripMult: [0.9, 0.9, 0.9, 0.9, 0.9],
-    stripLabel: '防禦力', stripDuration: [75, 90, 105, 120, 135],
-    internalCooldown: [5, 5, 5, 5, 5],
-    desc: '被動技能。普通攻擊有 10%~30% 機率使目標的防禦力 −10%（可與卸除盾牌疊加），'
-        + '持續 75~135 秒（內部冷卻 5 秒）。（官方削的是 VIT，本作怪物沒有 VIT，改為防禦力）'
+    id: 'rg_striparmor', name: '卸除鎧甲 Strip Armor', maxLv: 5, type: 'debuff_single', effect: 'strip',
+    spCost: [17, 19, 21, 23, 25], cooldown: [0, 0, 0, 0, 0],
+    successChance: [10, 15, 20, 25, 30], duration: [75, 90, 105, 120, 135],
+    strips: [{ kind: 'def', mult: 0.9 }],
+    desc: '10%~30% 機率使目標 VIT −40%（本作換算成防禦力 −10%），持續 75~135 秒。'
   },
   rg_stripweapon: {
-    id: 'rg_stripweapon', name: '卸除武器 Strip Weapon', maxLv: 5,
-    type: 'passive', passiveStat: 'stripProc',
-    spCost: [0], cooldown: [0],
-    mult: [10, 15, 20, 25, 30],
-    stripKind: 'atk', stripMult: [0.75, 0.75, 0.75, 0.75, 0.75],
-    stripLabel: '攻擊力', stripDuration: [75, 90, 105, 120, 135],
-    internalCooldown: [5, 5, 5, 5, 5],
-    desc: '被動技能。普通攻擊有 10%~30% 機率使目標的攻擊力 −25%，持續 75~135 秒（內部冷卻 5 秒）。'
+    id: 'rg_stripweapon', name: '卸除武器 Strip Weapon', maxLv: 5, type: 'debuff_single', effect: 'strip',
+    spCost: [17, 19, 21, 23, 25], cooldown: [0, 0, 0, 0, 0],
+    successChance: [10, 15, 20, 25, 30], duration: [75, 90, 105, 120, 135],
+    strips: [{ kind: 'atk', mult: 0.75 }],
+    desc: '10%~30% 機率使目標物理攻擊力 −25%，持續 75~135 秒。'
   },
   rg_compulsion: {
     id: 'rg_compulsion', name: '強制減價 Compulsion Discount', maxLv: 5,
@@ -2353,13 +2368,12 @@ const SKILLS = {
     desc: '被動技能。抄襲的候選名單多出**被動攻擊技**（原本只能挑主動攻擊技）。'
   },
   st_fullstrip: {
-    id: 'st_fullstrip', name: '所有卸除 Full Strip', maxLv: 5,
-    type: 'passive', passiveStat: 'fullStrip',
-    spCost: [0], cooldown: [0],
-    requires: { skillId: 'rg_stripweapon', level: 5 },
-    mult: [7, 9, 11, 13, 15],
-    duration: [75, 90, 105, 120, 135],
-    desc: '被動技能。普攻時有 7%~15% 機率**同時**發動卸除頭盔、盾牌、鎧甲與武器，持續 75~135 秒。'
+    id: 'st_fullstrip', name: '所有卸除 Full Strip', maxLv: 5, type: 'debuff_single', effect: 'strip',
+    spCost: [22, 24, 26, 28, 30], cooldown: [0, 0, 0, 0, 0],
+    successChance: [7, 9, 11, 13, 15], duration: [75, 90, 105, 120, 135],
+    strips: [{ key: 'rg_stripweapon', kind: 'atk', mult: 0.75 }, { key: 'rg_striphelm', kind: 'matk', mult: 0.75, fallbackMult: 0.9 },
+      { key: 'rg_stripshield', kind: 'def', mult: 0.85 }, { key: 'rg_striparmor', kind: 'def', mult: 0.9 }],
+    desc: '7%~15% 機率同時卸除目標的武器、頭盔、盾牌、鎧甲，持續 75~135 秒。'
   },
 
   /* ---------------- 武術宗師 CH_（#79）----------------

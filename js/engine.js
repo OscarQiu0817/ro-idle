@@ -3254,7 +3254,13 @@ const ailDefMult = mon => ailFold(mon, 'defMult', 1);          // 石化↑／�
 /* 睡眠 ×1.5，以及潛擊（#69）掛上去的「受到的傷害 +30%」。
    併在同一支而不是另開消費點：這條被八個傷害路徑呼叫，另開等於要改八個地方，
    而這個 repo 已經因為「推了沒人讀」踩過四次。 */
-const ailDmgTakenMult = mon => ailFold(mon, 'dmgTakenMult', 1) * monDmgTakenBoost(mon);
+const ailDmgTakenMult = mon => ailFold(mon, 'dmgTakenMult', 1) * monDmgTakenBoost(mon) * lexAeternaMult(mon);
+/* 天使之怒（T9，PR_LEXAETERNA）：目標下一次受到的傷害 ×2，用掉就消失；冰凍、石化中無效 */
+function lexAeternaMult(mon) {
+  if (!mon || !mon.lexAeterna) return 1;
+  delete mon.lexAeterna;
+  return 2;
+}
 const ailAlwaysHit = mon => ailList(mon).some(t => MON_AILMENTS[t].alwaysHit);   // 冰凍／睡眠
 // 黑暗：怪物的命中與迴避各降一截，回傳「要打幾折」
 function ailHitMult(mon) {
@@ -6434,7 +6440,7 @@ function playerAttackRange() {
      自動普攻關：停在技能射程只放技能；沒有可放的傷害技能時才退回普攻距離（但不會普攻） */
 // SKILL_ATTACK_TYPES 宣告在檔案後段，這裡不能在載入時就引用（const 暫時性死區），放進函式裡
 const DAMAGE_FIELD_TYPES = ['field_phys_aoe', 'field_aoe_magic', 'multi_dot_stun', 'stun_field'];
-function skillDealsDamage(sk) { return !!sk && sk.type !== 'ground_zone' && sk.type !== 'ground_icewall' && (SKILL_ATTACK_TYPES.includes(sk.type) || DAMAGE_FIELD_TYPES.includes(sk.type)); }
+function skillDealsDamage(sk) { return !!sk && !['ground_zone', 'ground_icewall', 'debuff_single'].includes(sk.type) && (SKILL_ATTACK_TYPES.includes(sk.type) || DAMAGE_FIELD_TYPES.includes(sk.type)); }
 function autoSkillCastableNow(sk, lv) {
   return !state.casting && Date.now() >= (state.acdUntil || 0) && skillReady(sk.id) && state.sp >= skillSpCost(sk, lv)
     && !groundUnitsFull(sk) && !(skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1));
@@ -6576,6 +6582,8 @@ function quagmireCut(mon) {
 /* 減速區：在區域內的怪每格要多花的倍率（取最慢的一個） */
 function zoneSlowMult(mon) {
   let mult = 1;
+  // 緩速術（T9）：移動速度 −25%
+  if (mon.decAgiUntil && Date.now() < mon.decAgiUntil) mult = Math.max(mult, 1 / 0.75);
   for (const z of state.groundUnits || []) {
     if (z.kind === 'zone' && z.slow > 0 && planarDist(mon, z) <= z.radius) mult = Math.max(mult, 1 / Math.max(0.05, 1 - z.slow));
   }
@@ -10095,7 +10103,7 @@ function skillAoeArea(sk, lv) {
   const row = skillCastRow(sk.id);
   if (!row) return null;
   const r = (row.unit && row.unit.range ? castLv(row.unit.range, lv) : 0) || castLv(row.splash, lv);
-  if (!r) return null;
+  if (!r || r < 0) return null;   // rAthena 的 −1 ＝整個畫面，不限範圍
   const tgt = state.monsters && state.monsters[0];
   const self = row.target === 'Self' || !tgt || !Number.isFinite(tgt.d);
   return { r, center: self ? { d: 0, a: 0 } : { d: tgt.d, a: tgt.a || 0 } };
@@ -10278,7 +10286,7 @@ function castSkillInner(skillId, opts) {
 
   const isHeal = sk.type === 'heal' || sk.type === 'heal_over_time';
   const isBuff = ['buff_atk', 'buff_auraflat', 'buff_meltdown', 'buff_windwalk', 'buff_sight', 'buff_matk', 'buff_basilica', 'buff_assumptio', 'buff_reflect', 'buff_providence', 'buff_spearquicken', 'buff_song', 'buff_ensemble', 'encore', 'debuff_aspd_aoe', 'debuff_def_aoe', 'buff_block', 'buff_def', 'buff_aspd', 'buff_flee', 'buff_gold', 'buff_crit', 'buff_maxroll', 'buff_blessing', 'buff_shield', 'buff_sprate', 'buff_lukflat', 'buff_holyweapon', 'buff_elearmor', 'buff_ailimmune', 'buff_angelus', 'buff_elementweapon', 'buff_elementfield', 'buff_chemical', 'debuff_def', 'debuff'].includes(sk.type);
-  const needsMonster = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi', 'debuff_def', 'debuff', 'special_charge', 'poison_proc', 'stun_field', 'multi_dot_stun', 'debuff_web'].includes(sk.type);
+  const needsMonster = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi', 'debuff_def', 'debuff', 'debuff_single', 'special_charge', 'poison_proc', 'stun_field', 'multi_dot_stun', 'debuff_web'].includes(sk.type);
   if (needsMonster && (!state.monsters || state.monsters.length === 0)) return false;
   /* 易燃之網對 BOSS 無效（官方）。**要擋在扣 SP 之前**——寫在 case 裡用 break
      只是跳出 switch，SP 已經扣掉了而且函式還是回傳 true。 */
@@ -10484,7 +10492,8 @@ function castSkillInner(skillId, opts) {
         const ic = Array.isArray(sk.inflict.chance) ? sk.inflict.chance[lv - 1] : sk.inflict.chance;
         if (Math.random() * 100 < ic) {
           const pool = String(sk.inflict.type).split('+');
-          applyAilment(target, def, pool[Math.floor(Math.random() * pool.length)]);
+          const isec = lvArr(sk.inflict.sec, lv);   // 有寫秒數就照寫（冰凍術 3~30 秒）
+          applyAilment(target, def, pool[Math.floor(Math.random() * pool.length)], isec ? { sec: isec } : undefined);
         }
       }
       // 衝鋒箭：命中時使敵人暈眩1~3秒（代表擊退）
@@ -10576,7 +10585,8 @@ function castSkillInner(skillId, opts) {
           const ic = Array.isArray(sk.inflict.chance) ? sk.inflict.chance[lv - 1] : sk.inflict.chance;
           if (Math.random() * 100 < ic) {
             const pool = String(sk.inflict.type).split('+');
-            applyAilment(mon, monDef, pool[Math.floor(Math.random() * pool.length)]);
+            const isec = lvArr(sk.inflict.sec, lv);
+            applyAilment(mon, monDef, pool[Math.floor(Math.random() * pool.length)], isec ? { sec: isec } : undefined);
           }
         }
         pushCombatLog(`  → 對 ${monDef.name} 造成 ${dmg} 點傷害！${aoeCrit ? '（暴擊）' : ''}`);
@@ -10628,11 +10638,44 @@ function castSkillInner(skillId, opts) {
     }
     /* ---- #22 補上的四個新類型 ---- */
     // 冷笑話：不造成傷害，對全場敵人各擲一次異常狀態
+    /* T9 控場類：原作者改成被動觸發的單體減益，還原成官方主動技（successChance 擲骰） */
+    case 'debuff_single': {
+      const target = state.monsters && state.monsters[0];
+      if (!target) break;
+      const def = MONSTERS[target.defId];
+      const chance = lvArr(sk.successChance, lv);
+      const dur = lvArr(sk.duration, lv);
+      const okRoll = chance == null || Math.random() * 100 < chance;
+      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      if (!okRoll) { logMsg(`「${sk.name}」Lv${lv} 對 ${def.name} 失敗了。`); break; }
+      if (sk.effect === 'strip') {
+        (sk.strips || []).forEach(st => {
+          let kind = st.kind, m = st.mult;
+          if (kind === 'matk' && !(def.matk > 0)) { kind = 'atk'; m = st.fallbackMult || 0.9; }
+          applyStrip(target, st.key || sk.id, kind, m, dur);
+        });
+        logMsg(`🗡️ 「${sk.name}」得手！${def.name} 的能力下降（${dur} 秒）。`);
+      } else if (sk.effect === 'ailment') {
+        if (applyAilment(target, def, sk.ailment, dur ? { sec: dur } : undefined)) logMsg(`✨ 「${sk.name}」：${def.name} 陷入${(MON_AILMENTS[sk.ailment] || {}).name || sk.ailment}！`);
+      } else if (sk.effect === 'decagi') {
+        target.decAgiUntil = Date.now() + dur * 1000;
+        target.debuffFlee = lvArr(sk.agiCut, lv); target.debuffFleeEnd = target.decAgiUntil;
+        logMsg(`🐢 「${sk.name}」：${def.name} 移動速度 −25%、AGI −${target.debuffFlee}（${dur} 秒）。`);
+      } else if (sk.effect === 'lexaeterna') {
+        if (ailActive(target, 'freeze') || ailActive(target, 'stone')) { logMsg(`「${sk.name}」對冰凍／石化中的目標無效。`); break; }
+        target.lexAeterna = true;
+        logMsg(`📜 「${sk.name}」：${def.name} 下一次受到的傷害變成 2 倍！`);
+      }
+      if (paid) logMsg(`（消耗${paid.label}）`);
+      break;
+    }
     case 'ailment_aoe': {
       if (!state.monsters || state.monsters.length === 0) break;
       const chance = Array.isArray(sk.successChance) ? sk.successChance[lv - 1] : sk.successChance;
       let hitCount = 0;
+      const area = skillAoeArea(sk, lv);   // rAthena 有範圍的只打範圍內（大地之擊 5×5）
       state.monsters.forEach(m => {
+        if (area && !inAoeArea(area, m)) return;
         if (Math.random() * 100 >= chance) return;
         // applyAilment 自己會處理免疫（冰凍對水屬性與不死族無效那類）
         if (applyAilment(m, MONSTERS[m.defId], sk.ailment)) hitCount++;
@@ -11797,7 +11840,7 @@ function wastesResourceInTown(sk, lv) {
    所以改成**只維護攻擊那份白名單**，其餘非被動一律算輔助——
    之後新增技能類型會自動出現在頁面上，不會再安靜地消失。 */
 const SKILL_ATTACK_TYPES = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi',
-  'damage_aoe', 'magic_aoe', 'poison_proc', 'bomb_random', 'ground_wall', 'ground_trap', 'ground_zone', 'ground_icewall'];
+  'damage_aoe', 'magic_aoe', 'poison_proc', 'bomb_random', 'ground_wall', 'ground_trap', 'ground_zone', 'ground_icewall', 'debuff_single'];
 /* 場上沒怪就放不出效果的類型。castSkill() 是**先扣 SP／鋅幣再進 switch**，
    氣泡蟲召喚那種「沒怪就 return false」的 case 會白白吃掉 5,000 鋅幣，
    所以擋在自動施放這一層。 */
