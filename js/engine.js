@@ -2704,9 +2704,11 @@ function familyOfMonster(monDef) {
 
    刻意合進同一支而不是另開一個函式——本作已經因為「新開了加成卻沒接上消費端」
    踩過四次（#24 buff_flee、#58 buff_def 與技能吃不到 ATK buff、#61 的 VIT flat buff）。
-   八個物理傷害路徑全部呼叫這一支，接在這裡就等於一次接滿。 */
-function cardTargetDmgMult(monDef) {
-  if (!monDef) return 1;
+   八個物理傷害路徑全部呼叫這一支，接在這裡就等於一次接滿。
+   magic＝這一發是魔法：官方 bAddRace／bAddSize／bAddEle／bAddClass 只算物理，魔法改看
+   magicRaceDmg_／magicSizeDmg_／magicEleDmg_（skillBaseDamage 與技能 mult 那邊），這裡整支不加（2026-11-03）。 */
+function cardTargetDmgMult(monDef, magic) {
+  if (!monDef || magic) return 1;
   let bonus = 0;
   const ele = monDef.element || 'none';
   if (state.cardEleDmgBonus && state.cardEleDmgBonus[ele]) bonus += state.cardEleDmgBonus[ele];
@@ -4281,7 +4283,7 @@ function trySongProcs(target, monDef) {
       const md = MONSTERS[mon.defId];
       if (!md) continue;
       const em = getElementMultiplierVsMonster(p.element, md, mon);
-      const dmg = mitigateDamage(skillBaseDamage(true, md, em) * p.mult * (cardTargetDmgMult(md)) * ailDmgTakenMult(mon),
+      const dmg = mitigateDamage(skillBaseDamage(true, md, em) * p.mult * cardTargetDmgMult(md, true) * ailDmgTakenMult(mon),
         ...defOf(md, 1, true, mon));
       noteMonsterDamage(mon, dmg);
       mon.hp -= dmg;
@@ -10484,7 +10486,7 @@ function castSkillInner(skillId, opts) {
         if (typeof showElementFloat === 'function') showElementFloat(target.id, skElement, elemMult);
       }
       // 卡片屬性傷害加成
-      const skEleDmgBonus = cardTargetDmgMult(def) - 1;
+      const skEleDmgBonus = cardTargetDmgMult(def, useMag) - 1;
       let skillMult = mult;
       let faExtraFlat = 0;   // 獵鷹突擊：鋼製喙那份固定傷害，加在防禦之後
       // 超音速投擲被動：音速投擲傷害+90%
@@ -10630,7 +10632,7 @@ function castSkillInner(skillId, opts) {
           continue;
         }
         const monElemMult = getElementMultiplierVsMonster(skElement, monDef, mon);
-        const monEleDmgBonus = cardTargetDmgMult(monDef) - 1;
+        const monEleDmgBonus = cardTargetDmgMult(monDef, useMag) - 1;
         // 負重量上升：加成手推車攻擊傷害
         let aoeMult = mult;
         if (sk.id === 'mc_cartrevolution' && state.cartDmgBonusMult) aoeMult *= (1 + state.cartDmgBonusMult);
@@ -11325,7 +11327,7 @@ function castSkillInner(skillId, opts) {
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
-      const dotEleDmgBonus = cardTargetDmgMult(def) - 1;
+      const dotEleDmgBonus = cardTargetDmgMult(def, useMag) - 1;
       const dmg = mitigateDamage(skillBaseDamage(useMag, def, elemMult) * mult * (1 + dotEleDmgBonus) * ailDmgTakenMult(target), ...defOf(def, 0.6, false, target));
       target.hp -= dmg;
       logMsg(`☠️ 「${sk.name}」Lv${lv} 造成 ${dmg} 點持續傷害！`);
@@ -11740,7 +11742,7 @@ function castSkillInner(skillId, opts) {
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
-      const mhEleDmgBonus = cardTargetDmgMult(def) - 1;
+      const mhEleDmgBonus = cardTargetDmgMult(def, useMag) - 1;
       // 第一段：單體傷害
       const dmg1 = mitigateDamage(skillBaseDamage(useMag, def, elemMult) * mult * (1 + mhEleDmgBonus) * ailDmgTakenMult(target), ...defOf(def, 1, false, target)) + raceFlatBonus(def);
       target.hp -= dmg1;
@@ -11756,7 +11758,7 @@ function castSkillInner(skillId, opts) {
         const mon = state.monsters[i];
         const monDef = MONSTERS[mon.defId];
         const monElemMult = getElementMultiplierVsMonster(skElement, monDef, mon);
-        const mon2EleDmgBonus = cardTargetDmgMult(monDef) - 1;
+        const mon2EleDmgBonus = cardTargetDmgMult(monDef, useMag) - 1;
         const dmg2 = mitigateDamage(skillBaseDamage(useMag, monDef, monElemMult) * mult2 * (1 + mon2EleDmgBonus) * ailDmgTakenMult(mon), ...defOf(monDef, 1, false, mon)) + raceFlatBonus(monDef);
         noteMonsterDamage(mon, dmg2);
         mon.hp -= dmg2;
@@ -11788,7 +11790,7 @@ function castSkillInner(skillId, opts) {
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
-      const multiEleDmgBonus = cardTargetDmgMult(def) - 1;
+      const multiEleDmgBonus = cardTargetDmgMult(def, useMag) - 1;
       const hits = Array.isArray(sk.hits) ? sk.hits[lv - 1] : (sk.hits || 1);
       let totalDmg = 0;
       let landed = 0;
@@ -11813,7 +11815,7 @@ function castSkillInner(skillId, opts) {
       // 命中判定：miss 時不造成傷害，但衝鋒生怪效果仍然發動
       if (skillHits(sk, lv, def, target)) {
         const elemMult = getElementMultiplierVsMonster(skElement, def, target);
-        const scEleDmgBonus = cardTargetDmgMult(def) - 1;
+        const scEleDmgBonus = cardTargetDmgMult(def, useMag) - 1;
         const dmg = mitigateDamage(skillBaseDamage(useMag, def, elemMult) * mult * (1 + scEleDmgBonus) * ailDmgTakenMult(target), ...defOf(def, 1, false, target));
         target.hp -= dmg;
         logMsg(`⚡ 「${sk.name}」Lv${lv} 造成 ${dmg} 點傷害！`);
