@@ -5728,6 +5728,7 @@ function gameTick() {
   tickCasting(moveNow);
   /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
      施放卻要等下一秒，中間角色會站在技能射程上乾等、普攻也打不到。隊友仍在 alliesTick（每秒）。 */
+  ensureNearestTarget();
   if (state.autoSkill) tryAutoCastSkill();
   if (state.monsters.length > 0) {
     // 使用攻擊間隔控制攻擊頻率（累積時間差模式）
@@ -6590,6 +6591,24 @@ function triggerTrap(mon, t) {
     if (t.effect === 'root') m.rootUntil = Date.now() + t.rootSec * 1000 * (def && def.isBoss ? 0.5 : 1);
     if (t.effect === 'blind' || t.effect === 'sleep' || t.effect === 'freeze') applyAilment(m, def, t.effect, { sec: t.ailSec });
   }
+}
+/* 選目標（玩家、隊友、技能都打 monsters[0]）：以前就是最早出生的那隻，會越過身邊的怪去追遠的。
+   改成換目標時選最近的；走過去途中有別隻近 1 格以上就改追那隻（差不多近就不換，免得來回抖）；
+   目標進到交戰距離就鎖住，打死才重選。換的時候原地搬到第一個，別處可能拿著同一個陣列 */
+function ensureNearestTarget() {
+  const ms = state.monsters;
+  if (!ms || !ms.length) { state._targetId = null; return; }
+  const cur = ms[0];
+  const locked = cur.id === state._targetId;
+  if (locked && Number.isFinite(cur.d) && cur.d <= playerEngageRange() + DIST_EPS) return;
+  let best = null;
+  for (const m of ms) if (m.hp > 0 && Number.isFinite(m.d) && (!best || m.d < best.d)) best = m;
+  if (best && best !== cur && !(locked && cur.hp > 0 && Number.isFinite(cur.d) && cur.d - best.d < 1)) {
+    ms.splice(ms.indexOf(best), 1);
+    ms.unshift(best);
+    state.monster = best;
+  }
+  state._targetId = ms[0].id;
 }
 /* 放置目標：最近的怪（施放時還會依技能種類調整距離） */
 function pickGroundTarget() {
