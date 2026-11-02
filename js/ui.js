@@ -1802,14 +1802,8 @@ function stopCastAnim() {
    光芒本身跟 sprite 無關，是掛在 .player-sprite 上的 CSS class，
    讀存檔進來時 buff 還在的話也會自動亮起來（靠 onTickUI 每 tick 對齊）。
 ------------------------------------------------- */
-const SKILL_FX = {
-  kn_twohandquicken: {
-    jobs: ['knight'],
-    sprite: gender => `images/effects/twohandquicken/knight_${gender}.png`,
-    spriteMs: 900,
-    auraClass: 'aura-quicken',
-  },
-};
+// 目前沒有任何技能有專屬特效（雙手劍加速那組不是官方特效圖，2026-11-02 拿掉）；之後從 grf 抽真正的特效再加
+const SKILL_FX = {};
 
 // 先預載，免得第一次施放時圖還沒到、閃一下才出現
 Object.values(SKILL_FX).forEach(fx => {

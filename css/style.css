@@ -551,51 +551,6 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
   100% { opacity: 0;    transform: scale(1.04); }
 }
 
-/* 雙手劍加速：效果持續中角色整個散發金黃色光芒。三層疊出來：
-     ::before  背後的發散光暈（z-index:-1）
-     filter    角色本體染成金色 + 沿輪廓的描邊光
-               色彩那幾道要放在 drop-shadow 前面，才不會連影子一起被染
-     ::after   壓在人物之上的金色光斑（z-index:2，screen 疊加）
-               父層有 filter 會自成一個合成群組，所以 mix-blend-mode 是跟角色本身混色
-   不做呼吸動畫，三層都固定在較淡的那組數值（原本脈動的最暗端）。 */
-.player-sprite.aura-quicken {
-  filter: sepia(0.32) saturate(1.9) hue-rotate(-8deg) brightness(1.10)
-          drop-shadow(0 4px 12px rgba(0,0,0,0.5))
-          drop-shadow(0 0 4px rgba(255, 218, 110, 0.85))
-          drop-shadow(0 0 10px rgba(255, 176, 30, 0.55));
-}
-.player-sprite.aura-quicken::before {
-  content: '';
-  position: absolute;
-  left: 50%; top: 50%;
-  /* 尺寸已經把原本脈動最暗端的 scale(0.94) 乘進去了，所以不再另外縮放 */
-  width: 122%; height: 111%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center,
-              rgba(255, 214, 92, 0.42) 0%,
-              rgba(255, 176, 32, 0.20) 45%,
-              rgba(255, 160, 20, 0) 72%);
-  opacity: 0.65;
-  pointer-events: none;
-  z-index: -1;
-}
-.player-sprite.aura-quicken::after {
-  content: '';
-  position: absolute;
-  left: 50%; top: 52%;
-  width: 112%; height: 104%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center,
-              rgba(255, 240, 175, 0.50) 0%,
-              rgba(255, 205, 70, 0.30) 42%,
-              rgba(255, 170, 20, 0) 72%);
-  opacity: 0.55;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  z-index: 2;
-}
 .monster-area-right {
   flex: 0 0 67%;
   display: flex;

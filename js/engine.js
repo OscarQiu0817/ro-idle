@@ -6438,11 +6438,15 @@ function playerMoveBy(step, ang) {
     p.a = Math.atan2(y, x);
   };
   (state.monsters || []).forEach(shift);
-  (state.groundUnits || []).forEach(u => {
-    shift(u);
-    if (u.cells) u.half = Math.min(Math.PI, u.cells / 2 / Math.max(0.5, u.d));   // 牆寬 N 格 ≈ N ÷ 距離
+  // 隊友放的場地物件、場地魔法存在隊友自己身上，也要一起平移，不然會跟著玩家走
+  const owners = [state].concat(_allyActing ? [] : allyList());
+  owners.forEach(o => {
+    (o.groundUnits || []).forEach(u => {
+      shift(u);
+      if (u.cells) u.half = Math.min(Math.PI, u.cells / 2 / Math.max(0.5, u.d));   // 牆寬 N 格 ≈ N ÷ 距離
+    });
+    (o.activeFieldEffects || []).forEach(f => shift(f.center));
   });
-  (state.activeFieldEffects || []).forEach(f => shift(f.center));
   state.worldX = (state.worldX || 0) + dx;
   state.worldY = (state.worldY || 0) + dy;
   state._walkAt = Date.now();
