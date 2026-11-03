@@ -43,12 +43,22 @@ const monBoss = {};     // rAthena 怪物 id → 首領階級（MVP 或迷你王
 {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'data.js'), 'utf8');
   const re = /['"]?id['"]?:\s*['"](\w+)['"],\s*['"]?imgId['"]?:\s*(\d+),\s*['"]?name['"]?:\s*['"]([^'"]+)['"],\s*['"]?icon['"]?:\s*['"][^'"]*['"],\s*['"]?level['"]?:.*$/mg;
+  const keyBoss = {};    // MONSTERS key → 首領階級
   for (const m of src.matchAll(re)) {
     monName[m[2]] = m[3];
     if (!monKey[m[2]]) monKey[m[2]] = m[1];
-    if (/['"]?isBoss['"]?:\s*true/.test(m[0])) monBoss[m[2]] = true;
+    keyBoss[m[1]] = /['"]?isBoss['"]?:\s*true/.test(m[0]);
+    if (keyBoss[m[1]]) monBoss[m[2]] = true;
   }
+  /* rAthena 有些地圖刷的是 G_ 版本（G_ALIOT、G_THA_ODIUM…），本作只收一般版本；
+     G_ 版本對不到時改用去掉 G_ 的那隻（MONSTERS 的 key 就是小寫 AegisName） */
   const db = fs.readFileSync(path.join(ROOT, 'grf_ex', 'mob_db.yml'), 'utf8');
+  for (const m of db.matchAll(/^ {2}- Id: (\d+)\r?\n {4}AegisName: G_(\w+)/mg)) {
+    const base = m[2].toLowerCase();
+    if (monKey[m[1]] || !(base in keyBoss)) continue;
+    monKey[m[1]] = base;
+    if (keyBoss[base]) monBoss[m[1]] = true;
+  }
   for (const m of db.matchAll(/^ {2}- Id: (\d+)\r?\n {4}AegisName: \w+\r?\n {4}Name: (.+)$/mg)) if (!monName[m[1]]) monName[m[1]] = m[2].trim() + '（未收錄）';
 }
 
@@ -193,8 +203,9 @@ const maps = [...allIds].sort().map(id => {
   for (const [mid, n] of Object.entries(spawns[id] || {})) {
     const key = monKey[mid];
     if (!key || town) continue;
-    if (monBoss[mid]) (bosses[id] = bosses[id] || []).push(key);
-    else monsters.push({ id: key, weight: n });
+    // G_ 版本對應回一般版本後可能跟原本那行重複：同一隻合併
+    if (monBoss[mid]) { const b = bosses[id] = bosses[id] || []; if (!b.includes(key)) b.push(key); }
+    else { const o = monsters.find(x => x.id === key); if (o) o.weight += n; else monsters.push({ id: key, weight: n }); }
   }
   monsters.sort((a, b) => b.weight - a.weight);
   return {
