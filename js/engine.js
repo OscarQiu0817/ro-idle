@@ -324,7 +324,6 @@ function createCharacter(name, statAlloc, gender) {
     spirits: 0,            // 武僧的氣球體（#70）：跨 tick 的資源，不歸 recomputeDerived 管
     sageAutoSpellId: null, // 賢者自動念咒挑的魔法（#71）
     converterElement: null,// 肯貝特武器附魔選的屬性
-    elementChangePick: null,// 元素更換選的屬性
     autoSkill: true,
     autoAttack: true,      // 自動普攻；關掉時停在技能射程只放技能（3d）
     autoSkillConfig: null, // 3d：4 招優先序，見 defaultAutoSkillConfig()（建角／讀檔時補上）
@@ -733,21 +732,11 @@ function usableSkillEntries() {
 /* ---------------- 抄襲：挑一個技能（#69）----------------
    官方是「記住最後一個打到你的技能」，使用者 2026-08-10 改成自己挑。
    可挑的範圍是**全技能庫裡的攻擊技能**，等級上限＝抄襲的等級。 */
-const PLAGIARISM_ATTACK_TYPES = ['damage', 'magic', 'damage_aoe', 'magic_aoe',
-  'damage_multi', 'damage_multihit', 'dot', 'poison_proc', 'stun_field', 'multi_dot_stun',
-  'field_aoe_magic', 'special_charge'];
-/* 被動型的攻擊技（普攻觸發那一批）。自由保護（#79）學了之後才進候選名單。
-   判斷方式是「有沒有 passiveStat、而且那個 passive 真的會打人」——
-   沒有一個共用旗標可以查，所以列出目前會造成傷害的那些 passiveStat。 */
-const PLAGIARISM_PASSIVE_STATS = [
-  'tripleAttack', 'chainCombo', 'comboFinish', 'extremityFist', 'investigate',
-  'fingerOffensive', 'balkyoung', 'palmStrike', 'tigerFist', 'chainCrush',
-  'raidProc', 'onAttackStrike', 'magicCrasher', 'soulBurn', 'tarotCard',
-];
+/* 候選＝技能欄當攻擊技用的類型（SKILL_ATTACK_TYPES，含場地技、單體減益）＋傷害場域＋衝鋒類；
+   被動與未實裝的不算。自由保護 T9 改未實裝，被動攻擊技不再開放。 */
 function plagiarismIsAttack(sk) {
-  if (PLAGIARISM_ATTACK_TYPES.includes(sk.type)) return true;
-  return !!(state.preserveOn && sk.type === 'passive'
-    && PLAGIARISM_PASSIVE_STATS.includes(sk.passiveStat));
+  if (!sk || sk.type === 'passive' || sk.unimplemented) return false;
+  return isAttackSkill(sk) || DAMAGE_FIELD_TYPES.includes(sk.type) || sk.type === 'special_charge';
 }
 function plagiarismChoices() {
   if (!state.plagiarismLv) return [];
@@ -838,13 +827,12 @@ function passiveSourceSkills() {
      一輩子進不了這個清單。使用者 2026-08-16 回報「抄襲的被動技 六合拳沒有觸發」。
 
      `plagiarizedLv()` 讀的 `state.plagiarismLv` 也是那一圈才設的，等於「要先跑完
-     才知道要不要跑」——所以先就地把抄襲等級與自由保護的開關算出來。
-     兩個值稍後在迴圈裡會被 case 'plagiarism' / 'preserve' 設成同一個結果。 */
+     才知道要不要跑」——所以先就地把抄襲等級算出來，稍後迴圈裡 case 'plagiarism' 會設成同一個結果。
+     舊存檔抄的技能已不在候選名單（例：自由保護時代的被動攻擊技）就清掉。 */
   out.forEach(sk => {
-    if (sk.type !== 'passive') return;
-    if (sk.passiveStat === 'plagiarism') state.plagiarismLv = skillLv(sk.id);
-    else if (sk.passiveStat === 'preserve' && skillLv(sk.id)) state.preserveOn = true;
+    if (sk.type === 'passive' && sk.passiveStat === 'plagiarism') state.plagiarismLv = skillLv(sk.id);
   });
+  if (state.plagiarismSkillId && !plagiarismIsAttack(SKILLS[state.plagiarismSkillId])) state.plagiarismSkillId = null;
   const plagId = state.plagiarismSkillId;
   if (plagId && !inJobs.has(plagId) && plagiarizedLv(plagId)) {
     const sk = findSkillAnywhere(plagId);
@@ -1109,7 +1097,6 @@ function recomputeDerived(fullHeal) {
 
   // Passive skill bonuses（跨職業）
   state.stealChance = 0;
-  state.hasAutoDetox = false;
   state.hasSandmanProc = false;
   state.hasBackslideDodge = false;
   state.hasPoisonReact = false;
@@ -1171,10 +1158,6 @@ function recomputeDerived(fullHeal) {
   state.hasAspdFlatPassive = false;
   state.hasAngelusProc = false;
   state.angelusCooldownSec = 10;
-  state.hasAutoRevive1 = false;
-  state.autoRevive1HpPct = 0;
-  state.autoRevive1CooldownSec = 0;
-  state.autoRevive1SpCost = 0;
   state.hasAutoRevive2 = false;
   state.autoRevive2HpPct = 0;
   state.autoRevive2CooldownSec = 0;
@@ -1196,9 +1179,6 @@ function recomputeDerived(fullHeal) {
   state.onAttackAoeMult = 0;
   state.onAttackAoeElement = 'none';
   state.onAttackAoeCooldownSec = 5;
-  state.hasPartyAutoCure = false;
-  state.partyAutoCureTypes = null;
-  state.partyAutoCureCooldownSec = 10;
   state.hasAttackSilenceProc = false;
   state.attackSilenceChance = 0;
   state.attackSilenceCooldownSec = 10;
@@ -1296,7 +1276,6 @@ function recomputeDerived(fullHeal) {
   state.stealCoinCdSec = 5;
   state.stripProcs = [];        // 卸除頭盔／盾牌／鎧甲／武器
   state.fullStrip = null;       // 所有卸除（#79）
-  state.preserveOn = false;     // 自由保護（#79）：抄襲可選被動攻擊技
   state.soulCollect = null;     // 狂蓄氣（#79）
   state.palmStrike = null;      // 猛虎硬派山（#79）
   state.tigerFist = null;       // 伏虎拳（#79）
@@ -1331,7 +1310,6 @@ function recomputeDerived(fullHeal) {
   state.dispellProc = null;     // 魔法效果解除
   state.abracadabra = null;     // 隨機技能
   state.elementConverter = null;// 肯貝特武器附魔（面板功能）
-  state.elementChanges = {};    // 元素更換：{ fire: {...}, water: {...}, … }
   // 鍊金術士被動（#72）
   state.pharmacyLv = 0;         // 配藥等級＝解鎖表（1 火煙瓶／2 鹽酸瓶／3 植物瓶／4 護貝藥／5~8 四屬抵抗藥水）
   state._alchemyZenyMult = 1;   // 知識藥水＋配藥 Lv9：鍊金術技能的鋅幣倍率（相乘）
@@ -1560,7 +1538,6 @@ function recomputeDerived(fullHeal) {
           state.fullStrip = { chance: val, durSec: at('duration', 75), cdSec: at('internalCooldown', 5) };
           break;
         }
-        case 'preserve': { state.preserveOn = true; break; }
         // ---- 武術宗師（#79）----
         case 'soulCollect': {
           state.soulCollect = { chance: val, cdSec: at('internalCooldown', 5) };
@@ -1847,8 +1824,6 @@ function recomputeDerived(fullHeal) {
           };
           break;
         }
-        /* 四個元素更換共用這個 case，只有 element 不同。
-           實際會觸發的是玩家在自動戰鬥面板選的那一個（`state.elementChangePick`）。 */
         /* ---------------- 鍊金術士的被動（#72）----------------
            這個職業的技能幾乎全部要花鋅幣，所以三個被動都在做同一件事：把價錢壓下來。
            折扣本身**不在這裡寫進 zenyCostReductionPct**——那張表在這個迴圈之前就被
@@ -1877,15 +1852,6 @@ function recomputeDerived(fullHeal) {
           break;
         }
         case 'bioethics': break;   // 官方就寫「沒有任何效能」，只是技能樹的起頭
-        case 'elementChange': {
-          state.elementChanges[sk.element] = {
-            id: sk.id, name: sk.name, element: sk.element, chance: val,
-            durSec: Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration,
-            cdSec: Array.isArray(sk.internalCooldown) ? sk.internalCooldown[lv - 1] : sk.internalCooldown,
-            costItems: sk.costItems || [], goldFallback: sk.goldFallback || 0,
-          };
-          break;
-        }
         /* 十字軍兩個被動（#66）。 */
         /* 光之盾：官方是主動 buff、只擋遠距離物理（−20%~−80%）＋攻速懲罰。
            本作怪物沒有遠近之分，照抄就是全域減傷 80%；使用者指定改成被動、免傷砍半到 10%~40%、
@@ -2084,11 +2050,6 @@ function recomputeDerived(fullHeal) {
           }
           break;
         }
-        case 'autoDetox': {
-          state.hasAutoDetox = true;
-          state.autoDetoxCooldownSec = Array.isArray(sk.internalCooldown) ? sk.internalCooldown[lv - 1] : (sk.internalCooldown || 30);
-          break;
-        }
         case 'sandmanProc': {
           state.hasSandmanProc = true;
           state.sandmanProcChance = Array.isArray(sk.procChance) ? sk.procChance[lv - 1] : sk.procChance;
@@ -2208,26 +2169,11 @@ function recomputeDerived(fullHeal) {
         }
         /* 沉默之術（#95）：官方是主動的單體沉默，使用者指定改成普攻機率觸發的被動。
            冷卻是「這個被動自己的」內部冷卻，不佔技能冷卻表。 */
-        /* 治療術（#97）：官方是主動的單體解狀態，使用者指定改成
-           「全隊有人中沉默／混亂／黑暗就自動解除」的被動。 */
-        case 'partyAutoCure': {
-          state.hasPartyAutoCure = true;
-          state.partyAutoCureTypes = sk.cureTypes || ['silence', 'confusion', 'blind'];
-          state.partyAutoCureCooldownSec = Array.isArray(sk.internalCooldown) ? sk.internalCooldown[lv - 1] : (sk.internalCooldown || 10);
-          break;
-        }
         case 'onAttackSilenceProc': {
           state.hasAttackSilenceProc = true;
           state.attackSilenceChance = Array.isArray(sk.procChance) ? sk.procChance[lv - 1] : sk.procChance;
           state.attackSilenceCooldownSec = Array.isArray(sk.internalCooldown) ? sk.internalCooldown[lv - 1] : (sk.internalCooldown || 10);
           state.attackSilenceSec = sk.silenceSec || 8;
-          break;
-        }
-        case 'onDeathRevive1': {
-          state.hasAutoRevive1 = true;
-          state.autoRevive1HpPct = Array.isArray(sk.revivePct) ? sk.revivePct[lv - 1] : sk.revivePct;
-          state.autoRevive1CooldownSec = Array.isArray(sk.internalCooldown) ? sk.internalCooldown[lv - 1] : sk.internalCooldown;
-          state.autoRevive1SpCost = Array.isArray(sk.reviveSpCost) ? sk.reviveSpCost[lv - 1] : (sk.reviveSpCost || 0);
           break;
         }
         case 'onDeathRevive2': {
@@ -4063,36 +4009,6 @@ function tryOnAttackStrikes(target, monDef) {
   }
 }
 
-/* 治療術（#97）：全隊有人中沉默／混亂／黑暗就自動解除，內部冷卻 10 秒。
-
-   隊友那半邊現在還碰不到——`monsterAttackAlly()` 不會掛異常狀態，所以隊友身上
-   一直是空的。照樣寫進去是因為規則是「全隊」，等哪天怪會對隊友下狀態就自動生效，
-   不必回頭再想起這件事。 */
-function tickPartyAutoCure() {
-  const now = Date.now();
-  /* 誰有這支被動、誰的冷卻好了就誰解（#105）。以前只認玩家身上那一份，
-     祭司隊友的治療術等於不存在。倒地的隊友不算施術者。 */
-  const caster = partySupportCasters().find(c => c.hasPartyAutoCure && now >= (c.partyAutoCureReadyAt || 0));
-  if (!caster) return;
-  const types = caster.partyAutoCureTypes || [];
-  const cured = [];
-  const clear = (holder, who) => {
-    if (!holder || !holder.playerAil) return;
-    types.forEach(t => {
-      if (holder.playerAil[t] && holder.playerAil[t] > now) {
-        delete holder.playerAil[t];
-        cured.push(`${who}的${(PLAYER_AILMENTS[t] || {}).name || t}`);
-      }
-    });
-  };
-  clear(state, '你');
-  allyList().forEach(a => clear(a, a && a._allyName));
-  if (!cured.length) return;
-  caster.partyAutoCureReadyAt = now + (caster.partyAutoCureCooldownSec || 10) * 1000;
-  const by = caster === state ? '' : `（${caster._allyName}）`;
-  logMsg(`💊 治療術發動${by}，解除了${cured.join('、')}。`);
-}
-
 /* 沉默之術（#95）：普攻機率讓目標沉默。使用者指定「20% 機率、冷卻 10 秒」，
    所以機率過了還要看內部冷卻——不然一場戰鬥裡目標幾乎不會有能開口的時候。
    走 `applyAilment()`，BOSS 的持續時間自動減半、免疫種族自動擋下。 */
@@ -4909,11 +4825,13 @@ function trySageProcs(target, monDef) {
 
   /* 隨機技能：官方是消耗黃色魔力礦石×2 隨機發動一個技能。
      使用者指定池子限定**攻擊技能**、等級＝本技能等級但不超過該技能自己的上限。
-     池子的查詢跟流氓的抄襲共用 `PLAGIARISM_ATTACK_TYPES`。 */
+     池子用自己的類型清單（抄襲 T9 改用 plagiarismIsAttack，這裡沒跟著換）。 */
   const ab = state.abracadabra;
+  const ABRACADABRA_TYPES = ['damage', 'magic', 'damage_aoe', 'magic_aoe', 'damage_multi', 'damage_multihit',
+    'dot', 'poison_proc', 'stun_field', 'multi_dot_stun', 'field_aoe_magic', 'special_charge'];
   if (ab && target && target.hp > 0
       && Math.random() * 100 < ab.chance && ready('sa_abracadabra', ab.cdSec)) {
-    const pool = Object.values(SKILLS).filter(sk => PLAGIARISM_ATTACK_TYPES.includes(sk.type));
+    const pool = Object.values(SKILLS).filter(sk => ABRACADABRA_TYPES.includes(sk.type));
     if (pool.length && sageCanPay(ab.costItems, ab.costQty)) {
       const paid = sagePay(ab.costItems, ab.costQty);
       const sk = pool[Math.floor(Math.random() * pool.length)];
@@ -4921,22 +4839,6 @@ function trySageProcs(target, monDef) {
       if (castSkill(sk.id, { free: true, forceLv: lv })) {
         logMsg(`🎲 「${ab.name}」抽到了「${sk.name}」Lv${lv}！（消耗${paid ? paid.label : '—'}）`);
       }
-    }
-  }
-
-  /* 元素更換：官方 maxLv 0 的四個技能，使用者指定轉職獲得、面板四選一。
-     把**這一隻怪**暫時變成選定的屬性 10 秒（首領階級也吃，使用者指定）。
-     覆寫寫在怪物實體上，`getElementMultiplierVsMonster` 的第三個參數就是為它加的。 */
-  const pick = state.elementChangePick;
-  const ec = pick && state.elementChanges ? state.elementChanges[pick] : null;
-  if (ec && target && target.hp > 0 && monDef
-      && monElementOf(monDef, target) !== ec.element
-      && Math.random() * 100 < ec.chance && ready(ec.id, ec.cdSec)) {
-    if (sageCanPay(ec.costItems, 1, ec.goldFallback)) {
-      const paid = sagePay(ec.costItems, 1, ec.goldFallback);
-      target.eleOverride = ec.element;
-      target.eleOverrideEnd = now + ec.durSec * 1000;
-      logMsg(`🌀 「${ec.name}」！${monDef.name} 變成${ELEMENT_NAMES[ec.element]}屬性 ${ec.durSec} 秒（消耗${paid ? paid.label : '—'}）。`);
     }
   }
 }
@@ -5596,7 +5498,6 @@ function gameTick() {
      30 秒的幸運之頌歌會撐成 5 分鐘。 */
   tickAllyBuffs();
   tickAllyCooldowns();   // 隊友冷卻也要倒數（#116），不然輔助技能只放第一發
-  tickPartyAutoCure();   // 治療術（#97）：全隊自動解沉默／混亂／黑暗
 
   if (state.hp <= 0) return; // 等待復活流程
 
@@ -5624,15 +5525,6 @@ function gameTick() {
     tickBleed();
     // 玩家身上的中毒／出血，順便清掉過期的異常狀態
     tickPlayerAilments();
-    // 解毒被動：玩家中毒時自動解除（目前遊戲尚無玩家中毒機制，此為預留掛鉤）
-    if (state.hasAutoDetox && state.playerPoisoned) {
-      const readyAt = state.autoDetoxReadyAt || 0;
-      if (Date.now() >= readyAt) {
-        state.playerPoisoned = false;
-        state.autoDetoxReadyAt = Date.now() + (state.autoDetoxCooldownSec || 30) * 1000;
-        logMsg('💊 解毒發動！自動解除了中毒狀態。');
-      }
-    }
     // 手推車使用被動：定時從等級解鎖的道具池隨機獲得1個
     if (state.hasAutoCartItem) {
       const readyAt = state.cartItemReadyAt || 0;
@@ -6503,7 +6395,7 @@ const DAMAGE_FIELD_TYPES = ['field_phys_aoe', 'field_aoe_magic', 'multi_dot_stun
 function skillDealsDamage(sk) { return !!sk && !['ground_zone', 'ground_icewall', 'debuff_single'].includes(sk.type) && (SKILL_ATTACK_TYPES.includes(sk.type) || DAMAGE_FIELD_TYPES.includes(sk.type)); }
 function autoSkillCastableNow(sk, lv) {
   return !state.casting && Date.now() >= (state.acdUntil || 0) && skillReady(sk.id) && state.sp >= skillSpCost(sk, lv)
-    && !groundUnitsFull(sk) && !(skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1));
+    && !groundUnitsFull(sk) && !(skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1, sk.goldFallback));
 }
 /* 要扣觸媒的技能：costMinLv 以上才扣（火柱攻擊 Lv6 起吃藍礦石） */
 function skillItemCost(sk, lv) {
@@ -8445,14 +8337,6 @@ function killMonster(def, monObj) {
 function tryAutoRevive() {
   const now = Date.now();
   const full = () => { state.hp = state.maxHp; state.sp = state.maxSp; };
-  if (state.hasAutoRevive1 && now >= (state.autoRevive1ReadyAt || 0) && state.sp >= (state.autoRevive1SpCost || 0)) {
-    state.sp -= (state.autoRevive1SpCost || 0);
-    state.autoRevive1ReadyAt = now + state.autoRevive1CooldownSec * 1000;
-    state.hp = Math.max(1, Math.round(state.maxHp * state.autoRevive1HpPct / 100));
-    if (state.cardReviveFull) full();
-    logMsg(`✨ 復活術發動！原地復活，恢復了${state.cardReviveFull ? '全部' : state.autoRevive1HpPct + '%'} HP！`);
-    return true;
-  }
   if (state.hasAutoRevive2 && now >= (state.autoRevive2ReadyAt || 0)) {
     state.autoRevive2ReadyAt = now + state.autoRevive2CooldownSec * 1000;
     state.hp = Math.max(1, Math.round(state.maxHp * state.autoRevive2HpPct / 100));
@@ -8460,17 +8344,20 @@ function tryAutoRevive() {
     logMsg(`✨ 捨身取義發動！原地復活，恢復了${state.cardReviveFull ? '全部' : state.autoRevive2HpPct + '%'} HP！`);
     return true;
   }
-  /* 自己的兩條都不行時，換還站著的祭司隊友扶（#105）。
-     技能寫的是「全隊有人倒下」，倒下的人是玩家時當然也算。 */
+  /* 復活術（T9）：官方不能復活自己，換站著、有勾自動施放的隊友扶。
+     玩家沒有倒地狀態，所以不跑詠唱，當場扣隊友 SP 與一顆藍色魔力礦石。 */
+  const res = findSkillAnywhere('all_resurrection');
   for (const a of allyAliveList()) {
-    if (!a.hasAutoRevive1 || now < (a.autoRevive1ReadyAt || 0)) continue;
-    const cost = a.autoRevive1SpCost || 0;
-    if (a.sp < cost) continue;
+    if (!(a.autoSupportSkills || {}).all_resurrection) continue;
+    const lv = withAlly(a, () => skillLv('all_resurrection'));
+    const cost = lv ? skillSpCost(res, lv) : 0;
+    if (!lv || a.sp < cost || !sageCanPay(res.costItems, 1)) continue;
     a.sp -= cost;
-    a.autoRevive1ReadyAt = now + a.autoRevive1CooldownSec * 1000;
-    state.hp = Math.max(1, Math.round(state.maxHp * a.autoRevive1HpPct / 100));
+    const paid = sagePay(res.costItems, 1);
+    const pct = lvArr(res.revivePct, lv);
+    state.hp = Math.max(1, Math.round(state.maxHp * pct / 100));
     if (state.cardReviveFull) full();
-    logMsg(`✨ 復活術發動（${a._allyName}）！扶起了你（HP ${a.autoRevive1HpPct}%）。`);
+    logMsg(`✨ 復活術發動（${a._allyName}）！扶起了你（HP ${state.cardReviveFull ? 100 : pct}%，消耗${paid ? paid.label : '—'}）。`);
     return true;
   }
   // 牧師遺物是最後一道保險：自己的復活術與隊友的祭司都優先用掉（#113）
@@ -9002,9 +8889,8 @@ function alliesTick() {
   list.forEach(ally => {
     if (!ally || !allyOnThisMap(ally)) return;
     if (ally._downed) {
-      /* 復活術（#95）優先：那是技能，不吃天地樹葉子也不必等倒地冷卻。
-         冷卻中或 SP 不夠才輪到葉子那條路。 */
-      if (!tryPriestReviveAlly(ally) && now >= (ally._reviveAt || 0)) tryAutoReviveAlly(ally);
+      // 復活術（T9）由其他人的輔助自動施放處理；這裡只剩天地樹葉子那條路
+      if (now >= (ally._reviveAt || 0)) tryAutoReviveAlly(ally);
       return;
     }
     tryAllyPotion(ally);        // 先喝水再打，免得這一輪就倒了
@@ -9264,7 +9150,7 @@ function tickAllyCooldowns() {
 /* ---------------- 隊伍支援技的施術者（#105）----------------
 
    復活術與治療術本來只認**玩家自己身上**的那一份：兩支都跑在玩家的 state 上、
-   讀 `state.hasAutoRevive1` / `state.hasPartyAutoCure`。
+   讀 `state.hasAutoRevive1`（T9 起復活術改成主動技，見 downedAllyToRevive）。
    結果是「雇一個祭司當隊友，他的復活術與治療術完全不會作用」——
    使用者 2026-08-16 指定要讓隊友那份也算數。
 
@@ -9279,33 +9165,10 @@ function partySupportCasters() {
 // 施術者的稱呼（玩家沒有 _allyName）
 function casterName(c) { return c === state ? '你' : (c._allyName || '隊友'); }
 
-/* 復活術（#95）：使用者指定改成「全隊有人倒下就自動扶起」。
-
-   跟自己那半邊（`tryAutoRevive()`）**共用同一個冷卻與 SP 消耗**——官方就是同一支技能，
-   分成兩份冷卻等於憑空多一次復活。回血量、SP 消耗、冷卻全部沿用技能表的原值。
-   扶起隊友不吃天地樹葉子，也不必等倒地 15 秒的冷卻——那是葉子那條路的規則。 */
-function tryPriestReviveAlly(ally) {
-  if (!ally || !ally._downed) return false;
-  const now = Date.now();
-  // 玩家優先（他的技能等級通常最高），再輪到還站著的隊友
-  for (const c of partySupportCasters()) {
-    if (c === ally) continue;                       // 倒地的人不會出現在名單裡，保險
-    if (!c.hasAutoRevive1) continue;
-    if (now < (c.autoRevive1ReadyAt || 0)) continue;
-    const cost = c.autoRevive1SpCost || 0;
-    if (c.sp < cost) continue;
-    c.sp -= cost;
-    c.autoRevive1ReadyAt = now + c.autoRevive1CooldownSec * 1000;
-    ally._downed = false;
-    ally._reviveAt = 0;
-    ally.hp = Math.max(1, Math.round(ally.maxHp * c.autoRevive1HpPct / 100));
-    ally.sp = ally.maxSp;
-    ally._atkAccum = 0; ally._lastAttackAt = 0;
-    const by = c === state ? '' : `（${c._allyName}）`;
-    logMsg(`✨ 復活術發動${by}！扶起了 ${ally._allyName}（HP ${c.autoRevive1HpPct}%）。`);
-    return true;
-  }
-  return false;
+/* 復活術（T9）的對象：還倒在這張地圖上的隊友（不含施術者自己） */
+function downedAllyToRevive() {
+  const owner = allyOwnerState();
+  return (owner.allies || []).find(a => a && a._downed && a !== state && allyOnThisMap(a)) || null;
 }
 
 /* 自動補隊友的箭（#93）。**不能靠玩家那支 `tryAutoBuyArrow()`**：那支第一行就問
@@ -10387,7 +10250,7 @@ function castSkillInner(skillId, opts) {
      元素領域從別的領域切換過來時官方不消耗礦石，所以那種情況直接放行。 */
   if (skillItemCost(sk, lv) && !free
       && !(sk.type === 'buff_elementfield' && elementFieldActive())
-      && !sageCanPay(sk.costItems, sk.costQty || 1)) {
+      && !sageCanPay(sk.costItems, sk.costQty || 1, sk.goldFallback)) {
     logMsg(`⚠️ 缺少${sk.costItems.map(id => getItemDisplayName(id)).join('或')}，無法施放「${sk.name}」！`);
     return false;
   }
@@ -10768,7 +10631,7 @@ function castSkillInner(skillId, opts) {
       const chance = lvArr(sk.successChance, lv);
       const dur = lvArr(sk.duration, lv);
       const okRoll = chance == null || Math.random() * 100 < chance;
-      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, sk.goldFallback || 0) : null;
       if (!okRoll) { logMsg(`「${sk.name}」Lv${lv} 對 ${def.name} 失敗了。`); break; }
       if (sk.effect === 'strip') {
         (sk.strips || []).forEach(st => {
@@ -10808,6 +10671,12 @@ function castSkillInner(skillId, opts) {
         target.rootUntil = Date.now() + dur * 1000;
         state.buffs.push({ type: 'flee', mult: 1, flatBonus: sk.selfFlee || 50, msRemaining: dur * 1000, skillId: sk.id });
         logMsg(`🔗 「${sk.name}」：${def.name} 無法移動，你的迴避 +${sk.selfFlee || 50}（${dur} 秒）。`);
+      } else if (sk.effect === 'elementChange') {
+        // 元素更換（T9，SC_ELEMENTALCHANGE）：首領無效；覆寫寫在怪物實體上，getElementMultiplierVsMonster 會讀
+        if (def.isBoss) { logMsg(`「${sk.name}」對首領無效。`); break; }
+        target.eleOverride = sk.element;
+        target.eleOverrideEnd = Date.now() + dur * 1000;
+        logMsg(`🌀 「${sk.name}」：${def.name} 變成${ELEMENT_NAMES[sk.element]}屬性。`);
       } else if (sk.effect === 'lexaeterna') {
         if (ailActive(target, 'freeze') || ailActive(target, 'stone')) { logMsg(`「${sk.name}」對冰凍／石化中的目標無效。`); break; }
         target.lexAeterna = true;
@@ -10853,12 +10722,12 @@ function castSkillInner(skillId, opts) {
         : `🌀 「${sk.name}」Lv${lv} 發動，但敵人身上沒有增益。`);
       break;
     }
-    // 痊癒術：清掉玩家身上全部的異常狀態（#30 的 state.playerAil）
+    // 痊癒術／治療術／解毒：清掉 cureTypes 指定的異常（沒指定＝全部，#30 的 state.playerAil）
     case 'cure': {
       const clear = () => {
-        const list = (typeof playerAilList === 'function') ? playerAilList() : [];
-        state.playerAil = {};
-        delete state.playerAilTick;
+        const list = playerAilList().filter(t => !sk.cureTypes || sk.cureTypes.includes(t));
+        if (!sk.cureTypes) { state.playerAil = {}; delete state.playerAilTick; }
+        else list.forEach(t => delete state.playerAil[t]);
         return list;
       };
       const had = clear();
@@ -10876,6 +10745,18 @@ function castSkillInner(skillId, opts) {
       break;
     }
 
+    case 'resurrection': {
+      const ally = downedAllyToRevive();
+      if (!ally) { logMsg(`「${sk.name}」：沒有倒地的隊友。`); break; }
+      const pct = lvArr(sk.revivePct, lv);
+      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, 1, 0) : null;
+      ally._downed = false;
+      ally._reviveAt = 0;
+      ally.hp = Math.max(1, Math.round(ally.maxHp * pct / 100));
+      ally._atkAccum = 0; ally._lastAttackAt = 0;
+      logMsg(`✨ 「${sk.name}」Lv${lv}：扶起了 ${ally._allyName}（HP ${pct}%${paid ? '，消耗' + paid.label : ''}）。`);
+      break;
+    }
     case 'buff_blessing': {
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       const statBonus = Array.isArray(sk.statBonus) ? sk.statBonus[lv - 1] : sk.statBonus;
@@ -12047,16 +11928,31 @@ function tryAutoCastSkill() {
     const isAttack = skillNeedsMonster(sk);
     if (isAttack && monsterCount < Math.max(1, sl.minMobs || 1)) continue;
     if (isAttack && !autoSkillInRange(sk, lv)) continue;
+    if (autoSkillWasted(sk)) continue;
     castSkill(sk.id);
     return;
   }
 }
 
+/* 放了也沒效果的就跳過：元素更換對首領無效、目標已經是該屬性 */
+function autoSkillWasted(sk) {
+  const tgt = state.monsters && state.monsters[0];
+  if (!tgt || sk.effect !== 'elementChange') return false;
+  const def = MONSTERS[tgt.defId];
+  return !def || def.isBoss || monElementOf(def, tgt) === sk.element;
+}
 /* 攻擊技能的目標（monsters[0]）要在技能射程內；射程 0＝以自己為中心，不看距離 */
 function autoSkillInRange(sk, lv) {
   const tgt = state.monsters && state.monsters[0];
   const r = skillRangeCells(sk, lv);
   return !tgt || !r || !Number.isFinite(tgt.d) || tgt.d <= r + DIST_EPS;
+}
+// 隊上（含自己、不含倒地）有沒有人身上帶著 types 其中一種異常
+function partyAilPending(types) {
+  const now = Date.now();
+  const owner = allyOwnerState();
+  const holders = [owner, ...(owner.allies || []).filter(a => a && !a._downed)];
+  return holders.some(h => h.playerAil && types.some(t => h.playerAil[t] > now));
 }
 // 自動施放輔助技能
 function tryAutoCastSupportSkills() {
@@ -12088,6 +11984,9 @@ function tryAutoCastSupportSkills() {
       if (state.activeFieldEffects && state.activeFieldEffects.some(f => f.skillId === sk.id)) continue;
       // 要有怪才放得出效果的（減益、場域、範圍傷害）：空場放出去只是白扣 SP 與鋅幣
       if (skillNeedsMonster(sk) && (!state.monsters || state.monsters.length === 0)) continue;
+      if (sk.type === 'resurrection' && !downedAllyToRevive()) continue;
+      // 解狀態類：隊上沒人中它解得掉的異常就不放
+      if (sk.type === 'cure' && !partyAilPending(sk.cureTypes || Object.keys(PLAYER_AILMENTS))) continue;
       // Heal 類：依技能自訂的HP%門檻觸發，並可設SP%下限保護
       if (sk.type === 'heal') {
         const healCfg = (state.autoHealConfig && state.autoHealConfig[sk.id]) || { hpThreshold: 70, spThreshold: 0 };

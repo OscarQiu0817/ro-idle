@@ -66,7 +66,12 @@ const SKILLS = {
   mc_pushcart: {"id":"mc_pushcart","name":"手推車使用","maxLv":10,"type":"passive","passiveStat":"autoCartItem","element":"neutral","spCost":[0],"cooldown":[0],"intervalSec":[30,25,25,20,20,15,15,15,15,15],"itemPools":[["carrot"],["carrot"],["carrot","apple","banana","grape","melon","coconut"],["carrot","apple","banana","grape","melon","coconut"],["carrot","apple","banana","grape","melon","coconut","red_potion","blue_herb"],["carrot","apple","banana","grape","melon","coconut","red_potion","blue_herb"],["carrot","apple","banana","grape","melon","coconut","red_potion","blue_herb","orange_potion"],["carrot","apple","banana","grape","melon","coconut","red_potion","blue_herb","orange_potion","yellow_potion","blue_potion"],["carrot","apple","banana","grape","melon","coconut","red_potion","blue_herb","orange_potion","yellow_potion","blue_potion","white_potion"],["carrot","apple","banana","grape","melon","coconut","red_potion","blue_herb","orange_potion","yellow_potion","blue_potion","white_potion","honey"]],"desc":"被動技能，隨等級解鎖更多隨機獲得的道具池並縮短冷卻：Lv1紅蘿蔔(CD30s)、Lv2(CD25s)、Lv3解鎖水果(CD25s)、Lv4(CD20s)、Lv5解鎖紅色藥水與藍色藥草(CD20s)、Lv6(CD15s)、Lv7解鎖赤色藥水(CD15s)、Lv8解鎖黃色藥水與藍色藥水、Lv9解鎖白色藥水、Lv10解鎖蜂蜜。每次觸發從當前等級的道具池隨機取得1個。"},
   mc_mammonite: {"id":"mc_mammonite","name":"金錢攻擊","maxLv":10,"type":"damage","element":"neutral","spCost":[5,5,6,6,7,7,8,8,9,9],"cooldown":[2,2,2,2,2,2,2,2,2,2],"mult":[1.5,2,2.5,3,3.5,4,4.5,5,5.5,6],"zenyCost":[100,200,300,400,500,600,700,800,900,1000],"desc":"消耗100~1000鋅幣（依等級），造成ATK150%~600%傷害。"},
   mc_inccarry: {"id":"mc_inccarry","name":"負重量上升","maxLv":10,"type":"passive","passiveStat":"cartDmgBonus","element":"neutral","spCost":[0],"cooldown":[0],"mult":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],"desc":"永久提升金錢攻擊與手推車攻擊傷害，滿級+100%。"},
-  tf_detoxify: {"id":"tf_detoxify","name":"解毒","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"autoDetox","spCost":[0],"cooldown":[0],"mult":[1],"internalCooldown":[30],"desc":"被動技能，玩家中毒時自動解除（冷卻30秒）。"},
+  /* 解毒：官方 TF_DETOXIFY 主動解中毒（SP 10）。T9 還原成主動。 */
+  tf_detoxify: {
+    id: 'tf_detoxify', name: '解毒', maxLv: 1, isQuest: true, type: 'cure', party: true,
+    cureTypes: ['poison'], spCost: [10], cooldown: [0],
+    desc: '解除全隊的中毒。勾選自動施放時，隊上有人中毒才會施放。'
+  },
   tf_sprinklesand: {
     id: 'tf_sprinklesand', name: '噴砂', maxLv: 1, isQuest: true,
     type: 'damage', element: 'earth', spCost: [9], cooldown: [0], mult: [1.3],
@@ -84,7 +89,13 @@ const SKILLS = {
   al_ruwach: {"id":"al_ruwach","name":"光獵","maxLv":1,"type":"magic_aoe","element":"holy","spCost":[10],"cooldown":[20],"mult":[1.45],"bonusHitBuff":[10],"bonusHitDuration":[20],"desc":"召喚聖靈，使自身HIT+10（持續20秒），並對場上所有敵人造成145%聖屬性魔法傷害。"},
   al_pneuma: {"id":"al_pneuma","name":"光之障壁","maxLv":1,"type":"buff_shield","party":true,"shieldShared":true,"shieldBlocks":"ranged","cdFromDuration":true,"spCost":[10],"cooldown":[10],"shieldCapacityFlat":[999999],"shieldCharges":[10],"duration":[10],"desc":"全隊共用一道光之障壁：10秒內合計抵擋10次遠程攻擊（射程4格以上）；冷卻＝持續時間。（官方為10秒內擋下所有遠程攻擊，本作改成次數制）"},
   al_dp: {"id":"al_dp","name":"天使之護","maxLv":10,"type":"passive","passiveStat":"defFlat","spCost":[0],"cooldown":[0],"mult":[3,6,9,12,15,18,21,24,27,30],"desc":"被惡魔/不死種族攻擊時，物理防禦力+3~30（依等級）。"},
-  al_cure: {"id":"al_cure","name":"治療術","maxLv":1,"type":"passive","passiveStat":"partyAutoCure","spCost":[0],"cooldown":[0],"cureTypes":["silence","confusion","blind"],"internalCooldown":[10],"desc":"被動技能，全隊有人陷入沉默／混亂／黑暗時自動解除，冷卻10秒。"},
+  /* 治療術：官方 AL_CURE 主動單體解沉默／混亂／黑暗（SP 15、後延遲 1 秒）。T9 還原成主動，
+     勾選輔助自動施放後，隊上有人中這三種才放。 */
+  al_cure: {
+    id: 'al_cure', name: '治療術', maxLv: 1, type: 'cure', party: true,
+    cureTypes: ['silence', 'confusion', 'blind'], spCost: [15], cooldown: [0],
+    desc: '解除全隊的沉默、混亂、黑暗。勾選自動施放時，隊上有人中這些異常才會施放。'
+  },
   al_angelus: {"id":"al_angelus","name":"天使之障壁","maxLv":10,"type":"buff_angelus","party":true,"spCost":[23,26,29,32,35,38,41,44,47,50],"cooldown":[30,30,30,30,30,30,30,30,30,30],"defPct":[5,10,15,20,25,30,35,40,45,50],"maxHpFlat":[50,100,150,200,250,300,350,400,450,500],"duration":[30,60,90,120,150,180,210,240,270,300],"desc":"使全體的物理防禦力+5%~50%、最大HP+50~500，持續30~300秒（依等級）。"},
   al_heal: {"id":"al_heal","name":"治癒術","maxLv":10,"type":"heal","spCost":[12,14,16,18,20,22,24,26,28,30],"cooldown":[4,4,4,4,4,4,4,4,4,4],"mult":[1,1.3,1.6,1.9,2.2,2.5,2.8,3.1,3.4,3.7],"desc":"恢復自身HP。可在自動戰鬥頁面設定依HP%/SP%門檻自動施放。"},
   al_incagi: {"id":"al_incagi","name":"加速術","maxLv":10,"type":"buff_aspd","party":true,"spCost":[18,21,24,27,30,33,36,39,42,45],"hpCost":[15,15,15,15,15,15,15,15,15,15],"cooldown":[25,25,25,25,25,25,25,25,25,25],"mult":[1.01,1.02,1.03,1.04,1.05,1.06,1.07,1.08,1.09,1.1],"agiFlatBonus":[3,4,5,6,7,8,9,10,11,12],"duration":[60,80,100,120,140,160,180,200,220,240],"desc":"消耗15HP，使**全體**AGI+3~12、攻速+1%~10%，持續60~240秒（依等級）。（官方是指定隊員施放，本作沒有指定對象，改成全隊一起吃）"},
@@ -225,7 +236,15 @@ const SKILLS = {
   pr_benedictio: {"id":"pr_benedictio","name":"聖之祈福","maxLv":5,"type":"buff_elearmor","element":"holy","party":true,"spCost":[20,20,20,20,20],"cooldown":[15,15,15,15,15],"duration":[40,80,120,160,200],"desc":"使全體玩家的防禦屬性變為聖屬性，持續40~200秒（依等級）。"},
   pr_aspersio: {"id":"pr_aspersio","name":"撒水祈福","maxLv":5,"type":"buff_holyweapon","party":true,"spCost":[14,18,22,26,30],"zenyCost":[1500,1500,1500,1500,1500],"cooldown":[15,15,15,15,15],"duration":[60,90,120,150,180],"desc":"消耗1500鋅幣，使全體武器附加聖屬性，持續60~180秒（依等級）。"},
   pr_slowpoison: {"id":"pr_slowpoison","name":"緩毒術","maxLv":4,"type":"buff_ailimmune","ailType":"poison","party":true,"spCost":[6,8,10,12],"cooldown":[10,10,10,10],"duration":[10,20,30,40],"desc":"使全體免疫中毒異常，持續10~40秒（依等級）。"},
-  all_resurrection: {"id":"all_resurrection","name":"復活術","maxLv":4,"type":"passive","passiveStat":"onDeathRevive1","spCost":[0],"cooldown":[0],"revivePct":[10,30,50,80],"internalCooldown":[120,100,80,60],"reviveSpCost":[60,60,60,60],"desc":"被動技能，全隊有人倒下時自動原地復活並恢復10%~80%HP（依等級），消耗SP60，冷卻120~60秒。"},
+  /* 復活術：官方 ALL_RESURRECTION 對倒地隊友施放（SP 60、藍色魔力礦石、詠唱 4.8~0 秒），
+     不能復活自己。T9 還原成主動；玩家倒下時沒有倒地狀態，改由站著的隊友當場扶起。 */
+  all_resurrection: {
+    id: 'all_resurrection', name: '復活術', maxLv: 4, type: 'resurrection',
+    spCost: [60, 60, 60, 60], cooldown: [0, 0, 0, 0], revivePct: [10, 30, 50, 80],
+    costItems: ['blue_gemstone'],
+    desc: '扶起倒地的隊友，恢復 10%~80% HP。消耗藍色魔力礦石×1。不能復活自己。'
+        + '勾選自動施放時，隊友倒地才會施放；你倒下時，勾了這招的隊友會當場扶起你。'
+  },
   pr_lexdivina: {
     id: 'pr_lexdivina', name: '沉默之術', maxLv: 10, type: 'debuff_single', effect: 'ailment', ailment: 'silence',
     spCost: [20, 20, 20, 20, 20, 18, 16, 14, 12, 10], cooldown: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1688,7 +1707,7 @@ const SKILLS = {
   },
   /* 隨機技能：官方是消耗黃色魔力礦石×2 隨機發動一個技能。
      使用者指定池子限定**攻擊技能**、等級依本技能等級但不超過該技能自己的上限。
-     技能池的查詢跟流氓的抄襲共用 `PLAGIARISM_ATTACK_TYPES`。 */
+     技能池見 engine.js 的 ABRACADABRA_TYPES。 */
   sa_abracadabra: {
     id: 'sa_abracadabra', name: '隨機技能 Abracadabra', maxLv: 10,
     type: 'passive', passiveStat: 'abracadabra',
@@ -1713,49 +1732,44 @@ const SKILLS = {
         + '選一種屬性就會自動維持 20 分鐘的武器屬性。'
         + '每次消耗對應的靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
   },
-  /* 四個元素更換：官方 maxLv 0，消耗對應的肯貝特把目標變成該屬性。
-     使用者指定轉職直接獲得、面板上四選一（下拉選單），普攻 20% 觸發，
-     消耗所選屬性的靈礦石（背包 → 倉庫 → 付 1000z），敵人轉成該屬性 10 秒，**MVP 也吃**。
-     四個技能共用同一組設定，只有 element 不同；實際會觸發的是面板選的那一個。 */
+  /* 四個元素更換（T9 還原成官方主動）：SA_ELEMENT*，固定詠唱 2 秒、SP 30、後延遲 1 秒、
+     持續 30 分鐘、首領無效。官方消耗肯貝特（本作沒有），沿用靈礦石，不足付 1000z。
+     轉職直接獲得照舊。 */
   sa_elementfire: {
     id: 'sa_elementfire', name: '火屬性元素更換 Elemental Change Fire', maxLv: 1,
-    type: 'passive', passiveStat: 'elementChange', element: 'fire', autoGrant: true,
-    spCost: [0], cooldown: [0], mult: [20],
-    duration: [10], costItems: ['boody_red'], goldFallback: 1000,
-    internalCooldown: [10],
-    desc: '被動技能，轉職時自動獲得。在自動戰鬥分頁選定屬性後，普通攻擊有 20% 機率'
-        + '把目標變成火屬性 10 秒（內部冷卻 10 秒，首領階級也有效）。'
-        + '每次消耗火靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+    type: 'debuff_single', effect: 'elementChange', element: 'fire', autoGrant: true,
+    spCost: [30], cooldown: [0],
+    duration: [1800], costItems: ['boody_red'], goldFallback: 1000,
+    desc: '把目標變成火屬性 30 分鐘（首領無效）。'
+        + '消耗火靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+        + '放進技能欄自動施放時，目標已經是火屬性或是首領就不放。'
   },
   sa_elementwater: {
     id: 'sa_elementwater', name: '水屬性元素更換 Elemental Change Water', maxLv: 1,
-    type: 'passive', passiveStat: 'elementChange', element: 'water', autoGrant: true,
-    spCost: [0], cooldown: [0], mult: [20],
-    duration: [10], costItems: ['crystal_blue'], goldFallback: 1000,
-    internalCooldown: [10],
-    desc: '被動技能，轉職時自動獲得。在自動戰鬥分頁選定屬性後，普通攻擊有 20% 機率'
-        + '把目標變成水屬性 10 秒（內部冷卻 10 秒，首領階級也有效）。'
-        + '每次消耗水靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+    type: 'debuff_single', effect: 'elementChange', element: 'water', autoGrant: true,
+    spCost: [30], cooldown: [0],
+    duration: [1800], costItems: ['crystal_blue'], goldFallback: 1000,
+    desc: '把目標變成水屬性 30 分鐘（首領無效）。'
+        + '消耗水靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+        + '放進技能欄自動施放時，目標已經是水屬性或是首領就不放。'
   },
   sa_elementwind: {
     id: 'sa_elementwind', name: '風屬性元素更換 Elemental Change Wind', maxLv: 1,
-    type: 'passive', passiveStat: 'elementChange', element: 'wind', autoGrant: true,
-    spCost: [0], cooldown: [0], mult: [20],
-    duration: [10], costItems: ['wind_of_verdure'], goldFallback: 1000,
-    internalCooldown: [10],
-    desc: '被動技能，轉職時自動獲得。在自動戰鬥分頁選定屬性後，普通攻擊有 20% 機率'
-        + '把目標變成風屬性 10 秒（內部冷卻 10 秒，首領階級也有效）。'
-        + '每次消耗風靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+    type: 'debuff_single', effect: 'elementChange', element: 'wind', autoGrant: true,
+    spCost: [30], cooldown: [0],
+    duration: [1800], costItems: ['wind_of_verdure'], goldFallback: 1000,
+    desc: '把目標變成風屬性 30 分鐘（首領無效）。'
+        + '消耗風靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+        + '放進技能欄自動施放時，目標已經是風屬性或是首領就不放。'
   },
   sa_elementground: {
     id: 'sa_elementground', name: '地屬性元素更換 Elemental Change Earth', maxLv: 1,
-    type: 'passive', passiveStat: 'elementChange', element: 'earth', autoGrant: true,
-    spCost: [0], cooldown: [0], mult: [20],
-    duration: [10], costItems: ['yellow_live'], goldFallback: 1000,
-    internalCooldown: [10],
-    desc: '被動技能，轉職時自動獲得。在自動戰鬥分頁選定屬性後，普通攻擊有 20% 機率'
-        + '把目標變成地屬性 10 秒（內部冷卻 10 秒，首領階級也有效）。'
-        + '每次消耗地靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+    type: 'debuff_single', effect: 'elementChange', element: 'earth', autoGrant: true,
+    spCost: [30], cooldown: [0],
+    duration: [1800], costItems: ['yellow_live'], goldFallback: 1000,
+    desc: '把目標變成地屬性 30 分鐘（首領無效）。'
+        + '消耗地靈礦石×1（先找背包、再找倉庫，都沒有就付 1000 鋅幣）。'
+        + '放進技能欄自動施放時，目標已經是地屬性或是首領就不放。'
   },
 
   /* ================= 鍊金術士 AM_（#72）=================
@@ -2322,15 +2336,13 @@ const SKILLS = {
     duration: [30, 30, 30, 30, 30],
     desc: 'STR +1~16，持續 30 秒。（官方另有隱身與移速下降，本作沒有位置概念，只留素質那半）'
   },
-  /* 官方是「被技能打到不會改變抄襲記住的技能」——本作的抄襲是自己挑的，沒有被打掉的問題。
-     使用者 2026-08-15 指定改成「讓抄襲也能選被動攻擊技」。 */
+  /* 官方是「被技能打到不會改變抄襲記住的技能」——本作的抄襲是自己挑的，沒有被換掉的問題。
+     原作者改成「抄襲可選被動攻擊技」，T9 改未實裝（使用者 2026-11-03）。 */
   st_preserve: {
-    id: 'st_preserve', name: '自由保護 Preserve', maxLv: 1,
-    type: 'passive', passiveStat: 'preserve',
+    id: 'st_preserve', name: '自由保護 Preserve', maxLv: 1, type: 'passive', unimplemented: true,
     spCost: [0], cooldown: [0],
     requires: { skillId: 'rg_plagiarism', level: 10 },
-    mult: [1],
-    desc: '被動技能。抄襲的候選名單多出**被動攻擊技**（原本只能挑主動攻擊技）。'
+    desc: '（未實裝）官方是抄襲記住的技能不會被換掉，本作的抄襲是自己挑的。可學習，作為其他技能的前置條件。'
   },
   st_fullstrip: {
     id: 'st_fullstrip', name: '所有卸除 Full Strip', maxLv: 5, type: 'debuff_single', effect: 'strip',

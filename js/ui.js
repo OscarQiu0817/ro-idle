@@ -4564,8 +4564,7 @@ function renderSkillsTab() {
         <div class="skill-row learned">
           <div class="skill-info">
             <div class="skill-name">記住一個攻擊技能</div>
-            <div class="skill-desc">依職業主系分類，共 ${total} 個可選；能用的等級不會超過抄襲本身的等級。
-              ${state.preserveOn ? '（自由保護已生效：被動攻擊技也在名單裡）' : ''}</div>
+            <div class="skill-desc">依職業主系分類，共 ${total} 個可選；能用的等級不會超過抄襲本身的等級。</div>
             <div class="skill-cost">
               <select onchange="doSetPlagiarism(this.value)">
                 <option value=""${cur ? '' : ' selected'}>（沒有記住任何技能）</option>
@@ -4608,14 +4607,13 @@ function renderSkillsTab() {
   el.innerHTML = html;
 }
 
-/* 賢者的兩個面板控制（#71）。官方這兩個都是「消耗道具的主動技」，
-   使用者 2026-08-10 指定改成自動戰鬥分頁上的設定，選了就自動維持／自動觸發。
-   兩個都是轉職自動獲得，所以沒學過的職業整塊不出現。 */
+/* 賢者的肯貝特武器附魔面板（#71）：官方是消耗道具的主動技，
+   使用者 2026-08-10 指定改成自動戰鬥分頁上的設定，選了就自動維持。
+   元素更換已由 T9 還原成主動技（放技能欄），不在這裡。 */
 const SAGE_ELEMENTS = [['fire', '火'], ['water', '水'], ['wind', '風'], ['earth', '地']];
 function sageConverterHtml() {
   const hasConverter = !!state.elementConverter;
-  const hasChange = state.elementChanges && Object.keys(state.elementChanges).length > 0;
-  if (!hasConverter && !hasChange) return '';
+  if (!hasConverter) return '';
   const opt = (cur, val, label) => `<option value="${val}"${cur === val ? ' selected' : ''}>${label}</option>`;
   let html = '<div class="ab-section"><h4 class="ab-section-title">🔮 賢者的元素操作</h4>';
   if (hasConverter) {
@@ -4629,27 +4627,11 @@ function sageConverterHtml() {
     </div>
     <div class="ab-info-text">選定後會自動維持 20 分鐘的武器屬性。自己放屬性附加時不會被搶走。</div>`;
   }
-  if (hasChange) {
-    const cur = state.elementChangePick || '';
-    html += `<div class="ab-config-row">
-      <label class="ab-config-label">元素更換</label>
-      <select class="ab-select" onchange="setSageElementChange(this.value)">
-        ${opt(cur, '', '不使用')}
-        ${SAGE_ELEMENTS.map(([k, n]) => opt(cur, k, `把敵人變成${n}屬性`)).join('')}
-      </select>
-    </div>
-    <div class="ab-info-text">普通攻擊 20% 機率把目標變成該屬性 10 秒（首領階級也有效），消耗對應靈礦石，不足則付 1000z。</div>`;
-  }
   return html + '</div>';
 }
 function setSageConverter(el) {
   state.converterElement = el || null;
   state._converterWarned = false;
-  saveGame();
-  renderAutoBattleTab();
-}
-function setSageElementChange(el) {
-  state.elementChangePick = el || null;
   saveGame();
   renderAutoBattleTab();
 }
