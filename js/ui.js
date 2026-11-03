@@ -403,8 +403,6 @@ function confirmCreate() {
 function enterGame() {
   startLoop();
   activeTab = 'map';
-  const cur = regionOf(state.mapId);
-  selectedRegionId = cur ? cur.id : null;
   renderAll();
   renderMapBackground();
   updatePlayerSprite();
@@ -2692,12 +2690,13 @@ function syncGroundUnits() {
     scene.appendChild(layer);
   }
   const units = (state && state.groundUnits) || [];
-  if (!units.length) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
   // 畫面外的場地物件由 .battle-scene 的 overflow 裁掉；加上補間落差（bfWorldLag）才不會比背景先跳
   const at = (d, a) => {
     const x = d * Math.cos(a) + bfWorldLag.x, y = d * Math.sin(a) + bfWorldLag.y;
     return bfPolarPoint({ d: Math.hypot(x, y), a: Math.atan2(y, x) });
   };
+  syncTravelPortal(scene, at);
+  if (!units.length) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
   let html = '';
   for (const u of units) {
     if (u.kind === 'wall') {
@@ -2721,6 +2720,26 @@ function syncGroundUnits() {
     }
   }
   if (layer._html !== html) { layer.innerHTML = html; layer._html = html; }
+}
+/* 趕路的傳點（D1b）：ring_yellow 貼圖做成轉動的光柱。元素常駐、只改位置，動畫才不會每拍重來 */
+function syncTravelPortal(scene, at) {
+  let el = document.getElementById('bf-portal');
+  const p = typeof travelPortalPolar === 'function' ? travelPortalPolar() : null;
+  if (!p) { if (el) el.style.display = 'none'; return; }
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'bf-portal';
+    el.innerHTML = '<i class="glow"></i><i class="col"></i><i class="col b"></i><em></em>';
+    scene.appendChild(el);
+  }
+  const pt = at(p.d, p.a);
+  el.style.display = '';
+  el.style.left = pt.x + '%';
+  el.style.top = pt.y + '%';
+  const to = state.travel.portal.to;
+  const label = '→ ' + ((MAPS.find(m => m.id === to) || {}).name || to);
+  const em = el.querySelector('em');
+  if (em.textContent !== label) em.textContent = label;
 }
 /* 詠唱條：掛在玩家立繪上方 */
 function syncCastBar(ps) {
@@ -2829,7 +2848,8 @@ function layoutBattlefield() {
       ps.style.top = (local.y - ps.offsetHeight) + 'px';
     }
   }
-  const walking = !town && bfPlayerWalking();
+  // 城鎮裡平常不走動；趕路（D1b）時會走向傳點，那時也要播走路
+  const walking = (!town || !!state.travel) && bfPlayerWalking();
   // 走路時面向走的方向；站著打怪時面向目標
   const faceRight = walking ? Math.cos(state._walkDir || 0) >= 0
     : (!lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x);
@@ -2837,7 +2857,7 @@ function layoutBattlefield() {
   bfScrollBackground();   // 先算補間落差，場地物件要用
   syncGroundUnits();
   layoutAllySprites(faceRight);
-  syncPlayerBattleAnim((stepped.moved || walking) && !town);
+  syncPlayerBattleAnim(walking || (stepped.moved && !town));
   pinComboTotal();
   faceBattlePlayer(faceRight);
   mons.forEach((mon, i) => {
@@ -3367,8 +3387,16 @@ function renderLogNow() {
 }
 
 /* ---------------- 地圖分頁 ---------------- */
-let selectedRegionId = null; // 目前下拉選單一選中的地區
-let selectedKingdomId = null; // 目前選中的王國
+// 趕路中：目的地、第幾張、下一張；可以停下來
+function mapTravelBox() {
+  const t = state.travel;
+  if (!t) return '';
+  const nm = id => shopEsc((MAPS.find(m => m.id === id) || {}).name || id);
+  const i = Math.max(0, t.path.indexOf(state.mapId));
+  const next = travelNextMapId();
+  return `<div class="map-travel">🧭 前往 <b>${nm(t.dest)}</b>　第 ${i + 1}／${t.path.length} 張${next ? `・下一張 ${nm(next)}` : ''}
+    <button class="btn-small" onclick="cancelTravel(); renderMapTab();">停止</button></div>`;
+}
 
 /* 地圖產出面板：左邊是拿目前素質推算這張圖的產出（不用先去打），
    右邊是從上次重置到現在的實測值。兩者算法不同，數字不會完全一致是正常的。 */
@@ -3503,14 +3531,7 @@ function huntGotoMonsterMap(monId) {
   if (bossOnly) showToast('這是王怪：先打開迷你王或 MVP 模式，牠才會出現');
   const wOf = m => ((m.monsters || []).find(x => norm(x.id) === want) || {}).weight || 0;
   const target = cands.slice().sort((a, b) => wOf(b) - wOf(a))[0];
-  const rg = regionOf(target.id);
-  if (rg) {
-    selectedRegionId = rg.id;
-    const kd = KINGDOMS.find(k => k.regions.indexOf(rg.id) >= 0);
-    if (kd) selectedKingdomId = kd.id;
-  }
-  selectMap(target.id);
-  switchTab('map');
+  openWorldMap(target.id);
 }
 
 let huntBand = null;
@@ -3810,60 +3831,19 @@ function renderQuestsTab() {
 
 function renderMapTab() {
   const el = document.getElementById('tab-map');
-  if (!selectedRegionId) {
-    const cur = regionOf(state.mapId);
-    selectedRegionId = cur ? cur.id : REGIONS[0].id;
-  }
-  // 自動選取所屬王國
-  if (!selectedKingdomId) {
-    const k = KINGDOMS.find(k => k.regions.includes(selectedRegionId));
-    selectedKingdomId = k ? k.id : KINGDOMS[0].id;
-  }
-  const kingdom = KINGDOMS.find(k => k.id === selectedKingdomId) || KINGDOMS[0];
-  // 篩選屬於該王國的區域
-  const filteredRegions = REGIONS.filter(r => kingdom.regions.includes(r.id));
-  const region = filteredRegions.find(r => r.id === selectedRegionId) || filteredRegions[0] || REGIONS[0];
-
-  const kingdomOptions = KINGDOMS.map(k =>
-    `<option value="${k.id}" ${k.id === kingdom.id ? 'selected' : ''}>${k.icon} ${k.name}</option>`
-  ).join('');
-
-  const regionOptions = filteredRegions.map(r =>
-    `<option value="${r.id}" ${r.id === region.id ? 'selected' : ''}>${r.icon} ${r.name}</option>`
-  ).join('');
-
-  const mapIds = typeof regionMapIds === 'function' ? regionMapIds(region) : region.maps;
-  const mapOptions = mapIds.map(mapId => {
-    const m = MAPS.find(x => x.id === mapId);
-    if (!m) return '';
-    const isCity = m.monsters.length === 0;
-    const lv = isCity ? '' : (' ' + mapLvRangeText(m));
-    return `<option value="${m.id}" ${state.mapId === m.id ? 'selected' : ''}>${m.name}${isCity ? '（安全區）' : lv}</option>`;
-  }).join('');
-
-  const currentMapObj = MAPS.find(x => x.id === state.mapId) || MAPS.find(x => x.id === mapIds[0]);
-  if (!currentMapObj) { el.innerHTML = '<div class="empty-hint">地圖資料錯誤</div>'; return; }
+  const currentMapObj = currentMap() || MAPS.find(x => x.id === 'prontera');
   const isCity = currentMapObj.monsters.length === 0;
   const monsterPreview = isCity ? '' : renderMapMonsterChips(currentMapObj);
 
   el.innerHTML = `
-    <h3 class="panel-title">選擇地區
-      <button class="btn-small map-home-btn" onclick="goNearestSafeZone()"
-        title="回到本區的安全區；這一區沒有的話回普隆德拉">🏠 回安全區</button>
-    </h3>
-    <div class="map-select-group">
-      <label class="map-select-label">王國/大陸</label>
-      <select class="map-select" onchange="onKingdomSelectChange(this.value)">${kingdomOptions}</select>
+    <h3 class="panel-title">📍 ${shopEsc(currentMapObj.name)} <span class="map-here-lv">${isCity ? '（安全區）' : mapLvRangeText(currentMapObj)}</span></h3>
+    <div class="map-actions">
+      <button class="btn-small" onclick="openWorldMap()">🗺️ 世界地圖</button>
+      <button class="btn-small" onclick="goNearestSafeZone()" title="沿傳送點最近的城鎮">🏠 回最近的城鎮</button>
+      ${currentMapObj.town ? '<button class="btn-small" onclick="openTownWarp()">🌀 傳送 NPC</button>'
+        : ferriesFrom(currentMapObj.id).length ? `<button class="btn-small" onclick="openTownWarp('ferry')">⛵ 坐船</button>` : ''}
     </div>
-    <div class="map-select-group">
-      <label class="map-select-label">地區</label>
-      <select class="map-select" onchange="onRegionSelectChange(this.value)">${regionOptions}</select>
-    </div>
-    <div class="map-select-group">
-      <label class="map-select-label">地點</label>
-      <select class="map-select" onchange="selectMap(this.value)">${mapOptions}</select>
-    </div>
-    <div class="region-subtitle-detail">${region.subtitle}</div>
+    ${mapTravelBox()}
     ${isCity ? '' : `<div class="map-preview-box">
       <div class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvRangeText(currentMapObj)}</div>
       <div class="map-preview-body">${monsterPreview}</div>
@@ -3891,26 +3871,6 @@ function renderMapTab() {
       </div>
     </div>
     ` : ''}`;
-}
-
-function onKingdomSelectChange(kingdomId) {
-  selectedKingdomId = kingdomId;
-  const kingdom = KINGDOMS.find(k => k.id === kingdomId);
-  if (kingdom && kingdom.regions.length > 0) {
-    selectedRegionId = kingdom.regions[0];
-    const region = REGIONS.find(r => r.id === selectedRegionId);
-    if (region) selectMap(typeof regionDefaultMapId === 'function' ? regionDefaultMapId(region) : region.maps[0]);
-  }
-  renderMapTab();
-}
-
-function onRegionSelectChange(regionId) {
-  selectedRegionId = regionId;
-  // 自動更新所屬王國
-  const k = KINGDOMS.find(k => k.regions.includes(regionId));
-  if (k) selectedKingdomId = k.id;
-  const region = REGIONS.find(r => r.id === regionId);
-  selectMap(typeof regionDefaultMapId === 'function' ? regionDefaultMapId(region) : region.maps[0]);
 }
 
 /* 打寶模式（#110）。放在自動戰鬥分頁而不是地圖分頁——它是全域的模式，
@@ -5152,16 +5112,8 @@ function codexBoxBar(book) {
 function codexGoToMap(mapId) {
   const m = MAPS.find(x => x.id === mapId);
   if (!m) return;
-  changeMap(mapId);
-  // 地圖分頁的三層下拉要跟著跳到正確的王國／區域，不然畫面停在原本那一區
-  const region = (typeof regionOf === 'function') ? regionOf(mapId) : null;
-  if (region) {
-    selectedRegionId = region.id;
-    const k = KINGDOMS.find(x => x.regions.includes(region.id));
-    if (k) selectedKingdomId = k.id;
-  }
-  switchTab('map');
-  renderAll();
+  // 在世界地圖上選好，玩家自己決定要不要出發
+  openWorldMap(mapId);
 }
 
 // 一行「哪張圖、出現率多少、可以直接去」
@@ -6582,7 +6534,7 @@ function renderInventoryTab() {
         const cardsHtml = iCards.length
           ? `<div class="inv-cardslot"><div class="socket-card-count">插槽 ${iCards.length}/${maxSlots}</div>${socketedCardsHtml(iCards)}</div>`
           : '';
-        return `<div class="inv-row${iLocked ? ' locked' : ''}" onmouseenter="showBagTooltip(event,'${row.item}','${row.instanceId}')" onmouseleave="hideBagTooltip()">
+        return `<div class="inv-row${iLocked ? ' locked' : ''}">
           <div class="inv-row-main">
             <div class="inv-icon"><img src="${itemImgSrc(row.item)}" alt="${displayName}" onerror="this.onerror=null;this.src='${placeholderImgSrc(itemPlaceholderKind(def))}'"></div>
             <div class="inv-info">
@@ -6615,7 +6567,7 @@ function renderInventoryTab() {
       const locked = isItemLocked(row.item);
       // 只有能穿的裝備才做比較，素材消耗品沒有比較的意義
       const compareHtml = (def.type === 'weapon' || def.type === 'armor') ? renderCompareBadge(row.item) : '';
-      return `<div class="inv-row${locked ? ' locked' : ''}" onmouseenter="showBagTooltip(event,'${row.item}')" onmouseleave="hideBagTooltip()">
+      return `<div class="inv-row${locked ? ' locked' : ''}">
         <div class="inv-row-main">
           <div class="inv-icon"><img src="${itemImgSrc(row.item)}" alt="${displayName}" onerror="this.onerror=null;this.src='${placeholderImgSrc(itemPlaceholderKind(def))}'"></div>
           <div class="inv-info">
@@ -7386,6 +7338,355 @@ function selectMap(mapId) {
     playMapMusic();
     renderMapTab();
   }
+}
+
+/* ---------------- 世界地圖（工作 7、D1b）----------------
+   全螢幕浮層：拖曳平移、滾輪／雙指縮放、＋－按鈕；點格子或地城圖示，底部資訊卡選「前往」。
+   點選自己算座標（不靠格子元素的 click），拖曳地圖時才不會誤選。
+   資料：WORLD.main（scripts/gen_worldmap.js），座標是底圖像素。 */
+const WM = { el: null, view: null, inner: null, s: 1, min: 0.3, tx: 0, ty: 0, sel: null, dun: null, ptrs: new Map(), moved: 0, pinch: 0 };
+const WM_MAX = 3;
+const WM_TAP_PX = 6;
+const wmMapOf = id => MAPS.find(m => m.id === id);
+const wmPos = id => worldMapPos(id);
+function wmBuild() {
+  const W = WORLD.main;
+  const box = (x1, y1, x2, y2) => `left:${x1}px;top:${y1}px;width:${x2 - x1}px;height:${y2 - y1}px`;
+  const el = document.createElement('div');
+  el.className = 'wm-overlay hidden';
+  el.innerHTML = `
+    <div class="wm-head"><b>🗺️ 世界地圖</b><span class="wm-here"></span><button class="wm-btn" data-act="close" title="關閉">✕</button></div>
+    <div class="wm-view">
+      <div class="wm-inner" style="width:${W.w}px;height:${W.h}px">
+        <img src="${W.img}" alt="" draggable="false">
+        ${W.tiles.map(t => `<div class="wm-tile" data-id="${t.id}" style="${box(t.x1, t.y1, t.x2, t.y2)}">${t.lv ? `<span class="wm-lv">Lv${t.lv}</span>` : ''}</div>`).join('')}
+        ${W.dungeons.map((d, i) => `<div class="wm-dun" data-i="${i}" style="${box(d.x1 - 3, d.y1 - 3, d.x2 + 3, d.y2 + 3)}"></div>`).join('')}
+        <svg class="wm-route" viewBox="0 0 ${W.w} ${W.h}" width="${W.w}" height="${W.h}"></svg>
+        <div class="wm-me"></div>
+      </div>
+    </div>
+    <div class="wm-zoom">
+      <button class="wm-btn" data-act="in" title="放大">＋</button>
+      <button class="wm-btn" data-act="out" title="縮小">－</button>
+      <button class="wm-btn" data-act="me" title="回到目前位置">📍</button>
+    </div>
+    <div class="wm-sheet hidden"></div>`;
+  document.body.appendChild(el);
+  WM.el = el;
+  WM.view = el.querySelector('.wm-view');
+  WM.inner = el.querySelector('.wm-inner');
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const act = b.dataset.act;
+    const r = WM.view.getBoundingClientRect();
+    if (act === 'close') closeWorldMap();
+    else if (act === 'in') wmZoomAt(r.width / 2, r.height / 2, WM.s * 1.4);
+    else if (act === 'out') wmZoomAt(r.width / 2, r.height / 2, WM.s / 1.4);
+    else if (act === 'me') wmCenter(wmPos(state.mapId));
+    else if (act === 'go') worldGo(b.dataset.id);
+    else if (act === 'route') wmShowRoute(b.dataset.id);
+    else if (act === 'backsel') wmSelect(b.dataset.id);
+    else if (act === 'ferry') { closeWorldMap(); doFerry(b.dataset.id); }
+    else if (act === 'townwarp') { closeWorldMap(); openTownWarp(); }
+    else if (act === 'hometown') { closeWorldMap(); goNearestSafeZone(); renderMapTab(); }
+    else if (act === 'floor') wmSelect(b.dataset.id);
+    else if (act === 'back') wmSelectDungeon(WM.dun);
+    else if (act === 'dun') wmSelectDungeon(WORLD.main.dungeons[+b.dataset.i]);
+  });
+  const v = WM.view;
+  v.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') e.preventDefault();   // 不然拖曳會變成反白格子上的文字
+    v.setPointerCapture(e.pointerId);
+    WM.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (WM.ptrs.size === 1) WM.moved = 0;
+    WM.pinch = 0;
+  });
+  v.addEventListener('pointermove', e => {
+    const p = WM.ptrs.get(e.pointerId);
+    if (!p) return;
+    const r = v.getBoundingClientRect();
+    if (WM.ptrs.size === 1) {
+      const dx = e.clientX - p.x, dy = e.clientY - p.y;
+      WM.moved += Math.abs(dx) + Math.abs(dy);
+      WM.tx += dx; WM.ty += dy;
+      wmApply();
+    }
+    p.x = e.clientX; p.y = e.clientY;
+    if (WM.ptrs.size === 2) {
+      const [a, b] = [...WM.ptrs.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (WM.pinch) wmZoomAt((a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top, WM.s * dist / WM.pinch);
+      WM.pinch = dist;
+      WM.moved = WM_TAP_PX + 1;     // 雙指之後放開不算點擊
+    }
+  });
+  const up = e => {
+    if (!WM.ptrs.has(e.pointerId)) return;
+    WM.ptrs.delete(e.pointerId);
+    WM.pinch = 0;
+    if (!WM.ptrs.size && WM.moved <= WM_TAP_PX && e.type === 'pointerup') {
+      const r = v.getBoundingClientRect();
+      wmTap((e.clientX - r.left - WM.tx) / WM.s, (e.clientY - r.top - WM.ty) / WM.s);
+    }
+  };
+  v.addEventListener('pointerup', up);
+  v.addEventListener('pointercancel', up);
+  v.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = v.getBoundingClientRect();
+    wmZoomAt(e.clientX - r.left, e.clientY - r.top, WM.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15));
+  }, { passive: false });
+  window.addEventListener('resize', () => { if (WM.el && !WM.el.classList.contains('hidden')) { wmFitMin(); wmApply(); } });
+}
+function wmFitMin() {
+  const r = WM.view.getBoundingClientRect();
+  WM.min = Math.min(r.width / WORLD.main.w, r.height / WORLD.main.h);
+}
+function wmApply() {
+  const r = WM.view.getBoundingClientRect();
+  const w = WORLD.main.w * WM.s, h = WORLD.main.h * WM.s;
+  WM.tx = w <= r.width ? (r.width - w) / 2 : Math.min(0, Math.max(r.width - w, WM.tx));
+  WM.ty = h <= r.height ? (r.height - h) / 2 : Math.min(0, Math.max(r.height - h, WM.ty));
+  WM.inner.style.transform = `translate(${WM.tx}px, ${WM.ty}px) scale(${WM.s})`;
+}
+function wmZoomAt(cx, cy, s) {
+  s = Math.max(WM.min, Math.min(WM_MAX, s));
+  const mx = (cx - WM.tx) / WM.s, my = (cy - WM.ty) / WM.s;
+  WM.s = s;
+  WM.tx = cx - mx * s; WM.ty = cy - my * s;
+  wmApply();
+}
+function wmCenter(p) {
+  if (!p) return;
+  const r = WM.view.getBoundingClientRect();
+  WM.tx = r.width / 2 - p[0] * WM.s;
+  WM.ty = r.height / 2 - p[1] * WM.s;
+  wmApply();
+}
+// focusId：開啟時就選好的地圖（圖鑑、討伐的「前往」）
+function openWorldMap(focusId) {
+  if (!WM.el) wmBuild();
+  WM.el.classList.remove('hidden');
+  wmFitMin();
+  // 開啟時縮放到格子約 44px（手指點得準），不小於整張塞得下的比例
+  WM.s = Math.min(WM_MAX, Math.max(WM.min, 44 / 58));
+  WM.sel = null; WM.dun = null; WM.hint = []; WM.route = null;
+  wmCenter(wmPos(focusId) || wmPos(state.mapId) || [WORLD.main.w / 2, WORLD.main.h / 2]);
+  if (focusId) wmSelect(focusId); else wmSheet('');
+  wmRefresh();
+}
+function closeWorldMap() { if (WM.el) WM.el.classList.add('hidden'); }
+function wmTap(x, y) {
+  const W = WORLD.main;
+  const pad = 4;
+  const d = W.dungeons.find(o => x >= o.x1 - pad && x <= o.x2 + pad && y >= o.y1 - pad && y <= o.y2 + pad);
+  if (d) { wmSelectDungeon(d); return; }
+  const t = W.tiles.find(o => x >= o.x1 && x <= o.x2 && y >= o.y1 && y <= o.y2);
+  if (t) { WM.dun = null; wmSelect(t.id); }
+  else { WM.sel = null; WM.dun = null; WM.hint = []; WM.route = null; wmSheet(''); wmRefresh(); }
+}
+// 入口圖示落在這個格子裡的地城（點大格子時也要讓玩家知道這裡有地城）
+function wmTileDungeons(id) {
+  const t = WORLD.main.tiles.find(x => x.id === id);
+  if (!t) return [];
+  return WORLD.main.dungeons.filter(d => {
+    const cx = (d.x1 + d.x2) / 2, cy = (d.y1 + d.y2) / 2;
+    return cx >= t.x1 && cx <= t.x2 && cy >= t.y1 && cy <= t.y2;
+  });
+}
+function wmSelectDungeon(d) {
+  WM.dun = d; WM.sel = null; WM.hint = []; WM.route = null;
+  const here = d.floors.some(f => f.id === state.mapId);
+  wmSheet(`<div class="wm-sheet-title">${shopEsc(d.name)} <small>${d.lv ? 'Lv ' + d.lv : ''}</small>${here ? '<span class="wm-tag">你在這裡</span>' : ''}</div>
+    <div class="wm-floors">${d.floors.map(f => {
+      const m = wmMapOf(f.id);
+      const nm = m ? m.name.replace(d.name, '').trim() || m.name : f.id;
+      return `<button class="wm-floor${f.id === state.mapId ? ' here' : ''}" data-act="floor" data-id="${f.id}"><span>${shopEsc(nm)}</span><small>${f.lv ? 'Lv ' + f.lv : ''}</small></button>`;
+    }).join('')}</div>`);
+  wmRefresh();
+}
+/* 怎麼到 id（D1b）：走路、先走到港口坐船、先用傳送 NPC。
+   segs 給地圖畫線：走路藍色虛線、坐船另一種顏色（ferry: true）；confirm 是確認後要做的事。 */
+function wmPlan(id) {
+  const cur = state.mapId;
+  const nm = x => (wmMapOf(x) || {}).name || x;
+  if (id === cur) return { kind: 'here', summary: '你在這裡', segs: [] };
+  const path = worldPath(cur, id);
+  if (path) return { kind: 'walk', summary: `沿傳送點過圖 ${path.length - 1} 次`, segs: [path],
+    confirm: { act: 'go', id, label: '🧭 出發' } };
+  const fh = ferryHint(cur, id);
+  if (fh) {
+    const p1 = worldPath(cur, fh.port), p2 = worldPath(fh.land, id);
+    const atPort = fh.port === cur;
+    return {
+      kind: 'ferry', summary: `${atPort ? '在這裡' : `先到「${nm(fh.port)}」，`}搭${fh.via}到「${nm(fh.land)}」${fh.land === id ? '' : '，再走過去'}`,
+      segs: [p1, { ids: [fh.port, fh.land], ferry: true }, p2],
+      confirm: atPort ? { act: 'ferry', id: fh.land, label: `⛵ 坐船到 ${nm(fh.land)}` }
+        : { act: 'go', id: fh.port, label: `🧭 出發（先走到 ${nm(fh.port)}）` },
+    };
+  }
+  const nt = npcTownHint(cur, id);
+  if (nt) {
+    const inTown = (wmMapOf(cur) || {}).town;
+    const home = inTown ? cur : nearestTownId(cur);
+    return {
+      kind: 'npc', summary: `先用城鎮的傳送 NPC 到「${nm(nt)}」${nt === id ? '' : '，再走過去'}`,
+      segs: [inTown ? null : worldPath(cur, home), worldPath(nt, id)],
+      confirm: inTown ? { act: 'townwarp', label: '🌀 打開傳送 NPC' } : { act: 'hometown', label: `🏠 出發（先回 ${nm(home)}）` },
+    };
+  }
+  return { kind: 'none', summary: '走不到', segs: [] };
+}
+function wmSelect(id) {
+  const m = wmMapOf(id);
+  if (!m) return;
+  WM.sel = id;
+  WM.route = null;
+  const dun = WORLD.main.dungeons.find(x => x.floors.some(f => f.id === id));
+  if (dun) WM.dun = dun;
+  const inTile = dun ? [] : wmTileDungeons(id);
+  WM.hint = inTile;
+  const mons = m.monsters.slice(0, 6).map(o => MONSTERS[o.id]).filter(Boolean)
+    .map(md => `${shopEsc(md.name)} <small>Lv${md.level}</small>`).join('、');
+  const boss = (MVP_MAP_DATA[id] || []).map(b => MONSTERS[b]).filter(Boolean).map(b => shopEsc(b.name)).join('、');
+  const plan = wmPlan(id);
+  const can = plan.kind !== 'here' && plan.kind !== 'none';
+  wmSheet(`${dun ? '<button class="wm-back" data-act="back">← 樓層</button>' : ''}
+    <div class="wm-sheet-title">${shopEsc(m.name)} <small>${m.town ? '城鎮' : (m.lv ? 'Lv ' + m.lv : mapLvRangeText(m))}${inTile.length ? '（含地城）' : ''}</small></div>
+    ${inTile.length ? `<div class="wm-row"><span>地城</span><span>${inTile.map(d =>
+      `<button class="wm-dun-link" data-act="dun" data-i="${WORLD.main.dungeons.indexOf(d)}">${shopEsc(d.name)} ›</button>`).join(' ')}</span></div>` : ''}
+    ${m.town ? '' : `<div class="wm-row"><span>怪物</span><span>${mons || '沒有怪物'}</span></div>`}
+    ${boss ? `<div class="wm-row"><span>首領</span><span>${boss}</span></div>` : ''}
+    <div class="wm-row"><span>路線</span><span>${shopEsc(plan.summary)}</span></div>
+    <button class="btn-small wm-go" data-act="route" data-id="${id}" ${can ? '' : 'disabled'}>🗺️ 查看路線</button>`);
+  wmRefresh();
+}
+// 第二步：地圖縮放到整條路線（畫線，不列每一站），玩家確認才出發
+function wmShowRoute(id) {
+  const plan = wmPlan(id);
+  if (!plan.confirm) return;
+  WM.sel = id;
+  WM.route = plan.segs;
+  const c = plan.confirm;
+  wmSheet(`<button class="wm-back" data-act="backsel" data-id="${id}">← 返回</button>
+    <div class="wm-sheet-title">前往 ${shopEsc((wmMapOf(id) || {}).name || id)} <small>${shopEsc(plan.summary)}</small></div>
+    ${plan.kind === 'ferry' ? '<div class="wm-legend"><i class="walk"></i>走路　<i class="ferry"></i>坐船</div>' : ''}
+    <button class="btn-small wm-go" data-act="${c.act}" data-id="${c.id || ''}">${shopEsc(c.label)}</button>`);
+  wmRefresh();
+  wmFitPoints([state.mapId, ...plan.segs.flatMap(sg => (sg && sg.ids) || sg || [])].map(wmPos).filter(Boolean));
+}
+// 縮放到這些點都看得到（底部資訊卡蓋住的部分不算）
+function wmFitPoints(pts) {
+  if (!pts.length) return;
+  const r = WM.view.getBoundingClientRect();
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const bw = Math.max(80, Math.max(...xs) - Math.min(...xs)), bh = Math.max(80, Math.max(...ys) - Math.min(...ys));
+  const usableH = r.height * 0.45;
+  WM.s = Math.max(WM.min, Math.min(WM_MAX, (r.width - 60) / bw, usableH / bh));
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  WM.tx = r.width / 2 - cx * WM.s;
+  WM.ty = usableH / 2 + 10 - cy * WM.s;
+  wmApply();
+}
+function wmSheet(html) {
+  const sh = WM.el.querySelector('.wm-sheet');
+  sh.innerHTML = html;
+  sh.classList.toggle('hidden', !html);
+}
+function wmRefresh() {
+  WM.el.querySelector('.wm-here').textContent = '📍 ' + ((wmMapOf(state.mapId) || {}).name || state.mapId);
+  // 查看路線時畫完整路線（坐船前後兩段）；只是選取時畫走路的那段
+  const segs = WM.route || [WM.sel ? worldPath(state.mapId, WM.sel) : null];
+  const segIds = sg => (sg && sg.ids) || sg || [];
+  const onRoute = new Set(segs.flatMap(segIds));
+  WM.el.querySelectorAll('.wm-tile').forEach(t => {
+    const id = t.dataset.id;
+    t.classList.toggle('here', id === state.mapId);
+    t.classList.toggle('sel', id === WM.sel);
+    t.classList.toggle('route', onRoute.has(id) && id !== WM.sel && id !== state.mapId);
+  });
+  WM.el.querySelectorAll('.wm-dun').forEach(d => {
+    const o = WORLD.main.dungeons[+d.dataset.i];
+    d.classList.toggle('sel', WM.dun === o || (WM.hint || []).includes(o));
+  });
+  WM.el.querySelector('.wm-route').innerHTML = segs.map(seg => {
+    const pts = segIds(seg).map(wmPos).filter(Boolean);
+    const color = seg && seg.ferry ? '#ffb347' : '#6fc8ff';     // 坐船橘色、走路藍色
+    return pts.length > 1
+      ? `<polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="${color}" stroke-width="4" stroke-dasharray="10 8" stroke-linecap="round"/>`
+      : '';
+  }).join('');
+  const me = WM.el.querySelector('.wm-me');
+  const p = wmPos(state.mapId);
+  me.style.display = p ? '' : 'none';
+  if (p) { me.style.left = p[0] + 'px'; me.style.top = p[1] + 'px'; }
+}
+function worldGo(id) {
+  closeWorldMap();
+  if (typeof startTravel === 'function') startTravel(id);
+  else selectMap(id);
+}
+
+function doFerry(id) {
+  if (!takeFerry(id)) return;
+  renderMapBackground();
+  playMapMusic();
+  renderAll();
+}
+
+/* 傳送 NPC（D1b）：城鎮才有；全部城鎮都列出，未開放的看得到不能選 */
+/* 傳送 NPC 視窗：「傳送」（城鎮才有）與「坐船」（這裡有船才有）兩個分頁 */
+function openTownWarp(tab) {
+  const town = (currentMap() || {}).town;
+  const ferries = ferriesFrom(state.mapId);
+  if (tab !== 'ferry' && tab !== 'warp') tab = town ? 'warp' : 'ferry';
+  if (tab === 'warp' && !town) tab = 'ferry';
+  if (tab === 'ferry' && !ferries.length) tab = 'warp';
+  const lv = partyTopLevel();
+  const tabs = [town && ['warp', '🌀 傳送'], ferries.length && ['ferry', '⛵ 坐船']].filter(Boolean);
+  const head = tabs.length > 1
+    ? `<div class="wm-tabs">${tabs.map(([k, label]) => `<button class="wm-tab${k === tab ? ' on' : ''}" onclick="openTownWarp('${k}')">${label}</button>`).join('')}</div>`
+    : '';
+  let body;
+  if (tab === 'warp') {
+    // 依開放等級排（同等級維持原順序，主城 Lv1 在最前面）
+    const rows = WORLD.towns.filter(t => t.id !== state.mapId).sort((a, b) => a.lv - b.lv).map(t => {
+      const lock = lv < t.lv;
+      return `<button class="wm-floor${lock ? ' locked' : ''}" ${lock ? 'disabled' : ''} onclick="doTownWarp('${t.id}')">
+        <span>${shopEsc(t.name)}</span><small>${lock ? `Lv${t.lv} 開放` : t.cost.toLocaleString() + 'z'}</small></button>`;
+    }).join('');
+    body = `<div class="wm-sheet-title">🌀 傳送 NPC <small>隊伍最高 Lv${lv}・持有 ${(state.gold || 0).toLocaleString()}z</small></div>
+      <div class="ab-info-text">主城 1,000z、其他城鎮 5,000z，一次收費、整隊一起過去。</div>
+      <div class="wm-floors">${rows}</div>`;
+  } else {
+    const rows = ferries.map(f => `<button class="wm-floor" onclick="closeTownWarp(); doFerry('${f.to}')">
+      <span>${shopEsc((MAPS.find(m => m.id === f.to) || {}).name || f.to)}</span><small>${shopEsc(f.via)}</small></button>`).join('');
+    body = `<div class="wm-sheet-title">⛵ 坐船</div><div class="wm-floors">${rows}</div>`;
+  }
+  showTownWarpModal(head + body);
+}
+function showTownWarpModal(html) {
+  let el = document.getElementById('town-warp-modal');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'town-warp-modal';
+    el.className = 'wm-modal hidden';
+    el.innerHTML = '<div class="wm-modal-box"><button class="wm-btn wm-modal-x" onclick="closeTownWarp()">✕</button><div class="wm-modal-body"></div></div>';
+    el.addEventListener('click', e => { if (e.target === el) closeTownWarp(); });
+    document.body.appendChild(el);
+  }
+  el.querySelector('.wm-modal-body').innerHTML = html;
+  el.classList.remove('hidden');
+}
+function closeTownWarp() { const el = document.getElementById('town-warp-modal'); if (el) el.classList.add('hidden'); }
+function doTownWarp(id) {
+  const why = npcWarp(id);
+  if (why) { showToast(why); return; }
+  closeTownWarp();
+  renderMapBackground();
+  playMapMusic();
+  renderAll();
 }
 
 /* ---------------- 離線掛機結算彈窗 ---------------- */

@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>過圖原型</title>
+<style>
+  :root { --bg: #14110d; --panel: #221c15; --line: #5a4a33; --text: #eadfc8; --dim: #a8987a; --gold: #f2c75c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Microsoft JhengHei", "Noto Sans TC", sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 12px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .bar .where { margin-left: auto; color: var(--gold); }
+  button.btn { background: #3a2f22; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 5px 12px; cursor: pointer; }
+  button.btn:hover:not(:disabled) { border-color: var(--gold); }
+  button.btn:disabled { opacity: .45; cursor: default; }
+  .stage { position: relative; isolation: isolate; height: 420px; overflow: hidden; border: 2px solid var(--line); border-radius: 6px; background-repeat: repeat; background-size: 512px 512px; }
+  .stage .fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .4s; z-index: 50; }
+  .stage .fade.on { opacity: 1; }
+  .banner { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); background: rgba(0,0,0,.55); padding: 4px 16px; border-radius: 14px; color: var(--gold); opacity: 0; transition: opacity .5s; z-index: 40; white-space: nowrap; }
+  .banner.on { opacity: 1; }
+  .spr { position: absolute; background-repeat: no-repeat; transition: opacity .3s, filter .3s; }
+  .tag { position: absolute; transform: translateX(-50%); font-size: 12px; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000; white-space: nowrap; pointer-events: none; }
+  .castbar { position: absolute; width: 60px; height: 6px; margin-left: -30px; background: rgba(0,0,0,.6); border: 1px solid #000; }
+  .castbar i { display: block; height: 100%; width: 0; background: #7fd0ff; }
+  /* 傳點：貼圖橫向捲動假裝圓柱在轉，下緣一圈光暈 */
+  .portal { position: absolute; width: 84px; height: 150px; margin-left: -42px; pointer-events: none; transition: opacity .4s; }
+  .portal .glow { position: absolute; left: -14px; right: -14px; bottom: -14px; height: 32px; border-radius: 50%; }
+  .portal .col { position: absolute; inset: 0 0 6px; border-radius: 50% / 14%; mix-blend-mode: screen; background-repeat: repeat-x; background-size: 64px 100%;
+        -webkit-mask-image: linear-gradient(to top, #000 55%, transparent); mask-image: linear-gradient(to top, #000 55%, transparent); animation: spin 1.6s linear infinite; }
+  .portal .col.b { inset: 4px 10px 8px; animation-duration: 1.1s; animation-direction: reverse; opacity: .8; }
+  .portal.yellow .col { background-image: url(../../images/effects/warp/ring_yellow.png); }
+  .portal.yellow .glow { background: radial-gradient(ellipse, rgba(255, 220, 110, .85), rgba(255, 200, 80, 0) 70%); }
+  .portal.blue .col { background-image: url(../../images/effects/warp/ring_blue.png); }
+  .portal.blue .glow { background: radial-gradient(ellipse, rgba(120, 200, 255, .9), rgba(90, 170, 255, 0) 70%); }
+  @keyframes spin { from { background-position-x: 0; } to { background-position-x: 64px; } }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 100; }
+  .modal.on { display: flex; }
+  .dlg { background: var(--panel); border: 1px solid var(--gold); border-radius: 8px; padding: 16px; width: min(440px, calc(100% - 32px)); }
+  .dlg h3 { margin: 0 0 10px; color: var(--gold); font-size: 16px; }
+  .dlg label { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .dlg .sec { color: var(--dim); font-size: 12px; margin: 10px 0 4px; }
+  .dlg select { width: 100%; background: #14110d; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 4px; }
+  .dlg .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .muted { color: var(--dim); font-size: 12px; }
+  .log { margin-top: 8px; font-size: 13px; color: var(--dim); min-height: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <button class="btn" id="btnWalk">走過傳點（下一張圖）</button>
+    <button class="btn" id="btnNpc">NPC 傳送</button>
+    <button class="btn" id="btnSkill">服事的傳送之陣</button>
+    <button class="btn" id="btnMemo">記錄此地</button>
+    <span class="where" id="where"></span>
+  </div>
+  <div class="stage" id="stage">
+    <div class="banner" id="banner"></div>
+    <div class="fade" id="fade"></div>
+  </div>
+  <div class="log" id="log"></div>
+  <p class="muted">畫面原型：只做過圖流程，沒有戰鬥。走路過圖＝黃色傳點（ring_yellow），全員走進去才換圖；傳送之陣＝藍色（ring_blue），勾選的角色走進去；祭司只能傳到「記錄此地」記過的地圖（最多 3 個）。</p>
+</div>
+
+<div class="modal" id="modal">
+  <div class="dlg">
+    <h3 id="dlgTitle"></h3>
+    <div class="sec">目的地</div>
+    <select id="dest"></select>
+    <div class="sec">一起過去的角色（同帳號）</div>
+    <div id="chars"></div>
+    <div class="muted" id="cost"></div>
+    <div class="row"><button class="btn" id="cancel">取消</button><button class="btn" id="ok">傳送</button></div>
+  </div>
+</div>
+
+<script src="../../js/player_anim_index.js"></script>
+<script src="../worldmap/data.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const stage = $('stage');
+const T = window.PLAYER_ANIM_TABLE;
+const GROUND = 330;              // 腳底的 y
+const SPEED = 130;               // 走路 px/秒
+
+const MAPS = {
+  prt_fild08: { name: '普隆德拉原野', bg: '../../images/maps/field.jpg', town: false },
+  prt_fild05: { name: '普隆德拉原野（北）', bg: '../../images/maps/field.jpg', town: false },
+  prontera: { name: '首都普隆德拉', bg: '../../images/maps/town.jpg', town: true },
+  geffen: { name: '魔法之都 吉芬', bg: '../../images/maps/town.jpg', town: true },
+  payon: { name: '山城 斐揚', bg: '../../images/maps/town.jpg', town: true },
+  morocc: { name: '沙漠之都 夢羅克', bg: '../../images/maps/desert.jpg', town: true },
+};
+// NPC 傳送的城鎮（scripts/gen_worldmap.js → WORLD.towns）：主城 1000z 一開始開放，其他 5000z 照周遭地圖等級開放
+const TOWNS = WORLD.towns;
+TOWNS.forEach(t => { if (!MAPS[t.id]) MAPS[t.id] = { name: t.name, bg: '../../images/maps/town.jpg', town: true }; });
+const ROUTE = ['prt_fild08', 'prontera', 'prt_fild05'];          // 走路示範的路線
+
+// 帳號裡的角色：前三位在隊伍裡、在場上；後兩位在別的地方
+const CHARS = [
+  { name: '騎士', key: 'knight_male_sword1', lv: 52, inParty: true },
+  { name: '祭司', key: 'priest_female_mace', lv: 48, inParty: true, acolyte: true },
+  { name: '巫師', key: 'wizard_female_rod1', lv: 50, inParty: true },
+  { name: '獵人', key: 'hunter_male_bow', lv: 41, inParty: false },
+  { name: '服事', key: 'acolyte_male_mace', lv: 30, inParty: false },
+];
+const partyLv = Math.max(...CHARS.filter(c => c.inParty).map(c => c.lv));
+
+// ---------- 角色 ----------
+class Unit {
+  constructor(c) {
+    this.c = c; this.meta = T[c.key];
+    this.el = document.createElement('div'); this.el.className = 'spr';
+    const [cw, ch] = this.meta.cell;
+    Object.assign(this.el.style, { width: cw + 'px', height: ch + 'px', backgroundImage: `url(../../images/player_anim/${c.key}.png?v=${this.meta.v})` });
+    this.tag = document.createElement('div'); this.tag.className = 'tag'; this.tag.textContent = c.name;
+    stage.append(this.el, this.tag);
+    this.x = 0; this.y = GROUND; this.act = 'idle_s'; this.t0 = performance.now(); this.visible = true; this.target = null;
+  }
+  setAct(a) { if (this.act !== a) { this.act = a; this.t0 = performance.now(); } }
+  show(v) { this.visible = v; this.el.style.opacity = v ? 1 : 0; this.tag.style.opacity = v ? 1 : 0; }
+  draw(cam, now) {
+    const m = this.meta, a = m.actions[this.act] || m.actions.idle_s;
+    const f = a.start + (Math.floor((now - this.t0) / a.delay) % a.frames);
+    const [cw, ch] = m.cell;
+    this.el.style.backgroundPosition = `${-(f % m.cols) * cw}px ${-Math.floor(f / m.cols) * ch}px`;
+    const sx = this.x - cam;
+    this.el.style.left = (sx - m.anchor[0]) + 'px'; this.el.style.top = (this.y - m.anchor[1]) + 'px';
+    this.el.style.zIndex = Math.round(this.y);
+    this.tag.style.left = sx + 'px'; this.tag.style.top = (this.y + 4) + 'px'; this.tag.style.zIndex = Math.round(this.y);
+  }
+  remove() { this.el.remove(); this.tag.remove(); }
+}
+
+// ---------- 傳點 ----------
+function makePortal(color, x) {
+  const el = document.createElement('div');
+  el.className = 'portal ' + color;
+  el.innerHTML = '<div class="glow"></div><div class="col"></div><div class="col b"></div>';
+  stage.appendChild(el);
+  return { el, x };
+}
+
+// ---------- 場景 ----------
+let cam = 0, mapId = ROUTE[0], units = [], portals = [], busy = false;
+const party = () => units.filter(u => u.c.inParty);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const log = s => { $('log').textContent = s; };
+function setMap(id) {
+  mapId = id;
+  stage.style.backgroundImage = `url(${MAPS[id].bg})`;
+  $('where').textContent = '📍 ' + MAPS[id].name;
+  const b = $('banner'); b.textContent = MAPS[id].name; b.classList.add('on');
+  setTimeout(() => b.classList.remove('on'), 1600);
+}
+// 隊形：隊長在前，其他人在身後兩側
+const FORM = [[0, 0], [-62, -26], [-62, 26], [-124, -14], [-124, 18]];
+function placeParty(list, x) { list.forEach((u, i) => { u.x = x + FORM[i][0]; u.y = GROUND + FORM[i][1]; u.setAct('idle_s'); }); }
+function clearPortals() { portals.forEach(p => p.el.remove()); portals = []; }
+function nextOnRoute() { const i = ROUTE.indexOf(mapId); return ROUTE[(i + 1) % ROUTE.length]; }
+
+function loop(now) {
+  const lead = party()[0];
+  if (lead) {
+    const want = lead.x - stage.clientWidth * 0.38;
+    cam += (want - cam) * 0.12;
+  }
+  stage.style.backgroundPosition = `${-cam}px 0`;
+  units.forEach(u => u.draw(cam, now));
+  portals.forEach(p => { p.el.style.left = (p.x - cam) + 'px'; p.el.style.top = (GROUND - 150 + 10) + 'px'; p.el.style.zIndex = GROUND - 30; });
+  requestAnimationFrame(loop);
+}
+// 一群人各自走到 x（保持隊形差距）；到了就呼叫 onArrive
+function walkTo(list, targetX, onArrive) {
+  return new Promise(res => {
+    let last = performance.now(), left = list.length;
+    const done = new Set();
+    list.forEach(u => u.setAct('walk_s'));
+    const step = now => {
+      const dt = (now - last) / 1000; last = now;
+      list.forEach(u => {
+        if (done.has(u)) return;
+        u.x += SPEED * dt;
+        if (u.x >= targetX) { u.x = targetX; done.add(u); left--; onArrive && onArrive(u); }
+      });
+      if (left > 0) requestAnimationFrame(step); else res();
+    };
+    requestAnimationFrame(step);
+  });
+}
+// 走進傳點：每個人走到傳點中心時消失
+async function enterPortal(list, portal) {
+  await walkTo(list, portal.x, u => { u.setAct('idle_s'); u.show(false); });
+  await wait(250);
+}
+// 換圖：淡出 → 換背景 → 入口傳點 → 一個一個走出來
+async function arrive(id, list) {
+  $('fade').classList.add('on');
+  await wait(450);
+  clearPortals();
+  setMap(id);
+  const entryX = 200;
+  placeParty(list, entryX);
+  list.forEach(u => { u.x = entryX; u.show(false); });
+  cam = entryX - stage.clientWidth * 0.38;
+  const entry = makePortal('yellow', entryX);
+  portals.push(entry);
+  $('fade').classList.remove('on');
+  await wait(350);
+  for (let i = 0; i < list.length; i++) {
+    const u = list[i];
+    u.show(true);
+    const tx = entryX + 160 + FORM[i][0];
+    walkTo([u], tx, () => u.setAct('idle_s'));
+    await wait(260);
+  }
+  await wait(900);
+  entry.el.style.opacity = 0;
+  await wait(400);
+  clearPortals();
+  // 下一個出口：城鎮也放
+  portals.push(makePortal('yellow', party()[0].x + 520));
+}
+
+async function doWalk() {
+  if (busy) return; busy = true; setButtons();
+  const list = party();
+  const to = nextOnRoute();
+  log(`往 ${MAPS[to].name}：全員走進傳點就換圖（實際遊戲中這段會照常遇怪、打完才繼續走）`);
+  await enterPortal(list, portals[0]);
+  await arrive(to, list);
+  log(`抵達 ${MAPS[to].name}。${MAPS[to].town ? '城鎮也有出口傳點，之後配城鎮背景圖。' : ''}`);
+  busy = false; setButtons();
+}
+
+// ---------- 傳送之陣（NPC／服事） ----------
+let mode = 'npc';
+function openDialog(m) {
+  mode = m;
+  $('dlgTitle').textContent = m === 'npc' ? '傳送 NPC：付費傳送到城鎮' : '傳送之陣（祭司）：傳到記錄點';
+  if (m === 'npc') {
+    // 全部列出；等級不夠的看得到但不能選
+    const open = t => partyLv >= t.lv;
+    $('dest').innerHTML = TOWNS.filter(t => t.id !== mapId).map(t => {
+      const lock = !open(t);
+      return `<option value="${t.id}" ${lock ? 'disabled' : ''}>${t.name}${lock ? `（Lv${t.lv} 開放）` : `　${t.cost.toLocaleString()}z`}</option>`;
+    }).join('');
+    $('dest').value = TOWNS.find(t => t.id !== mapId && open(t)).id;
+  } else {
+    // 只能去記錄過的地圖，沒有預設的城鎮
+    const list = memos.filter(id => id !== mapId);
+    $('dest').innerHTML = list.length
+      ? list.map(id => `<option value="${id}">${MAPS[id].name}</option>`).join('')
+      : '<option value="" disabled selected>還沒有記錄點（先到想去的地圖按「記錄此地」）</option>';
+  }
+  $('ok').disabled = !$('dest').value;
+  $('dest').onchange = updateCost;
+  $('chars').innerHTML = CHARS.map((c, i) => `<label><input type="checkbox" data-i="${i}" ${c.inParty ? 'checked' : ''}>
+      ${c.name} Lv${c.lv} <span class="muted">${c.inParty ? '隊伍中' : '不在隊伍（會在目的地會合）'}</span></label>`).join('');
+  updateCost();
+  $('modal').classList.add('on');
+}
+function updateCost() {
+  const t = TOWNS.find(x => x.id === $('dest').value);
+  $('cost').textContent = mode === 'npc'
+    ? `費用：${t.cost.toLocaleString()} 鋅幣（一次，整隊）　隊伍最高等級 Lv${partyLv}`
+    : `消耗：藍色魔力礦石 ×1；祭司要詠唱。記錄點 ${memos.length}/${MEMO_MAX}`;
+}
+// 記錄點（官方傳送之陣 Lv4 可記 3 個；滿了就擠掉最舊的）
+const MEMO_MAX = 3;
+const memos = [];
+function memo() {
+  const i = memos.indexOf(mapId);
+  if (i >= 0) memos.splice(i, 1);
+  memos.push(mapId);
+  if (memos.length > MEMO_MAX) memos.shift();
+  log(`記錄了 ${MAPS[mapId].name}。記錄點：${memos.map(id => MAPS[id].name).join('、')}`);
+}
+$('cancel').onclick = () => $('modal').classList.remove('on');
+$('ok').onclick = async () => {
+  const picks = [...document.querySelectorAll('#chars input:checked')].map(x => CHARS[+x.dataset.i]);
+  const dest = $('dest').value;
+  $('modal').classList.remove('on');
+  if (!picks.length || busy) return;
+  busy = true; setButtons();
+  const onField = party().filter(u => picks.includes(u.c));
+  const lead = party()[0];
+  const px = lead.x + 110;
+  if (mode === 'skill') {
+    // 祭司詠唱（示意 1.5 秒）
+    const priest = party().find(u => u.c.acolyte);
+    priest.setAct('cast_s');
+    const bar = document.createElement('div'); bar.className = 'castbar'; bar.innerHTML = '<i></i>';
+    stage.appendChild(bar);
+    const t0 = performance.now();
+    await new Promise(r => { const f = () => { const k = Math.min(1, (performance.now() - t0) / 1500);
+      bar.querySelector('i').style.width = k * 100 + '%'; bar.style.left = (priest.x - cam) + 'px'; bar.style.top = (priest.y - 110) + 'px'; bar.style.zIndex = 999;
+      k < 1 ? requestAnimationFrame(f) : r(); }; f(); });
+    bar.remove(); priest.setAct('idle_s');
+    log('祭司放出傳送之陣');
+  } else {
+    log('傳送 NPC 為隊伍放出傳送之陣');
+  }
+  portals.forEach(p => { p.el.style.opacity = 0.25; });
+  const warp = makePortal('blue', px);
+  portals.push(warp);
+  await wait(500);
+  // 沒勾的人留在原地
+  await enterPortal(onField, warp);
+  const stay = party().filter(u => !picks.includes(u.c));
+  stay.forEach(u => u.remove());
+  units = units.filter(u => !stay.includes(u));
+  // 不在場上的同帳號角色：直接在目的地會合
+  picks.filter(c => !units.some(u => u.c === c)).forEach(c => { c.inParty = true; units.push(new Unit(c)); });
+  stay.forEach(u => { u.c.inParty = false; });
+  await arrive(dest, party());
+  log(`${picks.map(c => c.name).join('、')} 抵達 ${MAPS[dest].name}${stay.length ? `；${stay.map(u => u.c.name).join('、')} 留在原地` : ''}`);
+  busy = false; setButtons();
+};
+
+function setButtons() {
+  $('btnWalk').disabled = busy;
+  $('btnNpc').disabled = busy || !MAPS[mapId].town;
+  $('btnNpc').title = MAPS[mapId].town ? '' : '要在城鎮才找得到傳送 NPC';
+  $('btnSkill').disabled = busy || !party().some(u => u.c.acolyte);
+  $('btnMemo').disabled = busy || !party().some(u => u.c.acolyte);
+}
+$('btnWalk').onclick = doWalk;
+$('btnNpc').onclick = () => openDialog('npc');
+$('btnSkill').onclick = () => openDialog('skill');
+$('btnMemo').onclick = memo;
+
+// 開場：在原野，前方有出口傳點
+units = CHARS.filter(c => c.inParty).map(c => new Unit(c));
+setMap(mapId);
+placeParty(party(), 260);
+cam = 260 - 420;
+portals.push(makePortal('yellow', 260 + 520));
+setButtons();
+requestAnimationFrame(loop);
+log('按「走過傳點」看隊伍一起過圖；走到城鎮後可以用 NPC 傳送。');
+</script>
+</body>
+</html>

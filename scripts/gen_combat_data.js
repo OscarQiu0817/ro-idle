@@ -1,13 +1,14 @@
 /* 3a：戰鬥資料（rAthena → js/），3b／3c 接進引擎用；本身不改遊戲行為。
    node scripts/gen_combat_data.js
      → js/skill_cast_data.js  SKILL_CAST[技能 id]：詠唱、固詠、後延遲、冷卻、可否打斷、射程、範圍、擊退、段數、場地
-     → js/mob_move.js         MOB_MOVE[怪物 id]：射程、每格毫秒、攻擊間隔、攻擊動作、受擊硬直、主動／不會動
+     → js/mob_move.js         MOB_MOVE[怪物 id]：射程、每格毫秒、攻擊間隔、攻擊動作、受擊硬直、主動／不會動；
+                              掉落表是空的或只剩蘋果佔位的怪，另帶 drops（rAthena Drops，Rate ÷ 10000）
    技能 id 已是 rAthena 名稱小寫（3a 改名），直接轉大寫查 skill_db。
    怪物：先用怪物 id 對 mob_db AegisName，對不到再用 imgId 對 mob_db Id。 */
 const fs = require('fs');
 const path = require('path');
 const { loadGameData, ROOT } = require('./lib/game_data');
-const { readYamlBody } = require('./lib/rathena');
+const { readYamlBody, loadItemDb } = require('./lib/rathena');
 const { pickSkill, pickMobMove } = require('./lib/rathena_combat');
 
 const HEADER = src => `/* 此檔由 scripts/gen_combat_data.js 產生，不要手改。來源：rAthena ${src}。 */\n`;
@@ -42,18 +43,30 @@ function main() {
   const move = {};
   const by = { aegis: 0, imgId: 0 };
   const noMob = [];
+  // 道具：rAthena AegisName → Id → 本作 ITEMS 的 key（imgId＝道具 Id）
+  const aegisToId = new Map([...loadItemDb().values()].map(it => [String(it.AegisName).toLowerCase(), it.Id]));
+  const idToKey = new Map();
+  for (const it of Object.values(g.ITEMS)) if (it.imgId && !idToKey.has(it.imgId)) idToKey.set(it.imgId, it.id);
+  const badDrops = mon => !mon.drops || !mon.drops.length || (mon.drops.length <= 2 && mon.drops.some(d => d.item === 'apple'));
+  let filled = 0;
   for (const mon of Object.values(g.MONSTERS)) {
     let m = byAegis.get(String(mon.id).toLowerCase());
     if (m) by.aegis++;
     else if (mon.imgId && byId.get(mon.imgId)) { m = byId.get(mon.imgId); by.imgId++; }
     if (!m) { noMob.push(mon.id); continue; }
     move[mon.id] = pickMobMove(m, attr);
+    if (badDrops(mon)) {
+      const drops = [...(m.MvpDrops || []), ...(m.Drops || [])]
+        .map(d => [idToKey.get(aegisToId.get(String(d.Item).toLowerCase())), d.Rate / 10000])
+        .filter(([k]) => k);
+      if (drops.length) { move[mon.id].drops = drops; filled++; }
+    }
   }
   writeTable('mob_move.js', 'MOB_MOVE', 'db/re/mob_db.yml（mob_db_re.yml）', move);
 
   console.log('技能', Object.keys(g.SKILLS).length, '｜寫入', Object.keys(cast).length, '｜skill_db 沒有', noSkill.length, noSkill.join(' '));
   console.log('怪物', Object.keys(g.MONSTERS).length, '｜寫入', Object.keys(move).length,
-    '（AegisName', by.aegis, '／imgId', by.imgId, '）｜對不到', noMob.length, noMob.slice(0, 20).join(' '));
+    '（AegisName', by.aegis, '／imgId', by.imgId, '）｜對不到', noMob.length, noMob.slice(0, 20).join(' '), '｜補掉落', filled);
 }
 
 main();

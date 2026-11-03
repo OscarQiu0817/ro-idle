@@ -305,7 +305,7 @@ function createCharacter(name, statAlloc, gender) {
     instances: {},     // { instanceId: {item, refine, cards:[cardId,...]} } 精煉或插卡過的裝備會變成獨立個體，跟著那一件走
     inventory: [],        // [{item:'jellopy', qty:3}]
     gold: 50,
-    mapId: 'novice_safe',
+    mapId: 'prontera',
     monster: null,        // {defId, hp, maxHp} - 保留相容性
     monsters: [],         // [{defId, hp, maxHp, id}] 多怪物系統
     monsterIdCounter: 0,  // 怪物唯一ID計數器
@@ -5622,7 +5622,7 @@ function gameTick() {
      施放卻要等下一秒，中間角色會站在技能射程上乾等、普攻也打不到。隊友仍在 alliesTick（每秒）。 */
   ensureNearestTarget();
   if (state.autoSkill) tryAutoCastSkill();
-  if (state.monsters.length > 0) {
+  if (hasFightTarget()) {
     // 使用攻擊間隔控制攻擊頻率（累積時間差模式）
     const now = Date.now();
     // 從無怪→有怪時重設，避免安全區累積爆發
@@ -5679,7 +5679,8 @@ function gameTick() {
   } else {
     state._prevHadMonsters = false;
     _pendingSwing = null;
-    tickRoam(moveDt, moveNow);   // 沒怪：漫遊找怪
+    if (state.travel) tickTravel(moveDt);   // 趕路：沒有擋路的就往傳點走
+    else tickRoam(moveDt, moveNow);         // 沒怪：漫遊找怪
   }
   saveGameThrottled();
   onTickUI();
@@ -6356,6 +6357,82 @@ function tickRoam(dt, now) {
   }
   playerMoveBy(dt / PLAYER_WALK_MS, state.roamDir);
 }
+/* ---------------- 趕路（D1b）----------------
+   世界地圖選目的地後，沿傳送點連線一張一張走。每張圖在固定距離放一個傳點，
+   方向照世界地圖上下一張圖的方位；照常刷怪、照常戰鬥，但只打擋路的
+   （主動怪、被打過而追上來的），被動怪不理；沒有擋路的就往傳點走，走到就換圖。
+   傳點存世界座標（state.worldX／worldY 那一套），畫面每拍換算成 d／a。 */
+const TRAVEL_PORTAL_CELLS = { town: 20, dungeon: 30, field: 40 };
+const TRAVEL_ENTER_CELLS = 0.6;
+function isTravelThreat(mon) {
+  return mon && mon.hp > 0 && (monMove(mon).aggressive || mon.hp < mon.maxHp);
+}
+// 有沒有要停下來打的：沒在趕路＝場上有怪就打；趕路中＝只看擋路的
+function hasFightTarget() {
+  const ms = state.monsters || [];
+  return state.travel ? ms.some(isTravelThreat) : ms.length > 0;
+}
+function travelPortalPolar() {
+  const t = state.travel;
+  if (!t || !t.portal) return null;
+  const x = t.portal.x - (state.worldX || 0), y = t.portal.y - (state.worldY || 0);
+  return { d: Math.hypot(x, y), a: Math.atan2(y, x) };
+}
+function travelNextMapId() {
+  const t = state.travel;
+  if (!t) return null;
+  const i = t.path.indexOf(state.mapId);
+  return i >= 0 ? t.path[i + 1] || null : null;
+}
+// 在這張圖放往下一張圖的傳點
+function placeTravelPortal() {
+  const t = state.travel;
+  const next = travelNextMapId();
+  if (!t || !next) { state.travel = null; return; }
+  const a0 = worldMapPos(state.mapId), a1 = worldMapPos(next);
+  const ang = a0 && a1 && (a0[0] !== a1[0] || a0[1] !== a1[1]) ? Math.atan2(a1[1] - a0[1], a1[0] - a0[0]) : Math.random() * Math.PI * 2 - Math.PI;
+  const m = currentMap() || {};
+  const dist = m.town ? TRAVEL_PORTAL_CELLS.town : m.bg === 'map-dungeon' ? TRAVEL_PORTAL_CELLS.dungeon : TRAVEL_PORTAL_CELLS.field;
+  t.portal = { x: (state.worldX || 0) + dist * Math.cos(ang), y: (state.worldY || 0) + dist * Math.sin(ang), to: next };
+  state.roamDir = ang;      // 怪偏向前方出生（rollMonsterPos）
+}
+function startTravel(destId) {
+  const path = worldPath(state.mapId, destId);
+  const dest = MAPS.find(m => m.id === destId);
+  if (!dest) return false;
+  if (!path) { logMsg(`⚠️ 從這裡沿傳送點走不到「${dest.name}」，可以到城鎮找傳送 NPC。`); return false; }
+  if (path.length < 2) return false;
+  state.travel = { dest: destId, path };
+  placeTravelPortal();
+  logMsg(`🧭 出發前往「${dest.name}」，要過圖 ${path.length - 1} 次。`);
+  if (typeof renderMapTab === 'function') renderMapTab();
+  return true;
+}
+function cancelTravel(silent) {
+  if (!state.travel) return;
+  state.travel = null;
+  if (!silent) logMsg('🧭 停止趕路。');
+}
+// 沒有擋路的怪：走向傳點，走到就換圖（全隊跟在身後一起進去）
+function tickTravel(dt) {
+  if (playerImmobile() || state.casting) return;
+  const p = travelPortalPolar();
+  if (!p) { placeTravelPortal(); return; }
+  state.roamDir = p.a;
+  if (p.d > TRAVEL_ENTER_CELLS) { playerMoveBy(Math.min(p.d, dt / PLAYER_WALK_MS), p.a); return; }
+  const t = state.travel;
+  const next = t.portal.to;
+  changeMap(next, { travel: true });
+  if (next === t.dest) {
+    state.travel = null;
+    logMsg(`🧭 抵達「${(MAPS.find(m => m.id === next) || {}).name || next}」。`);
+  } else {
+    placeTravelPortal();
+  }
+  if (typeof renderMapBackground === 'function') renderMapBackground();
+  if (typeof playMapMusic === 'function') playMapMusic();
+  if (typeof renderMapTab === 'function') renderMapTab();
+}
 /* 怪物經驗（T4）與屬性／種族／體型（T17）改照官方，資料在 MOB_MOVE（rAthena mob_db_re） */
 (function applyOfficialMobExp() {
   if (typeof MOB_MOVE === 'undefined') return;
@@ -6369,6 +6446,8 @@ function tickRoam(dt, now) {
     if (mv.race) m.race = mv.race;
     if (mv.size) m.size = mv.size;
     if (mv.eleRes) m.elementResistance = mv.eleRes;
+    // 原本掉落表是空的或只剩佔位的怪，用 rAthena 掉落補上（換成 rAthena 刷怪後才打得到的那批）
+    if (mv.drops) m.drops = mv.drops.map(([item, chance]) => ({ item, chance }));
   }
 })();
 function monMove(mon) {
@@ -6494,8 +6573,8 @@ function ensureNearestTarget() {
   const locked = cur.id === state._targetId;
   if (locked && Number.isFinite(cur.d) && cur.d <= playerEngageRange() + DIST_EPS) return;
   let best = null;
-  for (const m of ms) if (m.hp > 0 && Number.isFinite(m.d) && (!best || m.d < best.d)) best = m;
-  if (best && best !== cur && !(locked && cur.hp > 0 && Number.isFinite(cur.d) && cur.d - best.d < 1)) {
+  for (const m of ms) if (m.hp > 0 && Number.isFinite(m.d) && (!state.travel || isTravelThreat(m)) && (!best || m.d < best.d)) best = m;
+  if (best && best !== cur && !(locked && cur.hp > 0 && Number.isFinite(cur.d) && cur.d - best.d < 1 && (!state.travel || isTravelThreat(cur)))) {
     ms.splice(ms.indexOf(best), 1);
     ms.unshift(best);
     state.monster = best;
@@ -8370,16 +8449,9 @@ function onPlayerDown() {
   logMsg(`⚠️ 你被擊倒了！正在返回安全地帶療傷……`);
   state.monster = null;
   state.monsters = [];
-  // 找到該地區的安全區，沒有就去普隆德拉
-  const curRegion = regionOf(state.mapId);
-  let safeMap = null;
-  if (curRegion) {
-    for (const mid of curRegion.maps) {
-      const m = MAPS.find(x => x.id === mid);
-      if (m && m.monsters.length === 0) { safeMap = m.id; break; }
-    }
-  }
-  if (!safeMap) safeMap = 'prontera'; // 兜底
+  cancelTravel(true);
+  // 抬回沿傳送點最近的城鎮（D1b），走不到城鎮就回普隆德拉
+  const safeMap = nearestTownId(state.mapId);
   state.mapId = safeMap;
   reviveAlliesInTown();   // 被抬回城，隊友一起站起來（#83）
   resetRelicRevive();     // 牧師遺物的復活次數也一起回滿（#113）
@@ -11928,6 +12000,7 @@ function tryAutoCastSkill() {
     const isAttack = skillNeedsMonster(sk);
     if (isAttack && monsterCount < Math.max(1, sl.minMobs || 1)) continue;
     if (isAttack && !autoSkillInRange(sk, lv)) continue;
+    if (isAttack && state.travel && !isTravelThreat(state.monsters[0])) continue;   // 趕路：被動怪不打
     if (autoSkillWasted(sk)) continue;
     castSkill(sk.id);
     return;
@@ -12938,28 +13011,17 @@ function isInTown() {
   return map && map.monsters.length === 0;
 }
 
-/* ---- 回最近的安全區（#120）----
-   優先找**目前這一區**的安全區；這一區沒有就回普隆德拉。
-   跟 onPlayerDown() 被抬回城走的是同一套判斷，只是那邊是被動觸發。 */
-const FALLBACK_SAFE_MAP = 'prontera';
-function nearestSafeMapId() {
-  const region = typeof regionOf === 'function' ? regionOf(state.mapId) : null;
-  if (region) {
-    for (const mid of region.maps) {
-      const m = MAPS.find(x => x.id === mid);
-      if (m && (m.monsters || []).length === 0) return mid;
-    }
-  }
-  return MAPS.find(x => x.id === FALLBACK_SAFE_MAP) ? FALLBACK_SAFE_MAP : null;
-}
+/* ---- 回最近的城鎮（#120）----
+   沿傳送點連線最近的城鎮（D1b），跟 onPlayerDown() 被抬回城同一套。 */
+function nearestSafeMapId() { return nearestTownId(state.mapId); }
 function goNearestSafeZone() {
   const id = nearestSafeMapId();
   if (!id) return false;
   if (state.mapId === id) {
-    logMsg('🏠 你已經在安全區了。');
+    logMsg('🏠 你已經在城鎮了。');
     return false;
   }
-  return changeMap(id);
+  return startTravel(id);     // 走回去（D1b），不再瞬移
 }
 
 function townRestore() {
@@ -14894,9 +14956,10 @@ function craftMaterial(kind) {
 }
 
 /* ---------------- 地圖切換 ---------------- */
-function changeMap(mapId) {
+function changeMap(mapId, opt) {
   const map = MAPS.find(m => m.id === mapId);
   if (!map) return false;
+  if (!(opt && opt.travel)) cancelTravel(true);   // 手動換圖就不趕路了
   const prevMapId = state.mapId;
   state.mapId = mapId;
   // 回安全區全隊免費滿血復活（#83）——不然倒地的隊友只能靠天地樹葉子
@@ -14910,6 +14973,41 @@ function changeMap(mapId) {
   prepaidArrivingAllies(prevMapId);
   saveGame();
   return true;
+}
+
+/* ---------------- NPC 傳送（D1b）----------------
+   城鎮付費傳到 WORLD.towns 的城鎮：主城 1000z、其他 5000z，隊伍最高等級要到開放等級。
+   回傳失敗原因字串，成功回 null。 */
+function partyTopLevel() {
+  return Math.max(state.baseLevel || 1, ...allyList().map(a => (a && a.baseLevel) || 1));
+}
+function npcWarpBlockReason(townId) {
+  const t = WORLD.towns.find(x => x.id === townId);
+  if (!t) return '沒有這個傳送目的地。';
+  if (!(currentMap() || {}).town) return '要在城鎮找傳送 NPC。';
+  if (townId === state.mapId) return '你已經在這裡了。';
+  if (partyTopLevel() < t.lv) return `${t.name}要 Lv${t.lv} 才開放。`;
+  if ((state.gold || 0) < t.cost) return `鋅幣不足（需要 ${t.cost.toLocaleString()}z）。`;
+  return null;
+}
+function npcWarp(townId) {
+  const why = npcWarpBlockReason(townId);
+  if (why) { logMsg('⚠️ ' + why); return why; }
+  const t = WORLD.towns.find(x => x.id === townId);
+  cancelTravel(true);
+  state.gold -= t.cost;
+  logMsg(`🌀 支付 ${t.cost.toLocaleString()}z，傳送 NPC 送隊伍到「${t.name}」。`);
+  changeMap(townId);
+  return null;
+}
+
+// 坐船（D1b）：要人在出發的城鎮（或島上回程）才搭得上
+function takeFerry(to) {
+  const f = ferriesFrom(state.mapId).find(x => x.to === to);
+  if (!f) { logMsg('⚠️ 這裡搭不到往那裡的船。'); return false; }
+  cancelTravel(true);
+  logMsg(`⛵ 搭${f.via}到「${(MAPS.find(m => m.id === to) || {}).name || to}」。`);
+  return changeMap(to);
 }
 
 /* ---------------- MVP／迷你王 模式切換 ----------------
