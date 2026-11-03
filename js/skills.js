@@ -9,7 +9,7 @@
 ------------------------------------------------- */
 
 const SKILLS = {
-  nv_firstaid: {"id":"nv_firstaid","name":"急救術 First Aid","maxLv":5,"type":"heal","element":"neutral","spCost":[5,5,5,5,5],"cooldown":[5,5,5,5,5],"mult":[0.5,0.8,1.1,1.4,1.7],"desc":"消耗少量SP恢復HP。"},
+  nv_firstaid: {"id":"nv_firstaid","name":"急救術 First Aid","maxLv":5,"autoGrant":true,"type":"heal","element":"neutral","spCost":[5,5,5,5,5],"cooldown":[5,5,5,5,5],"mult":[0.5,0.8,1.1,1.4,1.7],"desc":"消耗少量SP恢復HP。"},
   sm_autoberserk: {"id":"sm_autoberserk","name":"狂暴狀態 Berserk","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"berserk","element":"neutral","spCost":[0],"cooldown":[0],"mult":[1],"desc":"HP低於25%時自動發動，ATK +32%、DEF -55%。"},
   sm_fatalblow: {"id":"sm_fatalblow","name":"攻擊弱點 Fatal Blow","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"bashStunProc","element":"neutral","spCost":[0],"cooldown":[0],"procChance":[50],"stunSec":[1],"mult":[1],"desc":"被動技能，狂擊命中時有50%機率使敵人暈眩1秒。"},
   sm_movingrecovery: {"id":"sm_movingrecovery","name":"移動時恢復HP","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"hpMoveRegen","element":"neutral","spCost":[0],"cooldown":[0],"mult":[1],"desc":"每10秒自動回復HP（戰鬥中也有效）。"},

@@ -13,7 +13,9 @@
    ============================================================ */
 
 let creationAlloc = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 };
-let creationBudget = 15;
+// 創角自由點數：比照官方，六項各 1 點起，另有 24 點可分（剛好能把三項點到 9）
+const CREATE_FREE_POINTS = 24;
+let creationBudget = CREATE_FREE_POINTS;
 let selectedGender = 'male';
 let activeTab = 'map';
 
@@ -340,7 +342,7 @@ function onImportFileChosen(ev) {
 
 function goCreateNew() {
   creationAlloc = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 };
-  creationBudget = 15;
+  creationBudget = CREATE_FREE_POINTS;
   renderCreationStats();
   showScreen('screen-create');
 }

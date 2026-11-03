@@ -364,6 +364,7 @@ function createCharacter(name, statAlloc, gender) {
   addItem('cotton_shirt', 1);
   logMsg(`歡迎，${state.name}！你的冒險即將展開。`);
   logMsg('新手包：獲得紅色藥水 x100、短劍 x1、棉襯衫 x1！');
+  grantAutoSkills(false);   // 急救術一開始就滿級
   spawnMonster();
   saveGame();
 }
@@ -12194,7 +12195,7 @@ const TRANSCENDENT_HPSP_MULT = 1.25;
 
 function rebirthSkillPoints() {
   const n = JOB_TREE.novice;
-  const need = (n.skills || []).reduce((a, sk) => a + (sk.isQuest ? 0 : (sk.maxLv || 1)), 0);
+  const need = (n.skills || []).reduce((a, sk) => a + (sk.isQuest || sk.autoGrant ? 0 : (sk.maxLv || 1)), 0);
   const fromLevels = Math.max(0, (n.jobLevelMax || 1) - 1);
   return Math.max(0, need - fromLevels);
 }
@@ -12310,6 +12311,7 @@ function doRebirth() {
   state.jobSkillPoints.novice = (state.jobSkillPoints.novice || 0) + bonusSp;
   state.skillPoints = Object.values(state.jobSkillPoints).reduce((a, b) => a + b, 0);
 
+  grantAutoSkills(false);   // 急救術（autoGrant）直接滿級
   // 新手的任務技能照樣自動習得（跟轉職同一段邏輯）
   (JOB_TREE.novice.skills || []).forEach(sk => {
     if (sk.isQuest && !state.learnedSkills[sk.id]) state.learnedSkills[sk.id] = 1;
@@ -12332,6 +12334,10 @@ function doRebirth() {
 /* ---------------- 轉職 ----------------
    轉職一律只能往下走（`next`），而且**轉生過的角色連分岔都沒有**——
    只放行 `state.rebirthPath` 記下的那條原路。 */
+// 這個職業有沒有要花技能點的技能（初心者只剩急救術、而且自動滿級，點數花不掉）
+function jobNeedsSkillPoints(job) {
+  return (job.skills || []).some(sk => sk && !sk.autoGrant && !sk.isQuest);
+}
 function canJobChange(targetId) {
   const job = currentJob();
   const locked = rebirthPathNext();
@@ -12348,7 +12354,7 @@ function canJobChange(targetId) {
   if ((target.tier >= 3) && state.baseLevel < target.baseLevelReq) return false;
   // 技能點檢查：當前職業的技能點必須花完
   if (!state.jobSkillPoints) state.jobSkillPoints = {};
-  if ((state.jobSkillPoints[state.jobId] || 0) > 0) return false;
+  if (jobNeedsSkillPoints(job) && (state.jobSkillPoints[state.jobId] || 0) > 0) return false;
   return true;
 }
 // 轉生鎖住路線之後，這個職業之所以不能選的理由（給 UI 顯示用）
@@ -12390,7 +12396,7 @@ function jobChangeBlockReason(targetId) {
   if ((target.tier >= 3) && state.baseLevel < target.baseLevelReq) {
     return `基礎等級要達到 ${target.baseLevelReq}（目前 ${state.baseLevel}）。`;
   }
-  const left = (state.jobSkillPoints || {})[state.jobId] || 0;
+  const left = jobNeedsSkillPoints(job) ? ((state.jobSkillPoints || {})[state.jobId] || 0) : 0;
   if (left > 0) {
     const bits = [];
     const learned = state.learnedSkills || {};
@@ -12442,6 +12448,11 @@ function doJobChange(targetId) {
 
   // 檢查當前職業的技能點是否已全部花完
   if (!state.jobSkillPoints) state.jobSkillPoints = {};
+  // 沒有技能可點的職業（初心者）：剩下的點數直接作廢，不擋轉職、也不帶到下一職
+  if (!jobNeedsSkillPoints(currentJob())) {
+    delete state.jobSkillPoints[state.jobId];
+    state.skillPoints = Object.values(state.jobSkillPoints).reduce((a, b) => a + b, 0);
+  }
   const currentJobPoints = state.jobSkillPoints[state.jobId] || 0;
   if (currentJobPoints > 0) {
     logMsg(`⚠️ 你還有 ${currentJobPoints} 點 ${currentJob().name} 的技能點未使用，請先用完再轉職！`);
