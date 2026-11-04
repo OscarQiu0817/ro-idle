@@ -443,6 +443,7 @@ function onTickUI() {
     }
     updateSkillAura();
     updateBuffCountdown();
+    refreshMapYieldBox();
     updatePlayerSprite();   // 換武器要即時換騎乘圖；key 沒變時這個函式會直接 return
     renderGmPanel();
     applyFarmModeTheme();     // 打寶模式的介面染色（#111）
@@ -513,8 +514,10 @@ function allySpriteHtml(a) {
   }
   return `<div class="ally-figure" data-key="${parts ? '' : (spriteFolderFor(a.jobId, a.gender || 'male') || '')}" title="${a._allyName}（${jd.name || a.jobId}）Lv.${a.baseLevel}">
     ${body}
+    <div class="ally-cast"><span class="ally-cast-name"></span><div class="ally-cast-track"><i></i></div></div>
     <div class="ally-tag"></div>
     <div class="ally-hp"><div class="ally-hp-fill"></div></div>
+    <div class="ally-sp"><div class="ally-sp-fill"></div></div>
   </div>`;
 }
 
@@ -559,6 +562,25 @@ function renderAllySprites() {
     if (tag && tag.textContent !== txt) tag.textContent = txt;
     const bar = fig.querySelector('.ally-hp-fill');
     if (bar) bar.style.width = Math.max(0, Math.min(100, (a.hp / Math.max(1, a.maxHp)) * 100)) + '%';
+    const spBar = fig.querySelector('.ally-sp-fill');
+    if (spBar) spBar.style.width = Math.max(0, Math.min(100, (a.sp / Math.max(1, a.maxSp)) * 100)) + '%';
+    // 隊友的詠唱條（跟玩家同一套 casting 欄位）
+    const castEl = fig.querySelector('.ally-cast');
+    if (castEl) {
+      const c = !away && !a._downed && a.casting;
+      castEl.style.visibility = c ? 'visible' : 'hidden';
+      if (c) {
+        // 放在頭頂：名牌在腳底下，往上一個角色高度就是頭（跟玩家的詠唱條同一個算法）
+        const tagEl = fig.querySelector('.ally-tag');
+        if (tagEl) castEl.style.top = (tagEl.offsetTop - ALLY_CHAR_H - castEl.offsetHeight - 2) + 'px';
+        const sk = SKILLS[c.skillId];
+        const nm = sk ? skillDisplayName(sk) : c.skillId;
+        const nameEl = castEl.querySelector('.ally-cast-name');
+        if (nameEl.textContent !== nm) nameEl.textContent = nm;
+        const pct = Math.min(100, Math.max(0, (Date.now() - c.startAt) / Math.max(1, c.endAt - c.startAt) * 100));
+        castEl.querySelector('i').style.width = pct.toFixed(0) + '%';
+      }
+    }
     if (!away && fig.querySelector('.ally-paper')) syncAllyDoll(i, a, fig);
     else if (!away) stepAllyAnim(i, a, fig);
   }
@@ -749,9 +771,10 @@ function renderAllyPanel() {
           ${allyJobLvHtml(c.jobName, c.baseLevel)}
           <span class="ally-row-hp">存檔 ${Number(c.slot) + 1}</span>
           <div class="ally-row-actions">
-          <button class="btn-small" ${!safe || list.length >= ALLY_MAX ? 'disabled' : ''}
+          <button class="btn-small" ${!safe || c.blocked ? 'disabled' : ''} title="${c.blocked ? shopEsc(c.blocked) : ''}"
             onclick="allyAction(hireAlly,'${c.slot}')">組隊</button>
           </div>
+          ${c.blocked ? `<div class="ally-note-sm">${shopEsc(c.blocked)}</div>` : ''}
         </div>`).join('');
   }
 
@@ -854,7 +877,7 @@ function renderAllyAutoBattle(a) {
   const cfg = a.autoSkillConfig = migrateAutoSkillConfig(a.autoSkillConfig);
   let atk = [], sup = [];
   withAlly(a, () => {
-    usableSkillEntries().forEach(({ sk, lv }) => {
+    orderedSupportEntries().forEach(({ sk, lv }) => {
       if (isAttackSkill(sk)) atk.push({ sk, lv });
       else if (isAutoSupportSkill(sk)) sup.push({ sk, lv });
     });
@@ -887,9 +910,12 @@ function renderAllyAutoBattle(a) {
     </div>`).join('');
   }
   if (sup.length) {
-    html += '<div class="ally-note-sm">輔助技能（勾了才會放）</div>';
-    html += sup.map(e => `<label><input type="checkbox" ${(a.autoSupportSkills || {})[e.sk.id] ? 'checked' : ''}
-      onchange="setAllyAutoSupport('${a._slot}','${e.sk.id}', this.checked)"> ${e.sk.name} Lv${e.lv}</label>`).join('');
+    html += '<div class="ally-note-sm">輔助技能（勾了才會放；由上往下檢查，▲▼ 調整優先）</div>';
+    html += sup.map((e, i) => `<div class="ally-sup-row">
+      <button class="btn-small" ${i === 0 ? 'disabled' : ''} onclick="moveSupportOrder('${a._slot}', '${e.sk.id}', -1)">▲</button>
+      <button class="btn-small" ${i === sup.length - 1 ? 'disabled' : ''} onclick="moveSupportOrder('${a._slot}', '${e.sk.id}', 1)">▼</button>
+      <label><input type="checkbox" ${(a.autoSupportSkills || {})[e.sk.id] ? 'checked' : ''}
+      onchange="setAllyAutoSupport('${a._slot}','${e.sk.id}', this.checked)"> ${e.sk.name} Lv${e.lv}</label></div>`).join('');
   }
   html += '</div>';
   return html;
@@ -1209,7 +1235,10 @@ function updateBuffCountdown() {
   if (!el || !state) return;
   const list = state.buffs || [];
   const debKeys = typeof pDebuffList === 'function' ? pDebuffList() : [];
-  if (!list.length && !debKeys.length) {
+  // 異常狀態與氣球體也放這一欄（以前在 HUD，出現／消失會讓整個畫面上下跳）
+  const ailKeys = typeof playerAilList === 'function' ? playerAilList() : [];
+  const spirits = state.spiritsMax > 0 ? Math.min(state.spirits || 0, state.spiritsMax) : -1;
+  if (!list.length && !debKeys.length && !ailKeys.length && spirits < 0) {
     if (el.childElementCount) el.innerHTML = '';
     buffTipText = '';
     return;
@@ -1219,7 +1248,8 @@ function updateBuffCountdown() {
     const key = buffChipKey(g);
     const remain = buffChipRemain(g);
     return key + ':' + remain + ':' + g.map(b => b.type).join(',');
-  }).join('|') + '|D:' + debKeys.map(k => k + ':' + pdebuffChipRemain(k)).join(',');
+  }).join('|') + '|D:' + debKeys.map(k => k + ':' + pdebuffChipRemain(k)).join(',')
+    + '|A:' + ailKeys.map(t => t + ':' + Math.ceil((state.playerAil[t] - Date.now()) / 1000)).join(',') + '|S:' + spirits;
   if (el.dataset.sig === sig) return;
   el.dataset.sig = sig;
   let html = groups.map(g => {
@@ -1237,6 +1267,15 @@ function updateBuffCountdown() {
     const key = ('d:' + k).replace(/"/g, '');
     return `<button type="button" class="buff-chip debuff" data-key="${key}" data-tip="${tip}" onclick="openBuffTip(this, true)" onmouseenter="openBuffTip(this, false)" onmouseleave="leaveBuffTip()">${pdebuffChipIcon(k)}<span class="buff-chip-t">${remain}</span></button>`;
   }).join('');
+  const esc = t => t.replace(/&/g, '＆').replace(/"/g, '＂').replace(/</g, '＜');
+  html = ailKeys.map(t => {
+    const a = PLAYER_AILMENTS[t];
+    const sec = Math.max(0, Math.ceil((state.playerAil[t] - Date.now()) / 1000));
+    return `<button type="button" class="buff-chip ailment" data-key="a:${t}" data-tip="${esc(a.name)}（剩 ${sec} 秒）" onclick="openBuffTip(this, true)" onmouseenter="openBuffTip(this, false)" onmouseleave="leaveBuffTip()">${a.icon}<span class="buff-chip-t">${sec}</span></button>`;
+  }).join('') + html;
+  if (spirits >= 0) {
+    html += `<button type="button" class="buff-chip" data-key="spirits" data-tip="氣球體 ${spirits}/${state.spiritsMax}" onclick="openBuffTip(this, true)" onmouseenter="openBuffTip(this, false)" onmouseleave="leaveBuffTip()">🔵<span class="buff-chip-t">${spirits}</span></button>`;
+  }
   el.innerHTML = html;
   paintBuffTip();
 }
@@ -1323,29 +1362,9 @@ function renderTopBar() {
   const canAny = job.next.some(canJobChange);
   jobBtn.classList.toggle('hidden', !canAny);
 
-  // 玩家身上的異常狀態圖示：掛在 HP 條旁邊，沒有狀態時整塊不佔位
+  // 異常狀態、臨時減益、氣球體都改在戰鬥畫面右側的狀態欄（updateBuffCountdown）；HUD 那一排清空不用
   const ailEl = document.getElementById('hud-ail');
-  if (ailEl && typeof playerAilList === 'function') {
-    let html = playerAilList()
-      .map(t => `<span title="${PLAYER_AILMENTS[t].name}">${PLAYER_AILMENTS[t].icon}</span>`).join('');
-    // 臨時減益（挑釁／緩緩移動／永恆之光）跟異常狀態同一排，但標成另一種底色
-    if (typeof pDebuffList === 'function') {
-      html += pDebuffList().map(k => {
-        const v = pDebuff(k);
-        const unit = k === 'fleeFlat' ? '' : '%';
-        return `<span class="p-debuff" title="${PLAYER_DEBUFF_META[k].name} ${v > 0 ? '+' : ''}${v}${unit}">${PLAYER_DEBUFF_META[k].icon}</span>`;
-      }).join('');
-    }
-    /* 武僧的氣球體（#70）：掛在同一排。這是玩家唯一看得到「還差幾顆」的地方——
-       爆氣、金剛不壞、阿修羅霸凰拳都靠它，沒有指示器的話整套系統是黑箱。
-       沒點蓄氣的職業 spiritsMax 是 0，整塊不出現。 */
-    if (state.spiritsMax > 0) {
-      const have = Math.min(state.spirits || 0, state.spiritsMax);
-      html += `<span class="p-debuff" title="氣球體 ${have}/${state.spiritsMax}">`
-        + '🔵'.repeat(have) + '⚪'.repeat(state.spiritsMax - have) + '</span>';
-    }
-    if (ailEl.innerHTML !== html) ailEl.innerHTML = html;
-  }
+  if (ailEl && ailEl.innerHTML) ailEl.innerHTML = '';
 }
 
 function paintHudBar(barId, textId, pctId, val, max) {
@@ -3417,46 +3436,47 @@ function fmtDur(sec) {
   return Math.floor(m / 60) + ' 小時 ' + (m % 60) + ' 分';
 }
 
-function renderMapYieldBox(mapObj) {
-  const est = typeof estimateMapYield === 'function' ? estimateMapYield(mapObj) : null;
+/* 產出估算（使用者 2026-11-05 改版）：左＝實測（從上次重置到現在），右＝離線預估（現在離線的話每 10 分鐘拿多少）。
+   右邊照離線結算同一條規則：這張圖的線上實測滿 1 分鐘就用實測速度，未滿用原地估算 ×0.1。
+   兩欄每 10 秒自己更新（refreshMapYieldBox），不用切分頁 */
+function renderMapYieldBox() {
+  const off = typeof offlineYieldPer10m === 'function' ? offlineYieldPer10m() : null;
   const act = typeof dpsStats === 'function' ? dpsStats() : null;
-  const isHere = mapObj.id === state.mapId;
-  // 樣本太少時比值會亂跳，滿 10 秒才顯示，否則寫「統計中」
-
-  const estRows = est ? `
-    <div class="yield-row"><span>DPS</span><b>${fmtNum(est.dps)}</b></div>
-    <div class="yield-row"><span>擊殺／10分</span><b>${fmtNum(est.killsPer10m)}${est.spawnCapped ? ' <small style="color:var(--ink-dim)" title="殺得比補怪快，每隻之間會多等一次生怪的時間">(含等怪時間)</small>' : ''}</b></div>
-    <div class="yield-row"><span>經驗／10分</span><b>${fmtNum(est.expPer10m)}</b></div>
-    <div class="yield-row"><span>職業經驗／10分</span><b>${fmtNum(est.jobExpPer10m)}</b></div>
-    <div class="yield-row"><span>金錢／10分</span><b>${fmtNum(est.goldPer10m)}z</b></div>`
+  const row = (label, v, unit = '') => `<div class="yield-row"><span>${label}</span><b>${fmtNum(v)}${unit}</b></div>`;
+  const offRows = off ? row('擊殺／10分', off.killsPer10m) + row('經驗／10分', off.expPer10m)
+      + row('職業經驗／10分', off.jobExpPer10m) + row('金錢／10分', off.goldPer10m, 'z')
+      + (off.full ? '' : `<div class="yield-warn">這張圖的實測未滿 1 分鐘（${Math.floor(off.sec)} 秒），離線數字 ×0.1</div>`)
     : '<div class="yield-empty">無法估算</div>';
-
-  const actRows = (act && act.sec >= 10) ? `
-    <div class="yield-row"><span>DPS</span><b>${fmtNum(act.dps)}</b></div>
-    <div class="yield-row"><span>擊殺數</span><b>${fmtNum(act.kills)}</b></div>
-    <div class="yield-row"><span>經驗／10分</span><b>${fmtNum(act.expPer10m)}</b></div>
-    <div class="yield-row"><span>職業經驗／10分</span><b>${fmtNum(act.jobExpPer10m)}</b></div>
-    <div class="yield-row"><span>金錢／10分</span><b>${fmtNum(act.goldPer10m)}z</b></div>`
+  const actRows = (act && act.sec >= 10) ? row('DPS', act.dps) + row('擊殺／10分', act.kills / act.sec * 600)
+      + row('經驗／10分', act.expPer10m) + row('職業經驗／10分', act.jobExpPer10m) + row('金錢／10分', act.goldPer10m, 'z')
     : '<div class="yield-empty">統計中…（滿 10 秒後顯示）</div>';
-
   return `
-  <div class="map-yield-box">
+  <div class="map-yield-box" id="map-yield-box">
     <div class="map-yield-head">
       <span class="map-yield-title">📊 產出估算</span>
       <button class="yield-reset-btn" onclick="resetDpsTracker();renderMapTab();">↺ 重置統計</button>
     </div>
     <div class="map-yield-cols">
       <div class="yield-col">
-        <div class="yield-col-title">預估${isHere ? '' : '（此圖）'}</div>
-        ${estRows}
-      </div>
-      <div class="yield-col">
         <div class="yield-col-title">實測 · ${act ? fmtDur(act.sec) : '—'}</div>
         ${actRows}
       </div>
+      <div class="yield-col">
+        <div class="yield-col-title">離線預估${off && off.full ? ` · 依最近 ${fmtDur(off.sec)}` : ''}</div>
+        ${offRows}
+      </div>
     </div>
-    <div class="map-yield-hint">預估以普通攻擊推算，已計入命中率、暴擊、屬性／體型、防禦與等級差。同圖可均分時含自己的那一份。技能傷害未計入。</div>
+    <div class="map-yield-hint">實測＝從上次重置到現在的實際表現。離線預估＝現在離線的話，每 10 分鐘會拿到多少：依這張圖最近一段（最多 10 分鐘）的實際打怪表現推算，已含走路、挨打、喝水、等怪的時間，離線時照這個速度結算。這張圖的實測未滿 1 分鐘時，離線預估與離線結算 ×0.1。兩欄每 10 秒更新。</div>
   </div>`;
+}
+// 每 10 秒換掉表格（只換這一塊，不重畫整個地圖分頁）
+let _yieldBoxAt = 0;
+function refreshMapYieldBox() {
+  if (Date.now() - _yieldBoxAt < 10000) return;
+  const el = document.getElementById('map-yield-box');
+  if (!el || !el.offsetParent) return;
+  _yieldBoxAt = Date.now();
+  el.outerHTML = renderMapYieldBox();
 }
 
 function mapLvRangeText(m) {
@@ -3485,12 +3505,30 @@ function mapMonsterChip(id, extra) {
   if (!m) return `<span class="monster-preview-chip">[${shopEsc(id)}]</span>`;
   return `<span class="monster-preview-chip"><img class="mon-chip-img" src="${monsterImgSrc(id)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'"><span class="mon-chip-text"><b>${shopEsc(m.name)} Lv.${m.level || '?'}</b><small>${monTagText(m)}</small></span>${extra || ''}</span>`;
 }
+// 主動／被動標籤（rAthena AI，見 js/mob_move.js）
+function monAggroTag(id) {
+  const mv = typeof MOB_MOVE !== 'undefined' && MOB_MOVE[id];
+  if (!mv) return '';
+  return mv.aggressive ? '<b class="mon-chip-aggro on" title="看到你就會主動攻擊">主動</b>'
+    : '<b class="mon-chip-aggro" title="被打才會反擊">被動</b>';
+}
+/* 優先目標：場上有勾選的怪就先打牠（engine ensureNearestTarget）。存成 state.priorityMonsters，跨地圖共用 */
+function togglePriorityMonster(id) {
+  if (!state.priorityMonsters) state.priorityMonsters = {};
+  if (state.priorityMonsters[id]) delete state.priorityMonsters[id];
+  else state.priorityMonsters[id] = true;
+  saveGame();
+  renderMapTab();
+}
 function renderMapMonsterChips(mapObj) {
+  const pri = state.priorityMonsters || {};
   const chips = [...mapObj.monsters].sort((a, b) => b.weight - a.weight).map(o => {
     const m = MONSTERS[o.id];
     const boss = m && m.isMvp ? '<b class="mon-chip-boss mvp">👑 MVP</b>'
       : (m && m.isBoss ? '<b class="mon-chip-boss mini">迷你王</b>' : '');
-    return mapMonsterChip(o.id, boss);
+    const star = `<button class="mon-chip-pri${pri[o.id] ? ' on' : ''}" onclick="togglePriorityMonster('${o.id}')"
+      title="${pri[o.id] ? '取消優先' : '設為優先目標：場上有牠就先打牠'}">${pri[o.id] ? '★ 優先' : '☆'}</button>`;
+    return mapMonsterChip(o.id, monAggroTag(o.id) + boss + star);
   }).join('');
   let bosses = '';
   if (typeof bossListOf === 'function') {
@@ -3500,7 +3538,8 @@ function renderMapMonsterChips(mapObj) {
   const bossRow = bosses
     ? `<div class="map-boss-preview"><span class="map-boss-preview-hint">這張圖的王（要勾選下方模式才會出現）</span>${bosses}</div>`
     : '';
-  return chips + bossRow;
+  const hint = `<div class="map-pri-hint">☆ 設為優先目標：場上有牠就先打，即使比較遠（主動怪靠過來時照樣會反擊）。</div>`;
+  return chips + hint + bossRow;
 }
 function mapPetCatchLine(mapObj) {
   if (typeof PETS === 'undefined' || !mapObj || !mapObj.monsters) return '';
@@ -3844,6 +3883,8 @@ function renderMapTab() {
       <button class="btn-small" onclick="goNearestSafeZone()" title="沿傳送點最近的城鎮">🏠 回最近的城鎮</button>
       ${currentMapObj.town ? '<button class="btn-small" onclick="openTownWarp()">🌀 傳送 NPC</button>'
         : ferriesFrom(currentMapObj.id).length ? `<button class="btn-small" onclick="openTownWarp('ferry')">⛵ 坐船</button>` : ''}
+      ${skillLv('al_warp') ? `<button class="btn-small" onclick="memoWarpPoint(); renderMapTab();" title="傳送之陣的記錄點（${(state.warpMemos || []).length}/${warpMemoMax()}）">📌 記錄此地</button>
+        ${currentMapObj.town ? '' : `<button class="btn-small" onclick="openTownWarp('portal')">✨ 傳送之陣</button>`}` : ''}
     </div>
     ${mapTravelBox()}
     ${isCity ? '' : `<div class="map-preview-box">
@@ -3944,7 +3985,8 @@ function renderAutoBattleTab() {
      吟遊詩人與舞孃的歌謠、賢者的屬性附加與元素領域、教授、聖殿十字軍…
      現在只維護「攻擊」那份，其餘非被動一律進輔助區。 */
   const attackSkills = [], supportSkills = [];
-  usableSkillEntries().forEach(({ sk, lv }) => {
+  // 輔助區照自訂優先序排（orderedSupportEntries），上面的先檢查
+  orderedSupportEntries().forEach(({ sk, lv }) => {
     const row = { ...sk, lv, jobName: jobNameOf(sk.id) };
     if (isAttackSkill(sk)) attackSkills.push(row);
     else if (isAutoSupportSkill(sk)) supportSkills.push(row);
@@ -4051,7 +4093,7 @@ function renderAutoBattleTab() {
         </div>`;
 
   // 輔助技能勾選
-  const supportRows = supportSkills.map(sk => {
+  const supportRows = supportSkills.map((sk, si) => {
     const enabled = state.autoSupportSkills && state.autoSupportSkills[sk.id];
     const spCost = Array.isArray(sk.spCost) ? sk.spCost[sk.lv - 1] : sk.spCost;
     // 顯示卡片修正後的冷卻（#55），不然畫面數字跟實際等待時間對不上
@@ -4065,6 +4107,10 @@ function renderAutoBattleTab() {
       </span>`;
     }
     return `<div class="support-skill-row ${enabled ? 'enabled' : ''}">
+      <span class="support-order">
+        <button class="btn-small" ${si === 0 ? 'disabled' : ''} onclick="moveSupportOrder(null, '${sk.id}', -1)" title="提高優先">▲</button>
+        <button class="btn-small" ${si === supportSkills.length - 1 ? 'disabled' : ''} onclick="moveSupportOrder(null, '${sk.id}', 1)" title="降低優先">▼</button>
+      </span>
       <label class="support-skill-toggle">
         <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleAutoSupportSkill('${sk.id}', this.checked);">
         <span class="support-skill-info">
@@ -4114,6 +4160,7 @@ function renderAutoBattleTab() {
     ${supportSkills.length > 0 ? `
     <div class="ab-section">
       <h4 class="ab-section-title">💚 輔助技能</h4>
+      <div class="ab-info-text">由上往下檢查，第一個需要補的先放；用 ▲▼ 調整優先順序。</div>
       <div class="support-skill-list">${supportRows}</div>
     </div>
     ` : ''}
@@ -4266,6 +4313,20 @@ function setAutoSkillSlot(i, key, value, quiet) {
 }
 
 // 輔助技能開關
+/* 輔助技能優先序（slot＝null 是玩家自己，否則是那位隊友）：把目前畫面上的順序整份存成 autoSupportOrder 再對調 */
+function moveSupportOrder(slot, skillId, dir) {
+  const who = slot == null ? state : allyBySlot(slot);
+  if (!who) return;
+  const ids = [];
+  const collect = () => orderedSupportEntries().forEach(({ sk }) => { if (isAutoSupportSkill(sk)) ids.push(sk.id); });
+  if (who === state) collect(); else withAlly(who, collect);
+  const i = ids.indexOf(skillId), j = i + dir;
+  if (i < 0 || j < 0 || j >= ids.length) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  who.autoSupportOrder = ids;
+  saveGame();
+  if (who === state) renderAutoBattleTab(); else renderAllyPanel();
+}
 function toggleAutoSupportSkill(skillId, enabled) {
   if (!state.autoSupportSkills) state.autoSupportSkills = {};
   state.autoSupportSkills[skillId] = enabled;
@@ -7574,6 +7635,7 @@ function wmShowRoute(id) {
   wmSheet(`<button class="wm-back" data-act="backsel" data-id="${id}">← 返回</button>
     <div class="wm-sheet-title">前往 ${shopEsc((wmMapOf(id) || {}).name || id)} <small>${shopEsc(plan.summary)}</small></div>
     ${plan.kind === 'ferry' ? '<div class="wm-legend"><i class="walk"></i>走路　<i class="ferry"></i>坐船</div>' : ''}
+    ${partyFollowHtml()}
     <button class="btn-small wm-go" data-act="${c.act}" data-id="${c.id || ''}">${shopEsc(c.label)}</button>`);
   wmRefresh();
   wmFitPoints([state.mapId, ...plan.segs.flatMap(sg => (sg && sg.ids) || sg || [])].map(wmPos).filter(Boolean));
@@ -7630,6 +7692,16 @@ function worldGo(id) {
   else selectMap(id);
 }
 
+// 有隊友在同一張圖時才出現的「隊友一起移動」勾選（預設開）
+function partyFollowHtml() {
+  const here = (state.allies || []).filter(a => a && allyOnThisMap(a));
+  if (!here.length) return '';
+  return `<label class="wm-party-follow"><input type="checkbox" ${state.partyFollow !== false ? 'checked' : ''}
+    onchange="state.partyFollow = this.checked; saveGame();"> 隊友一起移動（${here.map(a => shopEsc(a._allyName)).join('、')}）</label>`;
+}
+function doWarpPortal(id) {
+  if (warpPortalTo(id)) renderMapTab();   // 詠唱中；換圖在詠唱完成時（engine warp_portal）
+}
 function doFerry(id) {
   if (!takeFerry(id)) return;
   renderMapBackground();
@@ -7642,11 +7714,10 @@ function doFerry(id) {
 function openTownWarp(tab) {
   const town = (currentMap() || {}).town;
   const ferries = ferriesFrom(state.mapId);
-  if (tab !== 'ferry' && tab !== 'warp') tab = town ? 'warp' : 'ferry';
-  if (tab === 'warp' && !town) tab = 'ferry';
-  if (tab === 'ferry' && !ferries.length) tab = 'warp';
+  const portal = !!skillLv('al_warp');
+  const tabs = [town && ['warp', '🌀 傳送'], ferries.length && ['ferry', '⛵ 坐船'], portal && ['portal', '✨ 傳送之陣']].filter(Boolean);
+  if (!tabs.some(t => t[0] === tab)) tab = tabs.length ? tabs[0][0] : 'warp';
   const lv = partyTopLevel();
-  const tabs = [town && ['warp', '🌀 傳送'], ferries.length && ['ferry', '⛵ 坐船']].filter(Boolean);
   const head = tabs.length > 1
     ? `<div class="wm-tabs">${tabs.map(([k, label]) => `<button class="wm-tab${k === tab ? ' on' : ''}" onclick="openTownWarp('${k}')">${label}</button>`).join('')}</div>`
     : '';
@@ -7659,8 +7730,17 @@ function openTownWarp(tab) {
         <span>${shopEsc(t.name)}</span><small>${lock ? `Lv${t.lv} 開放` : t.cost.toLocaleString() + 'z'}</small></button>`;
     }).join('');
     body = `<div class="wm-sheet-title">🌀 傳送 NPC <small>隊伍最高 Lv${lv}・持有 ${(state.gold || 0).toLocaleString()}z</small></div>
-      <div class="ab-info-text">主城 1,000z、其他城鎮 5,000z，一次收費、整隊一起過去。</div>
+      <div class="ab-info-text">主城 1,000z、其他城鎮 5,000z，一次收費。</div>
+      ${partyFollowHtml()}
       <div class="wm-floors">${rows}</div>`;
+  } else if (tab === 'portal') {
+    const memos = state.warpMemos || [];
+    const rows = memos.filter(id => id !== state.mapId).map(id => `<button class="wm-floor" onclick="closeTownWarp(); doWarpPortal('${id}')">
+      <span>${shopEsc((MAPS.find(m => m.id === id) || {}).name || id)}</span><small>${id}</small></button>`).join('');
+    body = `<div class="wm-sheet-title">✨ 傳送之陣 <small>記錄點 ${memos.length}/${warpMemoMax()}・藍色魔力礦石 ${getItemQty('blue_gemstone')} 個</small></div>
+      <div class="ab-info-text">只能傳到記錄過的地圖（地圖分頁「📌 記錄此地」）。消耗藍色魔力礦石×1，詠唱 1 秒。</div>
+      ${partyFollowHtml()}
+      <div class="wm-floors">${rows || '<div class="ab-info-text">還沒有其他記錄點。</div>'}</div>`;
   } else {
     const rows = ferries.map(f => `<button class="wm-floor" onclick="closeTownWarp(); doFerry('${f.to}')">
       <span>${shopEsc((MAPS.find(m => m.id === f.to) || {}).name || f.to)}</span><small>${shopEsc(f.via)}</small></button>`).join('');
@@ -7723,12 +7803,17 @@ function showOfflineModal(off) {
   // 隊友有出力的話寫出來——#135 之前隊友的傷害根本沒算進離線收益
   const partyHtml = off.allyCount
     ? `<p class="offline-duration">🤝 ${off.allyCount} 位隊友一起參戰。</p>` : '';
+  // 結算依據（使用者 2026-11-05）：照線上實測，或實測未滿 1 分鐘的 ×0.1
+  const rateHtml = off.rateFromLive === false
+    ? '<p class="offline-duration yield-warn">這張圖的線上實測未滿 1 分鐘，這次結算 ×0.1。先在線上打滿 1 分鐘再離開，就會照實際表現結算。</p>'
+    : (off.rateFromLive ? '<p class="offline-duration">依這張圖最近的線上實際打怪表現結算。</p>' : '');
   // 頭目那份單獨寫一行（#137）：這是玩家最想知道的一件事
   const bossHtml = (off.bossList || []).length
     ? `<p class="offline-duration">👑 擊敗頭目：${off.bossList.map(b => `${b.name} ×${b.kills}`).join('、')}</p>` : '';
 
   document.getElementById('offline-modal-body').innerHTML = `
     <p class="offline-duration">離開了 <strong>${formatDuration(off.elapsedMs)}</strong>，你的角色在原地持續戰鬥了 ${off.kills} 場戰鬥：</p>
+    ${rateHtml}
     ${prepaidHtml}
     ${partyHtml}
     ${bossHtml}

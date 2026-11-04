@@ -38,8 +38,10 @@ function pickSkill(s) {
   };
 }
 
-const AGGRESSIVE_AI = new Set(['04', '05', '09', '13', '20', '21', '24', '26']);
-const IMMOBILE_AI = new Set(['06', '10']);
+/* 照 rAthena doc/mob_db_mode_list.txt：Aggressive 位元（0x4）有開的 AI。
+   24 是 MVP 召喚的小弟（被動、不亂走），以前誤列成主動；08／10／11／12／19／27 以前漏掉（螳螂是 19） */
+const AGGRESSIVE_AI = new Set(['04', '05', '08', '09', '10', '11', '12', '13', '19', '20', '21', '26', '27']);
+const IMMOBILE_AI = new Set(['06', '10', '11', '27']);
 
 /* 怪物移動與攻擊節奏（mob_db_re.yml） */
 /* T17：屬性／種族／體型照 rAthena，抗性表照 attr_fix（屬性等級 × 攻擊屬性 × 防守屬性） */

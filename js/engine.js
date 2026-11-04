@@ -2930,6 +2930,52 @@ function mitigatePlayerIncoming(rawDmg, hardDef, softDef) {
      實測 —— 從上次重置到現在真的打出多少傷害、拿到多少經驗與錢，用來看「現在跑得如何」
      預估 —— 拿目前素質去推算某張地圖的產出，用來看「該不該換圖」，不必先去打
 ------------------------------------------------- */
+/* ---- 離線結算用的線上實測（使用者 2026-11-05）----
+   只在主迴圈真的在跑時累計時間（分頁切走、離線不算），換圖就重來，保留最近 10 分鐘。
+   滿 1 分鐘：離線照這個擊殺速度結算（已含走路、挨打、喝水、等怪的時間）；
+   未滿：退回原地抽樣的估算，再 ×0.1。 */
+const LIVE_RATE_WINDOW_SEC = 600;
+const LIVE_RATE_MIN_SEC = 60;
+const OFFLINE_SHORT_DATA_MULT = 0.1;
+const LIVE_BUCKET_SEC = 10;
+const liveEmptyBucket = () => ({ sec: 0, kills: 0, exp: 0, jobExp: 0, gold: 0 });
+function liveRateTick(dtSec) {
+  let r = state.liveRate;
+  if (!r || r.mapId !== state.mapId) r = state.liveRate = { mapId: state.mapId, buckets: [], cur: liveEmptyBucket() };
+  r.cur.sec += dtSec;
+  if (r.cur.sec >= LIVE_BUCKET_SEC) {
+    r.buckets.push(r.cur);
+    r.cur = liveEmptyBucket();
+    while (r.buckets.length * LIVE_BUCKET_SEC > LIVE_RATE_WINDOW_SEC) r.buckets.shift();
+  }
+}
+// 記在玩家身上（隊友補刀時 state 是隊友，所以由呼叫端傳 owner 進來）
+function liveRateAdd(who, exp, jobExp, gold) {
+  const r = who.liveRate;
+  if (!r || r.mapId !== who.mapId) return;
+  r.cur.kills++; r.cur.exp += exp; r.cur.jobExp += jobExp; r.cur.gold += gold;
+}
+// 最近這段的合計；沒有資料回 null
+function liveRateStats() {
+  const r = state.liveRate;
+  if (!r || r.mapId !== state.mapId) return null;
+  const sum = liveEmptyBucket();
+  [...r.buckets, r.cur].forEach(b => { for (const k in sum) sum[k] += b[k] || 0; });
+  return sum.sec > 0 ? sum : null;
+}
+/* 右側「離線預估」：現在離線的話，每 10 分鐘會拿到多少。
+   滿 1 分鐘用實測速度；未滿用原地估算 ×0.1（跟離線結算同一條規則） */
+function offlineYieldPer10m() {
+  const live = liveRateStats();
+  if (live && live.sec >= LIVE_RATE_MIN_SEC) {
+    const k = 600 / live.sec;
+    return { full: true, sec: live.sec, killsPer10m: live.kills * k, expPer10m: live.exp * k, jobExpPer10m: live.jobExp * k, goldPer10m: live.gold * k };
+  }
+  const est = estimateMapYield(currentMap());
+  if (!est) return null;
+  const m = OFFLINE_SHORT_DATA_MULT;
+  return { full: false, sec: live ? live.sec : 0, killsPer10m: est.killsPer10m * m, expPer10m: est.expPer10m * m, jobExpPer10m: est.jobExpPer10m * m, goldPer10m: est.goldPer10m * m };
+}
 function resetDpsTracker() {
   state.dpsTracker = { since: Date.now(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };
   saveGame();
@@ -5492,6 +5538,7 @@ function tickFieldEffects() {
 
 function gameTick() {
   if (!state || tabSessionBlocked()) return;
+  liveRateTick(TICK_MS / 1000);
   tickCooldowns();
   tickBuffs();
   /* 隊友身上的全體輔助 buff 也要倒數（#95）。**跟 tickBuffs 同一拍**——
@@ -6371,6 +6418,7 @@ function isTravelThreat(mon) {
 // 有沒有要停下來打的：沒在趕路＝場上有怪就打；趕路中＝只看擋路的
 function hasFightTarget() {
   const ms = state.monsters || [];
+  if (state.travel && state.travel.flee) return false;   // 回城：不打，直接走（怪照樣會追著打）
   return state.travel ? ms.some(isTravelThreat) : ms.length > 0;
 }
 function travelPortalPolar() {
@@ -6397,13 +6445,13 @@ function placeTravelPortal() {
   t.portal = { x: (state.worldX || 0) + dist * Math.cos(ang), y: (state.worldY || 0) + dist * Math.sin(ang), to: next };
   state.roamDir = ang;      // 怪偏向前方出生（rollMonsterPos）
 }
-function startTravel(destId) {
+function startTravel(destId, opt) {
   const path = worldPath(state.mapId, destId);
   const dest = MAPS.find(m => m.id === destId);
   if (!dest) return false;
   if (!path) { logMsg(`⚠️ 從這裡沿傳送點走不到「${dest.name}」，可以到城鎮找傳送 NPC。`); return false; }
   if (path.length < 2) return false;
-  state.travel = { dest: destId, path };
+  state.travel = { dest: destId, path, flee: !!(opt && opt.flee) };
   placeTravelPortal();
   logMsg(`🧭 出發前往「${dest.name}」，要過圖 ${path.length - 1} 次。`);
   if (typeof renderMapTab === 'function') renderMapTab();
@@ -6423,7 +6471,7 @@ function tickTravel(dt) {
   if (p.d > TRAVEL_ENTER_CELLS) { playerMoveBy(Math.min(p.d, dt / PLAYER_WALK_MS), p.a); return; }
   const t = state.travel;
   const next = t.portal.to;
-  changeMap(next, { travel: true });
+  changeMap(next, { travel: true, party: true });
   if (next === t.dest) {
     state.travel = null;
     logMsg(`🧭 抵達「${(MAPS.find(m => m.id === next) || {}).name || next}」。`);
@@ -6575,7 +6623,16 @@ function ensureNearestTarget() {
   if (locked && Number.isFinite(cur.d) && cur.d <= playerEngageRange() + DIST_EPS) return;
   let best = null;
   for (const m of ms) if (m.hp > 0 && Number.isFinite(m.d) && (!state.travel || isTravelThreat(m)) && (!best || m.d < best.d)) best = m;
-  if (best && best !== cur && !(locked && cur.hp > 0 && Number.isFinite(cur.d) && cur.d - best.d < 1 && (!state.travel || isTravelThreat(cur)))) {
+  /* 優先目標（使用者 2026-11-05）：場上有勾選的怪就先打牠，即使比較遠——
+     不然主動怪一直靠過來，被動怪永遠輪不到。趕路時不看（只打擋路的） */
+  const pri = !state.travel && state.priorityMonsters;
+  if (pri) {
+    let pick = null;
+    for (const m of ms) if (pri[m.defId] && m.hp > 0 && Number.isFinite(m.d) && (!pick || m.d < pick.d)) pick = m;
+    if (pick) best = pick;
+  }
+  const curIsPri = !!(pri && cur && pri[cur.defId]);
+  if (best && best !== cur && !(locked && cur.hp > 0 && Number.isFinite(cur.d) && (cur.d - best.d < 1 || (curIsPri && !pri[best.defId])) && (!state.travel || isTravelThreat(cur)))) {
     ms.splice(ms.indexOf(best), 1);
     ms.unshift(best);
     state.monster = best;
@@ -8332,6 +8389,7 @@ function killMonster(def, monObj) {
     const t = owner.dpsTracker;
     t.kills++; t.exp += gotExp; t.jobExp += gotJobExp; t.gold += goldGain;
   }
+  liveRateAdd(owner, gotExp, gotJobExp, goldGain);
   // 吸魂術（#63）：擊殺就回固定 SP，不分種族也不分擊殺方式
   if (state.spOnKillFlat) {
     state.sp = Math.min(state.maxSp, state.sp + state.spOnKillFlat);
@@ -8654,6 +8712,7 @@ function buildAllySnapshot(raw, slot) {
 // 其他存檔格裡可以雇的角色
 function allyHireCandidates() {
   const out = [];
+  const adj = partyAdjacency();
   for (let i = 0; i < MAX_SLOTS; i++) {
     if (String(i) === String(currentSlot)) continue;
     let s = null;
@@ -8666,6 +8725,7 @@ function allyHireCandidates() {
       baseLevel: s.baseLevel || 1, jobLevel: s.jobLevel || 1,
       price: allyHirePrice(s.baseLevel || 1),
       hired: (state.allies || []).some(a => a && a._slot === String(i)),
+      blocked: partyJoinBlockReason(i, adj),
     });
   }
   return out;
@@ -8696,11 +8756,6 @@ function writeSaveSlot(slot, raw) {
 function partySlotList(raw) {
   const xs = raw && raw.partySlots;
   return Array.isArray(xs) ? xs.map(String) : [];
-}
-function rememberPartySlot(list, slot) {
-  const s = String(slot);
-  if (list.map(String).indexOf(s) < 0) list.push(s);
-  return list;
 }
 /* 只補等級、經驗、屬性點、技能點。不整份覆蓋，避免把他的背包和地圖蓋掉。
    同圖只推進經驗時鐘。道具時鐘留著，他上線仍領得到這段的掉落與鋅幣。 */
@@ -8807,36 +8862,83 @@ function prepaidArrivingAllies(prevMapId) {
     if (ally && !ally._downed && allyOnThisMap(ally)) pullAllyLevels(ally);
   });
 }
-function linkPartySlot(otherSlot) {
-  if (!Array.isArray(state.partySlots)) state.partySlots = [];
-  rememberPartySlot(state.partySlots, otherSlot);
-  const raw = readSaveSlot(otherSlot);
-  if (!raw) return;
-  if (!Array.isArray(raw.partySlots)) raw.partySlots = [];
-  rememberPartySlot(raw.partySlots, currentSlot);
-  writeSaveSlot(otherSlot, raw);
+/* ---- 小組（使用者 2026-11-04）----
+   一個角色同時只屬於一個隊伍、最多 3 人。成員關係存在每個成員存檔的 partySlots
+   （＝其他成員），任一成員都能把整組找齊；C 對 A 按組隊就加入 A／B 那一組。
+   舊存檔可能只有單向紀錄，找的時候兩個方向都算。 */
+const PARTY_MAX = ALLY_MAX + 1;
+function partySaveOf(slot) {
+  return String(slot) === String(currentSlot) ? allyOwnerState() : readSaveSlot(slot);
 }
-function unlinkPartySlot(otherSlot) {
-  state.partySlots = partySlotList(state).filter(s => s !== String(otherSlot));
-  const raw = readSaveSlot(otherSlot);
-  if (!raw) return;
-  raw.partySlots = partySlotList(raw).filter(s => s !== String(currentSlot));
-  if (Array.isArray(raw.allies)) {
-    raw.allies = raw.allies.filter(a => !a || String(a._slot) !== String(currentSlot));
+// 全部存檔的成員關係（無向）。一次建好給多次查詢共用，不然每查一格都要重讀 15 個存檔
+function partyAdjacency() {
+  const adj = {};
+  const cache = {};
+  const get = i => (String(i) in cache ? cache[String(i)] : (cache[String(i)] = partySaveOf(i)));
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const raw = get(i);
+    if (!raw || !raw.jobId) continue;
+    partySlotList(raw).forEach(o => {
+      const other = get(o);
+      if (!other || !other.jobId) return;
+      (adj[String(i)] = adj[String(i)] || []).push(String(o));
+      (adj[String(o)] = adj[String(o)] || []).push(String(i));
+    });
   }
-  writeSaveSlot(otherSlot, raw);
+  return adj;
 }
-function keepAllyCombat(fresh, prev) {
+function partyGroupOf(slot, adj = partyAdjacency()) {
+  const seen = [String(slot)];
+  for (let k = 0; k < seen.length; k++) (adj[seen[k]] || []).forEach(o => { if (seen.indexOf(o) < 0) seen.push(o); });
+  return seen;
+}
+// 把整組寫進每個成員的存檔：partySlots＝其他成員；不在組裡的隊友快照拿掉
+function writePartyGroup(members) {
+  members = members.map(String);
+  members.forEach(m => {
+    const others = members.filter(x => x !== m);
+    if (m === String(currentSlot)) { allyOwnerState().partySlots = others; return; }
+    const raw = readSaveSlot(m);
+    if (!raw) return;
+    raw.partySlots = others;
+    if (Array.isArray(raw.allies)) raw.allies = raw.allies.filter(a => a && others.indexOf(String(a._slot)) >= 0);
+    writeSaveSlot(m, raw);
+  });
+}
+// 不能跟這格組隊的原因；可以就回 null
+function partyJoinBlockReason(slot, adj = partyAdjacency()) {
+  const mine = partyGroupOf(currentSlot, adj), theirs = partyGroupOf(slot, adj);
+  if (mine.indexOf(String(slot)) >= 0) return '已經在同一個隊伍了。';
+  if (mine.length > 1 && theirs.length > 1) return '雙方各自已經有隊伍了，要先退隊才能組。';
+  if (mine.length + theirs.length > PARTY_MAX) return `隊伍已滿（最多 ${PARTY_MAX} 人）。`;
+  return null;
+}
+// 依目前的小組重建 state.allies（隊友快照），戰鬥中的狀態留著
+function rebuildPartyAllies(members) {
+  const prev = {};
+  (state.allies || []).forEach(a => { if (a && a._slot != null) prev[String(a._slot)] = a; });
+  state.allies = members.filter(m => m !== String(currentSlot)).map(m => {
+    if (prev[m]) return prev[m];
+    const raw = readSaveSlot(m);
+    return raw && raw.jobId ? buildAllySnapshot(raw, m) : null;
+  }).filter(Boolean);
+}
+/* keepSettings＝false（手動按「同步」）：技能設定改用那個角色自己存檔裡的（使用者 2026-11-04），
+   不用在隊伍面板再設一次；自動重新同步（resyncPartyAllies）照舊保留隊伍裡改過的設定 */
+function keepAllyCombat(fresh, prev, keepSettings = true) {
   fresh._downed = !!prev._downed;
   fresh._reviveAt = prev._reviveAt || 0;
   fresh.buffs = prev.buffs || [];
   fresh.cooldowns = prev.cooldowns || {};
   fresh._atkAccum = prev._atkAccum || 0;
   fresh._lastAttackAt = prev._lastAttackAt || 0;
-  if (prev.autoSkill != null) fresh.autoSkill = prev.autoSkill;
-  if (prev.autoSkillConfig) fresh.autoSkillConfig = prev.autoSkillConfig;
-  if (prev.autoSupportSkills) fresh.autoSupportSkills = prev.autoSupportSkills;
-  if (prev.autoHealConfig) fresh.autoHealConfig = prev.autoHealConfig;
+  if (keepSettings) {
+    if (prev.autoSkill != null) fresh.autoSkill = prev.autoSkill;
+    if (prev.autoSkillConfig) fresh.autoSkillConfig = prev.autoSkillConfig;
+    if (prev.autoSupportSkills) fresh.autoSupportSkills = prev.autoSupportSkills;
+    if (prev.autoHealConfig) fresh.autoHealConfig = prev.autoHealConfig;
+    if (prev.autoSupportOrder) fresh.autoSupportOrder = prev.autoSupportOrder;
+  }
   const saved = state;
   state = fresh;
   try { recomputeDerived(false); } catch (e) { /* 沿用快照裡已經算過的數 */ }
@@ -8856,58 +8958,46 @@ function resyncPartyAllies() {
     state.allies[i] = fresh;
   });
 }
-/* 舊存檔只有 allies 快照、沒有雙向連結。讀檔時補上，對方上線就直接在隊裡。 */
+/* 讀檔時照小組重建隊伍：舊存檔的單向紀錄、超過 3 人的都在這裡整理成一致的一組。
+   allies 快照裡有、但 partySlots 沒記的（更舊的存檔）也算成員 */
 function syncPartyOnLoad() {
   if (!Array.isArray(state.partySlots)) state.partySlots = [];
   (state.allies || []).forEach(a => {
-    if (a && a._slot != null) rememberPartySlot(state.partySlots, a._slot);
+    if (a && a._slot != null && state.partySlots.map(String).indexOf(String(a._slot)) < 0) state.partySlots.push(String(a._slot));
   });
-  for (let i = 0; i < MAX_SLOTS; i++) {
-    if (String(i) === String(currentSlot)) continue;
-    const raw = readSaveSlot(i);
-    if (raw && partySlotList(raw).indexOf(String(currentSlot)) >= 0) rememberPartySlot(state.partySlots, i);
-  }
-  state.partySlots = state.partySlots.filter(s => {
-    const raw = readSaveSlot(s);
-    if (!raw || !raw.jobId) return false;
-    const theirs = partySlotList(raw);
-    if (theirs.indexOf(String(currentSlot)) >= 0) return true;
-    if (theirs.length >= ALLY_MAX) return false;
-    if (!Array.isArray(raw.partySlots)) raw.partySlots = [];
-    raw.partySlots.push(String(currentSlot));
-    writeSaveSlot(s, raw);
-    return true;
-  }).slice(0, ALLY_MAX);
+  const group = partyGroupOf(currentSlot);
+  const me = String(currentSlot);
+  const members = [me, ...group.filter(m => m !== me)].slice(0, PARTY_MAX);
+  // 被擠出去的（舊資料超過 3 人）跟這組斷開
+  group.filter(m => members.indexOf(m) < 0).forEach(m => {
+    const raw = readSaveSlot(m);
+    if (raw) { raw.partySlots = partySlotList(raw).filter(x => members.indexOf(x) < 0); writeSaveSlot(m, raw); }
+  });
+  writePartyGroup(members);
   const prev = {};
   (state.allies || []).forEach(a => { if (a && a._slot != null) prev[String(a._slot)] = a; });
-  const next = [];
-  state.partySlots.forEach(s => {
-    const raw = readSaveSlot(s);
-    if (!raw || !raw.jobId) return;
-    const fresh = buildAllySnapshot(raw, s);
-    if (!fresh) return;
-    if (prev[String(s)]) keepAllyCombat(fresh, prev[String(s)]);
-    next.push(fresh);
-  });
-  state.allies = next;
+  state.allies = members.filter(m => m !== me).map(m => {
+    const raw = readSaveSlot(m);
+    if (!raw || !raw.jobId) return null;
+    const fresh = buildAllySnapshot(raw, m);
+    if (fresh && prev[m]) keepAllyCombat(fresh, prev[m]);
+    return fresh;
+  }).filter(Boolean);
 }
 
 function hireAlly(slot) {
   if (!inSafeZone()) { logMsg('⚠️ 只能在安全區組隊。'); return false; }
-  const list = allyList();
-  if (list.length >= ALLY_MAX) { logMsg(`⚠️ 隊友最多 ${ALLY_MAX} 名，請先讓一位退隊。`); return false; }
-  if (list.some(a => a && a._slot === String(slot))) { logMsg('⚠️ 這位已經在隊上了。'); return false; }
   const raw = readSaveSlot(slot);
   if (!raw || !raw.jobId) { logMsg('⚠️ 那格存檔讀不到角色。'); return false; }
-  if (partySlotList(raw).length >= ALLY_MAX && partySlotList(raw).indexOf(String(currentSlot)) < 0) {
-    logMsg('⚠️ 對方的隊伍已滿。');
-    return false;
-  }
-  const ally = buildAllySnapshot(raw, slot);
-  if (!ally) { logMsg('⚠️ 這個角色的資料算不出戰力，無法組隊。'); return false; }
-  list.push(ally);
-  linkPartySlot(slot);
-  logMsg(`🤝 ${ally._allyName} 加入隊伍。`);
+  const why = partyJoinBlockReason(slot);
+  if (why) { logMsg('⚠️ ' + why); return false; }
+  if (!buildAllySnapshot(raw, slot)) { logMsg('⚠️ 這個角色的資料算不出戰力，無法組隊。'); return false; }
+  // 兩邊的小組合併（一邊一定是單獨一人）
+  const members = [...new Set([...partyGroupOf(currentSlot), ...partyGroupOf(slot)])];
+  writePartyGroup(members);
+  rebuildPartyAllies(members);
+  const joined = state.allies.filter(a => members.indexOf(String(a._slot)) >= 0).map(a => a._allyName);
+  logMsg(`🤝 組隊完成：${joined.join('、')}。`);
   saveGame();
   return true;
 }
@@ -8921,9 +9011,9 @@ function refreshAlly(slot) {
   if (!raw || !raw.jobId) { logMsg('⚠️ 那格存檔讀不到角色。'); return false; }
   const fresh = buildAllySnapshot(raw, slot);
   if (!fresh) { logMsg('⚠️ 這個角色的資料算不出戰力。'); return false; }
-  keepAllyCombat(fresh, list[idx]);
+  keepAllyCombat(fresh, list[idx], false);
   list[idx] = fresh;
-  logMsg(`🔄 ${fresh._allyName} 已同步到最新狀態。`);
+  logMsg(`🔄 ${fresh._allyName} 已同步到最新狀態（含技能設定）。`);
   saveGame();
   return true;
 }
@@ -8934,7 +9024,10 @@ function dismissAlly(slot) {
   if (idx < 0) return false;
   const ally = list[idx];
   list.splice(idx, 1);
-  unlinkPartySlot(slot);
+  // 他離開整個小組：其他成員的名單一起拿掉，他自己的存檔也清空
+  writePartyGroup(partyGroupOf(currentSlot).filter(m => m !== String(slot)));
+  const raw = readSaveSlot(slot);
+  if (raw) { raw.partySlots = []; raw.allies = []; writeSaveSlot(slot, raw); }
   logMsg(`👋 ${ally._allyName} 離開了隊伍。`);
   saveGame();
   return true;
@@ -10830,6 +10923,20 @@ function castSkillInner(skillId, opts) {
       logMsg(`✨ 「${sk.name}」Lv${lv}：扶起了 ${ally._allyName}（HP ${pct}%${paid ? '，消耗' + paid.label : ''}）。`);
       break;
     }
+    // 傳送之陣：目的地由 warpPortalTo() 先寫進 state._warpDest，詠唱完才換圖
+    case 'warp_portal': {
+      const dest = state._warpDest;
+      state._warpDest = null;
+      if (!dest || !(state.warpMemos || []).includes(dest)) { logMsg(`「${sk.name}」：沒有選目的地。`); break; }
+      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, 1, 0) : null;
+      cancelTravel(true);
+      logMsg(`✨ 「${sk.name}」打開了通往「${(MAPS.find(m => m.id === dest) || {}).name || dest}」的傳送之陣${paid ? `（消耗${paid.label}）` : ''}。`);
+      changeMap(dest, { party: true });
+      if (typeof renderMapBackground === 'function') renderMapBackground();
+      if (typeof playMapMusic === 'function') playMapMusic();
+      if (typeof renderMapTab === 'function') renderMapTab();
+      break;
+    }
     case 'buff_blessing': {
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       const statBonus = Array.isArray(sk.statBonus) ? sk.statBonus[lv - 1] : sk.statBonus;
@@ -11949,7 +12056,7 @@ const SKILL_NEEDS_MONSTER_TYPES = SKILL_ATTACK_TYPES.concat(['debuff_def', 'debu
   'debuff_web', 'debuff_aspd_aoe', 'debuff_def_aoe', 'ailment_aoe', 'dispel_aoe',
   'field_phys_aoe', 'field_aoe_magic', 'multi_dot_stun', 'stun_field']);
 function isAttackSkill(sk) { return !!sk && SKILL_ATTACK_TYPES.includes(sk.type); }
-function isAutoSupportSkill(sk) { return !!sk && sk.type !== 'passive' && !isAttackSkill(sk); }
+function isAutoSupportSkill(sk) { return !!sk && sk.type !== 'passive' && sk.type !== 'warp_portal' && !isAttackSkill(sk); }
 function skillNeedsMonster(sk) { return !!sk && SKILL_NEEDS_MONSTER_TYPES.includes(sk.type); }
 
 /* 自動戰鬥攻擊技能欄（3d，docs/GAMEPLAY_DIRECTION.md D3）：4 招優先序。
@@ -12029,10 +12136,26 @@ function partyAilPending(types) {
   return holders.some(h => h.playerAil && types.some(t => h.playerAil[t] > now));
 }
 // 自動施放輔助技能
+/* 輔助技能的檢查順序：state.autoSupportOrder（玩家在設定頁排的），沒排到的照原本順序接在後面。
+   以前是技能表順序，冷卻短的排前面就會一直搶走詠唱空檔，冷卻長的永遠補不上 */
+function orderedSupportEntries() {
+  const list = usableSkillEntries();
+  const order = state.autoSupportOrder || [];
+  const rank = id => { const i = order.indexOf(id); return i < 0 ? order.length + list.findIndex(e => e.sk.id === id) : i; };
+  return list.slice().sort((a, b) => rank(a.sk.id) - rank(b.sk.id));
+}
+// 掛在怪身上的減益還沒到期就不重放（天使之光、挑釁官方沒有冷卻，只看玩家身上會每次後延遲一過就放）
+function monsterDebuffStillUp(sk) {
+  const ms = state.monsters || [];
+  const now = Date.now();
+  if (sk.type === 'debuff_def') return !!ms[0] && (ms[0].debuffDefEnd || 0) > now;
+  if (sk.type === 'debuff_def_aoe') return ms.length > 0 && ms.every(m => (m.debuffDefEnd || 0) > now);
+  return false;
+}
 function tryAutoCastSupportSkills() {
   if (!state.autoSupportSkills) return;
   {
-    for (const { sk, lv } of usableSkillEntries()) {
+    for (const { sk, lv } of orderedSupportEntries()) {
       if (!state.autoSupportSkills[sk.id]) continue;
       if (!skillReady(sk.id)) continue;
       if (!weaponReqMet(sk.requiresWeapon)) continue;
@@ -12058,6 +12181,7 @@ function tryAutoCastSupportSkills() {
       if (state.activeFieldEffects && state.activeFieldEffects.some(f => f.skillId === sk.id)) continue;
       // 要有怪才放得出效果的（減益、場域、範圍傷害）：空場放出去只是白扣 SP 與鋅幣
       if (skillNeedsMonster(sk) && (!state.monsters || state.monsters.length === 0)) continue;
+      if (monsterDebuffStillUp(sk)) continue;
       if (sk.type === 'resurrection' && !downedAllyToRevive()) continue;
       // 解狀態類：隊上沒人中它解得掉的異常就不放
       if (sk.type === 'cure' && !partyAilPending(sk.cureTypes || Object.keys(PLAYER_AILMENTS))) continue;
@@ -13032,7 +13156,7 @@ function goNearestSafeZone() {
     logMsg('🏠 你已經在城鎮了。');
     return false;
   }
-  return startTravel(id);     // 走回去（D1b），不再瞬移
+  return startTravel(id, { flee: true });     // 走回去（D1b）；戰鬥中也立刻動身，不停下來打
 }
 
 function townRestore() {
@@ -14982,8 +15106,24 @@ function changeMap(mapId, opt) {
   logMsg(`前往「${map.name}」。`);
   spawnMonster();
   prepaidArrivingAllies(prevMapId);
+  if (opt && opt.party) movePartyWith(prevMapId);
   saveGame();
   return true;
+}
+/* 隊伍一起換圖（D1b）：趕路、傳送 NPC、坐船時，原本跟玩家同一張圖的隊友一起過去，
+   連他們自己存檔裡的位置也改掉。state.partyFollow＝false（世界地圖可關）就只有玩家走。
+   要在 prepaidArrivingAllies 之後：那支是給「本來就在新地圖等的人」結算經驗，跟著走的不算 */
+function movePartyWith(prevMapId) {
+  if (state.partyFollow === false) return [];
+  const moved = [];
+  (state.allies || []).forEach(a => {
+    if (!a || (a._homeMapId || a.mapId) !== prevMapId) return;
+    a._homeMapId = state.mapId;
+    const raw = readSaveSlot(a._slot);
+    if (raw) { raw.mapId = state.mapId; writeSaveSlot(a._slot, raw); }
+    moved.push(a);
+  });
+  return moved;
 }
 
 /* ---------------- NPC 傳送（D1b）----------------
@@ -15008,8 +15148,35 @@ function npcWarp(townId) {
   cancelTravel(true);
   state.gold -= t.cost;
   logMsg(`🌀 支付 ${t.cost.toLocaleString()}z，傳送 NPC 送隊伍到「${t.name}」。`);
-  changeMap(townId);
+  changeMap(townId, { party: true });
   return null;
+}
+
+/* 傳送之陣的記錄點（state.warpMemos，最舊的在前）。數量看技能等級 */
+function warpMemoMax() {
+  const lv = skillLv('al_warp');
+  const sk = SKILLS.al_warp;
+  return lv && sk ? lvArr(sk.memoSlots, lv) : 0;
+}
+function memoWarpPoint() {
+  const max = warpMemoMax();
+  if (!max) { logMsg('⚠️ 要先學會傳送之陣。'); return false; }
+  const list = (state.warpMemos || []).filter(id => id !== state.mapId);
+  list.push(state.mapId);
+  while (list.length > max) list.shift();
+  state.warpMemos = list;
+  logMsg(`📌 記錄了「${(currentMap() || {}).name}」（${list.length}/${max}）。`);
+  saveGame();
+  return true;
+}
+function warpPortalTo(mapId) {
+  if (!skillLv('al_warp')) { logMsg('⚠️ 要先學會傳送之陣。'); return false; }
+  if (!(state.warpMemos || []).includes(mapId)) { logMsg('⚠️ 只能傳到記錄過的地圖。'); return false; }
+  if (mapId === state.mapId) { logMsg('⚠️ 你已經在這裡了。'); return false; }
+  state._warpDest = mapId;
+  const ok = castSkill('al_warp');
+  if (!ok) state._warpDest = null;
+  return ok;
 }
 
 // 坐船（D1b）：要人在出發的城鎮（或島上回程）才搭得上
@@ -15018,7 +15185,7 @@ function takeFerry(to) {
   if (!f) { logMsg('⚠️ 這裡搭不到往那裡的船。'); return false; }
   cancelTravel(true);
   logMsg(`⛵ 搭${f.via}到「${(MAPS.find(m => m.id === to) || {}).name || to}」。`);
-  return changeMap(to);
+  return changeMap(to, { party: true });
 }
 
 /* ---------------- MVP／迷你王 模式切換 ----------------
@@ -15722,7 +15889,12 @@ function computeOfflineProgress(minMs, opts) {
   // 頭目佔掉的時間不能同時拿去打雜魚，兩邊的時間預算要加得起來
   /* 近戰殺得比補怪快時，線上會清場再等 spawnDelayMs(true)。
      地圖產出已經這樣算，離線以前是怪一死立刻滿血，秒殺會變成每一刀一場。 */
-  if (killsPerSec > 0 && isFinite(killsPerSec) && state.encounterMode === 'melee' && typeof spawnDelayMs === 'function') {
+  /* 線上實測滿 1 分鐘就照實測（使用者 2026-11-05）：上面的原地抽樣沒算走路、挨打、被纏住的時間，會高估很多 */
+  const live = liveRateStats();
+  const rateFromLive = !!(live && live.sec >= LIVE_RATE_MIN_SEC);
+  if (rateFromLive) killsPerSec = live.kills / live.sec;
+  else killsPerSec *= OFFLINE_SHORT_DATA_MULT;
+  if (!rateFromLive && killsPerSec > 0 && isFinite(killsPerSec) && state.encounterMode === 'melee' && typeof spawnDelayMs === 'function') {
     const secPerKill = 1 / killsPerSec;
     const refillSec = spawnDelayMs(false) / 1000;
     if (secPerKill < refillSec) killsPerSec = 1 / (secPerKill + spawnDelayMs(true) / 1000);
@@ -15960,6 +16132,7 @@ function computeOfflineProgress(minMs, opts) {
     kills: Math.round(totalKills),
     allyCount: sampleAllies.length,
     mapName: map.name,
+    rateFromLive,        // 照線上實測結算（false＝實測未滿 1 分鐘，原地估算 ×0.1）
     // 頭目那份分開回報：玩家最想知道的就是「這一晚有沒有打到頭目」（#137）
     bossKills: Math.round(lootBossKills),
     bossList: lootBossList.filter(b => b.kills >= 0.5)

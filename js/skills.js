@@ -85,7 +85,14 @@ const SKILLS = {
   tf_hiding: {"id":"tf_hiding","name":"隱匿","maxLv":10,"type":"buff_flee","spCost":[10,10,10,10,10,10,10,10,10,10],"cooldown":[30,30,30,30,30,30,30,30,30,30],"mult":[1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75],"duration":[10,10,10,10,10,10,10,10,10,10],"desc":"短暫隱匿身形，大幅提升迴避。"},
   tf_poison: {"id":"tf_poison","name":"施毒","maxLv":10,"type":"poison_proc","element":"poison","spCost":[12,12,12,12,12,12,12,12,12,12],"cooldown":[10,10,10,10,10,10,10,10,10,10],"mult":1.2,"procChance":[5,10,15,20,25,30,35,40,45,50],"desc":"主動技能，命中造成固定ATK120%傷害（不隨等級變化），另外有5%~50%（依等級）機率使敵人中毒，持續3秒，每秒造成ATK120%的中毒傷害（不會疊加）。毒屬性怪物免疫。"},
   al_teleport: {"id":"al_teleport","name":"瞬間移動","maxLv":2,"type":"passive","passiveStat":"fleeFlat","spCost":[0],"cooldown":[0],"mult":[5,10],"desc":"被動技能，永久提升迴避+5~+10（依等級）。"},
-  al_warp: {"id":"al_warp","name":"傳送之陣","maxLv":4,"type":"passive","unimplemented":true,"spCost":[0],"cooldown":[0],"desc":"（未實裝）可學習，作為其他技能的前置條件。"},
+  /* 傳送之陣（使用者 2026-11-05 實裝）：官方 AL_WARP，SP 35~26、固定詠唱 1 秒、藍色魔力礦石。
+     官方是「儲存點＋Lv2~4 的 1~3 個記錄點」；本作沒有儲存點，改成 Lv1~4 可記 1~4 個地圖。
+     只能手動用（地圖分頁記錄、傳送視窗施放），不進自動輔助。 */
+  al_warp: {
+    id: 'al_warp', name: '傳送之陣', maxLv: 4, type: 'warp_portal',
+    spCost: [35, 32, 29, 26], cooldown: [0, 0, 0, 0], memoSlots: [1, 2, 3, 4], costItems: ['blue_gemstone'],
+    desc: '傳送到記錄過的地圖（地圖分頁按「記錄此地」，Lv1~4 可記 1~4 個，記滿擠掉最舊的）。消耗藍色魔力礦石×1，同一張圖的隊友可以一起過去。'
+  },
   al_ruwach: {"id":"al_ruwach","name":"光獵","maxLv":1,"type":"magic_aoe","element":"holy","spCost":[10],"cooldown":[20],"mult":[1.45],"bonusHitBuff":[10],"bonusHitDuration":[20],"desc":"召喚聖靈，使自身HIT+10（持續20秒），並對場上所有敵人造成145%聖屬性魔法傷害。"},
   al_pneuma: {"id":"al_pneuma","name":"光之障壁","maxLv":1,"type":"buff_shield","party":true,"shieldShared":true,"shieldBlocks":"ranged","cdFromDuration":true,"spCost":[10],"cooldown":[10],"shieldCapacityFlat":[999999],"shieldCharges":[10],"duration":[10],"desc":"全隊共用一道光之障壁：10秒內合計抵擋10次遠程攻擊（射程4格以上）；冷卻＝持續時間。（官方為10秒內擋下所有遠程攻擊，本作改成次數制）"},
   al_dp: {"id":"al_dp","name":"天使之護","maxLv":10,"type":"passive","passiveStat":"defFlat","spCost":[0],"cooldown":[0],"mult":[3,6,9,12,15,18,21,24,27,30],"desc":"被惡魔/不死種族攻擊時，物理防禦力+3~30（依等級）。"},
