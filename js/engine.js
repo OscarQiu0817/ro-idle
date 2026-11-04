@@ -6457,6 +6457,17 @@ function startTravel(destId, opt) {
   if (typeof renderMapTab === 'function') renderMapTab();
   return true;
 }
+/* 傳送之陣（祭司／傳送 NPC）：在面前放一個藍色傳送陣，全隊走進去才換圖（使用者 2026-11-05）。
+   走 tickTravel 同一套：path 只有兩站、不停下來打；同一張圖的隊友照 partyFollow 一起過去 */
+const WARP_PORTAL_CELLS = 2.5;
+function startWarpPortal(dest) {
+  const ang = Number.isFinite(state._walkDir) ? state._walkDir : 0;
+  state.travel = {
+    dest, path: [state.mapId, dest], flee: true, warp: true,
+    portal: { x: (state.worldX || 0) + WARP_PORTAL_CELLS * Math.cos(ang), y: (state.worldY || 0) + WARP_PORTAL_CELLS * Math.sin(ang), to: dest, color: 'blue' },
+  };
+  if (typeof renderMapTab === 'function') renderMapTab();
+}
 function cancelTravel(silent) {
   if (!state.travel) return;
   state.travel = null;
@@ -10931,10 +10942,7 @@ function castSkillInner(skillId, opts) {
       const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, 1, 0) : null;
       cancelTravel(true);
       logMsg(`✨ 「${sk.name}」打開了通往「${(MAPS.find(m => m.id === dest) || {}).name || dest}」的傳送之陣${paid ? `（消耗${paid.label}）` : ''}。`);
-      changeMap(dest, { party: true });
-      if (typeof renderMapBackground === 'function') renderMapBackground();
-      if (typeof playMapMusic === 'function') playMapMusic();
-      if (typeof renderMapTab === 'function') renderMapTab();
+      startWarpPortal(dest);
       break;
     }
     case 'buff_blessing': {
@@ -15147,8 +15155,8 @@ function npcWarp(townId) {
   const t = WORLD.towns.find(x => x.id === townId);
   cancelTravel(true);
   state.gold -= t.cost;
-  logMsg(`🌀 支付 ${t.cost.toLocaleString()}z，傳送 NPC 送隊伍到「${t.name}」。`);
-  changeMap(townId, { party: true });
+  logMsg(`🌀 支付 ${t.cost.toLocaleString()}z，傳送 NPC 打開了通往「${t.name}」的傳送之陣。`);
+  startWarpPortal(townId);
   return null;
 }
 

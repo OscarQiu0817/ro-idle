@@ -2757,7 +2757,8 @@ function syncTravelPortal(scene, at) {
   el.style.display = '';
   el.style.left = pt.x + '%';
   el.style.top = pt.y + '%';
-  const to = state.travel.portal.to;
+  el.classList.toggle('blue', state.travel.portal.color === 'blue');   // 傳送之陣是藍色，走路的傳點是黃色
+  const to = state.travel.portal.to;
   const label = '→ ' + ((MAPS.find(m => m.id === to) || {}).name || to);
   const em = el.querySelector('em');
   if (em.textContent !== label) em.textContent = label;

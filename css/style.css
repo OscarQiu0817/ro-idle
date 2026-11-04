@@ -2485,3 +2485,6 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .mon-chip-pri.on { border-color: var(--gold); color: var(--gold); background: rgba(242, 199, 92, .12); }
 .map-pri-hint { width: 100%; font-size: 11px; color: var(--ink-dim); margin: 4px 0; }
 .yield-warn { font-size: 11px; color: #f0b45a; margin-top: 4px; line-height: 1.4; }
+#bf-portal.blue .glow { background: radial-gradient(ellipse, rgba(120, 200, 255, .9), rgba(90, 170, 255, 0) 70%); }
+#bf-portal.blue .col { background-image: url(../images/effects/warp/ring_blue.png); }
+#bf-portal.blue em { color: #cfe9ff; }
