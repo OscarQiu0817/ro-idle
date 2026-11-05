@@ -2938,7 +2938,7 @@ const LIVE_RATE_WINDOW_SEC = 600;
 const LIVE_RATE_MIN_SEC = 60;
 const OFFLINE_SHORT_DATA_MULT = 0.1;
 const LIVE_BUCKET_SEC = 10;
-const liveEmptyBucket = () => ({ sec: 0, kills: 0, exp: 0, jobExp: 0, gold: 0 });
+const liveEmptyBucket = () => ({ sec: 0, kills: 0, exp: 0, jobExp: 0, gold: 0, use: {} });
 function liveRateTick(dtSec) {
   let r = state.liveRate;
   if (!r || r.mapId !== state.mapId) r = state.liveRate = { mapId: state.mapId, buckets: [], cur: liveEmptyBucket() };
@@ -2955,13 +2955,65 @@ function liveRateAdd(who, exp, jobExp, gold) {
   if (!r || r.mapId !== who.mapId) return;
   r.cur.kills++; r.cur.exp += exp; r.cur.jobExp += jobExp; r.cur.gold += gold;
 }
+// 自動喝掉的藥水記在玩家身上（隊友喝的也是玩家背包），離線結算照這個速度扣
+function liveRateUse(itemId) {
+  const o = allyOwnerState();
+  const r = o.liveRate;
+  if (!r || r.mapId !== o.mapId) return;
+  if (!r.cur.use) r.cur.use = {};
+  r.cur.use[itemId] = (r.cur.use[itemId] || 0) + 1;
+}
 // 最近這段的合計；沒有資料回 null
 function liveRateStats() {
   const r = state.liveRate;
   if (!r || r.mapId !== state.mapId) return null;
   const sum = liveEmptyBucket();
-  [...r.buckets, r.cur].forEach(b => { for (const k in sum) sum[k] += b[k] || 0; });
+  [...r.buckets, r.cur].forEach(b => {
+    for (const k in sum) if (k !== 'use') sum[k] += b[k] || 0;
+    for (const id in (b.use || {})) sum.use[id] = (sum.use[id] || 0) + b.use[id];
+  });
   return sum.sec > 0 ? sum : null;
+}
+/* 離線藥水模擬（使用者 2026-11-05）：照實測的喝水速度，先扣背包、再用錢自動補貨（錢照實測速度進帳）。
+   紅水那組喝完又買不起＝倒地，收益只算到那一刻，之後全隊回城。藍水、攻速藥水用完只是不喝，不停止。 */
+const OFFLINE_POTION_STEP_SEC = 10;
+function offlinePotionSim(live, sec) {
+  const use = live.use || {};
+  const price = id => { const d = ITEMS[id]; return d && d.buyPrice ? Math.max(1, Math.round(d.buyPrice * (state.shopDiscountMult || 1))) : 0; };
+  const groups = [];
+  const addGroup = (ids, buyId, critical) => {
+    ids = ids.filter(Boolean);
+    const rate = ids.reduce((a, id) => a + (use[id] || 0), 0) / live.sec;
+    if (rate > 0) groups.push({ ids, buyId, critical, rate, owe: 0 });
+  };
+  const ap = state.autoPotion || {}, sp = state.autoSpPotion || {};
+  addGroup([ap.primary, ap.fallback], state.autoBuyPotion ? ap.fallback : null, true);
+  addGroup([sp.primary, sp.fallback], state.autoBuySpPotion ? sp.fallback : null, false);
+  ((state.autoAspdPotion || {}).items || []).forEach(id => addGroup([id], state.autoBuyAspdPotion ? id : null, false));
+  if (!groups.length) return null;
+  const stock = {}, used = {}, bought = {};
+  groups.forEach(g => g.ids.forEach(id => { stock[id] = getItemQty(id); }));
+  const goldRate = live.gold / live.sec;
+  let gold = state.gold || 0, spent = 0, t = 0, downed = false;
+  while (t < sec && !downed) {
+    const dt = Math.min(OFFLINE_POTION_STEP_SEC, sec - t);
+    gold += goldRate * dt;
+    for (const g of groups) {
+      if (g.dry) continue;
+      g.owe += g.rate * dt;
+      while (g.owe >= 1) {
+        const id = g.ids.find(x => stock[x] > 0);
+        if (id) { stock[id]--; used[id] = (used[id] || 0) + 1; g.owe--; continue; }
+        const p = g.buyId ? price(g.buyId) : 0;
+        if (p && gold >= p) { gold -= p; spent += p; bought[g.buyId] = (bought[g.buyId] || 0) + 1; used[g.buyId] = (used[g.buyId] || 0) + 1; g.owe--; continue; }
+        if (g.critical) downed = true; else g.dry = true;
+        break;
+      }
+      if (downed) break;
+    }
+    t += dt;
+  }
+  return { survSec: Math.floor(t), downed, used, bought, spent: Math.round(spent) };
 }
 /* 右側「離線預估」：現在離線的話，每 10 分鐘會拿到多少。
    滿 1 分鐘用實測速度；未滿用原地估算 ×0.1（跟離線結算同一條規則） */
@@ -5894,7 +5946,7 @@ function autoUsePotion() {
 
   // 優先使用第一選擇（背包道具）
   if (primary && getItemQty(primary) > 0) {
-    useItem(primary);
+    useItem(primary); liveRateUse(primary);
     return;
   }
   // 第一選擇用完，使用第二選擇（固定藥水）
@@ -5903,7 +5955,7 @@ function autoUsePotion() {
       buyItem(fallback, AUTO_BUY_QTY);
     }
     if (getItemQty(fallback) > 0) {
-      useItem(fallback);
+      useItem(fallback); liveRateUse(fallback);
     }
   }
 }
@@ -5921,7 +5973,7 @@ function autoUseSpPotion() {
 
   // 優先使用第一選擇（背包裡任何回SP道具）
   if (primary && getItemQty(primary) > 0) {
-    useItem(primary);
+    useItem(primary); liveRateUse(primary);
     return;
   }
   // 第二選擇：藍水（唯一買得到的）
@@ -5929,7 +5981,7 @@ function autoUseSpPotion() {
     if (getItemQty(fallback) <= 0 && state.autoBuySpPotion) {
       buyItem(fallback, AUTO_BUY_SP_QTY);
     }
-    if (getItemQty(fallback) > 0) useItem(fallback);
+    if (getItemQty(fallback) > 0) { useItem(fallback); liveRateUse(fallback); }
   }
 }
 /* 攻速藥水自動使用：勾選哪幾種就在 buff 消失後自動補上（由高到低挑職業能用的）。
@@ -5952,7 +6004,7 @@ function autoUseAspdPotion() {
       if (unit && state.gold >= unit * AUTO_BUY_ASPD_QTY) buyItem(id, AUTO_BUY_ASPD_QTY);
     }
     if (getItemQty(id) <= 0) continue;
-    useItem(id);
+    useItem(id); liveRateUse(id);
     return;
   }
 }
@@ -8514,6 +8566,18 @@ function tryAutoRevive() {
   return false;
 }
 
+/* 離線中倒地：不寫戰鬥紀錄，直接全隊回城、補滿 */
+function offlineDownToTown() {
+  state.deaths = (state.deaths || 0) + 1;
+  const downMap = state.mapId;
+  state.mapId = nearestTownId(downMap);
+  const pf = state.partyFollow; state.partyFollow = true;
+  movePartyWith(downMap);
+  state.partyFollow = pf;
+  reviveAlliesInTown();
+  state.monsters = [];
+  state.hp = state.maxHp; state.sp = state.maxSp;
+}
 function onPlayerDown() {
   state.deaths = (state.deaths || 0) + 1;
   logMsg(`⚠️ 你被擊倒了！正在返回安全地帶療傷……`);
@@ -8522,7 +8586,12 @@ function onPlayerDown() {
   cancelTravel(true);
   // 抬回沿傳送點最近的城鎮（D1b），走不到城鎮就回普隆德拉
   const safeMap = nearestTownId(state.mapId);
+  const downMap = state.mapId;
   state.mapId = safeMap;
+  /* 同一張圖的隊友一起抬回城（不看「一起移動」開關），不然隊伍會散在兩張圖 */
+  const pf = state.partyFollow; state.partyFollow = true;
+  movePartyWith(downMap);
+  state.partyFollow = pf;
   reviveAlliesInTown();   // 被抬回城，隊友一起站起來（#83）
   resetRelicRevive();     // 牧師遺物的復活次數也一起回滿（#113）
   ensureCodex().maps[safeMap] = 1; // 被抬回城也算造訪過，這條路徑沒有經過 changeMap()
@@ -9022,9 +9091,14 @@ function refreshAlly(slot) {
   if (!raw || !raw.jobId) { logMsg('⚠️ 那格存檔讀不到角色。'); return false; }
   const fresh = buildAllySnapshot(raw, slot);
   if (!fresh) { logMsg('⚠️ 這個角色的資料算不出戰力。'); return false; }
-  keepAllyCombat(fresh, list[idx], false);
+  const prev = list[idx];
+  keepAllyCombat(fresh, prev, false);
   list[idx] = fresh;
-  logMsg(`🔄 ${fresh._allyName} 已同步到最新狀態（含技能設定）。`);
+  const lvTxt = (a, b, label) => (a === b ? `${label} ${b}` : `${label} ${a} → ${b}`);
+  logMsg(`🔄 ${fresh._allyName} 已同步到最新狀態。`);
+  logMsg(`${lvTxt(prev.baseLevel, fresh.baseLevel, 'Lv')}、${lvTxt(prev.jobLevel, fresh.jobLevel, 'Job')}、${(JOB_TREE[fresh.jobId] || {}).name || fresh.jobId}`);
+  logMsg(`最大 HP ${prev.maxHp} → ${fresh.maxHp}、ATK ${prev.atk} → ${fresh.atk}`);
+  logMsg('技能設定已改用這個角色自己存檔裡的設定。');
   saveGame();
   return true;
 }
@@ -10288,21 +10362,35 @@ function castLv(arr, lv) {
   if (!arr || !arr.length) return 0;
   return arr[Math.min(lv, arr.length) - 1] || 0;
 }
-function skillCastTimeMs(sk, lv) {
-  const row = skillCastRow(sk.id);
-  if (!row) return 0;
+/* 詠唱明細（使用者 2026-11-05：要看得到素質、裝備各減了多少）。skillCastTimeMs 也用這支，數字只有一份 */
+function castStatFactor() {
   const dex = state._totalDex != null ? state._totalDex : (state.stats.dex || 0);
   const int_ = state._totalInt != null ? state._totalInt : (state.stats.int || 0);
-  const statFactor = Math.max(0, 1 - Math.sqrt(Math.max(0, dex * 2 + int_) / 530));
+  const score = Math.max(0, dex * 2 + int_);
+  return { dex, int: int_, score, factor: Math.max(0, 1 - Math.sqrt(score / 530)) };
+}
+function skillCastBreakdown(sk, lv) {
+  const row = skillCastRow(sk.id);
+  if (!row) return null;
+  const st = castStatFactor();
   /* 裝備（工作 5a，js/item_effects.js）：
      變動 ＝ (基礎 + 指定技能 ms) × 素質 × (1 + 全部% + 指定技能%)
      固定 ＝ max(0, 基礎 + 全部 ms + 指定技能 ms) × (1 + 最大單一%) */
   const memo = (state.buffs || []).some(b => b.type === 'memorize') ? 0.5 : 1;   // 速讀術：下 5 次變動詠唱減半
-  const vct = memo * Math.max(0, castLv(row.castTime, lv) + getCardBonus('castVarMs_' + sk.id))
-    * statFactor * Math.max(0, 1 + (getCardBonus('castVarPct') + getCardBonus('castVarPct_' + sk.id) - buffMult('castcut').flatBonus) / 100);
-  const fct = Math.max(0, castLv(row.fixedCastTime, lv) + getCardBonus('castFixedMs') + getCardBonus('castFixedMs_' + sk.id))
-    * Math.max(0, 1 + getCardBonus('castFixedPct') / 100);
-  return Math.round(vct + fct);
+  const baseVct = castLv(row.castTime, lv);
+  const varMs = getCardBonus('castVarMs_' + sk.id);
+  const varPct = getCardBonus('castVarPct') + getCardBonus('castVarPct_' + sk.id);
+  const buffCut = buffMult('castcut').flatBonus;
+  const vct = memo * Math.max(0, baseVct + varMs) * st.factor * Math.max(0, 1 + (varPct - buffCut) / 100);
+  const baseFct = castLv(row.fixedCastTime, lv);
+  const fixedMs = getCardBonus('castFixedMs') + getCardBonus('castFixedMs_' + sk.id);
+  const fixedPct = getCardBonus('castFixedPct');
+  const fct = Math.max(0, baseFct + fixedMs) * Math.max(0, 1 + fixedPct / 100);
+  return { baseVct, varMs, statFactor: st.factor, varPct, buffCut, memo, vct, baseFct, fixedMs, fixedPct, fct, total: Math.round(vct + fct) };
+}
+function skillCastTimeMs(sk, lv) {
+  const b = skillCastBreakdown(sk, lv);
+  return b ? b.total : 0;
 }
 /* 技能射程（格）。rAthena 負值代表近身類（用絕對值）；0＝以自己為中心，不受距離限制 */
 function skillRangeCells(sk, lv) {
@@ -15628,9 +15716,18 @@ function computeOfflineProgress(minMs, opts) {
     if (!expOnly) { stampPlayedClocks(); saveGame(); }
     return null;
   }
-  const expSec = Math.floor(expElapsed / 1000);
-  const lootSec = Math.floor(lootElapsed / 1000);
-  const elapsedSec = Math.max(expSec, lootSec);
+  let expSec = Math.floor(expElapsed / 1000);
+  let lootSec = Math.floor(lootElapsed / 1000);
+  let elapsedSec = Math.max(expSec, lootSec);
+  /* 藥水：照實測喝水速度扣，紅水斷了就只算到倒地那一刻 */
+  const liveForPotion = liveRateStats();
+  const potion = (!expOnly && liveForPotion && liveForPotion.sec >= LIVE_RATE_MIN_SEC && (currentMap().monsters || []).length)
+    ? offlinePotionSim(liveForPotion, elapsedSec) : null;
+  if (potion && potion.downed) {
+    expSec = Math.min(expSec, potion.survSec);
+    lootSec = Math.min(lootSec, potion.survSec);
+    elapsedSec = Math.max(expSec, lootSec);
+  }
 
   const map = currentMap();
   const pool = map.monsters; // [{id, weight}]
@@ -16100,6 +16197,14 @@ function computeOfflineProgress(minMs, opts) {
   const beforeJobLv = state.jobLevel;
   gainExp(expGained, jobExpGained);
   state.gold += goldGained;
+  if (potion) {
+    for (const id in potion.used) {
+      const fromBag = potion.used[id] - (potion.bought[id] || 0);
+      if (fromBag > 0) removeItem(id, fromBag);
+    }
+    state.gold = Math.max(0, state.gold - potion.spent);
+    if (potion.downed) offlineDownToTown();
+  }
   /* 同圖的隊友此刻結算，並寫進他自己的存檔。不同圖的不在 partyCtx 裡。 */
   allyQuotes.forEach(row => {
     const q = row.q;
@@ -16141,6 +16246,10 @@ function computeOfflineProgress(minMs, opts) {
     allyCount: sampleAllies.length,
     mapName: map.name,
     rateFromLive,        // 照線上實測結算（false＝實測未滿 1 分鐘，原地估算 ×0.1）
+    downed: !!(potion && potion.downed),   // 紅水用完倒地，收益只算到 survSec
+    survSec: potion ? potion.survSec : elapsedSec,
+    potionUse: potion ? Object.keys(potion.used).map(id => ({ id, name: (ITEMS[id] || {}).name || id, used: potion.used[id], bought: potion.bought[id] || 0 })) : [],
+    potionSpent: potion ? potion.spent : 0,
     // 頭目那份分開回報：玩家最想知道的就是「這一晚有沒有打到頭目」（#137）
     bossKills: Math.round(lootBossKills),
     bossList: lootBossList.filter(b => b.kills >= 0.5)

@@ -926,7 +926,7 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .char-grid > div { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; }
 .char-grid > div > span:first-child { color: var(--ink-dim); }
 .stat-src-head { font-size: 13px; margin-bottom: 8px; }
-.stat-src-row { display: grid; grid-template-columns: 48px 48px 1fr; gap: 8px; font-size: 13px; padding: 2px 0; }
+.stat-src-row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 4px 0 1px; border-top: 1px solid rgba(255,255,255,.06); }
 .stat-help { margin: 10px 0 0; padding-left: 18px; font-size: 12px; color: var(--ink-dim); line-height: 1.6; }
 .stat-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .hair-grid { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1501,7 +1501,7 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .skill-job-spent { font-size: 11px; color: var(--ink-dim); }
 /* 展開後標頭釘在頂端（#102）：一個職業攤開有 15~22 招，捲到一半就看不到
    「現在看的是哪個職業、還剩幾點、已投入幾點」。做法跟裝備分頁同一套——
-   .tab-content 是外層捲動容器，負的 top 抵銷它的 16px padding 才會真的貼齊上緣。
+   .tab-content 是外層捲動容器，top: 0（不用負值）。手機版不黏，見下方 media。
    只有展開的區塊需要黏；收合的整列本來就只有一行高。 */
 .skill-job-section.expanded .skill-job-header {
   position: sticky;
@@ -1566,6 +1566,7 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 }
 @media (max-width: 860px) {
   .equip-sticky { position: static; top: auto; }
+  .skill-job-section.expanded .skill-job-header { position: static; }
 }
 .equip-fixed {
   background: var(--bg-panel);
@@ -2421,13 +2422,13 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .wm-inner img { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; pointer-events: none; }
 .wm-tile, .wm-dun { position: absolute; pointer-events: none; }
 .wm-tile.route { background: rgba(111, 200, 255, .2); }
-.wm-tile.here { outline: 2px solid rgba(255, 230, 120, .9); background: rgba(255, 230, 120, .15); }
+.wm-tile.here { outline: 2px solid rgba(63, 169, 255, .95); background: rgba(63, 169, 255, .18); }   /* 目前位置用藍色，底圖偏黃才分得出來 */
 .wm-tile.sel { outline: 3px solid var(--ro-gold); background: rgba(242, 199, 92, .25); }
 .wm-dun { border: 2px solid transparent; border-radius: 4px; }
 .wm-dun.sel { border-color: var(--ro-gold); background: rgba(242, 199, 92, .35); }
 .wm-route { position: absolute; left: 0; top: 0; pointer-events: none; }
 .wm-me { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, #fff 0 22%, #f2c75c 28% 52%, rgba(242, 199, 92, 0) 60%); animation: wm-pulse 1.4s ease-in-out infinite; }
+  background: radial-gradient(circle, #fff 0 22%, #3fa9ff 28% 52%, rgba(63, 169, 255, 0) 60%); box-shadow: 0 0 10px rgba(63, 169, 255, .8); animation: wm-pulse 1.4s ease-in-out infinite; }
 @keyframes wm-pulse { 50% { transform: scale(1.25); } }
 .wm-zoom { position: absolute; right: 12px; top: 64px; display: flex; flex-direction: column; gap: 6px; }
 .wm-sheet { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(520px, calc(100% - 24px)); max-height: 55%; overflow: auto;
@@ -2488,3 +2489,9 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 #bf-portal.blue .glow { background: radial-gradient(ellipse, rgba(120, 200, 255, .9), rgba(90, 170, 255, 0) 70%); }
 #bf-portal.blue .col { background-image: url(../images/effects/warp/ring_blue.png); }
 #bf-portal.blue em { color: #cfe9ff; }
+.notice-line { font-size: 14px; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.stat-extra { color: #7fd0ff; cursor: pointer; }
+.stat-src-item { display: flex; justify-content: space-between; gap: 8px; padding: 1px 0 1px 14px; font-size: 12px; color: var(--ink-dim); }
+
+.codex-set-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px; }
+.codex-set-list .set-miss { color: inherit; opacity: .85; }

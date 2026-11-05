@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PVP 爬塔 試玩</title>
+<style>
+  body { margin: 0; background: #14110d; color: #e8dcc4; font: 14px/1.5 "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 12px 16px; }
+  h1 { font-size: 18px; margin: 0 0 8px; font-weight: 500; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 8px 0; }
+  .bar label { display: flex; gap: 6px; align-items: center; }
+  select, button { background: #2a241c; color: #e8dcc4; border: 1px solid #5a4a36; border-radius: 6px; padding: 4px 10px; font: inherit; cursor: pointer; }
+  button:hover:not(:disabled) { background: #3a3126; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.go { border-color: #c9a24a; color: #f0d68a; }
+  .main { display: grid; grid-template-columns: 1fr 240px; gap: 12px; }
+  @media (max-width: 760px) { .main { grid-template-columns: 1fr; } }
+  canvas { display: block; width: 100%; height: auto; border-radius: 10px; background: #000; image-rendering: pixelated; }
+  .side { background: #1b1712; border-radius: 10px; padding: 10px; font-size: 13px; }
+  .side h2 { font-size: 14px; margin: 0 0 6px; font-weight: 500; color: #f0d68a; }
+  .floor { display: flex; justify-content: space-between; padding: 3px 8px; border-radius: 6px; color: #a8987c; }
+  .floor.boss { color: #e6a35a; }
+  .floor.cur { background: #3a2f18; color: #f0d68a; }
+  .floor.done { color: #6f8f5a; }
+  .tries { margin: 8px 0; }
+  .tries b { color: #f0d68a; }
+  #log { height: 110px; overflow: auto; background: #1b1712; border-radius: 8px; padding: 6px 10px; font-size: 12px; color: #b9aa8e; margin-top: 8px; }
+  .note { font-size: 12px; color: #8c7d63; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚔️ PVP 爬塔 試玩（俯視角、1 對 1 淘汰賽）</h1>
+  <div class="bar">
+    <label>你的職業 <select id="cls"></select></label>
+    <label>性別 <select id="gender"><option value="male">男</option><option value="female">女</option></select></label>
+    <label>速度 <select id="speed"><option>1</option><option>2</option><option>4</option></select>×</label>
+    <button id="start" class="go">開始挑戰</button>
+    <button id="resetDay">重置今日次數（測試用）</button>
+  </div>
+  <div class="main">
+    <canvas id="cv" width="960" height="600"></canvas>
+    <div class="side">
+      <h2>🗼 試煉之塔</h2>
+      <div class="tries">今日挑戰 <b id="tries">3</b> / 3　最高 <b id="best">0</b> 層</div>
+      <div id="floors"></div>
+    </div>
+  </div>
+  <div id="log"></div>
+  <p class="note">原型：關主是用角色資料換算的「人形怪物」，傷害公式為簡化版，只用來看畫面與節奏。每層限時 60 秒，輸一場就淘汰；往上打 HP／SP 不回滿，紅水自動喝（10 瓶）。</p>
+</div>
+<script>window.PAPERDOLL_BASE = '../../';</script>
+<script src="../../js/paperdoll_layers.js"></script>
+<script src="../../js/paperdoll.js"></script>
+<script src="tower.js"></script>
+</body>
+</html>

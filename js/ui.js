@@ -713,10 +713,37 @@ function toggleAllyPanel() {
   if (allyPanelOpen) renderAllyPanel();
 }
 function allyAction(fn, slot) {
-  fn(slot);
+  runWithNotice('🤝 隊伍', () => fn(slot));
   renderAllyPanel();
   renderAll();
 }
+/* 按鈕操作的結果改用彈窗（使用者 2026-11-05）：寫進戰鬥訊息很快就被洗掉。
+   操作期間把 logMsg 攔下來收集（戰鬥訊息照樣寫一份），結束後有訊息就跳彈窗 */
+function runWithNotice(title, fn) {
+  const lines = [];
+  const orig = logMsg;
+  logMsg = (t, lane) => { lines.push(String(t)); return orig(t, lane); };
+  let r;
+  try { r = fn(); } finally { logMsg = orig; }
+  if (lines.length) showNoticeModal(title, lines);
+  return r;
+}
+function showNoticeModal(title, lines) {
+  let el = document.getElementById('notice-modal');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'notice-modal';
+    el.className = 'wm-modal hidden';
+    el.innerHTML = '<div class="wm-modal-box"><button class="wm-btn wm-modal-x" onclick="closeNoticeModal()">✕</button><div class="wm-modal-body"></div></div>';
+    el.addEventListener('click', e => { if (e.target === el) closeNoticeModal(); });
+    document.body.appendChild(el);
+  }
+  el.querySelector('.wm-modal-body').innerHTML = `<div class="wm-sheet-title">${shopEsc(title)}</div>`
+    + lines.map(l => `<div class="notice-line">${shopEsc(l)}</div>`).join('')
+    + '<button class="btn-small wm-go" onclick="closeNoticeModal()">確定</button>';
+  el.classList.remove('hidden');
+}
+function closeNoticeModal() { const el = document.getElementById('notice-modal'); if (el) el.classList.add('hidden'); }
 /* 面板分兩層：`renderAllyPanel()` 整個重畫（開啟時、按下動作時），
    `updateAllyPanelLive()` 每秒只改會變的幾個數字。
 
@@ -2758,7 +2785,7 @@ function syncTravelPortal(scene, at) {
   el.style.left = pt.x + '%';
   el.style.top = pt.y + '%';
   el.classList.toggle('blue', state.travel.portal.color === 'blue');   // 傳送之陣是藍色，走路的傳點是黃色
-  const to = state.travel.portal.to;
+  const to = state.travel.portal.to;
   const label = '→ ' + ((MAPS.find(m => m.id === to) || {}).name || to);
   const em = el.querySelector('em');
   if (em.textContent !== label) em.textContent = label;
@@ -4799,7 +4826,39 @@ let codexJobFilter = false;  // 只顯示本職業裝得上的裝備
 
    `test` 收的是那一列的 id，回傳真假。寫成函式而不是欄位比對，是因為三種分頁
    要看的欄位根本不同（怪看 isBoss、卡看 slot、道具看 type + armorType）。 */
+/* 圖鑑套裝分頁：只列有實作效果的；成員全收藏算「已發現」 */
+let _codexSetCache = null;
+function codexSetDefs() {
+  if (_codexSetCache) return _codexSetCache;
+  const nameOf = i => (CARDS[i] && CARDS[i].name) || (ITEMS[i] && ITEMS[i].name) || i;
+  const out = {};
+  const add = (id, name, members, bonus) => {
+    if (!bonus || !Object.keys(bonus).length) return;
+    const cards = members.every(m => (Array.isArray(m) ? m : [m]).every(i => CARDS[i]));
+    const mem = members.map(m => (Array.isArray(m) ? m : [m]));
+    out[id] = { id, name, mem, bonus, cards, names: mem.map(a => [...new Set(a.map(nameOf))].join('／')) };
+  };
+  for (const [id, d] of Object.entries(typeof EQUIP_SETS !== 'undefined' ? EQUIP_SETS : {})) if (d.items) add(id, d.name, d.items, d.bonus);
+  for (const [cid, c] of Object.entries(CARDS)) (c.condBonus || []).forEach((cb, i) => {
+    const w = cb.when || {};
+    if (cb.setName && w.withCards) add('cardset_' + cid + '_' + i, cb.setName, [cid, ...w.withCards], cb.bonus);
+  });
+  return (_codexSetCache = out);
+}
+function codexSetCell(r, book) {
+  const d = codexSetDefs()[r.id];
+  const fx = Object.entries(d.bonus).map(([k, v]) => formatCardBonus(k, v, d.bonus)).filter(Boolean).join('、');
+  const mem = d.mem.map((a, i) => `<span class="${a.some(x => book.item[x]) ? '' : 'dim'}">${shopEsc(d.names[i])}</span>`).join('＋');
+  return `<div class="set-item${r.found ? ' on' : ''}">
+    <div class="set-head">${d.cards ? '🃏' : '🧩'} ${shopEsc(d.name)} <span class="set-count">(${d.mem.length} 件)</span></div>
+    <div class="set-miss">${mem}</div><div class="set-fx">${shopEsc(fx)}</div></div>`;
+}
 const CODEX_CATS = {
+  set: [
+    { k: 'all', label: '全部' },
+    { k: 'equip', label: '裝備套裝', test: id => !codexSetDefs()[id].cards },
+    { k: 'card', label: '套卡', test: id => codexSetDefs()[id].cards },
+  ],
   mon: [
     { k: 'all', label: '全部' },
     { k: 'normal', label: '普通怪', test: id => !MONSTERS[id].isBoss },
@@ -4993,6 +5052,7 @@ function renderCodexTab() {
     : codexView === 'card' ? pool.cards
     /* 卡冊限定卡排最前面：7 張混在 1.2 萬件後面永遠翻不到 */
     : codexView === 'hidden' ? getAlbumOnlyCards().concat(getBoxCodexPool())
+    : codexView === 'set' ? Object.keys(codexSetDefs())
     : pool.items;
   const catBar = codexCatBar(allIds);
   let ids = codexCatFilter(allIds);
@@ -5004,6 +5064,10 @@ function renderCodexTab() {
     rows = ids.map(id => ({ id, name: (CARDS[id] || ITEMS[id]).name, found: !!book.item[id] }));
   } else if (codexView === 'hidden') {
     rows = ids.map(id => ({ id, name: ITEMS[id].name, found: !!(book.box && book.box[id]) }));
+  } else if (codexView === 'set') {
+    const sd = codexSetDefs();
+    /* 搜尋也比對成員名稱：查「這張卡有沒有套卡」 */
+    rows = ids.map(id => ({ id, name: sd[id].name + ' ' + sd[id].names.join(' '), found: sd[id].mem.every(a => a.some(x => book.item[x])) }));
   } else {
     rows = ids.map(id => ({ id, name: ITEMS[id].name, found: !!book.item[id] }));
   }
@@ -5063,6 +5127,7 @@ function renderCodexTab() {
       <button class="btn-small ${codexView === 'mon' ? 'active' : ''}" onclick="setCodexView('mon')">👾 怪物</button>
       <button class="btn-small ${codexView === 'card' ? 'active' : ''}" onclick="setCodexView('card')">🃏 卡片</button>
       <button class="btn-small ${codexView === 'item' ? 'active' : ''}" onclick="setCodexView('item')">🎒 道具</button>
+      <button class="btn-small ${codexView === 'set' ? 'active' : ''}" onclick="setCodexView('set')">🧩 套裝</button>
       ${boxUnlocked ? `<button class="btn-small ${codexView === 'hidden' ? 'active' : ''}" onclick="setCodexView('hidden')">🎁 隱藏</button>` : ''}
     </div>` +
     (!boxUnlocked ? `<div class="empty-hint">🔒 三大收集（怪物／卡片／道具）全滿後，解鎖「隱藏圖鑑」——神秘箱挑戰。</div>`
@@ -5087,10 +5152,11 @@ function renderCodexTab() {
   if (!pageRows.length && !outRows.length) {
     html += '<div class="empty-hint">沒有符合條件的項目。</div>';
   } else if (pageRows.length) {
-    html += '<div class="codex-grid">';
+    html += codexView === 'set' ? '<div class="codex-set-list">' : '<div class="codex-grid">';
     pageRows.forEach(r => {
       html += (codexView === 'mon') ? codexMonCell(r, book)
         : (codexView === 'hidden') ? codexBoxCell(r, book)
+        : (codexView === 'set') ? codexSetCell(r, book)
         : codexItemCell(r, book);
     });
     html += '</div>';
@@ -6170,6 +6236,8 @@ function buildAmmoRowHtml() {
       : `<span class="ammo-name">未裝備</span>`}
     <button class="btn-small" onclick="showAmmoSelect()">選擇箭矢</button>
     ${warn ? `<span class="ammo-warn">沒箭矢，弓無法攻擊！</span>` : ''}
+    <label class="auto-toggle" title="engine tryAutoBuyArrow：每拍檢查目前裝備的箭"><input type="checkbox" ${state.autoBuyArrow ? 'checked' : ''}
+      onchange="setAutoBuyArrow(this.checked)"> 剩 ${AUTO_BUY_ARROW_THRESHOLD} 支以下自動買 ${AUTO_BUY_ARROW_QTY} 支</label>
   </div>`;
 }
 
@@ -6839,17 +6907,23 @@ function openStatInfo(k) {
   const m = document.getElementById('stat-modal');
   if (!title || !body || !m) return;
   const bd = (state._statBreakdown && state._statBreakdown[k]) || { base: 0, job: 0, gear: 0, skill: 0, buff: 0, total: 0 };
-  const rows = [
-    ['基礎', bd.base, '已分配的能力點'],
-    ['職業', bd.job, ''],
-    ['裝備', bd.gear, ''],
-    ['技能', bd.skill, ''],
-    ['增益', bd.buff, '']
-  ];
+  /* 每一類底下逐項列出來源（使用者 2026-11-05：以前只有合計，對不上是哪個加的） */
+  const sign = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+  const chain = getAllLearnedJobs().map(j => (JOB_TREE[j] && JOB_TREE[j].name) || j).join(' → ');
+  const gearList = statGearSources(k);
+  const sections = [
+    ['基礎', bd.base, [{ name: '已分配的能力點', v: bd.base }]],
+    ['職業加成', bd.job, bd.job ? [{ name: chain, v: bd.job }] : []],
+    ['裝備／卡片', bd.gear, gearList],
+    ['技能', bd.skill, bd.skillSrc || []],
+    ['增益', bd.buff, bd.buffSrc || []],
+    ['百分比加成', bd.pct || 0, (bd.pctSrc || []).map(x => ({ name: `${x.name}（+${Math.round(x.v * 100)}%）`, v: null }))],
+  ].filter(([, v, list], i) => i === 0 || v || list.length);
   title.textContent = (STAT_NAMES[k] || k) + ' 說明';
-  body.innerHTML = `<div class="stat-src-head">來源明細　合計 ${bd.total}</div>
-    <div class="stat-src-table">${rows.map(r =>
-      `<div class="stat-src-row"><span>${r[0]}</span><b>${r[1] > 0 ? '+' : ''}${r[1]}</b><span class="dim">${r[2]}</span></div>`
+  body.innerHTML = `<div class="stat-src-head">${STAT_NAMES[k] || k}　${bd.base} ${bd.total - bd.base >= 0 ? '+' : '−'} ${Math.abs(bd.total - bd.base)}　＝ ${bd.total}</div>
+    <div class="stat-src-table">${sections.map(([label, v, list]) =>
+      `<div class="stat-src-row"><span>${label}</span><b>${sign(v)}</b></div>`
+      + list.map(x => `<div class="stat-src-item"><span>${shopEsc(String(x.name))}</span><b>${x.v == null ? '' : sign(x.v)}</b></div>`).join('')
     ).join('')}</div>
     <ul class="stat-help">${(STAT_HELP[k] || []).map(t => `<li>${t}</li>`).join('')}</ul>`;
   m.classList.remove('hidden');
@@ -6945,12 +7019,12 @@ function renderCharacterTab() {
         return `
         <div class="stat-row">
           <div class="stat-label">${STAT_NAMES[k]} <button type="button" class="wh-info-btn" aria-label="看素質說明" onclick="openStatInfo('${k}')">ⓘ</button></div>
-          <div class="stat-value"><span class="stat-seg" title="基礎值（已分配的屬性點）">${state.stats[k]}</span>${
-            bonus > 0 ? `<span class="stat-seg" style="color:#4fc3f7" title="${statJobSourceTitle(k, bonus)}">+${bonus}</span>` : ''}${
-            gear !== 0 ? `<span class="stat-seg" style="color:var(--gold-soft)" title="${statGearSourceTitle(k)}">${gear > 0 ? '+' : ''}${gear}</span>` : ''}${
-            skillV !== 0 ? `<span class="stat-seg" style="color:#a5d6a7" title="${statListTitle('技能加成　合計 ' + (skillV > 0 ? '+' : '') + skillV, bd.skillSrc)}">${skillV > 0 ? '+' : ''}${skillV}</span>` : ''}${
-            buffV !== 0 ? `<span class="stat-seg" style="color:#ffb74d" title="${statListTitle('BUFF 加成　合計 ' + (buffV > 0 ? '+' : '') + buffV, bd.buffSrc)}">${buffV > 0 ? '+' : ''}${buffV}</span>` : ''}${
-            pctV !== 0 ? `<span class="stat-seg" style="color:#ce93d8" title="${statPctTitle(bd.pctSrc, pctV)}">${pctV > 0 ? '+' : ''}${pctV}</span>` : ''}</div>
+          <div class="stat-value">${(() => {
+            // 比照 RO：基礎 + 增益（職業、裝備、技能、BUFF、百分比的合計）；來源明細點 ⓘ 看
+            const extra = bonus + gear + skillV + buffV + pctV;
+            return `<span class="stat-seg" title="基礎值（已分配的屬性點）">${state.stats[k]}</span>`
+              + (extra ? `<span class="stat-seg stat-extra" onclick="openStatInfo('${k}')" title="點 ⓘ 看來源">${extra > 0 ? ' + ' : ' − '}${Math.abs(extra)}</span>` : '');
+          })()}</div>
           <div class="stat-cost" title="${atCap ? '已達上限' : `再加 1 點要花 ${cost} 點素質點`}">${atCap ? 'MAX' : '-' + cost}</div>
           <button class="btn-tiny" ${canAfford ? '' : 'disabled'} onclick="allocateStat('${k}');renderCharacterTab();renderTopBar();">+</button>
         </div>`;
@@ -7031,10 +7105,40 @@ function renderCharacterTab() {
           + `<span>生怪間隔</span><b>${(gap / 1000).toFixed(2)} 秒</b><span class="dim">清場後 ${(first / 1000).toFixed(2)} 秒</span>${tag}${list}</div>`;
       })()}
       <div class="set-row"><span>套裝</span>${setListHtml}</div>
+      ${castInfoRowHtml()}
     </div>
       </div>
     </div>
     <p class="stat-formula-hint">數值公式參考 RO 正式版邏輯調整：ATK=${state._atkUsesDex ? 'DEX+(DEX/10)²+STR/5+LUK/5（弓／樂器／鞭以 DEX 為主屬性）' : 'STR+(STR/10)²+DEX/5+LUK/5'}；HIT=175+等級+DEX；FLEE=100+等級+AGI；DEF 採比例減傷而非直接相減。屬性點數規則對齊官方對照表：每級獲得 floor((等級-1)/5)+3 點；加點消耗隨數值升高而增加（1~10 花2點、11~20花3點...以此類推）。</p>`;
+}
+
+/* 詠唱（使用者 2026-11-05）：素質縮短多少、離素質無詠還差多少、裝備加成；ⓘ 列每個技能的基礎 → 實際 */
+function castInfoRowHtml() {
+  const st = castStatFactor();
+  const cut = Math.round((1 - st.factor) * 100);
+  const need = Math.max(0, 530 - st.score);
+  const vPct = getCardBonus('castVarPct'), fMs = getCardBonus('castFixedMs'), fPct = getCardBonus('castFixedPct');
+  const gear = [vPct ? `變動 ${vPct > 0 ? '+' : ''}${vPct}%` : '', fMs ? `固定 ${fMs > 0 ? '+' : ''}${fMs}ms` : '', fPct ? `固定 ${fPct > 0 ? '+' : ''}${fPct}%` : ''].filter(Boolean).join('、');
+  return `<div><span>詠唱 <button type="button" class="wh-info-btn" onclick="openCastInfo()" aria-label="詠唱明細">ⓘ</button></span>
+    <b>變動詠唱 −${cut}%</b><span class="dim">DEX×2＋INT ＝ ${st.score}${need ? `，再 ${need} 點變動詠唱歸零` : '（素質無詠）'}${gear ? `；裝備：${gear}` : ''}</span></div>`;
+}
+function openCastInfo() {
+  const rows = usableSkillEntries().map(({ sk, lv }) => ({ sk, lv, b: skillCastBreakdown(sk, lv) }))
+    .filter(r => r.b && (r.b.baseVct || r.b.baseFct));
+  const st = castStatFactor();
+  const sec = ms => (ms / 1000).toFixed(2) + 's';
+  const lines = [
+    `變動詠唱 × ${st.factor.toFixed(3)}（1 − √((DEX ${st.dex}×2 ＋ INT ${st.int}) ÷ 530)）`,
+    `固定詠唱不受素質影響，只看裝備。`,
+  ];
+  rows.forEach(({ sk, lv, b }) => {
+    const parts = [`變動 ${sec(b.baseVct)} → ${sec(b.vct)}`, `固定 ${sec(b.baseFct)} → ${sec(b.fct)}`];
+    if (b.varPct || b.buffCut) parts.push(`變動加成 ${b.varPct - b.buffCut > 0 ? '+' : ''}${b.varPct - b.buffCut}%`);
+    if (b.memo < 1) parts.push('速讀術 ×0.5');
+    lines.push(`${skillDisplayName(sk)} Lv${lv}：合計 ${sec(b.total)}（${parts.join('、')}）`);
+  });
+  if (!rows.length) lines.push('目前沒有需要詠唱的技能。');
+  showNoticeModal('🔮 詠唱明細', lines);
 }
 
 /* 角色頁的套裝區：身上有任一件成員的裝備套裝與套卡。
@@ -7809,12 +7913,19 @@ function showOfflineModal(off) {
     ? '<p class="offline-duration yield-warn">這張圖的線上實測未滿 1 分鐘，這次結算 ×0.1。先在線上打滿 1 分鐘再離開，就會照實際表現結算。</p>'
     : (off.rateFromLive ? '<p class="offline-duration">依這張圖最近的線上實際打怪表現結算。</p>' : '');
   // 頭目那份單獨寫一行（#137）：這是玩家最想知道的一件事
+  // 藥水消耗與倒地（使用者 2026-11-05）
+  const downHtml = off.downed
+    ? `<p class="offline-duration yield-warn">💀 打了 ${formatDuration((off.survSec || 0) * 1000)}後紅水用完又買不起，倒地；收益只算到這裡，全隊已回 ${shopEsc((currentMap() || {}).name || '城鎮')}。</p>` : '';
+  const potionHtml = (off.potionUse || []).length
+    ? `<p class="offline-duration">🧪 喝掉：${off.potionUse.map(u => `${shopEsc(u.name)} ×${u.used}${u.bought ? `（買 ${u.bought}）` : ''}`).join('、')}${off.potionSpent ? `，花 ${off.potionSpent.toLocaleString()}z` : ''}</p>` : '';
   const bossHtml = (off.bossList || []).length
     ? `<p class="offline-duration">👑 擊敗頭目：${off.bossList.map(b => `${b.name} ×${b.kills}`).join('、')}</p>` : '';
 
   document.getElementById('offline-modal-body').innerHTML = `
     <p class="offline-duration">離開了 <strong>${formatDuration(off.elapsedMs)}</strong>，你的角色在原地持續戰鬥了 ${off.kills} 場戰鬥：</p>
     ${rateHtml}
+    ${downHtml}
+    ${potionHtml}
     ${prepaidHtml}
     ${partyHtml}
     ${bossHtml}
@@ -7856,7 +7967,8 @@ function setShowOfflineModal(on) {
 }
 /* 結算結果的統一出口：不管是開遊戲讀檔還是切分頁回來，都走這裡。
    紀錄一律留（見 engine.js 的 pushOfflineLog 說明），彈窗才看勾選。 */
-const IDLE_SETTLE_MIN_MS = 5000;    // 切分頁：超過 5 秒就結算，收益不蒸發
+const OFFLINE_MODAL_MIN_MS = 3 * 60 * 1000;
+const IDLE_SETTLE_MIN_MS = 5000;   // 切分頁：超過 5 秒就結算，收益不蒸發
 function deliverOfflineResult(off) {
   if (!off) return;
   if (typeof takeExpPrepaidNote === 'function') {
@@ -7868,7 +7980,9 @@ function deliverOfflineResult(off) {
      「離開 0 分鐘」，那顆按鈕就變成裝飾品，剛好跟使用者要的相反。 */
   if (off.elapsedMs < OFFLINE_MIN_MS && !off.expPrepaid) { saveGame(); return; }
   pushOfflineLog(off);
-  if (showOfflineReport()) showOfflineModal(off);
+  /* 不到 3 分鐘只記紀錄、收益照給，不彈窗（使用者 2026-11-05：切出去一下就跳太冗）；倒地停止的照跳 */
+  if (off.elapsedMs < OFFLINE_MODAL_MIN_MS && !off.downed) _idleReportUnseen = true;
+  else if (showOfflineReport()) showOfflineModal(off);
   else {
     _idleReportUnseen = true;
     const extra = off.expPrepaid ? `（已先結算經驗 ${(off.expPrepaid.base || 0).toLocaleString()}）` : '';
@@ -9114,3 +9228,18 @@ function showCardSelect(slotKey) {
 
   el.innerHTML = html;
 }
+
+/* 這些按鈕操作的結果改用彈窗（使用者 2026-11-05：寫進戰鬥訊息很快就被洗掉）。
+   只挑結果重要、而且只有按鈕會呼叫的（掛機流程不會叫到，才不會一直跳窗）；
+   賣一個道具、點一級技能這類頻繁操作維持寫戰鬥訊息。精煉有自己的結果畫面，不包。 */
+const NOTICE_ACTIONS = {
+  confirmJobChange: '🎊 轉職', confirmRebirth: '🔄 轉生', confirmStatReset: '🔁 重置素質',
+  huntClaim: '📜 討伐', huntClaimRepeat: '📜 討伐', doDestroyInstance: '🔨 拆卸卡片', insertCard: '🃏 插卡',
+  memoWarpPoint: '📌 記錄點', doEvolvePet: '🐾 寵物進化', doRedeemRelicTicket: '🎟️ 遺物', doExchangeRelicTicket: '🎟️ 遺物',
+  synthesizeOreAll: '⚒️ 合成', runAutoSellNow: '💰 自動販賣', doSetPlagiarism: '📖 抄襲',
+};
+Object.keys(NOTICE_ACTIONS).forEach(name => {
+  const fn = window[name];
+  if (typeof fn !== 'function') return;
+  window[name] = function (...args) { return runWithNotice(NOTICE_ACTIONS[name], () => fn.apply(this, args)); };
+});
