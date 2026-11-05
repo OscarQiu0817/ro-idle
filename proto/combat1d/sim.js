@@ -387,8 +387,10 @@ function createSim(cfg) {
     }
   }
 
+  // 不足一步的時間留到下次：以前每次呼叫至少走一步 50ms，畫面 60fps 時約 3 倍速
+  let acc = 0;
   return {
-    run(ms) { const end = S.t + ms; while (S.t < end) step(); return S; },
+    run(ms) { acc += ms; while (acc >= TICK) { step(); acc -= TICK; } return S; },
     state: S,
     derived: { atk: Math.round(atk), matk: Math.round(matk), hit: Math.round(hit), flee: Math.round(flee) },
   };
