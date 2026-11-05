@@ -2495,3 +2495,10 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 
 .codex-set-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px; }
 .codex-set-list .set-miss { color: inherit; opacity: .85; }
+/* 標題畫面：原型試玩連結 */
+.proto-links { margin-top: 14px; font-size: 13px; color: var(--ink-dim, #a8987c); text-align: center; }
+.proto-links summary { cursor: pointer; list-style: none; opacity: .8; }
+.proto-links summary::-webkit-details-marker { display: none; }
+.proto-links[open] summary { margin-bottom: 6px; }
+.proto-links a { display: inline-block; margin: 3px 4px; padding: 3px 10px; border: 1px solid rgba(201,162,74,.45); border-radius: 6px; color: #e8dcc4; text-decoration: none; background: rgba(0,0,0,.3); }
+.proto-links a:hover { border-color: #c9a24a; color: #f0d68a; }
