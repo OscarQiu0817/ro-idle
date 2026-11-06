@@ -5718,6 +5718,7 @@ function gameTick() {
   tickGroundUnits(moveNow);
   tickMonsterMovement(moveDt, moveNow);
   tickCasting(moveNow);
+  alliesCastTick(moveNow);
   /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
      施放卻要等下一秒，中間角色會站在技能射程上乾等、普攻也打不到。隊友仍在 alliesTick（每秒）。 */
   ensureNearestTarget();
@@ -6365,7 +6366,8 @@ function activeBossLists(mapId) {
    抽成函式是為了讓角色分頁顯示同一個數字：以前這段只寫在 spawnMonster() 裡面，
    畫面上沒有任何地方看得到，玩家點了騎乘術也不知道到底有沒有變快。
    兩邊各算一次的話遲早會算出不一樣的值，所以共用這一支。 */
-const SPAWN_BASE_MS = { empty: 500, some: 3000 };
+/* 使用者 2026-11-06：主動怪太多時走圖困難（尤其遠程），放慢 1.5 倍（原 500／3000，騎乘 375／2250） */
+const SPAWN_BASE_MS = { empty: 750, some: 4500 };
 function spawnSpeedSources() {
   const out = [];
   if (state.hasRiding) out.push({ name: '騎乘術／弓身彈影', pct: 33 });   // 500→375、3000→2250
@@ -6380,7 +6382,7 @@ function spawnSpeedSources() {
 // empty=true 代表場上一隻都沒有（補第一批的間隔比較短）
 function spawnDelayMs(empty) {
   const ride = state.hasRiding;
-  let delay = empty ? (ride ? 375 : SPAWN_BASE_MS.empty) : (ride ? 2250 : SPAWN_BASE_MS.some);
+  let delay = SPAWN_BASE_MS[empty ? 'empty' : 'some'] * (ride ? 0.75 : 1);   // 騎乘＝生怪 +25%（間隔 ×0.75）
   const clamp = v => Math.max(100, Math.round(v));
   const spawnPct = state.cardSpawnSpeedPct || 0;
   if (spawnPct) delay = clamp(delay / (1 + spawnPct / 100));
@@ -9014,6 +9016,7 @@ function keepAllyCombat(fresh, prev, keepSettings = true) {
   fresh._lastAttackAt = prev._lastAttackAt || 0;
   if (keepSettings) {
     if (prev.autoSkill != null) fresh.autoSkill = prev.autoSkill;
+    if (prev.autoAttack != null) fresh.autoAttack = prev.autoAttack;
     if (prev.autoSkillConfig) fresh.autoSkillConfig = prev.autoSkillConfig;
     if (prev.autoSupportSkills) fresh.autoSupportSkills = prev.autoSupportSkills;
     if (prev.autoHealConfig) fresh.autoHealConfig = prev.autoHealConfig;
@@ -9133,10 +9136,27 @@ function claimMercLedger() {
 /* ---- 隊友心跳 ----
    借慢心跳（每秒一次）跑，但攻擊次數照各自的攻擊間隔補齊，
    不然攻速再快也是一秒一下。 */
+/* 隊友的詠唱每拍結算（跟玩家的 tickCasting 同一拍）。
+   以前放在 alliesTick（每秒、而且沒怪就 return）：詠唱滿了最多晚 1 秒才放，
+   城內沒怪時永遠放不出來、詠唱條卡在滿格（使用者 2026-11-06 回報天使之光） */
+function alliesCastTick(now) {
+  allyList().forEach(ally => {
+    if (!ally || !ally.casting || ally._downed || !allyOnThisMap(ally)) return;
+    try { withAlly(ally, () => tickCasting(now)); } catch (e) { console.error('隊友詠唱結算失敗', e); }
+  });
+}
 function alliesTick() {
   const list = allyList();
-  if (!list.length || !state.monsters || !state.monsters.length) return;
+  if (!list.length) return;
   const now = Date.now();
+  // 沒怪（城內、清場等補怪）：只補輔助技能，跟玩家的慢心跳一樣
+  if (!state.monsters || !state.monsters.length) {
+    list.forEach(ally => {
+      if (!ally || ally._downed || !allyOnThisMap(ally)) return;
+      try { withAlly(ally, () => tryAutoCastSupportSkills()); } catch (e) { console.error('隊友輔助失敗', e); }
+    });
+    return;
+  }
   list.forEach(ally => {
     if (!ally || !allyOnThisMap(ally)) return;
     if (ally._downed) {
@@ -9156,7 +9176,7 @@ function alliesTick() {
     const engaged = state.monsters.length > 0 && now - (state._walkAt || 0) > 300;   // 玩家站定在打
     try {
       withAlly(ally, () => {
-        tickCasting(now);   // 隊友的詠唱也要跑完（T8）
+        tickCasting(now);   // 主要在 alliesCastTick 每拍結算；這裡再檢查一次沒有副作用
         tryAutoCastSupportSkills();   // 輔助先（見 tryAutoCastSkill 開頭）
         if (state.autoSkill && engaged) tryAutoCastSkill();
         /* 隊友自己掛上的場域效果也要跳（#131）。以前這段只長在 gameTick() 裡，
@@ -9170,6 +9190,8 @@ function alliesTick() {
     if (ally.casting) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
     // 玩家還在走（追怪或漫遊）時隊友也不打，等玩家開打才一起打（隊友攻擊不看距離，至少節奏跟玩家一致）
     if (!engaged) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
+    // 自動普攻關（使用者 2026-11-06）：純輔助帶人，不搶怪
+    if (ally.autoAttack === false) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
     if (!ally._lastAttackAt) ally._lastAttackAt = now - 1000;
     ally._atkAccum = (ally._atkAccum || 0) + (now - ally._lastAttackAt);
     ally._lastAttackAt = now;
@@ -11534,8 +11556,16 @@ function castSkillInner(skillId, opts) {
     }
     case 'heal': {
       const amt = Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult());
-      state.hp = Math.min(state.maxHp, state.hp + amt);
-      logMsg(`💚 「${sk.name}」Lv${lv} 恢復了 ${amt} 點HP。`);
+      let tgt = state._healTarget || state;
+      state._healTarget = null;
+      if (tgt !== state && (tgt._downed || !(tgt.hp > 0))) tgt = state;   // 詠唱期間倒了就補自己
+      tgt.hp = Math.min(tgt.maxHp, tgt.hp + amt);
+      const who = tgt === state ? '' : `${tgt === allyOwnerState() ? '玩家' : (tgt._allyName || '隊友')} `;
+      logMsg(`💚 「${sk.name}」Lv${lv} 為${who || '自己'}恢復了 ${amt} 點HP。`);
+      if (tgt === allyOwnerState() && tgt !== state && typeof showPlayerFloat === 'function') {
+        const prev = _allyActing; _allyActing = null;
+        try { showPlayerFloat('+' + amt, 'heal'); } finally { _allyActing = prev; }
+      }
       break;
     }
     case 'heal_over_time': {
@@ -12284,8 +12314,11 @@ function tryAutoCastSupportSkills() {
       // Heal 類：依技能自訂的HP%門檻觸發，並可設SP%下限保護
       if (sk.type === 'heal') {
         const healCfg = (state.autoHealConfig && state.autoHealConfig[sk.id]) || { hpThreshold: 70, spThreshold: 0 };
-        if (state.hp > state.maxHp * ((healCfg.hpThreshold ?? 70) / 100)) continue;
         if (healCfg.spThreshold > 0 && state.sp < state.maxSp * (healCfg.spThreshold / 100)) continue;
+        // 治癒術可補隊友（使用者 2026-11-06）：同圖隊伍裡 HP% 最低、低於門檻的那位
+        const tgt = healTargetBelow((healCfg.hpThreshold ?? 70) / 100);
+        if (!tgt) continue;
+        state._healTarget = tgt;
       }
 
       castSkill(sk.id);
@@ -14133,6 +14166,18 @@ function skillSpCost(sk, lv) {
    注意 `hpItemEffectBonusPct` 是**道具**專用（禪心給的），跟治癒術是兩回事，不要混。 */
 function rangeDmgMult(weaponId) {
   return 1 + ((isBowWeapon(weaponId) ? state.cardRangedDmgPct : state.cardMeleeDmgPct) || 0) / 100;
+}
+/* 同圖隊伍（玩家＋同圖隊友，倒地的除外）裡 HP% 最低、且不高於 ratio 的人；沒有回 null。
+   隊友身上施放時 state 是隊友，隊伍名單一律從玩家那份讀 */
+function healTargetBelow(ratio) {
+  const owner = allyOwnerState();
+  const members = [owner, ...(owner.allies || []).filter(a => a && !a._downed && a.hp > 0 && allyOnThisMap(a))];
+  let best = null, bestR = Infinity;
+  members.forEach(m => {
+    const r = m.hp / Math.max(1, m.maxHp);
+    if (r <= ratio && r < bestR) { best = m; bestR = r; }
+  });
+  return best;
 }
 function healOutputMult() {
   // 裝備的治癒量加成（bHealPower，5d）跟冥想相加

@@ -24857,6 +24857,8 @@ function itemImgSrc(itemId) {
   if (!def) return `images/_placeholder_item.png`;
   /* 遺物沒有 imgId（畫面上用 emoji），不先擋掉會組出 items/undefined.png，
      每一列都送一次註定 404 的請求——雖然 onerror 會退回佔位圖，但那是白費的往返。 */
+  /* 卡片沒有圖片編號或指到不存在的 5000：用通用卡片圖（RO 背包裡卡片本來就同一個圖示） */
+  if (typeof CARDS !== 'undefined' && CARDS[itemId] && (!def.imgId || def.imgId === 5000)) return resolveImgPath('items/4001.png');
   if (!def.imgId) return `images/_placeholder_${itemPlaceholderKind(def)}.png`;
   const dir = def.type === 'weapon' ? 'equip/weapon' : def.type === 'armor' ? 'equip/armor' : 'items';
   return resolveImgPath(`${dir}/${def.imgId}.png`);

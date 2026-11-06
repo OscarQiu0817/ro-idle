@@ -728,22 +728,45 @@ function runWithNotice(title, fn) {
   if (lines.length) showNoticeModal(title, lines);
   return r;
 }
+/* 訊息提示：畫面上緣堆疊（像 RO 獲得道具），時間到自動消失，可手動關（使用者 2026-11-06：不要蓋住中間畫面） */
+const NOTICE_BASE_MS = 4000;
+const NOTICE_PER_LINE_MS = 1200;
+const NOTICE_MAX_MS = 12000;
 function showNoticeModal(title, lines) {
-  let el = document.getElementById('notice-modal');
+  let stack = document.getElementById('notice-stack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'notice-stack';
+    document.body.appendChild(stack);
+  }
+  const card = document.createElement('div');
+  card.className = 'notice-card';
+  card.innerHTML = `<button class="notice-x" title="關閉">✕</button><div class="notice-title">${shopEsc(title)}</div>`
+    + lines.map(l => `<div class="notice-line">${shopEsc(l)}</div>`).join('');
+  const close = () => { card.classList.add('out'); setTimeout(() => card.remove(), 250); };
+  card.querySelector('.notice-x').onclick = close;
+  stack.prepend(card);
+  while (stack.children.length > 4) stack.lastChild.remove();
+  setTimeout(close, Math.min(NOTICE_MAX_MS, NOTICE_BASE_MS + lines.length * NOTICE_PER_LINE_MS));
+}
+/* 主動點開看的說明（例：詠唱明細）：維持置中彈窗，不自動消失 */
+function showInfoModal(title, lines) {
+  let el = document.getElementById('info-modal');
   if (!el) {
     el = document.createElement('div');
-    el.id = 'notice-modal';
+    el.id = 'info-modal';
     el.className = 'wm-modal hidden';
-    el.innerHTML = '<div class="wm-modal-box"><button class="wm-btn wm-modal-x" onclick="closeNoticeModal()">✕</button><div class="wm-modal-body"></div></div>';
-    el.addEventListener('click', e => { if (e.target === el) closeNoticeModal(); });
+    el.innerHTML = '<div class="wm-modal-box"><button class="wm-btn wm-modal-x" onclick="closeInfoModal()">✕</button><div class="wm-modal-body"></div></div>';
+    el.addEventListener('click', e => { if (e.target === el) closeInfoModal(); });
     document.body.appendChild(el);
   }
   el.querySelector('.wm-modal-body').innerHTML = `<div class="wm-sheet-title">${shopEsc(title)}</div>`
     + lines.map(l => `<div class="notice-line">${shopEsc(l)}</div>`).join('')
-    + '<button class="btn-small wm-go" onclick="closeNoticeModal()">確定</button>';
+    + '<button class="btn-small wm-go" onclick="closeInfoModal()">確定</button>';
   el.classList.remove('hidden');
 }
-function closeNoticeModal() { const el = document.getElementById('notice-modal'); if (el) el.classList.add('hidden'); }
+function closeInfoModal() { const el = document.getElementById('info-modal'); if (el) el.classList.add('hidden'); }
+function closeNoticeModal() { const el = document.getElementById('notice-stack'); if (el) el.innerHTML = ''; }
 /* 面板分兩層：`renderAllyPanel()` 整個重畫（開啟時、按下動作時），
    `updateAllyPanelLive()` 每秒只改會變的幾個數字。
 
@@ -920,8 +943,11 @@ function renderAllyAutoBattle(a) {
   const opt = (list, sel) => '<option value="">不使用技能</option>'
     + list.map(e => `<option value="${e.sk.id}" ${sel === e.sk.id ? 'selected' : ''}>${e.sk.name} Lv${e.lv}</option>`).join('');
   let html = head + `<div class="ally-opt">
+    <label><input type="checkbox" ${a.autoAttack !== false ? 'checked' : ''} onchange="setAllyAutoAttack('${a._slot}', this.checked)">
+      自動普攻</label>
     <label><input type="checkbox" ${a.autoSkill ? 'checked' : ''} onchange="setAllyAutoSkill('${a._slot}', this.checked)">
-      自動施放攻擊技能</label>`;
+      自動施放攻擊技能</label>
+    <div class="ally-note-sm">兩個都關＝只放輔助技能、不打怪（帶新手不搶怪）</div>`;
   if (!atk.length) {
     html += '<div class="ally-note-sm">這位隊友沒有學任何攻擊技能。</div>';
   } else {
@@ -948,6 +974,7 @@ function renderAllyAutoBattle(a) {
   return html;
 }
 function allyBySlot(slot) { return (state.allies || []).find(a => a && String(a._slot) === String(slot)); }
+function setAllyAutoAttack(slot, v) { const a = allyBySlot(slot); if (!a) return; a.autoAttack = !!v; saveGame(); renderAllyPanel(); }
 function setAllyAutoSkill(slot, v) { const a = allyBySlot(slot); if (!a) return; a.autoSkill = !!v; saveGame(); renderAllyPanel(); }
 function setAllyAutoSlot(slot, i, key, v) {
   const a = allyBySlot(slot);
@@ -2546,10 +2573,12 @@ function mobAnimApply(img, d, id) {
   img._maDef = d;
   if (!img._maBox0) img._maBox0 = [img.clientWidth || 80, img.clientHeight || img.clientWidth || 80];
   const bw = img._maBox0[0], bh = img._maBox0[1];
-  let k = Math.min(bw / d.fit[0], bh / d.fit[1]);
-  const over = Math.max(d.cell[0] * k / (bw * 2.2), d.cell[1] * k / (bh * 2.2), 1);
-  k /= over;
+  /* 只照待機大小縮放（T2）。以前格子超過待機 2.2 倍就整隻再縮小，
+     重產原圖後攻擊特效大的怪（闇神官等）會被縮成 6 成，2026-11-06 拿掉 */
+  const k = Math.min(bw / d.fit[0], bh / d.fit[1]);
   img._maK = k;
+  // 腳底錨點不一定在格子正中（特效往一側延伸的怪），水平位移讓身體對準位置
+  img._maOffX = Math.round((d.cell[0] / 2 - d.anchor[0]) * k);
   img.src = MOB_ANIM_BLANK;
   img.style.backgroundImage = 'url("' + MOB_ANIM_DIR + id + '.png")';
   img.style.backgroundRepeat = 'no-repeat';
@@ -2948,7 +2977,8 @@ function layoutBattlefield() {
     if (Math.abs(rel) > 2 || img._faceLeft == null) img._faceLeft = rel > 0;
     const faceLeft = img._faceLeft;
     const nativeLeft = !!img._maDef;
-    img.style.transform = (faceLeft !== nativeLeft) ? 'scaleX(-1)' : '';
+    const flipMon = faceLeft !== nativeLeft, offX = img._maOffX || 0;
+    img.style.transform = (offX ? `translateX(${flipMon ? -offX : offX}px) ` : '') + (flipMon ? 'scaleX(-1)' : '');
     if (img._maDef && img._maAct !== 'hit' && img._maAct !== 'die') {
       const arrived = Number.isFinite(mon.d) ? monInRange(mon) : Math.hypot(bfPlayer.x - mon.bx, bfPlayer.y - mon.by) <= gap + 0.6;
       mobAnimPlay(img, mv.moved ? 'walk' : (arrived ? 'attack' : 'idle'), false);
@@ -4220,6 +4250,15 @@ function renderAutoBattleTab() {
           ${potionOptions}
         </select>
       </div>
+    </div>
+
+    <!-- 箭矢自動購買（使用者 2026-11-06：跟藥水放一起，不用再去裝備欄找） -->
+    <div class="ab-section">
+      <h4 class="ab-section-title">🏹 箭矢</h4>
+      <div class="potion-toggles">
+        <label class="auto-toggle"><input type="checkbox" ${state.autoBuyArrow ? 'checked' : ''} onchange="setAutoBuyArrow(this.checked)"> 目前裝備的箭剩 ${AUTO_BUY_ARROW_THRESHOLD} 支以下自動買 ${AUTO_BUY_ARROW_QTY} 支</label>
+      </div>
+      <div class="ab-info-text">目前裝備：${state.equip.ammo && ITEMS[state.equip.ammo] ? `${ITEMS[state.equip.ammo].name} ×${getItemQty(state.equip.ammo)}` : '沒有（到裝備欄選擇箭矢）'}</div>
     </div>
 
     <div class="ab-section">
@@ -6236,8 +6275,6 @@ function buildAmmoRowHtml() {
       : `<span class="ammo-name">未裝備</span>`}
     <button class="btn-small" onclick="showAmmoSelect()">選擇箭矢</button>
     ${warn ? `<span class="ammo-warn">沒箭矢，弓無法攻擊！</span>` : ''}
-    <label class="auto-toggle" title="engine tryAutoBuyArrow：每拍檢查目前裝備的箭"><input type="checkbox" ${state.autoBuyArrow ? 'checked' : ''}
-      onchange="setAutoBuyArrow(this.checked)"> 剩 ${AUTO_BUY_ARROW_THRESHOLD} 支以下自動買 ${AUTO_BUY_ARROW_QTY} 支</label>
   </div>`;
 }
 
@@ -7138,7 +7175,7 @@ function openCastInfo() {
     lines.push(`${skillDisplayName(sk)} Lv${lv}：合計 ${sec(b.total)}（${parts.join('、')}）`);
   });
   if (!rows.length) lines.push('目前沒有需要詠唱的技能。');
-  showNoticeModal('🔮 詠唱明細', lines);
+  showInfoModal('🔮 詠唱明細', lines);
 }
 
 /* 角色頁的套裝區：身上有任一件成員的裝備套裝與套卡。
@@ -9193,7 +9230,7 @@ function showCardSelect(slotKey) {
       const c = CARDS[id];
       html += `<div class="card-row inserted">
         <div class="card-info">
-          <span class="card-icon">${c.icon}</span>
+          <img class="card-icon-img" src="${itemImgSrc(id)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
           <div class="card-details">
             <span class="card-name">${c.name}</span>
             <span class="card-desc">${c.desc}</span>
@@ -9214,7 +9251,7 @@ function showCardSelect(slotKey) {
     availableCards.forEach(c => {
       html += `<div class="card-row">
         <div class="card-info">
-          <span class="card-icon">${c.card.icon}</span>
+          <img class="card-icon-img" src="${itemImgSrc(c.cardId)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
           <div class="card-details">
             <span class="card-name">${c.card.name} x${c.qty}</span>
             <span class="card-desc">${c.card.desc}</span>

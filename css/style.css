@@ -2502,3 +2502,12 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .proto-links[open] summary { margin-bottom: 6px; }
 .proto-links a { display: inline-block; margin: 3px 4px; padding: 3px 10px; border: 1px solid rgba(201,162,74,.45); border-radius: 6px; color: #e8dcc4; text-decoration: none; background: rgba(0,0,0,.3); }
 .proto-links a:hover { border-color: #c9a24a; color: #f0d68a; }
+
+/* 上緣訊息提示 */
+#notice-stack { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 6px; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+.notice-card { position: relative; pointer-events: auto; background: rgba(24, 19, 13, .94); border: 1px solid var(--gold, #c9a24a); border-radius: 8px; padding: 8px 30px 8px 12px; box-shadow: 0 4px 14px rgba(0,0,0,.5); font-size: 13px; animation: notice-in .2s ease-out; transition: opacity .25s, transform .25s; }
+.notice-card.out { opacity: 0; transform: translateY(-8px); }
+.notice-title { color: var(--gold, #f0d68a); font-weight: 600; margin-bottom: 2px; }
+.notice-x { position: absolute; top: 4px; right: 6px; background: none; border: 0; color: #a8987c; cursor: pointer; font-size: 13px; }
+@keyframes notice-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+.card-icon-img { width: 24px; height: 24px; image-rendering: pixelated; flex: 0 0 24px; }
