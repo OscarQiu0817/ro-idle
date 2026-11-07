@@ -104,7 +104,9 @@ function main() {
     if (it.type === 'material' && raType === 'consumable') put(it.id, 'type', 'consumable');
     if (it.type === 'consumable' && raType === 'material' && !Object.keys(it).some(k => !BASE_KEYS.has(k))) put(it.id, 'type', 'material');
     /* 名稱：非裝備直接用台服名稱；裝備在下面加孔數後綴 */
-    if (twName && !(it.type === 'weapon' || it.type === 'armor') && twName !== it.name) put(it.id, 'name', twName);
+    /* 本作自加、借用官方圖片編號的道具（以太神之金屬／以太鋁借 984／985）：用編號對到的台服名稱會蓋掉自己的名字 */
+    const KEEP_OWN_NAME = ['ether_oridecon', 'ether_elunium'];
+    if (twName && !(it.type === 'weapon' || it.type === 'armor') && twName !== it.name && !KEEP_OWN_NAME.includes(it.id)) put(it.id, 'name', twName);
     /* 說明：目前是英文（rAthena 原文）而台服有中文的，換成台服（T3）。色碼 ^RRGGBB 去掉、各行以空白接起來 */
     const hasZh = s => /[一-鿿]/.test(s || '');
     if (!hasZh(it.desc) && /[A-Za-z]{3,}/.test(it.desc || '') && zhAll && hasZh(zhAll.desc.join(''))) {

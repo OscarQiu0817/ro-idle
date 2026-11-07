@@ -1,0 +1,17 @@
+﻿file,row,column,suggested_use,size,status
+01_01_town_stone_plaza.png,1,1,town_stone_plaza,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+01_02_town_warm_cobble.png,1,2,town_warm_cobble,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+01_03_field_grass.png,1,3,field_grass,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+01_04_field_sandy_grass.png,1,4,field_sandy_grass,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+02_01_desert_sand.png,2,1,desert_sand,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+02_02_snow_ice.png,2,2,snow_ice,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+02_03_town_purple_stone.png,2,3,town_purple_stone,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+02_04_rocky_field.png,2,4,rocky_field,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+03_01_forest_grass.png,3,1,forest_grass,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+03_02_beach_shore.png,3,2,beach_shore,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+03_03_dry_yellow_field.png,3,3,dry_yellow_field,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+03_04_volcanic_ground.png,3,4,volcanic_ground,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+04_01_town_pale_stone.png,4,1,town_pale_stone,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+04_02_flower_meadow.png,4,2,flower_meadow,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+04_03_dungeon_ashen_rock.png,4,3,dungeon_ashen_rock,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling
+04_04_old_mossy_stone.png,4,4,old_mossy_stone,384x256,reference crop; needs edge cleanup and seamless processing before repeat tiling

@@ -3762,8 +3762,6 @@ const ITEM_IDENTITY = {
   "etel_violet_jewel": {"name":"乙太紫寶石"},
   "eternal_protected_love": {"reqJobs":null,"reqUpper":null,"reqGender":null,"slots":1,"reqLevel":null},
   "eternal_slash": {"name":"十字影武之魂(永衡斬擊)","desc":"永衡斬擊傷害+2%。 精煉每+2，永衡斬擊傷害再+1%。"},
-  "ether_elunium": {"name":"鋁"},
-  "ether_oridecon": {"name":"神之金屬"},
   "etherdeocon": {"name":"乙太神之金屬"},
   "ethernium": {"name":"乙太鋁"},
   "etoile_ring": {"name":"艾托伊爾之戒","desc":"能讓每一場婚約都變得格外特別的特殊戒指。 重量 : 0"},

@@ -2,8 +2,9 @@
    node scripts/gen_item_prune.js           → 只印報告
    node scripts/gen_item_prune.js --write   → 寫 js/item_prune.js
 
-   條件：名稱純英文、且台服 itemInfo 查不到（以 imgId 對）。這批全部不會掉落，
+   條件一：名稱純英文、且台服 itemInfo 查不到（以 imgId 對）。這批全部不會掉落，
    少數被套裝或條件加成引用的，那些套裝／條件一併移除（成員拿不到，永遠湊不齊）。
+   條件二（T15）：要求等級 >99 或只有範圍外職業能裝。有些會掉落，掉落表由 engine 清掉。
    js/item_prune.js 在 item_identity.js 之後、item_effects.js 之前載入。 */
 const fs = require('fs');
 const path = require('path');
@@ -14,13 +15,20 @@ const OUT = path.join(ROOT, 'js', 'item_prune.js');
 const { ITEMS } = loadGameData('js/item_identity.js');
 const info = loadItemInfo();
 const isEn = s => /^[\x20-\x7e]+$/.test(s || '') && /[a-z]{3}/.test(s || '');
-const del = Object.values(ITEMS).filter(it => isEn(it.name) && !info.has(it.imgId)).map(it => it.id).sort();
+const enDel = Object.values(ITEMS).filter(it => isEn(it.name) && !info.has(it.imgId)).map(it => it.id);
+/* T15（D6 範圍外）：要求等級超過 99（v2 等級上限，三轉以後才用得到），
+   或可裝備職業全在範圍外（槍手、忍者、三四轉專用：reqJobs 是空陣列） */
+const scopeDel = Object.values(ITEMS).filter(it => !enDel.includes(it.id)
+  && (it.reqLevel > 99 || (Array.isArray(it.reqJobs) && !it.reqJobs.length))).map(it => it.id);
+console.log(`英文名 ${enDel.length} 件、範圍外 ${scopeDel.length} 件`);
+const del = enDel.concat(scopeDel).sort();
 const types = {};
 del.forEach(id => { types[ITEMS[id].type] = (types[ITEMS[id].type] || 0) + 1; });
 console.log(`刪除 ${del.length} 件：` + Object.entries(types).map(x => x.join(' ')).join('、'));
 if (process.argv.includes('--write')) {
   fs.writeFileSync(OUT, `/* 由 scripts/gen_item_prune.js --write 產生，勿手改。
-   台服沒有、名稱只有英文的道具（拿不到）。連同引用它們的手寫套裝與條件加成一起移除。 */
+   台服沒有、名稱只有英文的道具（拿不到），以及範圍外裝備（要求等級 >99、只有範圍外職業能裝；T15）。
+   連同引用它們的手寫套裝與條件加成一起移除；怪物掉落在 engine applyOfficialMobExp 之後清。 */
 const ITEM_PRUNE = ${JSON.stringify(del)};
 (function applyItemPrune() {
   const gone = new Set(ITEM_PRUNE);

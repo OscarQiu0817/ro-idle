@@ -206,7 +206,7 @@ function withdrawGoldFromWarehouse(amount) {
   logMsg(`📦 從倉庫領出 ${amount} 鋅幣。`);
   return true;
 }
-const OFFLINE_CAP_MS = 24 * 60 * 60 * 1000; // 離線掛機最多累積 24 小時
+const OFFLINE_CAP_MS = 12 * 60 * 60 * 1000; // 離線掛機最多累積 12 小時（使用者 2026-11-07：免得登入結算太久，日後接 server 也省）
 const OFFLINE_MIN_MS = 30 * 1000;            // 離線超過 30 秒才顯示結算
 
 /* ---------------- ASPD 攻擊間隔計算 ----------------
@@ -5781,6 +5781,7 @@ function gameTick() {
     state._prevHadMonsters = false;
     _pendingSwing = null;
     if (state.travel) tickTravel(moveDt);   // 趕路：沒有擋路的就往傳點走
+    else if (state.townTarget && typeof tickTownWalk === 'function') tickTownWalk(moveDt);   // T27：城裡走向 NPC
     else tickRoam(moveDt, moveNow);         // 沒怪：漫遊找怪
   }
   saveGameThrottled();
@@ -6563,6 +6564,8 @@ function tickTravel(dt) {
     // 原本掉落表是空的或只剩佔位的怪，用 rAthena 掉落補上（換成 rAthena 刷怪後才打得到的那批）
     if (mv.drops) m.drops = mv.drops.map(([item, chance]) => ({ item, chance }));
   }
+  // T15：已刪除的道具（js/item_prune.js）從掉落表拿掉，不然會掉出不存在的東西
+  for (const m of Object.values(MONSTERS)) if (m.drops) m.drops = m.drops.filter(d => ITEMS[d.item]);
 })();
 function monMove(mon) {
   return (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[mon.defId]) || MOB_MOVE_DEFAULT;
@@ -8573,6 +8576,7 @@ function offlineDownToTown() {
   state.deaths = (state.deaths || 0) + 1;
   const downMap = state.mapId;
   state.mapId = nearestTownId(downMap);
+  if (typeof townEnter === 'function') townEnter(state.mapId);
   const pf = state.partyFollow; state.partyFollow = true;
   movePartyWith(downMap);
   state.partyFollow = pf;
@@ -8590,6 +8594,7 @@ function onPlayerDown() {
   const safeMap = nearestTownId(state.mapId);
   const downMap = state.mapId;
   state.mapId = safeMap;
+  if (typeof townEnter === 'function') townEnter(safeMap);
   /* 同一張圖的隊友一起抬回城（不看「一起移動」開關），不然隊伍會散在兩張圖 */
   const pf = state.partyFollow; state.partyFollow = true;
   movePartyWith(downMap);
@@ -9878,6 +9883,23 @@ function allocateStat(key) {
 }
 
 /* ---------------- 技能 ---------------- */
+/* 還沒達成的前置 [{skillId, level, name}]，空陣列＝可以點。
+   requires：單一物件或陣列（全部要達成）；requiresAny：多個版本任一達成即可
+   （js/skill_requires.js，官方同技能在不同職業前置不同）。多版本時回報缺最少的那版。 */
+function skillMissingReq(sk) {
+  const learned = state.learnedSkills || {};
+  const miss = list => list.filter(r => (learned[r.skillId] || 0) < r.level)
+    .map(r => ({ ...r, name: (findSkillAnywhere(r.skillId) || {}).name || r.skillId }));
+  if (sk.requiresAny) {
+    // 只看這個角色路線上有的版本，不然會叫舞孃去學詩人的歌
+    const have = id => getAllLearnedJobs().some(j => (JOB_TREE[j].skills || []).some(s => s.id === id));
+    const vers = sk.requiresAny.filter(v => v.every(r => have(r.skillId)));
+    const res = (vers.length ? vers : sk.requiresAny).map(miss).sort((a, b) => a.length - b.length);
+    return res[0];
+  }
+  return miss(sk.requires ? (Array.isArray(sk.requires) ? sk.requires : [sk.requires]) : []);
+}
+
 function levelUpSkill(skillId) {
   // 搜尋所有已解鎖職業的技能
   const sk = findSkillById(skillId);
@@ -9889,11 +9911,9 @@ function levelUpSkill(skillId) {
   /* 前置技能檢查。`requires` 可以是一個 `{skillId, level}`，也可以是一個陣列——
      官方有不少技能是**兩個以上**的前置（智者的薄霧牆要風＋水兩個元素領域、
      速讀術要三個），寫成陣列才表達得出來。單一物件的舊寫法照舊，不用改既有的 48 筆。 */
-  const reqList = sk.requires ? (Array.isArray(sk.requires) ? sk.requires : [sk.requires]) : [];
-  for (const req of reqList) {
-    if ((state.learnedSkills[req.skillId] || 0) >= req.level) continue;
-    const reqSk = findSkillById(req.skillId);
-    logMsg(`⚠️ 需要先學習「${reqSk ? reqSk.name : req.skillId}」Lv${req.level}！`);
+  const missing = skillMissingReq(sk);
+  if (missing.length) {
+    logMsg(`⚠️ 需要先學習${missing.map(r => `「${r.name}」Lv${r.level}`).join('、')}！`);
     return false;
   }
 
@@ -9911,8 +9931,10 @@ function levelUpSkill(skillId) {
       paidJob = spendSkillPoint(state.jobId);
     }
   }
-  // 3轉多餘點可點1轉技能：若現職為3轉且該技能為血脈祖先，則從現職池扣點
-  if (!paidJob && (JOB_TREE[state.jobId]?.tier || 0) >= 3) {
+  /* 現職點數可點祖先職業的技能（官方：二轉的點數能補一轉技能）。原本只開放三轉，
+     官方前置接上後（js/skill_requires.js）騎士的雙手劍加速要一轉的雙手劍修練，
+     轉職時沒點就永遠點不到，所以二轉起就開放 */
+  if (!paidJob && (JOB_TREE[state.jobId]?.tier || 0) >= 2) {
     let cur = JOB_TREE[state.jobId];
     let isAncestor = false;
     while (cur) { if (cur.id === skillJobId) { isAncestor = true; break; } cur = JOB_TREE[cur.parent]; }
@@ -9976,7 +9998,7 @@ function skillPointsAvailable(jobId) {
   const pts = state.jobSkillPoints || {};
   let avail = skillPointPoolJobs(jobId).reduce((n, j) => n + (pts[j] || 0), 0);
   // 3轉多餘點可點1轉：若查詢的是祖先職業且現職為3轉，回退顯示現職池
-  if (avail === 0 && jobId !== state.jobId && (JOB_TREE[state.jobId]?.tier || 0) >= 3) {
+  if (avail === 0 && jobId !== state.jobId && (JOB_TREE[state.jobId]?.tier || 0) >= 2) {
     let cur = JOB_TREE[state.jobId];
     while (cur) {
       if (cur.id === jobId) { avail = skillPointPoolJobs(state.jobId).reduce((n, j) => n + (pts[j] || 0), 0); break; }
@@ -10048,6 +10070,9 @@ function advancedReplacementOf(jobId) {
 function earnedSkillPoints(jobId) {
   // 這個二轉已被沿線上的進階二轉取代 → 它的點數由進階那格承接，不再單獨算
   if (advancedReplacementOf(jobId)) return 0;
+  // 沒有技能可點的職業（v2 初心者）：轉職時點數就作廢了，重置不能再發回來變死點
+  const jd = JOB_TREE[jobId];
+  if (jd && !jobNeedsSkillPoints(jd)) return 0;
   const lv = (jobId === state.jobId) ? state.jobLevel : ((state.jobLevelHistory || {})[jobId] || 0);
   let pts = Math.max(0, lv - 1);
   // 轉生後的新手多一筆，湊到「JOB10 時剛好點滿新手全部技能」
@@ -12786,7 +12811,7 @@ const NPC_SHOPS = {
     icon: '⚔️',
     items: ['knife', 'cutter', 'main_gauche', 'dirk', 'dagger', 'stiletto', 'gladius', 'damascus', 'cinquedea', 'kindling_dagger', 'obsidian_dagger', 'item_1249', 'jujube_dagger', 'coward', 'sword', 'falchion', 'blade', 'lapier', 'tsurugi', 'haedonggum', 'saber', 'slayer', 'bastard_sword', 'two_hand_sword', 'broad_sword', 'spear', 'pike', 'lance', 'guisarme', 'glaive', 'halberd', 'axe', 'battle_axe', 'hammer', 'buster', 'two_handed_axe', 'club', 'mace', 'smasher', 'flail', 'morning_star', 'sword_mace', 'chain', 'stunner', 'bow', 'composite_bow', 'great_bow', 'cross_bow', 'arbalest', 'kakkung', 'hunter_bow', 'repeting_cross_bow', 'waghnakh', 'knuckle_duster', 'hora', 'fist', 'claw', 'finger', 'violin', 'mandolin', 'lute', 'guitar', 'harp', 'guh_moon_goh',
       // 樂器／鞭子／法杖的低階線：官方商店同一家武器商人賣的就是這條線
-      'cello', 'contabass', 'electronic_guitar',
+      'cello', 'electronic_guitar',   // contabass 要求 Lv130，T15 刪了
       'rope', 'rope_', 'line', 'line_', 'wire', 'wire_', 'lariat', 'tail', 'tail_', 'whip', 'whip_', 'rante', 'rante_',
       'rod', 'rod_', 'wand', 'wand_', 'staff', 'staff_', 'survival_rod', 'survival_rod_', 'survival_rod2', 'survival_rod2_', 'arc_wand', 'arc_wand_',
       // 拳刃：刺客專用，官方商店賣的就是這條線
@@ -13200,7 +13225,7 @@ function openNpcShop(shopId) {
     let category = '其他';
     if (item.type === 'weapon') {
       const cat = item.weaponCat || item.weaponType || 'sword';
-      const typeNames = { dagger: '短劍', sword: '劍', tsword: '雙手劍', bow: '弓', rod: '法杖', mace: '鈍器', katar: '拳刃', spear: '長矛', knuckle: '拳套', instrument: '樂器', whip: '鞭子' };
+      const typeNames = { dagger: '短劍', sword: '劍', sword1: '劍', sword2: '雙手劍', tsword: '雙手劍', bow: '弓', rod: '法杖', rod1: '法杖', rod2: '雙手杖', mace: '鈍器', axe: '斧', axe1: '單手斧', axe2: '雙手斧', katar: '拳刃', spear: '長矛', spear1: '長矛', spear2: '雙手矛', knuckle: '拳套', instrument: '樂器', whip: '鞭子', book: '書', gun: '槍' };
       category = typeNames[cat] || cat;
     } else if (item.type === 'armor') {
       const armorType = item.armorType || 'cloth';
@@ -13229,7 +13254,8 @@ function openNpcShop(shopId) {
     <div class="npc-shop-header">
       <button class="btn-small" onclick="renderMapTab()">← 返回地圖</button>
       <h3 class="panel-title">${shop.icon} ${shop.name}</h3>
-    </div>`;
+    </div>
+    ${typeof townShopSwitchHtml === 'function' ? townShopSwitchHtml(shopId) : ''}`;
 
   Object.keys(grouped).forEach(category => {
     html += `<div class="shop-category">
@@ -13887,7 +13913,7 @@ function synthesizeOreAll(key) {
 
 /* ---------------- 裝備精煉 ---------------- */
 // 注意：操作對象是「裝備欄位」，精煉結果掛在那一件裝備的個體紀錄上，跟背包裡同名的其他份無關
-function refineItem(slotKey, materialType) {
+function refineItem(slotKey, materialType, useBless) {
   const itemId = getEquipBaseItemId(slotKey);
   if (!itemId) return false;
   const currentLevel = getRefinementLevel(slotKey);
@@ -13922,8 +13948,17 @@ function refineItem(slotKey, materialType) {
     return false;
   }
 
-  // 扣除材料和費用
+  // 鐵匠的祝福（T28）：只在有規定數量的精煉度能用，不夠就不精煉
+  const blessNeed = useBless ? getBlacksmithBlessNeed(currentLevel) : 0;
+  if (useBless && !blessNeed) { logMsg(`⚠️ +${currentLevel} 不能使用鐵匠的祝福。`); return false; }
+  if (blessNeed && getItemQty('blacksmith_blessing') < blessNeed) {
+    logMsg(`⚠️ 鐵匠的祝福不足，需要 ${blessNeed} 個。`);
+    return false;
+  }
+
+  // 扣除材料和費用（祝福成敗都會消耗）
   removeItem(mat.id, 1);
+  if (blessNeed) removeItem('blacksmith_blessing', blessNeed);
   state.gold -= cost;
 
   /* 計算成功率。
@@ -13952,6 +13987,8 @@ function refineItem(slotKey, materialType) {
     if (penalty === 'none') {
       // 以太礦石：無懲罰
       logMsg(`💥 精煉失敗！${item.name} 維持 +${currentLevel}。${mat.name}保護了裝備！`);
+    } else if (blessNeed) {
+      logMsg(`💥 精煉失敗！${item.name} 維持 +${currentLevel}。鐵匠的祝福保護了裝備！`);
     } else if (currentLevel >= safeLevel) {
       // 安全等級以上：降3級或損壞
       if (currentLevel > 3) {
@@ -15238,6 +15275,7 @@ function changeMap(mapId, opt) {
   if (!(opt && opt.travel)) cancelTravel(true);   // 手動換圖就不趕路了
   const prevMapId = state.mapId;
   state.mapId = mapId;
+  if (typeof townEnter === 'function') townEnter(mapId);   // T27：分區城鎮從城門口進
   // 回安全區全隊免費滿血復活（#83）——不然倒地的隊友只能靠天地樹葉子
   if ((map.monsters || []).length === 0) reviveAlliesInTown();
   ensureCodex().maps[mapId] = 1; // 探索成就用
@@ -16001,7 +16039,7 @@ function computeOfflineProgress(minMs, opts) {
        · 每 BOSS_ROLL_SEC 秒擲一次 20%，中了就從名單抽一隻（等機率）
        · 查該頭目在當下打寶模式的實測耗時（bossKillRecord），沒殺過就跳過換下一輪
          ——抽到打不動的，那段時間本來就是白耗，跟線上一致
-       · 殺得動的照耗時結算隻數，直到 24 小時的時間用完
+       · 殺得動的照耗時結算隻數，直到 上限（OFFLINE_CAP_MS）的時間用完
      效能：24h ≈ 5,760 次擲骰、~1,150 隻，每隻都是 O(1) 查表，總計 < 10ms。 */
   const bossGained = [];
   let bossKills = 0;

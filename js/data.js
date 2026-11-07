@@ -162,8 +162,8 @@ const SIZE_MODIFIER = {
 
 const ITEMS = {
   "refine_stone": {"id":"refine_stone","imgId":1010,"name":"精煉石","type":"material","icon":"🪨","weight":20,"sell":50,"buyPrice":100,"desc":"道具商店有售的基礎精煉材料。可用於強化武器等級 1~2 的武器。 重量: 20"},
-  "ether_oridecon": {"id":"ether_oridecon","imgId":984,"name":"以太神之金屬","type":"material","icon":"✨","weight":20,"sell":5000,"desc":"蘊含以太之力的神之金屬，只有 MVP 魔物會掉落。精煉武器用，失敗時不會有任何懲罰。 重量: 20"},
-  "ether_elunium": {"id":"ether_elunium","imgId":985,"name":"以太鋁","type":"material","icon":"✨","weight":20,"sell":5000,"desc":"蘊含以太之力的鋁，只有 MVP 魔物會掉落。精煉防具用，失敗時不會有任何懲罰。 重量: 20"},
+  "ether_oridecon": {"id":"ether_oridecon","imgId":984,"name":"以太神之金屬","type":"material","icon":"✨","weight":20,"sell":5000,"desc":"蘊含以太之力的神之金屬，只有 MVP 魔物會掉落。精煉武器用，成功率比神之金屬高，失敗照樣會損壞。 重量: 20"},
+  "ether_elunium": {"id":"ether_elunium","imgId":985,"name":"以太鋁","type":"material","icon":"✨","weight":20,"sell":5000,"desc":"蘊含以太之力的鋁，只有 MVP 魔物會掉落。精煉防具用，成功率比鋁高，失敗照樣會損壞。 重量: 20"},
     "blue_potion": {"id":"blue_potion","imgId":505,"name":"藍色藥水","type":"consumable","buyPrice":1000,"restoreSp":50,"icon":"🧪","weight":15,"sell":500,"desc":"將藍色的藥草搗碎製成的精神恢復劑，約可恢復60點SP。 _ 重量: 15 "},
   "green_potion": {"id":"green_potion","imgId":506,"name":"綠色藥水","type":"material","icon":"📦","weight":7,"sell":20,"desc":"將綠色的藥草搗碎製成的治療劑，可以治療 毒與 沉默與 暗黑與 混亂，幻覺的狀態。 _ 重量: 7 ","buyPrice":40},
   "red_herb": {"id":"red_herb","imgId":507,"name":"紅色藥草","type":"consumable","icon":"🧪","weight":3,"sell":9,"desc":"在治療傷處上有一定功效的珍貴藥草，可恢復少量的HP。 _ 重量: 3 ","heal":25,"buyPrice":18},
@@ -3879,7 +3879,7 @@ const ITEMS = {
   "gold_coin_basket": {"id":"gold_coin_basket","imgId":6612,"name":"金幣籃","type":"material","icon":"📦","weight":20,"sell":150000,"desc":"裝滿金幣的盒子，雖年代有點久但確實是金幣。 金幣上刻有老鷹和2個交叉的槍。 \"A。W 669 作品:魏格納。F。艾博內\" 重量: 20 ","buyPrice":300000},
   "colorful_brooch": {"id":"colorful_brooch","imgId":6613,"name":"華麗的胸針","type":"material","icon":"📦","weight":1,"sell":50000,"desc":"鑲著大顆紅寶石的胸針，雖有點損壞但依然鮮豔，背面有雕刻文字。 \"祝魯賓布勒格。F。艾里希10歲生日快樂！\" 重量: 1 ","buyPrice":100000},
   "siege_guild_coin": {"id":"siege_guild_coin","imgId":6615,"name":"攻城工會紀念硬幣","type":"material","icon":"📦","weight":1,"sell":1,"desc":"為了緬懷米德加爾特大陸上各公會城所創造的成就而製作的紀念幣。 可與特別物品兌換。 重量: 1 "},
-  "blacksmith_blessing": {"id":"blacksmith_blessing","imgId":6635,"name":"鐵匠的祝福","type":"consumable","icon":"📦","weight":1,"sell":10,"desc":"全世界所有鐵匠的渴望都裝在這瓶子中。 限一次精煉失敗時，精煉值不會下降及裝備不會損壞，無論成功失敗與否物品都會消失，依精煉值所需數量會增加。 ※精煉所需數量 7精煉->8精煉：1個 8精煉->9精煉：","buyPrice":20},
+  "blacksmith_blessing": {"id":"blacksmith_blessing","imgId":6635,"name":"鐵匠的祝福","type":"consumable","icon":"📦","weight":1,"sell":10,"desc":"全世界所有鐵匠的渴望都裝在這瓶子中。 限一次精煉失敗時，精煉值不會下降及裝備不會損壞，無論成功失敗與否物品都會消失，依精煉值所需數量會增加。 ※精煉所需數量 7精煉->8精煉：1個 8精煉->9精煉："},
   "strstone_top": {"id":"strstone_top","imgId":6636,"name":"力量石(頭上)","type":"material","icon":"📦","weight":10,"sell":5,"desc":"蘊含著力量的石頭。 於時裝頭上欄位上賦予以下能力值。 STR+1 &lt;NAVI&gt;[阿維爾 道旭]&lt;/span&gt;&lt;INFO&gt;mal_in01,23,113,0,100,","buyPrice":10},
   "intstone_top": {"id":"intstone_top","imgId":6637,"name":"智慧石(頭上)","type":"material","icon":"📦","weight":10,"sell":5,"desc":"蘊含著智慧的石頭。 於時裝頭上欄位上賦予以下能力值。 INT+1 &lt;NAVI&gt;[阿維爾 道旭]&lt;/span&gt;&lt;INFO&gt;mal_in01,23,113,0,100,","buyPrice":10},
   "agistone_top": {"id":"agistone_top","imgId":6638,"name":"敏捷石(頭上)","type":"material","icon":"📦","weight":10,"sell":5,"desc":"蘊含著敏捷的石頭。 於時裝頭上欄位上賦予以下能力值。 AGI+1 &lt;NAVI&gt;[阿維爾 道旭]&lt;/span&gt;&lt;INFO&gt;mal_in01,23,113,0,100,","buyPrice":10},
@@ -24576,8 +24576,54 @@ function mapSceneryOf(mapId) {
   return MAP_SCENERY_BY_BG[m.bg] || 'field';
 }
 
+/* 地板素材（images/maps/floor/，scripts/gen_floor_tiles.py 從 ro_idle_terrain_atlas_v1 產生）。
+   比上面 4 類細：城鎮各自指定、野外依地名分類型；對不上的退回 mapSceneryOf 的 4 張舊圖。
+   分類參考 docs/MAP_FLOORS.md；洞窟／水道／礦坑沒有新素材，維持 cave.jpg */
+const MAP_FLOOR_TOWN = {
+  prontera: 'stone_plaza', izlude: 'stone_plaza',
+  geffen: 'grey_cobble', aldebaran: 'grey_cobble', yuno: 'grey_cobble', lighthalzen: 'grey_cobble',
+  einbroch: 'grey_cobble', einbech: 'grey_cobble', rachel: 'grey_cobble', mid_camp: 'grey_cobble', sp_cor: 'grey_cobble',
+  alberta: 'warm_cobble', payon: 'warm_cobble', hugel: 'warm_cobble', umbala: 'warm_cobble', louyang: 'warm_cobble',
+  amatsu: 'warm_cobble', gonryun: 'warm_cobble', ayothaya: 'warm_cobble', malaya: 'warm_cobble', mora: 'warm_cobble',
+  manuk: 'warm_cobble', splendide: 'warm_cobble', dewata: 'warm_cobble', brasilis: 'warm_cobble', wolfvill: 'warm_cobble',
+  comodo: 'purple_stone', niflheim: 'purple_stone', dicastes01: 'purple_stone',
+  morocc: 'desert', veins: 'desert', harboro1: 'desert', jawaii: 'beach',
+  xmas: 'snow', icecastle: 'snow', moscovia: 'snow',
+  nameless_n: 'ashen_rock', nameless_i: 'ashen_rock', thor_camp: 'volcano', verus04: 'mossy_stone',
+};
+// 順序有意義：前面的先比對（例：金字塔算遺跡不算沙漠、迷宮森林算森林）
+const MAP_FLOOR_RULES = [
+  [/火山|熔岩|thor_v/, 'volcano'],
+  [/冰穴|冰洞|雪|薑餅城原野|^ice_dun/, 'snow'],
+  [/地獄|墓地|監獄|深淵|鬼峽谷|斯凱領頓/, 'ashen_rock'],
+  [/神殿|聖域|修道院|教堂|遺跡|廢墟|金字塔|史芬克斯|人面獅身|王陵|審良宮|舊良宮|優配擂斯/, 'mossy_stone'],
+  [/塔台|鐘塔|高塔|燈塔/, 'pale_stone'],
+  [/古城|城堡|宮殿|騎士團|工廠|研究所|實驗|船舶|沈船|碉堡/, 'grey_cobble'],
+  [/洞穴|洞窟|地洞|水道|廢礦|礦山|密穴|隧道/, 'cave'],   // 沒有新素材，用舊的 cave.jpg
+  [/海邊|海灘|沙灘|珊瑚|海伊洛|^cmd_fild0[1-4]$/, 'beach'],
+  [/森林|叢林/, 'forest'],
+  [/沙漠|荒地|荒原|沙丘/, 'desert'],
+  [/妙勒|艾音布羅克|里希塔樂|卡米達|峽谷|礦/, 'rocky'],
+  [/菲音斯|拉赫|浦勒吐盧納|伊達|阿巫敦拉/, 'dry_field'],
+  [/普隆德拉|毀葛|新手|花/, 'meadow'],
+];
+
+function mapFloorOf(mapId) {
+  const m = MAPS.find(x => x.id === mapId);
+  if (!m) return null;
+  if (m.town) return MAP_FLOOR_TOWN[m.id] || 'pale_stone';
+  const name = m.name || '';
+  for (const [re, floor] of MAP_FLOOR_RULES) if (re.test(name) || re.test(m.id)) return floor;
+  // 沒有怪的室內圖（轉職所、副本入口…）用乾淨石地；有怪的野外預設草地
+  const old = mapSceneryOf(mapId);
+  if (old === 'town') return 'pale_stone';
+  return old === 'field' ? 'grass' : null;
+}
+
 function mapImgSrc(mapId) {
-  return resolveImgPath(`maps/${mapSceneryOf(mapId)}.jpg`);
+  const floor = mapFloorOf(mapId);
+  if (floor === 'cave') return resolveImgPath('maps/cave.jpg');
+  return resolveImgPath(floor ? `maps/floor/${floor}.jpg` : `maps/${mapSceneryOf(mapId)}.jpg`);
 }
 
 
@@ -24596,15 +24642,15 @@ function mapMusicUrl(mapId, ext) {
    精煉材料：
      精煉石 — 道具商店 100z，適用 Lv1~Lv2 武器、防具
      神之金屬 — 掉落/合成，適用 Lv3 武器
-     以太神之金屬 — MVP 掉落，適用 Lv3~Lv4 武器，失敗無懲罰
+     以太神之金屬 — MVP 掉落，適用 Lv3~Lv4 武器，成功率較高（官方 Enriched）
      鋁礦 — 掉落/合成，適用防具
-     以太鋁礦 — MVP 掉落，適用防具，失敗無懲罰
+     以太鋁礦 — MVP 掉落，適用防具，成功率較高（官方 Enriched）
 
    成功率：依武器等級不同（參考原作版）
    武器 ATK 加成：依武器等級不同（參考原作版）
    防具 DEF 加成：不分等級（參考原作版）
    費用：統一 5,000z
-   失敗懲罰：安全等級以上降3級或損壞，以太礦石無懲罰
+   失敗懲罰：安全等級以上降3級或損壞（以太礦石也一樣；只有鐵匠的祝福能保住）
 ------------------------------------------------- */
 const REFINEMENT_MAX = 20;            // 官方上限（一般礦石到 +10，再上去要靠同一批材料續衝）
 const REFINEMENT_COST = 5000;         // +1~+10 的費用
@@ -24612,14 +24658,15 @@ const REFINEMENT_COST_HIGH = 100000;  // +11 以上的費用（官方 100,000z�
 
 /* 精煉材料
    一般礦：失敗會依安全等級降級或損壞
-   以太礦：效果與對應的一般礦相同，唯一差別是「失敗無懲罰」，只有 MVP 王會掉
+   以太礦：效果與對應的一般礦相同，差別是成功率較高、失敗照罰（T28），+10 以上也能用，只有 MVP 王會掉
    （强化武器金属-级数一/二 已改為單純可販賣的素材，不再是精煉材料） */
 const REFINEMENT_MATERIALS = {
   refine_stone:   { id: 'refine_stone',   name: '精煉石',       desc: '道具商店 100z，適用 Lv1~Lv2 武器', usableWeaponLv: [1, 2], usableArmor: false, failPenalty: 'break' },
   oridecon:       { id: 'oridecon',       name: '神之金屬',     desc: '5 個原石可合成，適用 Lv3~Lv4 武器', usableWeaponLv: [3, 4], usableArmor: false, failPenalty: 'break' },
   elunium:        { id: 'elunium',        name: '鋁',           desc: '5 個原石可合成，適用防具',         usableWeaponLv: [],     usableArmor: true,  failPenalty: 'break' },
-  ether_oridecon: { id: 'ether_oridecon', name: '以太神之金屬', desc: 'MVP 掉落，武器用，失敗無懲罰',      usableWeaponLv: [1, 2, 3, 4], usableArmor: false, failPenalty: 'none' },
-  ether_elunium:  { id: 'ether_elunium',  name: '以太鋁',       desc: 'MVP 掉落，防具用，失敗無懲罰',      usableWeaponLv: [],     usableArmor: true,  failPenalty: 'none' }
+  // 以太：成功率較高（+10 以前照官方 Enriched 對照，+11 以上 ×1.5），失敗照罰，任何精煉度都能用
+  ether_oridecon: { id: 'ether_oridecon', name: '以太神之金屬', desc: 'MVP 掉落，武器用，成功率較高', usableWeaponLv: [1, 2, 3, 4], usableArmor: false, failPenalty: 'break', enriched: true },
+  ether_elunium:  { id: 'ether_elunium',  name: '以太鋁',       desc: 'MVP 掉落，防具用，成功率較高', usableWeaponLv: [],     usableArmor: true,  failPenalty: 'break', enriched: true }
 };
 
 // 原石合成：5 個原石 → 1 個精煉礦
@@ -24637,6 +24684,8 @@ const REFINEMENT_SUCCESS_RATES = {
   weapon_lv4: { 0:100,1:100,2:100,3:100,4:100,5:60,6:40,7:20,8:20,9:20,10:19 },
   armor:     { 0:100,1:100,2:100,3:100,4:100,5:60,6:40,7:20,8:20,9:20,10:19 }
 };
+/* 以太（Enriched）成功率：rAthena 同一格一般→以太的對照（60→90、50→80、40→70、20→40、19→30、9→20） */
+const REFINEMENT_ENRICHED_RATE = { 60:90, 50:80, 40:70, 20:40, 19:30, 9:20 };
 const REFINEMENT_RATES_ABOVE10 = {
   low:  { 11:20,12:20,13:20,14:20,15:20,16:10,17:10,18:10,19:10,20:10 }, // Lv1~3 武器
   high: { 11:10,12:10,13:10,14:10,15:10,16:5, 17:5, 18:5, 19:5, 20:5  }  // Lv4 武器與防具
@@ -24674,10 +24723,14 @@ function getRefinementSuccessRate(currentLevel, weaponLv, materialType) {
     // Lv1~3 武器算「低段」，Lv4 武器與防具算「高段」（成功率更低）
     const isHigh = !weaponLv || weaponLv >= 4;
     const t = isHigh ? REFINEMENT_RATES_ABOVE10.high : REFINEMENT_RATES_ABOVE10.low;
-    return t[currentLevel + 1] || 0;
+    const base = t[currentLevel + 1] || 0;
+    const m = REFINEMENT_MATERIALS[materialType];
+    return m && m.enriched ? Math.round(base * 1.5) : base;   // 官方沒有 +11 以上的以太，本作照 ×1.5 延伸
   }
   const rateTable = weaponLv ? REFINEMENT_SUCCESS_RATES[`weapon_lv${weaponLv}`] : REFINEMENT_SUCCESS_RATES.armor;
-  return rateTable ? (rateTable[currentLevel] || 0) : 0;
+  const base = rateTable ? (rateTable[currentLevel] || 0) : 0;
+  const mat = REFINEMENT_MATERIALS[materialType];
+  return mat && mat.enriched ? (REFINEMENT_ENRICHED_RATE[base] || base) : base;
 }
 
 // 取得武器精煉 ATK 加成
@@ -24707,6 +24760,13 @@ function getRefinementSafeLevel(weaponLv, isArmor) {
 function getRefinementFailPenalty(materialType) {
   const mat = REFINEMENT_MATERIALS[materialType];
   return mat ? mat.failPenalty : 'break';
+}
+
+/* 鐵匠的祝福（T28）：失敗時不降級、不損壞，成敗都會消耗。
+   數量照台服道具說明：+7→+8 1 個 … +13→+14 15 個；其他精煉度不能用。 */
+const BLACKSMITH_BLESS_NEED = { 7:1, 8:2, 9:3, 10:4, 11:4, 12:9, 13:15 };
+function getBlacksmithBlessNeed(currentLevel) {
+  return BLACKSMITH_BLESS_NEED[currentLevel] || 0;
 }
 
 

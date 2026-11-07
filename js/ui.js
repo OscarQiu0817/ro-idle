@@ -1202,6 +1202,55 @@ function buffChipKey(group) {
 function buffChipRemain(group) {
   return group.reduce((m, b) => Math.max(m, Math.ceil((b.msRemaining || 0) / 1000)), 0);
 }
+/* T31：技能各級數值表（比照官方技能說明）。
+   欄位：技能資料裡逐級的數值陣列＋官方詠唱／後延遲／冷卻（SKILL_CAST，跟實際施放同一份）。
+   全是 0 的欄不列；沒有中文標籤的欄位不列（多半是內部用）。 */
+const SKILL_LV_COLS = {
+  mult: ['倍率', v => Math.round(v * 100) + '%'], mult2: ['倍率2', v => Math.round(v * 100) + '%'],
+  hits: ['段數'], duration: ['持續', v => v + 's'], successChance: ['成功率', v => v + '%'],
+  procChance: ['機率', v => v + '%'], chance: ['機率', v => v + '%'], stunChance: ['暈眩率', v => v + '%'],
+  stunSec: ['暈眩', v => v + 's'], ailChance: ['異常率', v => v + '%'], ailSec: ['異常', v => v + 's'],
+  rootSec: ['定身', v => v + 's'], statBonus: ['素質'], strBonus: ['STR'], intBonus: ['INT'], lukBonus: ['LUK'],
+  allStat: ['全素質'], atkFlat: ['ATK'], watkFlat: ['武器ATK'], matkPct: ['MATK', v => v + '%'],
+  matkUpPct: ['MATK', v => v + '%'], hitBonus: ['命中'], hitFlat: ['命中'], fleeFlat: ['迴避'],
+  critFlat: ['爆擊'], critBonus: ['爆擊'], defFlat: ['DEF'], defPct: ['DEF', v => v + '%'],
+  aspdPct: ['攻速', v => v + '%'], aspdFlat: ['攻速'], maxHpPct: ['MaxHP', v => v + '%'],
+  maxHpFlat: ['MaxHP'], maxSpPct: ['MaxSP', v => v + '%'], healPct: ['治癒', v => v + '%'],
+  healPerTick: ['每次回復'], shieldCharges: ['次數'], shieldCapacityPct: ['吸收', v => v + '%MaxHP'],
+  blockChance: ['格擋率', v => v + '%'], reflectPct: ['反射', v => v + '%'], revivePct: ['復活 HP', v => v + '%'],
+  slowPct: ['減速', v => v + '%'], castCutPct: ['詠唱減', v => v + '%'], delayCutPct: ['延遲減', v => v + '%'],
+  zenyCost: ['Zeny'], hpCost: ['HP 消耗'], doubleAttackChance: ['連擊率', v => v + '%'],
+};
+function skillLevelTableHtml(sk) {
+  const n = sk.maxLv || 1;
+  if (n < 2) return '';
+  const sec = ms => ms ? (ms / 1000).toFixed(ms % 1000 ? 1 : 0) + 's' : '';
+  const pick = (arr, i) => Array.isArray(arr) ? arr[Math.min(i, arr.length - 1)] : arr;
+  const row = typeof skillCastRow === 'function' ? skillCastRow(sk.id) : null;
+  // 每欄 val(i) 回傳顯示字串，0／沒有回傳 ''
+  const cols = [];
+  for (const [k, [label, fmt]] of Object.entries(SKILL_LV_COLS)) {
+    if (!Array.isArray(sk[k]) || typeof sk[k][0] !== 'number') continue;
+    cols.push({ label, val: i => { const v = pick(sk[k], i); return v ? String(fmt ? fmt(v) : v) : ''; } });
+  }
+  cols.push({ label: 'SP', val: i => String(pick(sk.spCost, i) || 0) });
+  if (row) {
+    cols.push({ label: '詠唱', val: i => {
+      const v = sec(pick(row.castTime, i) || 0), f = sec(pick(row.fixedCastTime, i) || 0);
+      return f ? `${v || '0s'}＋固定${f}` : v;
+    } });
+    cols.push({ label: '後延遲', val: i => sec(pick(row.afterCastDelay, i) || 0) });
+    cols.push({ label: '冷卻', val: i => sec(pick(row.cooldown, i) || 0) });
+  }
+  const shown = cols.filter(c => Array.from({ length: n }, (_, i) => c.val(i)).some(Boolean));
+  if (!shown.length) return '';
+  const cur = (state.learnedSkills || {})[sk.id] || 0;
+  const head = `<tr><th>Lv</th>${shown.map(c => `<th>${c.label}</th>`).join('')}</tr>`;
+  const body = Array.from({ length: n }, (_, i) =>
+    `<tr${i + 1 === cur ? ' class="cur"' : ''}><td>${i + 1}</td>${shown.map(c => `<td>${c.val(i) || '-'}</td>`).join('')}</tr>`).join('');
+  return `<details class="skill-lv-table"><summary>各級數值</summary><table>${head}${body}</table></details>`;
+}
+
 /* 原版技能圖示（images/skills/<技能 id>.png，scripts/gen_skill_icons.js 產生） */
 function skillIconHtml(sk, cls) {
   if (!sk || !sk.id || !SKILLS[sk.id]) return '';
@@ -2200,6 +2249,12 @@ function updateMonsterHp() {
           `<span class="mon-buff" title="${MON_BUFF_LABELS[k] || k}">${MON_BUFF_ICONS[k] || '✨'}</span>`).join('');
       }
       if (ailEl.innerHTML !== html) ailEl.innerHTML = html;
+      // T24：石化灰階、冰凍冰藍（濾鏡在 css .ail-stone／.ail-freeze）
+      const slot = ailEl.closest('.monster-slot');
+      if (slot) {
+        slot.classList.toggle('ail-stone', list.includes('stone'));
+        slot.classList.toggle('ail-freeze', list.includes('freeze'));
+      }
     }
   });
 }
@@ -2773,8 +2828,16 @@ function syncGroundUnits() {
     return bfPolarPoint({ d: Math.hypot(x, y), a: Math.atan2(y, x) });
   };
   syncTravelPortal(scene, at);
-  if (!units.length) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
+  syncTownNpcs(scene, at);
+  /* T24：場地魔法（暴風雪、隕石術、十字驅魔…）的範圍圈，半徑照 fieldRadius；
+     中心存在 activeFieldEffects[].center，玩家走動時 engine 會一起平移 */
+  const fields = ((state && state.activeFieldEffects) || []).filter(f => f.center && f.radius > 0 && Date.now() < f.endsAt);
+  if (!units.length && !fields.length) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
   let html = '';
+  for (const f of fields) {
+    const p = at(f.center.d, f.center.a);
+    html += `<span class="bf-gu bf-zone bf-field elem-ring-${f.element || 'neutral'}" title="${f.name}" style="left:${p.x}%;top:${p.y}%;width:${(f.radius * 2 + 1) * BF_CELL_X}%;height:${(f.radius * 2 + 1) * BF_CELL_Y}%"></span>`;
+  }
   for (const u of units) {
     if (u.kind === 'wall') {
       for (const k of [-1, -0.5, 0, 0.5, 1]) {
@@ -2927,7 +2990,7 @@ function layoutBattlefield() {
     }
   }
   // 城鎮裡平常不走動；趕路（D1b）時會走向傳點，那時也要播走路
-  const walking = (!town || !!state.travel) && bfPlayerWalking();
+  const walking = (!town || !!state.travel || !!state.townTarget) && bfPlayerWalking();   // T27：城內走向 NPC／區域也播
   // 走路時面向走的方向；站著打怪時面向目標
   const faceRight = walking ? Math.cos(state._walkDir || 0) >= 0
     : (!lead || !Number.isFinite(lead.bx) || lead.bx >= bfPlayer.x);
@@ -3928,6 +3991,190 @@ function renderQuestsTab() {
   _huntSig = huntTabSig();
 }
 
+/* ---------------- T27 城鎮分區：戰場上的 NPC 與招牌 ---------------- */
+const _townDolls = {};
+function townNpcDoll(n) {
+  let o = _townDolls[n.id];
+  if (!o) {
+    const parts = typeof paperdollPartsFor === 'function' ? paperdollPartsFor({
+      job: n.look.job, gender: n.look.gender, hairStyle: n.look.hair, hairColor: n.look.hc, hatViews: [], weaponCat: 'bare',
+    }) : null;
+    o = _townDolls[n.id] = { parts, bounds: parts && paperdollBounds(parts), drawn: false };
+  }
+  return o;
+}
+function drawTownNpcDoll(n, canvas) {
+  const o = townNpcDoll(n);
+  if (!canvas || o.drawn === canvas || !o.parts || !o.bounds) return;
+  const b = o.bounds;
+  canvas.width = b.width;
+  canvas.height = Math.max(1, b.feet);
+  const k = MOB_PX_SCALE;
+  canvas.style.width = Math.round(b.width * k) + 'px';
+  canvas.style.height = Math.round(b.feet * k) + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const res = drawPaperdollFrame(ctx, o.parts, 'idle', 0, -b.minX, -b.minY);
+  if (res && res.ready) o.drawn = canvas;   // 圖還沒載完就下一幀再畫
+}
+function syncTownNpcs(scene, at) {
+  let layer = document.getElementById('bf-npcs');
+  const L = (typeof townLayout === 'function' && isInTown()) ? townLayout() : null;
+  if (!L) {
+    if (layer) layer.remove();
+    const nav = document.getElementById('bf-town-nav');
+    if (nav) nav.remove();
+    return;
+  }
+  if (!layer || layer._map !== state.mapId) {
+    if (layer) layer.remove();
+    layer = document.createElement('div');
+    layer.id = 'bf-npcs';
+    layer._map = state.mapId;
+    layer.innerHTML = L.districts.map(d => `<div class="bf-sign" data-d="${d.id}">${shopEsc(d.name)}</div>`).join('')
+      + L.npcs.map(n => `<div class="bf-npc" data-npc="${n.id}" onclick="walkToTownNpc('${n.id}')" title="${shopEsc(n.name)}">`
+        + `<canvas></canvas><em>${shopEsc(n.name)}</em></div>`).join('');
+    scene.appendChild(layer);
+  }
+  const wx = state.worldX || 0, wy = state.worldY || 0;
+  const place = (el, x, y) => {
+    const dx = x - wx, dy = y - wy;
+    const pt = at(Math.hypot(dx, dy), Math.atan2(dy, dx));
+    el.style.display = pt.off ? 'none' : '';
+    el.style.left = pt.x + '%';
+    el.style.top = pt.y + '%';
+  };
+  layer.querySelectorAll('.bf-sign').forEach(el => {
+    const d = L.districts.find(x => x.id === el.dataset.d);
+    if (d) place(el, d.x, d.y + 2.5);
+  });
+  layer.querySelectorAll('.bf-npc').forEach(el => {
+    const n = L.npcs.find(x => x.id === el.dataset.npc);
+    if (!n) return;
+    place(el, n.x, n.y);
+    el.classList.toggle('target', state.townTarget === n.id);
+    drawTownNpcDoll(n, el.querySelector('canvas'));
+  });
+  syncTownNav(scene, L);
+}
+/* 區域移動按鈕（使用者 2026-11-06）：在入口時畫面邊緣顯示往三區的按鈕，在其他區顯示回卡普拉服務處。
+   方向照兩區中心的相對位置擺在上／下／左／右邊緣 */
+function syncTownNav(scene, L) {
+  let nav = document.getElementById('bf-town-nav');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'bf-town-nav';
+    scene.appendChild(nav);
+  }
+  const here = townDistrictHere();
+  const gate = L.districts[0];
+  const walking = state.townTarget && state.townTarget.indexOf('district:') === 0 ? state.townTarget.slice(9) : '';
+  const key = state.mapId + '|' + (here && here.id) + '|' + walking;
+  if (nav._key === key) return;
+  nav._key = key;
+  const targets = here && here.id === gate.id ? L.districts.slice(1) : [gate];
+  nav.innerHTML = targets.map(d => {
+    const dx = d.x - (here ? here.x : 0), dy = d.y - (here ? here.y : 0);
+    const side = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    const arrow = { up: '▲', down: '▼', left: '◀', right: '▶' }[side];
+    return `<button class="bf-nav-btn ${side}${walking === d.id ? ' active' : ''}" onclick="walkToTownDistrict('${d.id}')">${arrow} ${shopEsc(d.name)}</button>`;
+  }).join('');
+}
+/* 商店頁上方的切換列：同一區的其他 NPC，點了走過去（買完不用捲回上面找） */
+function townShopSwitchHtml(shopId) {
+  const L = typeof townLayout === 'function' && isInTown() ? townLayout() : null;
+  if (!L) return '';
+  const here = townDistrictHere();
+  const list = L.npcs.filter(n => here && n.district === here.id);
+  if (list.length < 2) return '';
+  return `<div class="town-shop-switch">${list.map(n => `<button class="btn-chip${n.shop === shopId ? ' active' : ''}" onclick="walkToTownNpc('${n.id}')">${shopEsc(n.name)}</button>`).join('')}</div>`;
+}
+/* 手機版分頁內容在戰鬥畫面下方：開了 NPC 功能就把分頁捲到可視範圍頂端 */
+function scrollTabIntoView(tabId) {
+  const el = document.getElementById(tabId);
+  if (!el) return;
+  const box = el.closest('.tab-content');
+  if (box) box.scrollTop = 0;
+  if (window.innerWidth <= 860) {
+    const r = el.getBoundingClientRect();
+    if (r.top < 0 || r.top > window.innerHeight * 0.5) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+}
+function walkToTownKafra() {
+  const L = townLayout();
+  const k = L && L.npcs.find(n => n.role === 'kafra');
+  if (k) walkToTownNpc(k.id);
+}
+/* 到達 NPC：開對應功能 */
+function openTownNpc(id) {
+  const n = typeof townNpc === 'function' ? townNpc(id) : null;
+  if (!n) return;
+  if (n.role === 'shop') { switchTab('map'); openNpcShop(n.shop); scrollTabIntoView('tab-map'); return; }
+  if (n.role === 'soon') { showToast(`${n.name}：${n.soon || '還沒開放。'}`); return; }
+  if (n.role === 'job') { switchTab('jobtree'); showToast(`${n.name}：在轉職樹選擇要轉的職業`); return; }
+  switchTab('map');
+  const el = document.getElementById('tab-map');
+  if (!el) return;
+  const back = '<button class="btn-small" onclick="renderMapTab()">← 返回地圖</button>';
+  if (n.role === 'kafra') {
+    el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💁 ${shopEsc(n.name)}</h3></div>
+      <div class="town-npc-say">歡迎光臨卡普拉服務，今天需要什麼服務呢？</div>
+      <div class="town-npc-list">
+        <div class="town-npc-card" onclick="openWarehouse()"><div class="town-npc-icon">📦</div><div class="town-npc-name">使用倉庫</div></div>
+        <div class="town-npc-card" onclick="openTownWarp()"><div class="town-npc-icon">🌀</div><div class="town-npc-name">傳送服務</div></div>
+      </div></div>`;
+    return;
+  }
+  if (n.role === 'refine') {
+    const slots = (typeof EQUIP_SLOTS_ALL !== 'undefined' ? EQUIP_SLOTS_ALL : []).filter(k => getEquipBaseItemId(k));
+    const rows = slots.map(k => {
+      const iid = getEquipBaseItemId(k);
+      const lv = getRefinementLevel(k);
+      return `<div class="town-npc-card" onclick="showRefinePanel('${k}')">
+        <img class="shop-item-icon" src="${itemImgSrc(iid)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+        <div class="town-npc-name">${lv ? '+' + lv + ' ' : ''}${shopEsc(ITEMS[iid].name)}</div></div>`;
+    }).join('');
+    el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🔨 ${shopEsc(n.name)}</h3></div>
+      <div class="town-npc-say">要精煉哪一件裝備？</div>
+      <div class="town-npc-list">${rows || '<div class="empty-hint">身上沒有裝備。</div>'}</div></div>`;
+  }
+  scrollTabIntoView('tab-map');
+}
+/* 地圖分頁的城鎮區塊：分區城鎮列出各區 NPC（點了走過去），其他城鎮沿用原本的商店卡片 */
+function townNpcPanelHtml() {
+  const L = typeof townLayout === 'function' ? townLayout() : null;
+  if (!L) {
+    return `<div class="town-npcs">
+      <h4 class="town-npc-title">🏪 城鎮 NPC</h4>
+      <div class="town-npc-list">
+        ${GENERIC_TOWN_SHOPS.map(id => {
+          const shop = NPC_SHOPS[id];
+          return shop ? `<div class="town-npc-card" onclick="openNpcShop('${id}');">
+            <div class="town-npc-icon">${shop.icon}</div>
+            <div class="town-npc-name">${shop.name}</div>
+            <div class="town-npc-hint">${shop.getItems().length} 項商品</div>
+          </div>` : '';
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  const here = townDistrictHere();
+  const icon = n => n.role === 'shop' ? ((NPC_SHOPS[n.shop] || {}).icon || '🏪')
+    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : '🧑';
+  return `<div class="town-npcs">
+    <h4 class="town-npc-title">🏙️ 城內　<span class="town-here">目前在：${here ? shopEsc(here.name) : '—'}</span></h4>
+    ${L.districts.map(d => {
+      const list = L.npcs.filter(n => n.district === d.id);
+      return `<div class="town-district${here && here.id === d.id ? ' here' : ''}">
+        <button class="btn-chip town-district-name" onclick="walkToTownDistrict('${d.id}')" title="走過去">📍 ${shopEsc(d.name)}</button>
+        ${list.map(n => `<button class="btn-chip town-npc-chip${state.townTarget === n.id ? ' active' : ''}" onclick="walkToTownNpc('${n.id}')">${icon(n)} ${shopEsc(n.name)}</button>`).join('')}
+      </div>`;
+    }).join('')}
+    <div class="town-npc-hint">點 NPC 會走過去，到了才開功能；戰鬥畫面上的 NPC 也可以直接點。</div>
+  </div>`;
+}
+
 function renderMapTab() {
   const el = document.getElementById('tab-map');
   const currentMapObj = currentMap() || MAPS.find(x => x.id === 'prontera');
@@ -3939,12 +4186,13 @@ function renderMapTab() {
     <div class="map-actions">
       <button class="btn-small" onclick="openWorldMap()">🗺️ 世界地圖</button>
       <button class="btn-small" onclick="goNearestSafeZone()" title="沿傳送點最近的城鎮">🏠 回最近的城鎮</button>
-      ${currentMapObj.town ? '<button class="btn-small" onclick="openTownWarp()">🌀 傳送 NPC</button>'
+      ${currentMapObj.town ? `<button class="btn-small" onclick="${typeof townLayout === 'function' && townLayout() ? 'walkToTownKafra()' : 'openTownWarp()'}">🌀 傳送 NPC</button>`
         : ferriesFrom(currentMapObj.id).length ? `<button class="btn-small" onclick="openTownWarp('ferry')">⛵ 坐船</button>` : ''}
       ${skillLv('al_warp') ? `<button class="btn-small" onclick="memoWarpPoint(); renderMapTab();" title="傳送之陣的記錄點（${(state.warpMemos || []).length}/${warpMemoMax()}）">📌 記錄此地</button>
         ${currentMapObj.town ? '' : `<button class="btn-small" onclick="openTownWarp('portal')">✨ 傳送之陣</button>`}` : ''}
     </div>
     ${mapTravelBox()}
+    ${isCity ? townNpcPanelHtml() : ''}
     ${isCity ? '' : `<div class="map-preview-box">
       <div class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvRangeText(currentMapObj)}</div>
       <div class="map-preview-body">${monsterPreview}</div>
@@ -3955,23 +4203,7 @@ function renderMapTab() {
     ${!isCity ? bossModeBox(currentMapObj) : ''}
     ${/* 轉生祭壇只開在安全區。放在這裡而不是轉職樹，是因為轉生是「回到城裡辦一件大事」，
           跟商店同一個場景；而且要先擋在安全區，玩家就不會在野外打到一半按下去 */
-      isCity ? renderRebirthPanel() : ''}
-    ${isCity ? `
-    <div class="town-npcs">
-      <h4 class="town-npc-title">🏪 城鎮 NPC</h4>
-      <div class="town-npc-list">
-        ${/* 直接由 NPC_SHOPS 產生，之後新增商店不用再回來改這裡 */
-          Object.keys(NPC_SHOPS).map(id => {
-            const shop = NPC_SHOPS[id];
-            return `<div class="town-npc-card" onclick="openNpcShop('${id}');">
-              <div class="town-npc-icon">${shop.icon}</div>
-              <div class="town-npc-name">${shop.name}</div>
-              <div class="town-npc-hint">${shop.getItems().length} 項商品</div>
-            </div>`;
-          }).join('')}
-      </div>
-    </div>
-    ` : ''}`;
+      isCity ? renderRebirthPanel() : ''}`;
 }
 
 /* 打寶模式（#110）。放在自動戰鬥分頁而不是地圖分頁——它是全域的模式，
@@ -4559,10 +4791,17 @@ function renderSkillsTab() {
              if (alt > 0) { payJob = state.jobId; payPoints = alt; }
            }
          }
-         const canLevelUp = !isQuest && !isMaxed && payPoints > 0;
+         // 官方前置（js/skill_requires.js）：沒達成就鎖住加點，列出還缺什麼
+         const missReq = (!isQuest && !isMaxed && typeof skillMissingReq === 'function') ? skillMissingReq(sk) : [];
+         const canLevelUp = !isQuest && !isMaxed && payPoints > 0 && !missReq.length;
+         const reqHtml = missReq.length
+           ? `<div class="skill-req">需要：${missReq.map(r => `${r.name} Lv${r.level}`).join('、')}</div>` : '';
 
         const spCost = Array.isArray(sk.spCost) ? sk.spCost[Math.max(0, lv - 1)] || sk.spCost[0] : sk.spCost;
-        const cd = effectiveCooldownMs(sk.id, Array.isArray(sk.cooldown) ? sk.cooldown[Math.max(0, lv - 1)] || sk.cooldown[0] : sk.cooldown) / 1000;
+        // 跟實際施放同一份：有官方資料（SKILL_CAST）就用官方冷卻，skills.js 的 cooldown 只是備案
+        const castRowCd = typeof skillCastRow === 'function' ? skillCastRow(sk.id) : null;
+        const cd = castRowCd ? castLv(castRowCd.cooldown, Math.max(1, lv)) / 1000
+          : effectiveCooldownMs(sk.id, Array.isArray(sk.cooldown) ? sk.cooldown[Math.max(0, lv - 1)] || sk.cooldown[0] : sk.cooldown) / 1000;
 
         /* 等級一律印成「目前/上限」（#102）。以前「未習得」與「MAX」都只有字、
            沒有數字，玩家看不出這招總共幾級——要點的時候得先點下去才知道還有幾格。 */
@@ -4595,6 +4834,8 @@ function renderSkillsTab() {
             <div class="skill-name">${skillIconHtml(sk)}${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} ${statusTag} ${typeTag} ${elemTag}</div>
             <div class="skill-desc">${sk.desc}</div>
             <div class="skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</div>
+            ${reqHtml}
+            ${skillLevelTableHtml(sk)}
           </div>
           ${isQuest ? '' : `<div class="skill-actions">
             <button class="btn-small btn-levelup" ${canLevelUp ? '' : 'disabled'}
@@ -5947,6 +6188,44 @@ const ARMOR_TYPE_LABELS = {
   garment: '披風', footgear: '鞋子', accessory: '飾品'
 };
 const ITEM_SUBTYPE_LABELS = { consumable: '消耗品', material: '素材', ammo: '箭矢', etc: '雜物' };
+/* 道具依用途細分（使用者 2026-11-06：找東西太久）。由上往下第一個符合的就是它的分類 */
+const ITEM_USE_LABELS = {
+  ammo: '🏹 箭矢', heal: '🧪 回復', buff: '✨ 增益', pet: '🐾 寵物', refine: '🔨 精煉',
+  box: '🎁 箱子／轉蛋', skill: '💎 技能耗材', enchant: '🔮 附魔', shadow: '👤 影子裝備',
+  ticket: '🎫 兌換券', look: '💇 外觀',
+  consumable: '其他消耗品', material: '素材', etc: '雜物'
+};
+let _itemUseSets = null;
+function itemUseSets() {
+  if (_itemUseSets) return _itemUseSets;
+  const pet = new Set(), skill = new Set(), refine = new Set();
+  Object.values(typeof PETS !== 'undefined' ? PETS : {}).forEach(p => { if (p.tame) pet.add(p.tame); if (p.food) pet.add(p.food); });
+  Object.keys(typeof TAME_TO_PET !== 'undefined' ? TAME_TO_PET : {}).forEach(id => pet.add(id));
+  Object.values(SKILLS).forEach(sk => { (sk.costItems || []).forEach(id => skill.add(id)); if (sk.catalyst) skill.add(sk.catalyst); });
+  Object.values(typeof REFINEMENT_MATERIALS !== 'undefined' ? REFINEMENT_MATERIALS : {}).forEach(m => refine.add(m.id));
+  Object.values(typeof ORE_SYNTHESIS !== 'undefined' ? ORE_SYNTHESIS : {}).forEach(o => refine.add(o.from));
+  return (_itemUseSets = { pet, skill, refine });
+}
+function itemUseOf(itemId) {
+  const d = ITEMS[itemId] || {};
+  const n = d.name || '';
+  const S = itemUseSets();
+  if (d.type === 'ammo') return 'ammo';
+  if (/^影子/.test(n)) return 'shadow';
+  if (S.pet.has(itemId) || /寵物/.test(n)) return 'pet';
+  if (S.refine.has(itemId) || /精煉|神之金屬|鋁原石/.test(n)) return 'refine';
+  if (d.boxOpen || /箱|轉蛋|禮盒|福袋|寶盒|禮包|袋子|卡片簿|卡冊/.test(n)) return 'box';
+  if (d.heal || d.healPct || d.restoreSp || d.restoreSpPct || d.reviveAlly) return 'heal';
+  if (d.aspdPct || (typeof EXP_DROP_CANDY !== 'undefined' && EXP_DROP_CANDY[itemId])
+    || (d.type === 'consumable' && (d.bonus || d.str || d.agi || d.vit || d.int || d.dex || d.luk))) return 'buff';
+  if (S.skill.has(itemId) || /礦石$|陷阱|聖水/.test(n)) return 'skill';
+  if (/附魔|石\((頭|披|鎧|鞋|盾|武|飾|衣)/.test(n)) return 'enchant';
+  if (/券|兌換/.test(n)) return 'ticket';
+  if (d.hairPick || /染料|髮型|^\[衣裝\]/.test(n)) return 'look';
+  if (d.type === 'consumable') return 'consumable';
+  if (d.type === 'material') return 'material';
+  return 'etc';
+}
 
 let invCategory = 'weapon';
 let invSub = 'all';
@@ -5970,14 +6249,14 @@ function invSubOf(itemId) {
   if (cat === 'armor') return d.armorType || 'other';
   if (cat === 'card') return (CARDS[itemId].slot || 'any');
   if (cat === 'relic') return d.relicSet || 'other';   // 遺物照套裝分（#115）
-  return d.type || 'etc';
+  return itemUseOf(itemId);
 }
 function invSubLabel(cat, sub) {
   if (cat === 'weapon') return WEAPON_TYPE_LABELS[sub] || '其他';
   if (cat === 'armor') return ARMOR_TYPE_LABELS[sub] || '其他';
   if (cat === 'card') return CARD_SLOT_LABELS[sub] || sub;
   if (cat === 'relic') return (RELIC_SETS[sub] && RELIC_SETS[sub].name) || sub;
-  return ITEM_SUBTYPE_LABELS[sub] || sub;
+  return ITEM_USE_LABELS[sub] || ITEM_SUBTYPE_LABELS[sub] || sub;
 }
 
 /* 裝備比較：算出「換上這件」相對於「目前穿的那件」的數值差。
@@ -6654,7 +6933,10 @@ function renderInventoryTab() {
     const inCat = known.filter(r => invCategoryOf(r.item) === invCategory);
     const subCount = {};
     inCat.forEach(r => { const s = invSubOf(r.item); subCount[s] = (subCount[s] || 0) + 1; });
-    const subKeys = Object.keys(subCount).sort((a, b) => subCount[b] - subCount[a]);
+    // 道具照固定順序排（找東西靠位置記憶），其他分類照數量
+    const useOrder = Object.keys(ITEM_USE_LABELS);
+    const subKeys = Object.keys(subCount).sort((a, b) => invCategory === 'item'
+      ? useOrder.indexOf(a) - useOrder.indexOf(b) : subCount[b] - subCount[a]);
 
     let rows = inCat;
     if (invSub !== 'all') rows = rows.filter(r => invSubOf(r.item) === invSub);
@@ -7338,6 +7620,9 @@ function renderJobTree() {
 /* 轉職前的確認：**這個動作會刪東西**，所以一定要先把刪什麼列出來。
    沒有東西要刪（正常的一路往下轉）就不打擾，直接轉。 */
 function confirmJobChange(jobId) {
+  // T27：轉職要找轉職官（分區城鎮）；還沒分區的城鎮在城裡就能轉
+  const jobWhy = typeof townServiceBlockReason === 'function' ? townServiceBlockReason('job') : null;
+  if (jobWhy) { showToast('🎓 轉職：' + jobWhy); return; }
   const jd = JOB_TREE[jobId];
   const p = jobPrunePreview(jobId);
   const noSkills = jd.tier === 2.5 && (jd.skills || []).length === 0;
@@ -8215,67 +8500,253 @@ function setRefineMat(slotKey, key) {
   showRefinePanel(slotKey);
 }
 
-function showRefinePanel(slotKey) {
-  const el = document.getElementById('tab-equip');
-  if (!el) return;
-  hideEquipTooltip();
-  const ctx = refineContext(slotKey);
-  if (!ctx) { renderEquipTab(); return; }
+/* T28 RO 式精煉視窗（素材 images/ui/refine，由 scripts/gen_refine_ui.py 產生）。
+   畫面固定 262×301，整塊依視窗寬縮放；座標都照原圖量。
+   上排 4 格藍＝一般材料、粉＝鐵匠的祝福；中間放裝備；底下按鈕顯示費用。 */
+const RF_W = 262, RF_H = 301, RF_FRAME_MS = 70;
+const RF_STRIPS = ['wait', 'ready_a', 'ready_b', 'proc_a', 'proc_b', 'proc', 'success', 'fail'];
+const RF_MAT_X = [9, 57, 107, 155];   // 上排藍格左上角 x（y 一律 26）
+const RF_BLESS_X = 207;
+let _rf = { slot: null, phase: 'ready', bless: false, timer: null, reveal: false };
+let _rfPreloaded = false;
 
-  // 用「基底道具」當 key，不能用 state.equip[slotKey]——第一次精煉成功時
-  // 那件裝備會從 itemId 變成 instanceId，key 一變紀錄就當場被清掉
+function rfImg(name) { return 'images/ui/refine/' + name; }
+function rfPreload() {
+  if (_rfPreloaded) return;
+  _rfPreloaded = true;
+  RF_STRIPS.forEach(n => { const i = new Image(); i.src = rfImg(n + '.webp'); });
+}
+function rfScale() {
+  const w = (window.innerWidth || 400) - 40;
+  return Math.max(1, Math.min(1.5, w / RF_W));
+}
+function rfStop() { if (_rf.timer) { clearInterval(_rf.timer); _rf.timer = null; } }
+function rfBlessInfo(ctx) {
+  const need = ctx && !ctx.maxed ? getBlacksmithBlessNeed(ctx.level) : 0;
+  const have = getItemQty('blacksmith_blessing');
+  return { need, have, ok: need > 0 && have >= need, on: _rf.bless && need > 0 && have >= need };
+}
+// 播一段背景動畫；loop 時循環，否則停在最後一格後呼叫 done
+function rfPlay(steps, loop, done) {
+  rfStop();
+  const bg = document.getElementById('rf-bg');
+  if (!bg) return;
+  const frames = [];
+  steps.forEach(([strip, n]) => { for (let i = 0; i < n; i++) frames.push([strip, i]); });
+  let k = 0;
+  const show = () => {
+    const [strip, i] = frames[k];
+    bg.style.backgroundImage = `url(${rfImg(strip + '.webp')})`;
+    bg.style.backgroundPosition = `${-i * RF_W}px 0`;
+  };
+  show();
+  _rf.timer = setInterval(() => {
+    k++;
+    if (k >= frames.length) {
+      if (loop) k = 0;
+      else { rfStop(); if (done) done(); return; }
+    }
+    show();
+  }, loop ? 160 : RF_FRAME_MS);
+}
+
+function showRefinePanel(slotKey) {
+  // T27：精煉要找精煉師
+  const refWhy = typeof townServiceBlockReason === 'function' ? townServiceBlockReason('refine') : null;
+  if (refWhy) { showToast('🔨 精煉：' + refWhy); return; }
+  hideEquipTooltip();
+  if (_rf.slot !== slotKey) { _rf.bless = false; _rf.phase = 'ready'; }
+  if (_rf.phase === 'proc') return;
+  _rf.slot = slotKey;
+  if (_rf.phase !== 'success' && _rf.phase !== 'fail') _rf.phase = 'ready';
+  rfPreload();
+  renderRefineWin();
+}
+function closeRefineWin() {
+  if (_rf.phase === 'proc') return;
+  rfStop();
+  _rf.phase = 'ready'; _rf.shown = null;
+  const el = document.getElementById('refine-win');
+  if (el) el.remove();
+  if (typeof renderEquipTab === 'function' && activeTab === 'equip') renderEquipTab();
+}
+function setRefineBless() {
+  if (_rf.phase !== 'ready') return;
+  const ctx = refineContext(_rf.slot);
+  const b = rfBlessInfo(ctx);
+  if (!b.need) { showToast(`🔨 鐵匠的祝福只能用在 +7～+13。`); return; }
+  if (!_rf.bless && !b.ok) { showToast(`🔨 鐵匠的祝福不足：需要 ${b.need} 個（持有 ${b.have}）。`); return; }
+  _rf.bless = !_rf.bless;
+  renderRefineWin();
+}
+function rfPickMat(key) {
+  if (_rf.phase !== 'ready') return;
+  _refineMatChoice[_rf.slot] = key;
+  renderRefineWin();
+}
+function rfBackToReady() {
+  if (_rf.phase === 'proc') return;
+  _rf.phase = 'ready';
+  renderRefineWin();
+}
+
+function renderRefineWin() {
+  const slotKey = _rf.slot;
+  const ctx = refineContext(slotKey);
+  let win = document.getElementById('refine-win');
+  if (!ctx) { if (win) win.remove(); rfStop(); return; }
   const logKey = slotKey + ':' + ctx.itemId;
   if (_refineLogFor !== logKey) { _refineLog = []; _refineLogFor = logKey; }
 
   const sel = currentRefineMat(slotKey, ctx);
-  const rate = ctx.maxed ? 0 : getRefinementSuccessRate(ctx.level, ctx.weaponLv, sel ? sel.key : null);
+  const bless = rfBlessInfo(ctx);
+  if (_rf.bless && !bless.ok) _rf.bless = false;
+  const rate = ctx.maxed || !sel ? 0
+    : Math.min(100, getRefinementSuccessRate(ctx.level, ctx.weaponLv, sel.key) + (state.refineBonusPct || 0));
   const canPay = state.gold >= ctx.cost;
   const canRefine = !ctx.maxed && !!sel && canPay;
+  const ph = _rf.phase;
+  const ready = ph === 'ready';
+  const s = rfScale();
+  const icon = (id, cls) => `<img class="${cls}" src="${itemImgSrc(id)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">`;
 
-  const matBtns = ctx.mats.length
-    ? ctx.mats.map(m => {
-        const on = sel && sel.key === m.key;
-        const penalty = m.mat.failPenalty === 'none'
-          ? '失敗無懲罰'
-          : (ctx.level >= ctx.safe ? '失敗降3級或損壞' : '失敗不降級');
-        const r = getRefinementSuccessRate(ctx.level, ctx.weaponLv, m.key);
-        return `<button class="refine-mat${on ? ' active' : ''}${m.qty <= 0 ? ' out' : ''}"
-          ${m.qty <= 0 ? 'disabled' : ''} onclick="setRefineMat('${slotKey}','${m.key}')">
-          <span class="refine-mat-name">${m.mat.name}</span>
-          <span class="refine-mat-qty${m.qty <= 0 ? ' zero' : ''}">×${m.qty}</span>
-          <span class="refine-mat-note">成功率 ${r}%・${penalty}</span>
-        </button>`;
-      }).join('')
-    : `<div class="equip-pick-empty">這件裝備沒有對應的精煉材料。</div>`;
+  // 上排材料格：只在待命畫面顯示
+  let overlay = '';
+  if (ready && !ctx.maxed) {
+    overlay += ctx.mats.slice(0, 4).map((m, i) => {
+      const on = sel && sel.key === m.key;
+      return `<button class="rf-mat${m.qty > 0 ? '' : ' out'}" style="left:${RF_MAT_X[i]}px" title="${m.mat.name}（${m.mat.desc}）"
+        ${m.qty > 0 ? `onclick="rfPickMat('${m.key}')"` : 'disabled'}>
+        ${on ? `<img class="rf-sel" src="${rfImg('slot_select_blue0.png')}" alt="">` : ''}
+        ${icon(m.mat.id, 'rf-mat-ic')}<span class="rf-qty">${m.qty}</span></button>`;
+    }).join('');
+    overlay += `<button class="rf-mat rf-bless${bless.need ? '' : ' out'}" style="left:${RF_BLESS_X}px"
+      title="鐵匠的祝福（持有 ${bless.have}）：失敗不降級、不損壞" onclick="setRefineBless()">
+      ${bless.on ? `<img class="rf-sel" src="${rfImg('slot_select_red.png')}" alt="">` : ''}
+      ${icon('blacksmith_blessing', 'rf-mat-ic')}<span class="rf-qty">${bless.need ? '×' + bless.need : '—'}</span></button>`;
+    if (sel) overlay += `<div class="rf-hex" style="left:64px">${icon(sel.mat.id, 'rf-hex-ic')}</div>`;
+    if (bless.on) overlay += `<div class="rf-hex" style="left:144px" onclick="setRefineBless()">${icon('blacksmith_blessing', 'rf-hex-ic')}</div>`;
+  }
+  if (ph !== 'proc') overlay += `<div class="rf-item">${icon(ctx.itemId, 'rf-item-ic')}</div>`;
+
+  let btns = '';
+  if (ready) {
+    const st = canRefine ? 'normal' : 'disable';
+    btns = `<button class="rf-btn rf-go" ${canRefine ? 'onclick="rfStart()"' : 'disabled'}
+      style="background-image:url(${rfImg('bt_refining_' + st + '.png')})">
+      <span class="rf-btn-t">${ctx.maxed ? '已達上限' : `精煉 ${rate}%`}</span>
+      <span class="rf-cost${canPay ? '' : ' short'}">${ctx.cost.toLocaleString()}</span></button>`;
+  } else if (ph === 'success' || ph === 'fail') {
+    const k = ph;
+    btns = `<button class="rf-btn rf-again" ${canRefine ? 'onclick="rfStart()"' : 'disabled'}
+        style="background-image:url(${rfImg(`bt_refining_again_${k}_${canRefine ? 'normal' : 'disable'}.png`)})"><span class="rf-btn-t">再精煉一次</span></button>
+      <button class="rf-btn rf-ret" onclick="rfBackToReady()"
+        style="background-image:url(${rfImg(`bt_refining_return_${k}_normal.png`)})"><span class="rf-btn-t">返回</span></button>`;
+  }
+
+  // 可切換的裝備
+  const chips = EQUIP_SLOTS_ALL.filter(k => getEquipBaseItemId(k)).map(k => {
+    const iid = getEquipBaseItemId(k), lv = getRefinementLevel(k);
+    return `<button class="btn-chip${k === slotKey ? ' active' : ''}" ${ph === 'proc' ? 'disabled' : ''} onclick="showRefinePanel('${k}')">${lv ? '+' + lv + ' ' : ''}${ITEMS[iid].name}</button>`;
+  }).join('');
 
   let hint = '';
   if (ctx.maxed) hint = `已達最大精煉 +${REFINEMENT_MAX}。`;
   else if (!sel) hint = `身上沒有可用的材料。${ctx.lvTag}要用：${ctx.mats.map(m => m.mat.name).join('、') || '（無）'}`;
   else if (!canPay) hint = `鋅幣不足，需要 ${ctx.cost.toLocaleString()} z。`;
+  const penalty = !sel ? '' : bless.on ? '失敗不降級'
+    : (ctx.level >= ctx.safe ? '失敗降 3 級或損壞' : '失敗不降級');
 
-  el.innerHTML = `
-    <h3 class="panel-title">🔨 精煉　${ctx.level > 0 ? `+${ctx.level} ` : ''}${getItemDisplayName(ctx.itemId)}</h3>
-    <button class="btn-small" onclick="renderEquipTab()">← 返回裝備欄</button>
-    <div class="refine-panel">
-      <div class="refine-head">
-        <span class="refine-step">${ctx.maxed ? `<b>+${ctx.level}</b>（已達上限）` : `+${ctx.level} → <b>+${ctx.level + 1}</b>`}</span>
-        <span class="refine-meta">${ctx.lvTag}・安全等級 +${ctx.safe}</span>
-        <span class="refine-meta">費用 ${ctx.cost.toLocaleString()} z（持有 ${state.gold.toLocaleString()} z）</span>
+  const html = `<div class="rf-box">
+      <div class="rf-head"><b>🔨 精煉</b><button class="btn-small" onclick="closeRefineWin()">✕</button></div>
+      <div class="rf-chips">${chips}</div>
+      <div class="rf-stage-wrap" style="width:${RF_W * s}px;height:${RF_H * s}px">
+        <div class="rf-stage" style="transform:scale(${s})">
+          <div id="rf-bg" class="rf-bg"></div>
+          <div class="rf-name">${ctx.level > 0 ? '+' + ctx.level + ' ' : ''}${getItemDisplayName(ctx.itemId)}</div>
+          ${overlay}${btns}
+        </div>
       </div>
-      <div class="refine-mats">${matBtns}</div>
-      <div class="refine-actions">
-        <button class="btn-small" ${canRefine ? '' : 'disabled'} onclick="doRefineSlot('${slotKey}')">
-          精煉（成功率 ${rate}%）
-        </button>
-        ${!ctx.maxed && ctx.mats.length ? `<select id="refine-bulk-target" class="refine-bulk-select">
+      <div class="rf-info">
+        <span>${ctx.maxed ? `+${ctx.level}` : `+${ctx.level} → <b>+${ctx.level + 1}</b>`}</span>
+        <span>${ctx.lvTag}・安全 +${ctx.safe}</span>
+        ${sel ? `<span>${sel.mat.name}・成功率 ${rate}%・${penalty}</span>` : ''}
+        <span>持有 ${state.gold.toLocaleString()} z</span>
+        ${hint ? `<span class="refine-hint">${hint}</span>` : ''}
+      </div>
+      ${!ctx.maxed && ctx.mats.length ? `<div class="rf-bulk"><select id="refine-bulk-target" class="refine-bulk-select">
           ${Array.from({length: REFINEMENT_MAX - ctx.level}, (_, i) => ctx.level + i + 1).map(lv => `<option value="${lv}">強化到 +${lv}</option>`).join('')}
           <option value="break">強化到爆掉／材料用完</option>
         </select>
-        <button class="btn-small" ${canRefine ? '' : 'disabled'} onclick="doRefineBulk('${slotKey}')">一鍵強化</button>` : ''}
-        ${hint ? `<span class="refine-hint">${hint}</span>` : ''}
-      </div>
+        <button class="btn-small" ${canRefine && ready ? '' : 'disabled'} onclick="doRefineBulk('${slotKey}')">一鍵強化</button></div>` : ''}
       ${_refineLog.length ? `<div class="refine-log">${_refineLog.map(l => `<div>${l}</div>`).join('')}</div>` : ''}
     </div>`;
+  const bulkSel = document.getElementById('refine-bulk-target');
+  const bulkVal = bulkSel ? bulkSel.value : null;
+  if (!win) {
+    win = document.createElement('div');
+    win.id = 'refine-win';
+    win.className = 'rf-overlay';
+    win.onclick = e => { if (e.target === win) closeRefineWin(); };
+    document.body.appendChild(win);
+  }
+  win.innerHTML = html;
+  const nb = document.getElementById('refine-bulk-target');
+  if (nb && bulkVal && [...nb.options].some(o => o.value === bulkVal)) nb.value = bulkVal;
+
+  // ready 那 3 格是材料欄出現的過場：播一次停在最後一格（循環會抖）；同一種畫面重畫時直接停格
+  if (ready) {
+    if (!canRefine) { _rf.shown = 'wait'; rfPlay([['wait', 4]], true); }
+    else {
+      const strip = bless.on ? 'ready_a' : 'ready_b';
+      if (_rf.shown === strip) rfHold(strip, 2);
+      else { _rf.shown = strip; rfPlay([[strip, 3]], false, () => rfHold(strip, 2)); }
+    }
+  } else if (ph === 'success' || ph === 'fail') {
+    _rf.shown = null;
+    const n = ph === 'success' ? 17 : 20;
+    if (_rf.reveal) { _rf.reveal = false; rfPlay([[ph, n]], false, () => rfHold(ph, n - 1)); }
+    else rfHold(ph, n - 1);
+  }
+}
+function rfHold(strip, i) {
+  const bg = document.getElementById('rf-bg');
+  if (!bg) return;
+  bg.style.backgroundImage = `url(${rfImg(strip + '.webp')})`;
+  bg.style.backgroundPosition = `${-i * RF_W}px 0`;
+}
+
+// 按下精煉：先結算（存檔照常），動畫播完才揭曉
+function rfStart() {
+  const slotKey = _rf.slot;
+  const ctx = refineContext(slotKey);
+  if (!ctx || ctx.maxed || _rf.phase === 'proc') return;
+  const sel = currentRefineMat(slotKey, ctx);
+  if (!sel || state.gold < ctx.cost) { renderRefineWin(); return; }
+  const bless = rfBlessInfo(ctx);
+  const before = ctx.level, goldBefore = state.gold;
+  const sfx = window.playEventSfx;
+  window.playEventSfx = null;   // 成功音效等動畫揭曉再放
+  let ok;
+  try { ok = refineItem(slotKey, sel.key, bless.on); } finally { window.playEventSfx = sfx; }
+  const after = getRefinementLevel(slotKey);
+  if (state.gold === goldBefore) { renderRefineWin(); return; }   // 沒有真的精煉（材料／祝福不足等）
+  _refineLog.unshift(`${ok ? '🔨 成功' : '💥 失敗'}　${ctx.item.name} +${before} → +${after}（${sel.mat.name}${bless.on ? '＋祝福' : ''}）`);
+  _refineLog = _refineLog.slice(0, 8);
+  if (typeof renderTopBar === 'function') renderTopBar();
+
+  _rf.phase = 'proc';
+  const name = document.querySelector('#refine-win .rf-name');
+  document.querySelectorAll('#refine-win .rf-mat, #refine-win .rf-hex, #refine-win .rf-item, #refine-win .rf-btn').forEach(e => e.remove());
+  document.querySelectorAll('#refine-win .rf-chips button, #refine-win .rf-bulk button, #refine-win .rf-head button').forEach(b => { b.disabled = true; });
+  if (name) name.textContent = `${before > 0 ? '+' + before + ' ' : ''}${getItemDisplayName(ctx.itemId)}`;
+  const steps = bless.on ? [['proc_a', 9]] : [['proc_b', 9], ['proc', 5]];
+  rfPlay(steps, false, () => {
+    _rf.phase = ok ? 'success' : 'fail';
+    _rf.reveal = true;
+    if (ok && typeof playEventSfx === 'function') playEventSfx('refine');
+    renderRefineWin();
+  });
 }
 
 /* 一鍵強化（使用者 2026-08-22 指定）：下拉選目標 +N 或「到爆掉／材料用完」，
@@ -8312,7 +8783,7 @@ function doRefineBulk(slotKey) {
       return;
     }
     const before = lv;
-    const success = refineItem(slotKey, sel.key);
+    const success = refineItem(slotKey, sel.key, rfBlessInfo(ctx).on);
     const after = getRefinementLevel(slotKey);
     _refineLog.unshift(success
       ? `🔨 成功　${ctx.item.name} +${before} → +${after}（${sel.mat.name}）`
@@ -8706,6 +9177,9 @@ function whWithdrawInstance(whInstanceId) {
 function showWarehousePanel() { openWarehouse(); }
 
 function openWarehouse() {
+  // T27：倉庫要找卡普拉職員
+  const whWhy = typeof townServiceBlockReason === 'function' ? townServiceBlockReason('kafra') : null;
+  if (whWhy) { showToast('📦 倉庫：' + whWhy); return; }
   let win = document.getElementById('warehouse-window');
   if (!win) {
     win = document.createElement('div');

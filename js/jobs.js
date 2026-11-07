@@ -237,6 +237,7 @@ const JOB_TREE = {
       'pr_aspersio', 'pr_benedictio', 'mg_safetywall', 'pr_slowpoison',
       'pr_strecovery', 'all_resurrection', 'pr_lexdivina', 'pr_turnundead',
       'pr_lexaeterna', 'pr_magnus', 'pr_redemptio',
+      'mg_srecovery',   // rAthena skill_tree 祭司也有；復活術、高階祭司技能的前置
     ],
     desc: '光輝籠罩之地，皆為信徒的庇護所。'
   },
