@@ -98,7 +98,8 @@ function main() {
     const raType = RA_TYPE_TO_GAME[ra.Type] || ra.Type || 'material';
     const isEquip = raType === 'weapon' || raType === 'armor';
     const zhAll = info.get(ra.Id);
-    const twName = zhAll && zhAll.name && zhAll.name.replace(/\\/g, '').trim();
+    // 台服同一組織有「樂園團」「伊甸園」兩種譯名，統一成伊甸園（使用者 2026-11-07）
+    const twName = zhAll && zhAll.name && zhAll.name.replace(/\\/g, '').replace(/樂園團/g, '伊甸園').trim();
 
     /* 類型：只在雜物↔消耗品之間修；消耗品身上有效果欄位的不改 */
     if (it.type === 'material' && raType === 'consumable') put(it.id, 'type', 'consumable');
@@ -110,7 +111,7 @@ function main() {
     /* 說明：目前是英文（rAthena 原文）而台服有中文的，換成台服（T3）。色碼 ^RRGGBB 去掉、各行以空白接起來 */
     const hasZh = s => /[一-鿿]/.test(s || '');
     if (!hasZh(it.desc) && /[A-Za-z]{3,}/.test(it.desc || '') && zhAll && hasZh(zhAll.desc.join(''))) {
-      put(it.id, 'desc', zhAll.desc.map(l => l.replace(/\^[0-9a-fA-F]{6}/g, '').replace(/\\/g, '').trim()).filter(Boolean).join(' '));
+      put(it.id, 'desc', zhAll.desc.map(l => l.replace(/\^[0-9a-fA-F]{6}/g, '').replace(/\\/g, '').replace(/樂園團/g, '伊甸園').trim()).filter(Boolean).join(' '));
     }
     if (raType !== it.type && !(raType === 'card' && it.type === 'material')) R.typeDiff.push({ ...row, game: it.type, ra: raType });
 

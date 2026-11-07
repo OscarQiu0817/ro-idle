@@ -133,6 +133,7 @@
         <span class="hud-job" id="hud-job">—</span>
         <div class="hud-zeny-line">
           <span id="hud-gold">Zeny : 0</span>
+          <span id="hud-cash" title="商城點數：主線、每日簽到取得，在「商城」使用">💎 0</span>
           <span id="hud-world-online" class="hud-world-online" hidden></span>
         </div>
       </div>
@@ -150,6 +151,7 @@
       </div>
       <div class="hud-actions">
         <button class="hud-act" onclick="openAttendanceModal()" title="每日簽到">簽到</button>
+        <button class="hud-act" onclick="openCashShopModal()" title="商城點數換加倍道具、卡冊、轉蛋">商城</button>
         <button id="btn-ally" class="hud-act" onclick="toggleAllyPanel()" title="隊友：雇傭、喝水、復活">隊伍</button>
         <button class="hud-act" onclick="backToTitle()" title="回到標題，換一個存檔角色">換角色</button>
         <button id="btn-jobchange-alert" class="btn-jobchange hidden" onclick="switchTab('jobtree')">🔔 可以轉職了！</button>
@@ -246,7 +248,7 @@
         <nav class="tab-nav group-fight">
           <button class="tab-btn active" data-tab="map" data-group="fight" onclick="switchTab('map')">🗺️ 地圖</button>
           <button class="tab-btn" data-tab="autobattle" data-group="fight" onclick="switchTab('autobattle')">⚔️ 自動戰鬥</button>
-          <button class="tab-btn" data-tab="quests" data-group="fight" onclick="switchTab('quests')">📜 討伐</button>
+          <button class="tab-btn" data-tab="quests" data-group="fight" onclick="switchTab('quests')">📜 任務</button>
           <button class="tab-btn" data-tab="character" data-group="grow" onclick="switchTab('character')">🧍 角色</button>
           <button class="tab-btn" data-tab="skills" data-group="grow" onclick="switchTab('skills')">📖 技能</button>
           <button class="tab-btn" data-tab="jobtree" data-group="grow" onclick="switchTab('jobtree')">🌳 轉職樹</button>
@@ -302,6 +304,14 @@
     <h3 class="modal-title">每日簽到</h3>
     <div id="attendance-modal-body"></div>
     <button class="btn btn-primary modal-confirm" onclick="closeAttendanceModal()">關閉</button>
+  </div>
+</div>
+
+<div id="cash-shop-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeCashShopModal()">
+  <div class="modal-box modal-box-tall">
+    <h3 class="modal-title">商城</h3>
+    <div id="cash-shop-modal-body"></div>
+    <button class="btn btn-primary modal-confirm" onclick="closeCashShopModal()">關閉</button>
   </div>
 </div>
 
@@ -366,6 +376,8 @@
 <script src="js/item_identity.js"></script>
 <script src="js/item_prune.js"></script>
 <script src="js/item_effects.js"></script>
+<script src="js/sealed_cards.js"></script>
+<script src="js/item_effects_manual.js"></script>
 <script src="js/equip_sets.js"></script>
 <script src="js/skill_cast_data.js"></script>
 <script src="js/mob_move.js"></script>
@@ -375,6 +387,8 @@
 <script src="js/achievements.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/towns.js"></script>
+<script src="js/cash_shop.js"></script>
+<script src="js/main_quest.js"></script>
 <script src="js/mob_anim_index.js"></script>
 <script src="js/paperdoll_layers.js"></script>
 <script src="js/paperdoll.js"></script>

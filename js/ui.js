@@ -1458,6 +1458,8 @@ function renderTopBar() {
   document.getElementById('hud-name').textContent = state.name;
   document.getElementById('hud-job').textContent = `${job.name} Lv. ${state.baseLevel} ( ${bPct}% ) / JLv. ${state.jobLevel} (${jPct}%)`;
   document.getElementById('hud-gold').textContent = `Zeny : ${Number(state.gold || 0).toLocaleString()}`;
+  const cashEl = document.getElementById('hud-cash');
+  if (cashEl) cashEl.textContent = `💎 ${Number(state.cashPoints || 0).toLocaleString()}`;
   paintHudBar('hud-hp-bar', 'hud-hp-text', 'hud-hp-pct', state.hp, state.maxHp);
   paintHudBar('hud-sp-bar', 'hud-sp-text', 'hud-sp-pct', state.sp, state.maxSp);
 
@@ -3707,7 +3709,39 @@ function huntTabSig() {
   return hb.q.map(e => {
     const p = (typeof huntProgress === 'function' && huntProgress(e)) || [];
     return e.id + ':' + p.map(x => x.have).join(',');
-  }).join('|') + '#' + (hb.noAuto || 0);
+  }).join('|') + '#' + (hb.noAuto || 0) + '#' + mainQuestSig();
+}
+function mainQuestSig() {
+  const st = typeof mainQuestStep === 'function' ? mainQuestStep() : null;
+  return st ? mainQuestState().i + ':' + st.check().join('/') : 'end';
+}
+/* T19 主線：任務分頁最上面，一次只顯示目前這一步 */
+function mainQuestHtml() {
+  if (typeof mainQuestStep !== 'function') return '';
+  const st = mainQuestStep();
+  if (!st) return `<h3 class="panel-title">📖 主線</h3><div class="empty-hint">目前的主線都完成了，後續章節製作中。</div>`;
+  const i = mainQuestState().i;
+  const no = MAIN_QUEST.filter((s2, k) => k <= i && s2.ch === st.ch).length;
+  const total = MAIN_QUEST.filter(s2 => s2.ch === st.ch).length;
+  const [have, need] = st.check();
+  const done = have >= need;
+  const r = st.reward;
+  const bits = [];
+  if (r.points) bits.push(`💎 ${r.points} ${CASH_POINT_NAME}`);
+  if (r.zeny) bits.push(`${r.zeny.toLocaleString()} 鋅幣`);
+  (r.items || []).forEach(([id, n]) => { if (ITEMS[id]) bits.push(`${ITEMS[id].name} ×${n}`); });
+  const go = !done && st.go ? `<button class="btn-small" onclick="switchTab('${st.go}')">前往</button>` : '';
+  return `<h3 class="panel-title">📖 主線　<span class="dim">第 ${st.ch} 章 ${no}／${total}</span></h3>
+    <div class="acv-list"><div class="acv-row ${done ? 'done' : ''}">
+      <div class="acv-icon">📖</div>
+      <div class="acv-body">
+        <div class="acv-name">${shopEsc(st.title)}${done ? ' <span class="acv-check">✔</span>' : ''}</div>
+        <div class="acv-desc">${shopEsc(st.desc)}</div>
+        ${need > 1 ? `<div class="acv-desc">${have} / ${need}</div><div class="acv-bar"><div class="acv-bar-fill" style="width:${Math.min(100, have / need * 100)}%"></div></div>` : ''}
+        <div class="acv-desc">獎勵：${bits.join('、')}</div>
+      </div>
+      <div class="acv-side">${done ? `<button class="btn-small active" onclick="claimMainQuest();renderQuestsTab();renderTopBar();">領取獎勵</button>` : go}</div>
+    </div></div>`;
 }
 function attendanceSig() {
   const at = (state && state.attendance) || { day: 0, n: 0 };
@@ -3877,25 +3911,26 @@ function renderAttendanceCard() {
   const nextIdx = at.n % len;
   const claimedToday = at.day === day;
   const cells = ATTENDANCE_REWARDS.map((r, i) => {
-    const def = ITEMS[r[0]] || {};
+    const main = (r.items || [])[0];
+    const id = main ? main[0] : '';
     const got = i < nextIdx;
     const isNext = i === nextIdx;
-    const nm = def.name || r[0];
+    const itemsTxt = (r.items || []).filter(([k]) => ITEMS[k]).map(([k, n]) => `${shopEsc(ITEMS[k].name)} ×${n}`).join('<br>');
     const tag = got ? '✔ 已領' : (isNext ? (claimedToday ? '明日' : '今日') : '');
     return `<div class="att-cell ${got ? 'got' : ''} ${isNext ? 'next' : ''}"
-        onmouseenter="showShopItemTooltip(event,'${r[0]}')" onmouseleave="hideEquipTooltip()"
-        onclick="showShopItemTooltip(event,'${r[0]}')">
+        ${id ? `onmouseenter="showShopItemTooltip(event,'${id}')" onmouseleave="hideEquipTooltip()" onclick="showShopItemTooltip(event,'${id}')"` : ''}>
         <div class="att-day">第${i + 1}天</div>
-        <img src="${itemImgSrc(r[0])}" alt="${shopEsc(nm)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
-        <div class="att-name">${shopEsc(nm)}</div>
-        <div>×${r[1]}</div>
+        <img src="${id ? itemImgSrc(id) : placeholderImgSrc('item')}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+        <div class="att-name att-items">${itemsTxt}</div>
+        <div class="att-pts">💎 ${r.points || 0}</div>
+        <div class="att-day">${(r.zeny || 0).toLocaleString()}z</div>
         <div class="att-tag">${tag || '　'}</div>
       </div>`;
   }).join('');
   const status = claimedToday
     ? `今日已簽到。累計 <b>${at.n}</b> 天，明日上線自動領下一份。`
     : `今日還沒簽到。累計 <b>${at.n}</b> 天。掛機後自動發進背包。`;
-  return `<div class="empty-hint">${status} ${len} 天一輪，不用按領取。點格子可看道具說明。</div>
+  return `<div class="empty-hint">${status} ${len} 天一輪，不用按領取。每天都有商城點數、鋅幣和一樣道具，點格子可看道具說明。</div>
     <div class="att-grid">${cells}</div>`;
 }
 function openAttendanceModal() {
@@ -3917,11 +3952,52 @@ function renderAttendanceModal() {
 function renderAttendanceTab() {
   renderAttendanceModal();
 }
+/* 商城（cash_shop.js）：分類列出，點格子看說明，按鈕買 1 個／10 個 */
+function openCashShopModal() {
+  const m = document.getElementById('cash-shop-modal');
+  if (!m) return;
+  renderCashShopModal();
+  m.classList.remove('hidden');
+}
+function closeCashShopModal() {
+  const m = document.getElementById('cash-shop-modal');
+  if (m) m.classList.add('hidden');
+}
+function cashShopBuy(id, n) {
+  runWithNotice('💎 商城', () => buyCashItem(id, n));
+  renderCashShopModal();
+  renderTopBar();
+}
+function renderCashShopModal() {
+  const el = document.getElementById('cash-shop-modal-body');
+  if (!el || !state || typeof CASH_SHOP === 'undefined') return;
+  const pts = cashPoints();
+  const sec = CASH_SHOP.map(c => {
+    const cells = c.items.filter(([id]) => ITEMS[id]).map(([id, p]) => {
+      const nm = ITEMS[id].name;
+      const have = getItemQty(id);
+      return `<div class="att-cell cash-cell ${pts < p ? 'poor' : ''}">
+        <div onmouseenter="showShopItemTooltip(event,'${id}')" onmouseleave="hideEquipTooltip()" onclick="showShopItemTooltip(event,'${id}')">
+          <img src="${itemImgSrc(id)}" alt="${shopEsc(nm)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+          <div class="att-name">${shopEsc(nm)}</div>
+          <div class="att-day">持有 ${have}</div>
+        </div>
+        <div class="att-tag">💎 ${p}</div>
+        <div class="cash-btns">
+          <button class="btn-small" ${pts < p ? 'disabled' : ''} onclick="cashShopBuy('${id}',1)">買 1</button>
+          <button class="btn-small ghost" ${pts < p * 10 ? 'disabled' : ''} onclick="cashShopBuy('${id}',10)">×10</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<h4 class="cash-cat">${shopEsc(c.cat)}</h4><div class="att-grid">${cells}</div>`;
+  }).join('');
+  el.innerHTML = `<div class="empty-hint">持有 <b>💎 ${pts.toLocaleString()}</b> ${CASH_POINT_NAME}。主線每一步、每日簽到都會發點數。點圖示看道具說明。</div>${sec}`;
+}
 function renderQuestsTab() {
   const el = document.getElementById('tab-quests');
   if (!el || !state) return;
   const hb = ensureHuntBoard();
-  let html = `<h3 class="panel-title">📜 討伐佈告欄</h3>
+  let html = mainQuestHtml() + `<h3 class="panel-title">📜 討伐佈告欄</h3>
     <div class="empty-hint">接下之後，擊殺目標會自動計數。完成後回來領。不想做可以放棄換一張。</div>`;
   if (!hb.q.length) html += '<div class="empty-hint">佈告欄是空的，稍等幾秒會貼上新的。</div>';
   html += '<div class="acv-list">';
@@ -3992,31 +4068,10 @@ function renderQuestsTab() {
 }
 
 /* ---------------- T27 城鎮分區：戰場上的 NPC 與招牌 ---------------- */
-const _townDolls = {};
-function townNpcDoll(n) {
-  let o = _townDolls[n.id];
-  if (!o) {
-    const parts = typeof paperdollPartsFor === 'function' ? paperdollPartsFor({
-      job: n.look.job, gender: n.look.gender, hairStyle: n.look.hair, hairColor: n.look.hc, hatViews: [], weaponCat: 'bare',
-    }) : null;
-    o = _townDolls[n.id] = { parts, bounds: parts && paperdollBounds(parts), drawn: false };
-  }
-  return o;
-}
-function drawTownNpcDoll(n, canvas) {
-  const o = townNpcDoll(n);
-  if (!canvas || o.drawn === canvas || !o.parts || !o.bounds) return;
-  const b = o.bounds;
-  canvas.width = b.width;
-  canvas.height = Math.max(1, b.feet);
-  const k = MOB_PX_SCALE;
-  canvas.style.width = Math.round(b.width * k) + 'px';
-  canvas.style.height = Math.round(b.feet * k) + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const res = drawPaperdollFrame(ctx, o.parts, 'idle', 0, -b.minX, -b.minY);
-  if (res && res.ready) o.drawn = canvas;   // 圖還沒載完就下一幀再畫
+/* NPC 外觀：images/npc/<spr>.png（底邊＝腳底），照怪物同一個倍率放大 */
+function townNpcImgLoad(img) {
+  img.style.width = Math.round(img.naturalWidth * MOB_PX_SCALE) + 'px';
+  img.style.height = Math.round(img.naturalHeight * MOB_PX_SCALE) + 'px';
 }
 function syncTownNpcs(scene, at) {
   let layer = document.getElementById('bf-npcs');
@@ -4034,7 +4089,7 @@ function syncTownNpcs(scene, at) {
     layer._map = state.mapId;
     layer.innerHTML = L.districts.map(d => `<div class="bf-sign" data-d="${d.id}">${shopEsc(d.name)}</div>`).join('')
       + L.npcs.map(n => `<div class="bf-npc" data-npc="${n.id}" onclick="walkToTownNpc('${n.id}')" title="${shopEsc(n.name)}">`
-        + `<canvas></canvas><em>${shopEsc(n.name)}</em></div>`).join('');
+        + `<img src="images/npc/${n.spr}.png" alt="" onload="townNpcImgLoad(this)"><em>${shopEsc(n.name)}</em></div>`).join('');
     scene.appendChild(layer);
   }
   const wx = state.worldX || 0, wy = state.worldY || 0;
@@ -4054,7 +4109,6 @@ function syncTownNpcs(scene, at) {
     if (!n) return;
     place(el, n.x, n.y);
     el.classList.toggle('target', state.townTarget === n.id);
-    drawTownNpcDoll(n, el.querySelector('canvas'));
   });
   syncTownNav(scene, L);
 }
@@ -4106,17 +4160,42 @@ function walkToTownKafra() {
   const k = L && L.npcs.find(n => n.role === 'kafra');
   if (k) walkToTownNpc(k.id);
 }
+/* T29 公會 NPC：列出這裡能轉、而且在你路線上的職業；女武神另外辦轉生 */
+function guildNpcPanelHtml(n, back) {
+  const g = n.guild;
+  const job = currentJob();
+  const locked = rebirthPathNext();
+  const nexts = locked ? [locked] : (job.next || []);
+  const here = nexts.filter(j => JOB_TREE[j] && jobGuildFor(j) === g);
+  const cards = here.map(j => {
+    const jd = JOB_TREE[j];
+    const why = jobChangeBlockReason(j);
+    return `<div class="town-npc-card${why ? ' locked' : ''}" ${why ? `title="${jobTreeAttr(why)}"` : `onclick="confirmJobChange('${j}')"`}>
+      ${jobTreeIconHtml(j, jd)}<div class="town-npc-name">${shopEsc(jd.name)}</div>
+      <div class="town-npc-hint">${why ? shopEsc(why) : '可轉職'}</div></div>`;
+  }).join('');
+  let say;
+  if (here.length) say = '想成為我們的一員嗎？條件達到了就能轉職。';
+  else {
+    const where = [...new Set(nexts.map(j => jobGuildFor(j)).filter(Boolean))].map(x => `${townName(x.town)}的「${x.name}」`);
+    say = where.length ? `你的下一步不在這裡。要轉職請找：${where.join('、')}。` : '你已經走到目前這條路的終點了。';
+  }
+  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🎓 ${shopEsc(n.name)}</h3></div>
+    <div class="town-npc-say">${say}</div>
+    ${cards ? `<div class="town-npc-list">${cards}</div>` : ''}
+    ${g.rebirth ? renderRebirthPanel() : ''}</div>`;
+}
 /* 到達 NPC：開對應功能 */
 function openTownNpc(id) {
   const n = typeof townNpc === 'function' ? townNpc(id) : null;
   if (!n) return;
   if (n.role === 'shop') { switchTab('map'); openNpcShop(n.shop); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'soon') { showToast(`${n.name}：${n.soon || '還沒開放。'}`); return; }
-  if (n.role === 'job') { switchTab('jobtree'); showToast(`${n.name}：在轉職樹選擇要轉的職業`); return; }
   switchTab('map');
   const el = document.getElementById('tab-map');
   if (!el) return;
   const back = '<button class="btn-small" onclick="renderMapTab()">← 返回地圖</button>';
+  if (n.role === 'job') { el.innerHTML = guildNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'kafra') {
     el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💁 ${shopEsc(n.name)}</h3></div>
       <div class="town-npc-say">歡迎光臨卡普拉服務，今天需要什麼服務呢？</div>
@@ -4201,9 +4280,7 @@ function renderMapTab() {
     </div>`}
     ${!isCity ? renderMapYieldBox(currentMapObj) : ''}
     ${!isCity ? bossModeBox(currentMapObj) : ''}
-    ${/* 轉生祭壇只開在安全區。放在這裡而不是轉職樹，是因為轉生是「回到城裡辦一件大事」，
-          跟商店同一個場景；而且要先擋在安全區，玩家就不會在野外打到一半按下去 */
-      isCity ? renderRebirthPanel() : ''}`;
+`;   // 轉生改到朱諾找女武神（T29，openTownNpc 的 job 面板）
 }
 
 /* 打寶模式（#110）。放在自動戰鬥分頁而不是地圖分頁——它是全域的模式，
@@ -5760,7 +5837,7 @@ const CARD_BONUS_LABELS = {
   allStat: '全素質', aspdPct: '攻擊速度', aspdFlat: 'ASPD', critDmgPct: '暴擊傷害',
   bossDmgPct: '對首領類傷害', allTargetDmgPct: '物理傷害', rangedDmgPct: '遠距離傷害',
   rangedDmgTakenPct: '受遠距離傷害', bossDmgTakenPct: '受首領類傷害',
-  normalDmgTakenPct: '受一般魔物傷害', spCostPct: '技能SP消耗', defPct: 'DEF',
+  normalDmgTakenPct: '受一般魔物傷害', spCostPct: '技能SP消耗', defPct: 'DEF', mdefPct: 'MDEF',
   rangedCritRate: '遠距離攻擊暴擊率',
   expAllPct: '經驗值', dropPct: '掉寶率'
 };
@@ -5772,7 +5849,7 @@ function cardArtSrc(cardId) {
 const CARD_PCT_KEYS = [
   'hpPct', 'spPct', 'hpRegenPct', 'spRegenPct', 'aspdPct', 'critDmgPct',
   'bossDmgPct', 'allTargetDmgPct', 'rangedDmgPct', 'rangedDmgTakenPct',
-  'bossDmgTakenPct', 'normalDmgTakenPct', 'spCostPct', 'defPct', 'matkPct',
+  'bossDmgTakenPct', 'normalDmgTakenPct', 'spCostPct', 'defPct', 'mdefPct', 'matkPct',
   'expAllPct', 'dropPct'
 ];
 /* 數值一律帶正負號，減益卡片才不會顯示成「MaxHP +-25%」 */
@@ -5885,6 +5962,7 @@ function socketedCardsHtml(cardIds) {
 function formatCardBonus(k, v, all) {
   if (CARD_BONUS_LABELS[k]) return `${CARD_BONUS_LABELS[k]} ${signed(v, CARD_PCT_KEYS.includes(k))}`;
   if (k === 'ignoreSizePenalty') return '無視體型修正（一律100%傷害）';
+  if (k === 'noGemStone') return '技能不消耗魔力礦石';
   if (k === 'splashAttack') return '普通攻擊改為打擊場上全部敵人（不含技能）';
   if (k.startsWith('itemHeal_')) {
     const it = k.slice(9);
@@ -7585,6 +7663,9 @@ function renderJobTree() {
       const isCurrent = state.jobId === jobId;
       const unlocked = isCurrent || isJobUnlocked(jobId);
       const canChange = tIdx > 0 && canJobChange(jobId);
+      // T29：條件都到了只差人不在公會 → 按了前往公會
+      const canGo = tIdx > 0 && !isCurrent && !canChange && canJobChange(jobId, true);
+      const guild = canGo ? jobGuildFor(jobId) : null;
       /* 格子上只留兩種狀態。具體差在哪（等級、技能點）放 title。 */
       let foot = '';
       let full = jd.name;
@@ -7592,15 +7673,18 @@ function renderJobTree() {
         if (canChange) {
           foot = '可轉職';
           full = '可轉職';
+        } else if (guild) {
+          foot = '前往公會';
+          full = `到${townName(guild.town)}找「${guild.name}」轉職`;
         } else {
           foot = '未達轉職條件';
           full = (typeof jobChangeBlockReason === 'function' ? jobChangeBlockReason(jobId) : '') || foot;
         }
       }
-      cards += `<button type="button" class="tree-card ${isCurrent ? 'tree-node-current' : ''} ${unlocked ? 'tree-node-unlocked' : 'tree-node-locked'}" ${canChange ? `onclick="confirmJobChange('${jobId}')"` : 'disabled'} title="${jobTreeAttr(full || jd.name)}">
+      cards += `<button type="button" class="tree-card ${isCurrent ? 'tree-node-current' : ''} ${unlocked ? 'tree-node-unlocked' : 'tree-node-locked'}" ${canChange ? `onclick="confirmJobChange('${jobId}')"` : guild ? `onclick="jobTreeGoGuild('${jobId}')"` : 'disabled'} title="${jobTreeAttr(full || jd.name)}">
           ${jobTreeIconHtml(jobId, jd)}
           <span class="tree-label">${jd.name}</span>
-          ${foot ? `<span class="${canChange ? 'tree-cta' : 'tree-wip'}">${foot}</span>` : '<span class="tree-wip">&nbsp;</span>'}
+          ${foot ? `<span class="${canChange || guild ? 'tree-cta' : 'tree-wip'}">${foot}</span>` : '<span class="tree-wip">&nbsp;</span>'}
         </button>`;
     });
     rows += `<div class="job-tree-tier ${tIdx ? 'job-tree-tier-linked' : ''}" style="--tier-count:${tier.length}">${cards}</div>`;
@@ -7614,14 +7698,24 @@ function renderJobTree() {
       <b>職業一旦選定就走到底</b>，轉職只保留本系路線，其他路線的技能會被清除。</p>
     ${/* 轉生面板搬到地圖分頁的安全區了，這裡只留指路 */
       (state.rebirthCount || 0) >= REBIRTH_MAX ? renderRebirthPanel()
-        : `<div class="rebirth-pointer">🌟 轉生要到<b>安全區（城鎮）</b>的轉生祭壇辦理——請切到地圖分頁。</div>`}`;
+        : `<div class="rebirth-pointer">🌟 轉生要到<b>朱諾</b>找<b>女武神</b>辦理。
+            ${rebirthBlockReason(true) === null ? '<button class="btn-small" onclick="jobTreeGoRebirth()">前往朱諾</button>' : ''}</div>`}`;
+}
+function jobTreeGoGuild(jobId) {
+  const g = jobGuildFor(jobId);
+  if (g && goToJobGuild(jobId)) showToast(`🧭 前往${townName(g.town)}的「${g.name}」`);
+  renderJobTree();
+}
+function jobTreeGoRebirth() {
+  if (goToRebirth()) showToast('🧭 前往朱諾的「女武神」');
+  renderJobTree();
 }
 
 /* 轉職前的確認：**這個動作會刪東西**，所以一定要先把刪什麼列出來。
    沒有東西要刪（正常的一路往下轉）就不打擾，直接轉。 */
 function confirmJobChange(jobId) {
-  // T27：轉職要找轉職官（分區城鎮）；還沒分區的城鎮在城裡就能轉
-  const jobWhy = typeof townServiceBlockReason === 'function' ? townServiceBlockReason('job') : null;
+  // T29：要站在公會 NPC 旁邊
+  const jobWhy = jobChangeBlockReason(jobId);
   if (jobWhy) { showToast('🎓 轉職：' + jobWhy); return; }
   const jd = JOB_TREE[jobId];
   const p = jobPrunePreview(jobId);

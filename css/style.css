@@ -833,8 +833,17 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .att-day, .att-name, .att-tag { font-size: 11px; line-height: 1.25; }
 .att-day { color: #9aa0b4; }
 .att-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.att-items { white-space: normal; min-height: 2.5em; }
+.att-pts { font-size: 11px; color: #9ad8ff; font-weight: 700; }
 .att-cell.got .att-tag { color: #3aa877; font-weight: 700; }
 .att-cell.next .att-tag { color: #f5a623; font-weight: 700; }
+#hud-cash { margin-left: 10px; color: #9ad8ff; }
+.cash-cat { margin: 12px 0 0; font-size: 13px; color: #f0d58a; }
+.cash-cell { cursor: default; }
+.cash-cell > div:first-child { cursor: pointer; }
+.cash-cell .att-tag { color: #9ad8ff; font-weight: 700; }
+.cash-cell.poor { opacity: .55; }
+.cash-btns { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
 .hunt-pick-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
 .hunt-pick-row .ab-select { max-width: 220px; }
 .pet-row .acv-side { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; max-width: 46%; }
@@ -1795,6 +1804,9 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .town-npc-icon { font-size: 1.5rem; }
 .town-npc-name { font-weight: 600; font-size: 0.85rem; color: var(--gold-soft); }
 .town-npc-card:hover .town-npc-name { color: var(--bg-deep); }
+.town-npc-card.locked { cursor: default; opacity: .6; }
+.town-npc-card.locked:hover { background: var(--bg-panel-2); color: inherit; }
+.town-npc-card.locked:hover .town-npc-hint, .town-npc-card.locked:hover .town-npc-name { color: inherit; }
 .town-npc-hint { font-size: 0.7rem; color: var(--ink-dim); }
 
 /* Auto Battle Tab */
@@ -2516,10 +2528,10 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 /* T27 城鎮分區：戰場上的 NPC、區域招牌、地圖分頁清單 */
 #bf-npcs { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 .bf-npc { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; pointer-events: auto; cursor: pointer; }
-.bf-npc canvas { display: block; image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.bf-npc img { display: block; image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
 .bf-npc em { position: absolute; top: 100%; margin-top: 2px; font-style: normal; font-size: 11px; white-space: nowrap; color: #bfe6ff; text-shadow: 0 1px 2px #000, 0 0 3px #000; }
 .bf-npc:hover em, .bf-npc.target em { color: #ffe08a; }
-.bf-npc:hover canvas, .bf-npc.target canvas { filter: drop-shadow(0 0 4px rgba(255, 224, 138, .9)); }
+.bf-npc:hover img, .bf-npc.target img { filter: drop-shadow(0 0 4px rgba(255, 224, 138, .9)); }
 .bf-sign { position: absolute; transform: translate(-50%, -50%); padding: 2px 10px; border-radius: 10px; background: rgba(20, 16, 11, .55); border: 1px solid rgba(201, 162, 74, .5); color: #f0d68a; font-size: 12px; white-space: nowrap; pointer-events: none; }
 .town-here { font-size: 12px; color: var(--ink-dim); font-weight: normal; }
 .town-district { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.06); }

@@ -2337,6 +2337,14 @@ function recomputeDerived(fullHeal) {
     state.defSoft = Math.max(0, Math.round(state.defSoft * (1 + defPctBonus)));
   }
   state.def = state.defHard + state.defSoft;
+  // MDEF ±%（塔奧群卡片系列）：同樣在所有 MDEF 來源加完之後才乘
+  const mdefPctBonus = getCardBonus('mdefPct') / 100;
+  if (mdefPctBonus !== 0) {
+    state.mdefHard = Math.max(0, Math.round(state.mdefHard * (1 + mdefPctBonus)));
+    state.mdefSoft = Math.max(0, Math.round(state.mdefSoft * (1 + mdefPctBonus)));
+    state.mdef = state.mdefHard + state.mdefSoft;
+  }
+  state.cardNoGemStone = getCardBonus('noGemStone') > 0;
 
   /* 戰鬥迴圈每次揮擊都會用到的卡片數值，先在這裡收斂成純量，
      免得每一擊都去掃一遍所有插槽的卡片 */
@@ -2370,6 +2378,11 @@ function recomputeDerived(fullHeal) {
   state.playerElement = 'none';
   for (const e of ARMOR_ELEMENT_PRIORITY) {
     if (getCardBonus('armorEle_' + e) > 0) { state.playerElement = e; break; }
+  }
+  // 攻擊屬性（atkEle_<屬性>，rAthena bAtkEle）：武器本身沒有屬性時才套，箭矢與附魔照樣蓋過
+  state.cardAtkElement = null;
+  for (const e of ARMOR_ELEMENT_PRIORITY) {
+    if (getCardBonus('atkEle_' + e) > 0) { state.cardAtkElement = e; break; }
   }
   /* 聖之祈福（#95）的防禦屬性附加**蓋過卡片**——限時的東西壓過常駐的，
      不然穿著屬性防具時放這招會完全沒感覺。 */
@@ -2733,7 +2746,8 @@ function defOf(mon, scale, magic, inst) {
   const fm = farmMult('def');
   const s = (scale === undefined ? 1 : scale) * (inst ? ailDefMult(inst) : 1) * fm;
   if (magic) {
-    const ig = (state.cardMdefIgnorePct || 0) + (mon.isBoss ? (state.cardBossMdefIgnorePct || 0) : 0);
+    const ig = (state.cardMdefIgnorePct || 0) + (mon.isBoss ? (state.cardBossMdefIgnorePct || 0) : 0)
+      + (mon.race ? getCardBonus('mdefIgnoreRace_' + mon.race) : 0);
     const ms = s * Math.max(0, 1 - ig / 100) * monDebuffMdef(inst);
     return [(mon.mdef || 0) * ms, (mon.mdefSoft || 0) * ms];
   }
@@ -2751,7 +2765,9 @@ function defOf(mon, scale, magic, inst) {
 function physDefIgnorePct(mon) {
   const all = state.cardDefIgnorePct || 0;
   const byRace = (state.cardDefIgnoreRace && mon && state.cardDefIgnoreRace[mon.race]) || 0;
-  return Math.min(100, all + byRace);
+  // 無視首領防禦（rAthena bIgnoreDefClass,Class_Boss：爾休披斯槍、鋼爪拳套）
+  const boss = mon && mon.isBoss ? getCardBonus('bossDefIgnorePct') : 0;
+  return Math.min(100, all + byRace + boss);
 }
 
 /* 卡片的「從某個魔物家族受到的傷害 +N%」（妖道：從殭屍受到的傷害 +100%）。
@@ -3058,7 +3074,7 @@ function estimateMapYield(mapObj) {
 
   const weaponId = getEquipBaseItemId('weapon');
   const weapon = weaponId ? ITEMS[weaponId] : null;
-  const atkElement = (weapon && weapon.element) ? weapon.element : 'none';
+  const atkElement = (weapon && weapon.element) ? weapon.element : (state.cardAtkElement || 'none');
   const critRate = Math.min(100, state.critRate) / 100;
 
   let dmg = 0, exp = 0, jobExp = 0, gold = 0, hp = 0;
@@ -3488,7 +3504,8 @@ function bossCardKind(cardId) {
       沒有任何怪物會掉，也不該從卡冊開出來——用名稱結尾是不是「卡片」來擋
    2. 有 3 張卡片沒有對應的 ITEMS 條目，addItem 進不了背包
    剩下 445 張，其中 MVP 卡 30 張、迷你王卡 39 張。 */
-const cardDrawable = () => Object.keys(CARDS).filter(k => ITEMS[k] && /卡片$/.test(CARDS[k].name));
+// 封印卡只從封印王卡卡冊開（SEALED_CARD_RATES），其他卡冊不出
+const cardDrawable = () => Object.keys(CARDS).filter(k => ITEMS[k] && /卡片$/.test(CARDS[k].name) && !SEALED_CARD_RATES[k]);
 const cardWeight = id => CARD_ALBUM_WEIGHT[bossCardKind(id)];
 
 const ALBUM_ITEMS = {
@@ -3505,7 +3522,26 @@ const ALBUM_SLOT = {
   old_c_album_weapon: 'weapon',
 };
 
+/* 封印王卡卡冊：41 張封印 MVP 卡，機率照台服公告（使用者 2026-11-07 提供，合計 100%）。
+   rAthena 的 IG_SEALED_CARD 只有 15 張、平均，跟台服不同，以台服為準。 */
+const SEALED_CARD_RATES = {
+  sealed_kiel_card: 1, sealed_ktullanux_card: 2.5, sealed_b_ygnizem_card: 3, sealed_dracula_card: 2,
+  sealed_mistress_card: 2, sealed_gloom_card: 2, sealed_berz_card: 2, sealed_ifrit_card: 3,
+  sealed_d_lord_card: 3, sealed_pharaoh_card: 3, sealed_m_flower_card: 3, sealed_b_shecil_card: 2.5,
+  sealed_orc_hero_card: 3, sealed_tao_card: 2, sealed_turtleg_card: 2.5, sealed_knight_ws_card: 2.5,
+  sealed_lady_tanee_card: 3, sealed_samurai_card: 2, sealed_orc_load_card: 2.5, sealed_b_magaleta_card: 3,
+  sealed_b_harword_card: 3, sealed_apocalips_h_card: 2.5, sealed_eddga_card: 3, sealed_bacsojin_card: 2.5,
+  sealed_f_bishop_card: 2.5, sld_q_scaraba_card: 2.5, sld_thanatos_card: 1, sld_baphomet_card: 2,
+  sld_maya_card: 2, sld_clown_card: 2.5, sld_professor_card: 2, sld_champion_card: 2.5,
+  sld_creator_card: 2.5, sld_stalker_card: 3, sld_paladin_card: 3, sld_gypsy_card: 3,
+  sld_daehyon_card: 2.5, sld_gioia_card: 2, sld_pyuriel_card: 2.5, sld_kades_card: 1.5,
+  sld_timeholder_card: 2.5,
+};
 Object.assign(BOX_POOLS, {
+  sealed: {
+    build: () => Object.keys(SEALED_CARD_RATES).filter(k => ITEMS[k]),
+    weight: id => SEALED_CARD_RATES[id],
+  },
   album: {
     build: () => Object.keys(ALBUM_ITEMS).filter(k => ITEMS[k]),
     weight: id => ALBUM_ITEMS[id],
@@ -4757,6 +4793,7 @@ function sageWarehouseQty(id) {
 // 湊不湊得出來（只看，不扣）。ids 依序試，第一個湊得出來的就算數
 function sageCanPay(ids, qty, goldFallback) {
   qty = qty || 1;
+  if (gemFreeByCard(ids)) return true;
   for (const id of ids || []) {
     if (getItemQty(id) >= qty || sageWarehouseQty(id) >= qty) return true;
   }
@@ -4764,8 +4801,14 @@ function sageCanPay(ids, qty, goldFallback) {
 }
 /* 真的扣。回傳 { id, label } 讓訊息印得出「用掉了什麼」，湊不出來回 null。
    `gemfree`（觸媒之所）在這裡一起認——那個 buff 講的就是「使用魔法時魔力礦石不消耗」。 */
+/* 不消耗魔力礦石（蜂后卡片系列，卡片鍵 noGemStone）：要付的全是魔力礦石才免，其他觸媒照扣 */
+const GEMSTONE_IDS = ['blue_gemstone', 'red_gemstone', 'yellow_gemstone'];
+function gemFreeByCard(ids) {
+  return !!(state && state.cardNoGemStone && ids && ids.length && ids.every(id => GEMSTONE_IDS.includes(id)));
+}
 function sagePay(ids, qty, goldFallback) {
   qty = qty || 1;
+  if (gemFreeByCard(ids)) return { id: null, label: '（卡片效果：不消耗魔力礦石）' };
   const gemFree = buffMult('gemfree').flatBonus;
   if (gemFree > 0 && Math.random() * 100 < gemFree) return { id: null, label: '（觸媒之所免除）' };
   for (const id of ids || []) {
@@ -5225,12 +5268,12 @@ function tryGanbantein() {
   if (!state.hasGanbantein || !state.monsters || !state.monsters.length) return;
   if (Date.now() < (state.ganbanteinReadyAt || 0)) return;
   if (typeof getItemQty !== 'function') return;
-  if (GANBANTEIN_STONES.some(id => getItemQty(id) <= 0)) return;
+  if (!gemFreeByCard(GANBANTEIN_STONES) && GANBANTEIN_STONES.some(id => getItemQty(id) <= 0)) return;
   state.ganbanteinReadyAt = Date.now() + state.ganbanteinCdSec * 1000;
   /* 觸媒之所（#68）：官方是「使用魔法時魔力礦石消耗 −1」。本作單人合奏只有一半效果，
      所以做成「N% 機率不消耗」——礦石本來就只吃 1 個，減半沒有整數可減。 */
   const gemFree = buffMult('gemfree').flatBonus;
-  const freeThisTime = gemFree > 0 && Math.random() * 100 < gemFree;
+  const freeThisTime = gemFreeByCard(GANBANTEIN_STONES) || (gemFree > 0 && Math.random() * 100 < gemFree);
   if (!freeThisTime) GANBANTEIN_STONES.forEach(id => removeItem(id, 1));
   let hit = 0;
   state.monsters.forEach(mon => {
@@ -6526,6 +6569,7 @@ function startWarpPortal(dest) {
 function cancelTravel(silent) {
   if (!state.travel) return;
   state.travel = null;
+  state.townGoal = null;
   if (!silent) logMsg('🧭 停止趕路。');
 }
 // 沒有擋路的怪：走向傳點，走到就換圖（全隊跟在身後一起進去）
@@ -7049,7 +7093,9 @@ function skillBaseDamage(useMag, monDef, elemMult, sk) {
     // 裝備的魔法對種族／體型增傷（rAthena bMagicAddRace／bMagicAddSize，T16），只算魔法
     const race = monDef && monDef.race ? getCardBonus('magicRaceDmg_' + monDef.race) : 0;
     const size = monDef && monDef.size ? getCardBonus('magicSizeDmg_' + monDef.size) : 0;
-    return state.matk * elemMult * (1 + dragon / 100) * (1 + race / 100) * (1 + size / 100);
+    // 對目標屬性的魔法增傷（rAthena bMagicAddEle，magicTargetEleDmg_<怪的屬性>）
+    const tEle = getCardBonus('magicTargetEleDmg_' + ((monDef && monDef.element) || 'none'));
+    return state.matk * elemMult * (1 + dragon / 100) * (1 + race / 100) * (1 + size / 100) * (1 + tEle / 100);
   }
   return weaponChainDamage(monDef, elemMult, state.buffs.some(b => b.type === 'maxroll'), sk);
 }
@@ -7168,7 +7214,7 @@ function playerAttackInner() {
   const weapon = atkWeaponId ? ITEMS[atkWeaponId] : null;
 
   // 屬性相剋：武器屬性 vs 怪物屬性（弓由箭矢決定）
-  let atkElement = (weapon && weapon.element) ? weapon.element : 'none';
+  let atkElement = (weapon && weapon.element) ? weapon.element : (state.cardAtkElement || 'none');
   if (isBowWeapon(atkWeaponId)) {
     const ammo = getEquippedAmmo();
     if (ammo && ammo.element) atkElement = ammo.element;
@@ -12485,14 +12531,15 @@ function inSafeZone() {
 }
 
 // 擋住轉生的理由（沒有就回 null）。UI 直接顯示這句話，不必自己拼條件
-function rebirthBlockReason() {
+function rebirthBlockReason(ignorePlace) {
   if ((state.rebirthCount || 0) >= REBIRTH_MAX) return '每隻角色只能轉生一次。';
   if (state.jobId === 'novice') return '你已經是新手了。';
-  if (!inSafeZone()) return '要在安全區（城鎮）才能轉生。';
+  // T29：轉生要到朱諾找女武神（towns.js）
+  const place = typeof rebirthPlaceReason === 'function' ? rebirthPlaceReason() : (inSafeZone() ? null : '要在安全區（城鎮）才能轉生。');
   if (state.baseLevel < REBIRTH_REQ.baseLevel) return `基礎等級要達到 ${REBIRTH_REQ.baseLevel}（目前 ${state.baseLevel}）。`;
   if (state.jobLevel < REBIRTH_REQ.jobLevel) return `職業等級要達到 ${REBIRTH_REQ.jobLevel}（目前 ${state.jobLevel}）。`;
   if (state.gold < REBIRTH_REQ.zeny) return `需要 ${REBIRTH_REQ.zeny.toLocaleString()}z（目前 ${Math.floor(state.gold).toLocaleString()}z）。`;
-  return null;
+  return ignorePlace ? null : place;
 }
 function canRebirth() { return rebirthBlockReason() === null; }
 
@@ -12616,7 +12663,7 @@ function doRebirth() {
 function jobNeedsSkillPoints(job) {
   return (job.skills || []).some(sk => sk && !sk.autoGrant && !sk.isQuest);
 }
-function canJobChange(targetId) {
+function canJobChange(targetId, ignorePlace) {
   const job = currentJob();
   const locked = rebirthPathNext();
   if (locked !== null && targetId !== locked) return false;
@@ -12633,6 +12680,8 @@ function canJobChange(targetId) {
   // 技能點檢查：當前職業的技能點必須花完
   if (!state.jobSkillPoints) state.jobSkillPoints = {};
   if (jobNeedsSkillPoints(job) && (state.jobSkillPoints[state.jobId] || 0) > 0) return false;
+  // T29：要站在公會 NPC 旁邊
+  if (!ignorePlace && typeof jobGuildBlockReason === 'function' && jobGuildBlockReason(targetId)) return false;
   return true;
 }
 // 轉生鎖住路線之後，這個職業之所以不能選的理由（給 UI 顯示用）
@@ -12648,7 +12697,7 @@ function jobLockReason(targetId) {
    玩家看到的就是「按了沒反應」。轉生之後樹上只剩自己那三格，這件事更明顯：
    畫面上只有一條路，而那條路點不動，看起來就像壞掉。
    實際上擋住的原因通常很單純（差一級、技能點還沒花完），寫出來就好。 */
-function jobChangeBlockReason(targetId) {
+function jobChangeBlockReason(targetId, ignorePlace) {
   const job = currentJob();
   const target = JOB_TREE[targetId];
   if (!target) return '這個職業還沒實作。';
@@ -12692,6 +12741,8 @@ function jobChangeBlockReason(targetId) {
       : '';
     return `還有 ${left} 點技能點沒用完${where}。${how}`;
   }
+  // T29：條件都到了，最後看人在不在公會 NPC 旁邊（ignorePlace：職業樹用來決定顯示「前往公會」）
+  if (!ignorePlace && typeof jobGuildBlockReason === 'function') return jobGuildBlockReason(targetId);
   return null;
 }
 
@@ -12837,8 +12888,8 @@ const NPC_SHOPS = {
             // 技能觸媒：魔力礦石（藍／紅／黃）、陷阱道具（官方 NPC 有賣）
             'blue_gemstone', 'red_gemstone', 'yellow_gemstone', 'booby_trap',
             'center_potion', 'awakening_potion', 'berserk_potion',
-            // 未解封的卡冊：500 萬一本，開出卡冊再開出卡片。純粹是給後期消耗金錢的玩法
-            'sealed_card_album', 'leaf_of_yggdrasil',
+            // 封印王卡卡冊改在商城用點數買（cash_shop.js）
+            'leaf_of_yggdrasil',
             'hair_dye', 'beauty_coupon'],
     getItems() {
       return this.items.filter(id => ITEMS[id]);
@@ -13074,10 +13125,8 @@ function tickAttendance() {
   at.day = day;
   const idx = at.n % ATTENDANCE_REWARDS.length;
   at.n++;
-  const r = ATTENDANCE_REWARDS[idx];
-  if (!r || !ITEMS[r[0]]) return;
-  addItem(r[0], r[1]);
-  logMsg(`📅 每日簽到（第 ${idx + 1} 天）：獲得 ${ITEMS[r[0]].name} ×${r[1]}！`);
+  const got = grantAttendance(idx);   // 表與發獎在 cash_shop.js
+  logMsg(`📅 每日簽到（第 ${idx + 1} 天）：獲得 ${got.join('、')}！`);
   saveGame();
 }
 
@@ -13229,7 +13278,7 @@ function openNpcShop(shopId) {
       category = typeNames[cat] || cat;
     } else if (item.type === 'armor') {
       const armorType = item.armorType || 'cloth';
-      const typeNames = { cloth: '衣服', leather: '皮甲', shield: '盾牌', garment: '披風', footgear: '鞋子', accessory: '飾品' };
+      const typeNames = { headgear: '頭盔', cloth: '衣服', leather: '皮甲', shield: '盾牌', garment: '披風', footgear: '鞋子', accessory: '飾品' };
       category = typeNames[armorType] || armorType;
     } else if (item.type === 'ammo') {
       category = '箭矢';        // 26 種全上架（#139），不分一組會全部掉進「其他」
@@ -13249,6 +13298,8 @@ function openNpcShop(shopId) {
     if (!grouped[category]) grouped[category] = [];
     grouped[category].push(id);
   });
+  // 箭矢排最後（使用者 2026-11-07）：武器商人清單裡箭矢常排在前面
+  if (grouped['箭矢']) { const a = grouped['箭矢']; delete grouped['箭矢']; grouped['箭矢'] = a; }
 
   let html = `<div class="npc-shop">
     <div class="npc-shop-header">
@@ -13573,7 +13624,9 @@ function useItem(itemId) {
          卡片那批（啤酒企鵝的果汁 +50%、雪怪的冰淇淋 +100%）是**指定道具**才生效，
          所以另外查一張 道具id → 加成% 的表，兩者相加。 */
       const perItemPct = (state.itemHealBonus && state.itemHealBonus[itemId]) || 0;
-      const boostedHeal = Math.round(def.heal * (1 + ((state.hpItemEffectBonusPct || 0) + perItemPct) / 100));
+      // itemHealPct：所有回復道具的回復量（rAthena bAddItemHealRate,N）
+      const allItemPct = getCardBonus('itemHealPct') || 0;
+      const boostedHeal = Math.round(def.heal * (1 + ((state.hpItemEffectBonusPct || 0) + perItemPct + allItemPct) / 100));
       state.hp = Math.min(state.maxHp, state.hp + boostedHeal);
       healed = true;
     }
@@ -14277,6 +14330,28 @@ function condMet(when, host, lo) {
      裝備時」，用 jobLine 判斷會永遠成立——每個職業的血脈都從初學者開始。 */
   if (when.jobIs && !(Array.isArray(when.jobIs) ? when.jobIs.includes(state.jobId) : state.jobId === when.jobIs)) return false;
   if (when.weaponReq && !weaponReqMet(when.weaponReq)) return false;
+  /* 以下由 scripts/lib/item_script.js 從 rAthena 腳本轉出（2026-11-07）：
+     基礎／職業等級門檻、學到的技能等級、武器等級、手上武器的分類（aspdCategoryOf）、三轉以上 */
+  if (when.levelMin != null && !((state.baseLevel || 1) >= when.levelMin)) return false;
+  if (when.jobLevelMin != null && !((state.jobLevel || 1) >= when.jobLevelMin)) return false;
+  if (when.skillMin) {
+    for (const [k, v] of Object.entries(when.skillMin)) {
+      if (((state.learnedSkills || {})[k] || 0) < v) return false;
+    }
+  }
+  if (when.weaponLvMin != null) {
+    const w = ITEMS[getEquipBaseItemId('weapon')];
+    if (!w || w.type !== 'weapon' || getRefineWeaponLv(w) < when.weaponLvMin) return false;
+  }
+  if (when.weaponCat && !when.weaponCat.includes(aspdCategoryOf(getEquipBaseItemId('weapon')))) return false;
+  // 手上武器的精煉值（卡片插在別的部位、卻看武器精煉的那種）
+  if (when.weaponRefineMin != null) {
+    const ws = lo.slots && lo.slots.weapon;
+    if (!ws || (ws.refine || 0) < when.weaponRefineMin) return false;
+  }
+  if (when.tierMin != null && !(((JOB_TREE[state.jobId] || {}).tier || 0) >= when.tierMin)) return false;
+  // 現實月份（金鋼猿頭飾：1、2 月加成），UTC+8
+  if (when.monthIn && !when.monthIn.includes(new Date(Date.now() + 8 * 3600 * 1000).getUTCMonth() + 1)) return false;
   if (when.withCards && !when.withCards.every(c => lo.cards.has(c))) return false;
   if (when.withItems && !when.withItems.every(i => lo.items.has(i))) return false;
   /* withAnyItem：陣列中**任一件**有裝就算成立（官方同一件裝備常有無孔/有孔兩個 id，
@@ -14916,6 +14991,14 @@ function getCardBonus(stat) {
     const target = k.slice('perBaseLv1_'.length);
     if (target !== stat) continue;
     total += (state.baseLevel || 0) * all[k];
+  }
+  /* perLv_<每N級>_<目標>／perJobLv_<每N級>_<目標>：基礎／職業等級每 N 級 +v
+     （scripts/lib/item_script.js 從 rAthena 的 BaseLevel/N、JobLevel/N 轉出，2026-11-07） */
+  for (const k in all) {
+    const m = k.match(/^per(Job)?Lv_(\d+)_(.+)$/);
+    if (!m || m[3] !== stat) continue;
+    const lv = (m[1] ? state.jobLevel : state.baseLevel) || 0;
+    total += Math.floor(lv / (+m[2] || 1)) * all[k];
   }
   /* perBaseLv210_<目標>： BaseLv210以上時…（狸貓變身樹葉-LT） */
   for (const k in all) {

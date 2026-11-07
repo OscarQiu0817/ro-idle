@@ -11,7 +11,7 @@
      refine  精煉師
      job     轉職官
      soon    還沒開放的功能（附魔、副本），點了只顯示說明
-   外觀 look 用職業紙娃娃（images/paperdoll），沒有 NPC 專用圖。
+   外觀 spr＝RO NPC sprite 名稱（grf_ex/sprite/npc → images/npc/<spr>.png，scripts/gen_npc_sprites.py）。
    配置（使用者 2026-11-06）：一進城是卡普拉（倉庫、傳送），分商店街／精煉・附魔區／副本三區，所有城鎮共用。 */
 
 /* ---- 各城的武器／防具商人（rAthena npc/merchants/shops.txt，2026-11-06 抓的 master）----
@@ -77,6 +77,35 @@ function makeTownShop(name, icon, items) {
     if (a.length) NPC_SHOPS[town + '_armor'] = makeTownShop('防具商人', '🛡️', a);
   }
 })();
+/* ---- 各城 NPC 外觀（使用者 2026-11-07：照官方預設，同城商人不重複）----
+   來源：rAthena npc/merchants/shops.txt（各城第一個武器／防具／道具商人）、npc/kafras/kafras.txt、
+   pre-re shops.txt 的寵物美容師（Pet Groomer）。官方沒有的欄位用卡普拉 1 號／寵物美容師補，
+   同城撞圖的改用其他商人圖（1_m_merchant、1_f_merchant_01／02…）。沒列的城鎮用普隆德拉那組。 */
+const TOWN_NPC_SPRITE = {
+  prontera: { kafra: '4_f_kafra6', weapon: '1_m_jobguider', armor: '1_m_02', item: '1_m_innkeeper', pet: '4_m_teleporter' },
+  alberta: { kafra: '4_f_kafra2', weapon: '1_m_03', armor: '4w_f_01', item: '1_f_merchant_01', pet: '4_f_teleporter' },
+  aldebaran: { kafra: '4_f_kafra5', weapon: '1_m_03', armor: '4w_f_01', item: '4_m_01', pet: '4_f_teleporter' },
+  amatsu: { kafra: '4_f_kafra2', weapon: '4_m_jpnoji', armor: '4_f_jpn2', item: '4_m_jpn', pet: '4_f_teleporter' },
+  ayothaya: { kafra: '4_f_kafra2', weapon: '4_m_thaiongbak', armor: '4_m_thaiold', item: '4_f_thaishaman', pet: '4_f_teleporter' },
+  brasilis: { kafra: '4_f_kafra1', weapon: '4_m_brz_man2', armor: '1_m_merchant', item: '4_f_brz_woman', pet: '4_f_teleporter' },
+  comodo: { kafra: '4_f_kafra7', weapon: '1_m_03', armor: '4w_f_01', item: '4_m_01', pet: '4_f_teleporter' },
+  einbroch: { kafra: '4_f_kafra8', weapon: '4_f_einwoman', armor: '1_m_merchant', item: '1_f_merchant_01', pet: '4_f_teleporter' },
+  geffen: { kafra: '4_f_kafra3', weapon: '1_m_01', armor: '1_f_01', item: '1_f_03', pet: '4_f_teleporter' },
+  gonryun: { kafra: '4_f_kafra2', weapon: '4_m_twboy', armor: '4_f_twgirl', item: '4_m_twoldman', pet: '4_f_teleporter' },
+  hugel: { kafra: '4_f_kafra1', weapon: '4_m_human_01', armor: '4_m_04', item: '1_m_innkeeper', pet: '4_f_teleporter' },
+  izlude: { kafra: '4_f_kafra1', weapon: '1_f_maria', armor: '1_m_siz', item: '1_m_01', pet: '4_f_teleporter' },
+  yuno: { kafra: '4_f_kafra8', weapon: '1_m_03', armor: '4w_f_01', item: '4_m_02', pet: '4_f_teleporter' },
+  lighthalzen: { kafra: '4_f_kafra8', weapon: '4_m_repair', armor: '1_m_merchant', item: '4_f_01', pet: '4_m_teleporter' },
+  louyang: { kafra: '4_f_kafra2', weapon: '4_m_chnman', armor: '4_f_chnwoman', item: '1_m_merchant', pet: '4_f_teleporter' },
+  xmas: { kafra: '4_f_kafra1', weapon: '1_m_03', armor: '4w_f_01', item: '4_m_01', pet: '4_f_teleporter' },
+  morocc: { kafra: '4_f_kafra5', weapon: '1_m_merchant', armor: '1_f_merchant_01', item: '1_f_merchant_02', pet: '4_f_teleporter' },
+  moscovia: { kafra: '4_f_kafra4', weapon: '4_m_rusman2', armor: '4_f_ruswoman3', item: '1_m_merchant', pet: '4_f_teleporter' },
+  niflheim: { kafra: '4_f_nfdeadkafra', weapon: '4_nfcoffin', armor: '1_m_merchant', item: '1_f_merchant_01', pet: '4_f_teleporter' },
+  payon: { kafra: '4_f_kafra5', weapon: '1_f_orient_03', armor: '1_f_orient_02', item: '4_m_orient01', pet: '4_f_teleporter' },
+  rachel: { kafra: '4_f_kafra1', weapon: '4_m_rachman1', armor: '4_f_shabby', item: '1_m_merchant', pet: '4_f_teleporter' },
+  umbala: { kafra: '4_f_kafra7', weapon: '4_m_umsoldier', armor: '1_m_merchant', item: '4_m_umoldman', pet: '4_f_teleporter' },
+  veins: { kafra: '4_f_kafra1', weapon: '4_m_rachman1', armor: '4_f_shabby', item: '4_m_desert', pet: '4_f_teleporter' },
+};
 // 沒有分區資料時的通用商店（道具、寵物一律用這兩家）
 const GENERIC_TOWN_SHOPS = ['weapon', 'item', 'armor', 'pet'];
 
@@ -91,28 +120,90 @@ const TOWN_TEMPLATE = {
     { id: 'dungeon', name: '副本', x: -15, y: 0 },
   ],
   npcs: [
-    { id: 'kafra', name: '卡普拉職員', role: 'kafra', district: 'gate', x: 1.8, y: -0.5,
-      look: { job: 'novice', gender: 'female', hair: 17, hc: 1 } },
-    // 轉職暫時放入口（T29 會改成到各職業公會）
-    { id: 'jobmaster', name: '轉職官', role: 'job', district: 'gate', x: -1.8, y: -0.5,
-      look: { job: 'priest', gender: 'male', hair: 1, hc: 4 } },
+    { id: 'kafra', name: '卡普拉職員', role: 'kafra', district: 'gate', x: 1.8, y: -0.5 },
     // 四家排在一列、間隔 2 格：站在最左那家也看得到最右那家（畫面一屏約 ±7 格）
-    { id: 'weapon', name: '武器商人', role: 'shop', shopKind: 'weapon', district: 'shops', x: -3, y: -15,
-      look: { job: 'blacksmith', gender: 'male', hair: 2, hc: 0 } },
-    { id: 'armor', name: '防具商人', role: 'shop', shopKind: 'armor', district: 'shops', x: -1, y: -15,
-      look: { job: 'merchant', gender: 'female', hair: 8, hc: 6 } },
-    { id: 'item', name: '道具商人', role: 'shop', shopKind: 'item', district: 'shops', x: 1, y: -15,
-      look: { job: 'merchant', gender: 'male', hair: 5, hc: 3 } },
-    { id: 'pet', name: '寵物商人', role: 'shop', shopKind: 'pet', district: 'shops', x: 3, y: -15,
-      look: { job: 'archer', gender: 'female', hair: 9, hc: 3 } },
-    { id: 'refiner', name: '精煉師', role: 'refine', district: 'forge', x: 14, y: -1,
-      look: { job: 'blacksmith', gender: 'male', hair: 10, hc: 1 } },
-    { id: 'enchanter', name: '附魔師', role: 'soon', district: 'forge', x: 16, y: -1, soon: '附魔還沒開放（D7）。',
-      look: { job: 'sage', gender: 'female', hair: 11, hc: 5 } },
-    { id: 'dungeon', name: '副本管理員', role: 'soon', district: 'dungeon', x: -15, y: -1, soon: '副本還沒開放。',
-      look: { job: 'knight', gender: 'male', hair: 3, hc: 4 } },
+    { id: 'weapon', name: '武器商人', role: 'shop', shopKind: 'weapon', district: 'shops', x: -3, y: -15 },
+    { id: 'armor', name: '防具商人', role: 'shop', shopKind: 'armor', district: 'shops', x: -1, y: -15 },
+    { id: 'item', name: '道具商人', role: 'shop', shopKind: 'item', district: 'shops', x: 1, y: -15 },
+    { id: 'pet', name: '寵物商人', role: 'shop', shopKind: 'pet', district: 'shops', x: 3, y: -15 },
+    { id: 'refiner', name: '精煉師', role: 'refine', district: 'forge', x: 14, y: -1, spr: '4_m_03' },
+    { id: 'enchanter', name: '附魔師', role: 'soon', district: 'forge', x: 16, y: -1, soon: '附魔還沒開放（D7）。', spr: '4_m_sage_a' },
+    { id: 'dungeon', name: '副本管理員', role: 'soon', district: 'dungeon', x: -15, y: -1, soon: '副本還沒開放。', spr: '4_m_knight_silver' },
   ],
 };
+
+/* ---- T29 職業公會（使用者 2026-11-07：找 NPC 就能轉，不跑任務）----
+   地點照官方（rAthena npc/re/jobs、npc/jobs），外觀照該 NPC 的 sprite。官方在室內／專屬地圖的，放到所屬城鎮。
+     獵人：renewal 在毀葛（hu_in01）　流氓：官方在克魔島野外的流氓公會 → 克魔島
+     刺客：夢羅克金字塔 → 夢羅克　轉生、進階二轉：官方在英靈殿（從朱諾進）→ 朱諾女武神
+   轉生後的高等一轉（還是 swordsman 等同一個 id）照樣找一轉公會。
+   三轉官方散在各地、有些地圖本作沒有，先一律交給女武神。
+   弓箭手公會官方是 4_M_03，跟精煉師同圖，斐揚兩個並排會分不出來 → 改 4_m_job_hunter。 */
+const JOB_GUILDS = [
+  { id: 'g_swordsman', town: 'izlude', name: '劍士公會', spr: '2_m_swordmaster', jobs: ['swordsman'] },
+  { id: 'g_mage', town: 'geffen', name: '魔法師公會', spr: '2_f_magicmaster', jobs: ['mage'] },
+  { id: 'g_wizard', town: 'geffen', name: '巫師公會', spr: '1_f_gypsy', jobs: ['wizard'] },
+  { id: 'g_archer', town: 'payon', name: '弓箭手公會', spr: '4_m_job_hunter', jobs: ['archer'] },
+  { id: 'g_merchant', town: 'alberta', name: '商人公會', spr: '4_m_04', jobs: ['merchant'] },
+  { id: 'g_thief', town: 'morocc', name: '盜賊公會', spr: '2_m_thiefmaster', jobs: ['thief'] },
+  { id: 'g_assassin', town: 'morocc', name: '刺客公會', spr: '1_m_jobtester', jobs: ['assassin'] },
+  { id: 'g_church', town: 'prontera', name: '普隆德拉教堂', spr: '1_m_pastor', jobs: ['acolyte', 'priest'] },
+  { id: 'g_knight', town: 'prontera', name: '騎士團', spr: '1_m_knightmaster', jobs: ['knight'] },
+  { id: 'g_crusader', town: 'prontera', name: '十字軍', spr: '4_f_cru', jobs: ['crusader'] },
+  { id: 'g_monk', town: 'prontera', name: '聖卡皮多利那修道院', spr: '4_f_monk', jobs: ['monk'] },
+  { id: 'g_supernovice', town: 'aldebaran', name: '超級初心者導師', spr: '4_m_seaman', jobs: ['supernovice'] },
+  { id: 'g_alchemist', town: 'aldebaran', name: '鍊金術士公會', spr: '4_f_alche', jobs: ['alchemist'] },
+  { id: 'g_sage', town: 'yuno', name: '賢者學院', spr: '2_m_sage_old', jobs: ['sage'] },
+  { id: 'g_hunter', town: 'hugel', name: '獵人公會', spr: '4_f_job_hunter', jobs: ['hunter'] },
+  { id: 'g_bard', town: 'comodo', name: '吟遊詩人', spr: '2_m_bard_orient', jobs: ['bard'] },
+  { id: 'g_dancer', town: 'comodo', name: '舞孃', spr: '4_f_07', jobs: ['dancer'] },
+  { id: 'g_rogue', town: 'comodo', name: '流氓公會', spr: '4_f_rogue', jobs: ['rogue'] },
+  { id: 'g_blacksmith', town: 'einbroch', name: '鐵匠公會', spr: '4_m_job_blacksmith', jobs: ['blacksmith'] },
+  // 轉生＋進階二轉＋三轉；jobs 留空，jobGuildFor 依 tier 判斷
+  { id: 'g_valkyrie', town: 'yuno', name: '女武神', spr: '4_f_valkyrie', jobs: [], rebirth: true },
+];
+// 這個職業要找哪個公會：tier 2 以上不在名單上的（進階二轉、三轉）都歸女武神
+function jobGuildFor(jobId) {
+  const g = JOB_GUILDS.find(x => x.jobs.includes(jobId));
+  if (g) return g;
+  const jd = typeof JOB_TREE !== 'undefined' ? JOB_TREE[jobId] : null;
+  return jd && jd.tier >= 2 ? JOB_GUILDS.find(x => x.rebirth) : null;
+}
+function townName(mapId) {
+  const m = typeof MAPS !== 'undefined' ? MAPS.find(x => x.id === mapId) : null;
+  // 「衛星都市 依斯魯得島」→ 依斯魯得島、「…共和國首都朱諾」→ 朱諾
+  return m && m.name ? m.name.trim().split(/\s+/).pop().replace(/^.*首都/, '') : mapId;
+}
+/* 站在公會 NPC 旁邊才能轉（T29）。查不到公會的職業不擋 */
+function jobGuildBlockReason(jobId) {
+  const g = jobGuildFor(jobId);
+  if (!g) return null;
+  if (state.mapId === g.town) {
+    const n = townNpc(g.id);
+    if (n && townNpcDist(n) <= TOWN_NPC_NEAR) return null;
+  }
+  return `要到${townName(g.town)}找「${g.name}」轉職。`;
+}
+function rebirthPlaceReason() {
+  const g = JOB_GUILDS.find(x => x.rebirth);
+  if (state.mapId === g.town) {
+    const n = townNpc(g.id);
+    if (n && townNpcDist(n) <= TOWN_NPC_NEAR) return null;
+  }
+  return `要到${townName(g.town)}找「${g.name}」轉生。`;
+}
+/* 前往公會：同城直接走過去；不同城沿傳送點趕路，進城後自動走向 NPC（townEnter 接手） */
+function goToJobGuildNpc(g) {
+  if (!g) return false;
+  if (state.mapId === g.town && isInTown()) return walkToTownNpc(g.id);
+  state.townGoal = { map: g.town, npc: g.id };
+  if (startTravel(g.town)) return true;
+  state.townGoal = null;
+  return false;
+}
+function goToJobGuild(jobId) { return goToJobGuildNpc(jobGuildFor(jobId)); }
+function goToRebirth() { return goToJobGuildNpc(JOB_GUILDS.find(x => x.rebirth)); }
+
 const _townLayoutCache = {};
 function buildTownLayout(mapId) {
   if (_townLayoutCache[mapId]) return _townLayoutCache[mapId];
@@ -121,6 +212,8 @@ function buildTownLayout(mapId) {
     districts: TOWN_TEMPLATE.districts,
     npcs: TOWN_TEMPLATE.npcs.map(n => {
       const o = Object.assign({}, n);
+      const look = TOWN_NPC_SPRITE[mapId] || TOWN_NPC_SPRITE.prontera;
+      if (!o.spr) o.spr = look[n.shopKind || n.role];
       if (n.shopKind) {
         const own = mapId + '_' + n.shopKind;
         o.shop = (n.shopKind === 'weapon' || n.shopKind === 'armor') && NPC_SHOPS[own] ? own : n.shopKind;
@@ -128,6 +221,15 @@ function buildTownLayout(mapId) {
       return o;
     }),
   };
+  // 有公會的城多一區「職業公會」，在城門口正下方；NPC 排一列、間隔 2 格
+  const guilds = JOB_GUILDS.filter(g => g.town === mapId);
+  if (guilds.length) {
+    L.districts = L.districts.concat([{ id: 'guild', name: '職業公會', x: 0, y: 14 }]);
+    guilds.forEach((g, i) => L.npcs.push({
+      id: g.id, name: g.name, role: 'job', district: 'guild', spr: g.spr, guild: g,
+      x: (i - (guilds.length - 1) / 2) * 2, y: 13,
+    }));
+  }
   return (_townLayoutCache[mapId] = L);
 }
 
@@ -165,6 +267,12 @@ function townEnter(mapId) {
   if (!L) return;
   state.worldX = L.spawn[0];
   state.worldY = L.spawn[1];
+  // 前往公會（goToJobGuild）到了目的城：接著走向那個 NPC
+  const goal = state.townGoal;
+  if (goal && goal.map === mapId) {
+    state.townGoal = null;
+    if (L.npcs.some(n => n.id === goal.npc)) state.townTarget = goal.npc;
+  }
 }
 /* 走向 NPC（畫面點 NPC、地圖分頁點清單都走這支）；已經在旁邊就直接開 */
 function walkToTownNpc(id) {

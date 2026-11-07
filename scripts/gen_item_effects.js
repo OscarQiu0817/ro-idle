@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const { loadGameData, ROOT } = require('./lib/game_data');
 const { loadItemDb } = require('./lib/rathena');
-const { parseScript, convert, autoSpellsOf, ownKey, familyOf } = require('./lib/item_script');
+const { parseScript, convert, autoSpellsOf, specialsOf, setContext, ownKey, familyOf } = require('./lib/item_script');
 
 const WRITE = process.argv.includes('--write');
 const DIFF = process.argv.includes('--diff') ? process.argv[process.argv.indexOf('--diff') + 1] : null;
@@ -30,10 +30,16 @@ const TOP = ['str', 'agi', 'vit', 'int', 'dex', 'luk', 'hp', 'sp', 'mdef', 'hit'
 // 已廢除的魔改鍵（D2）：一律丟掉
 const RETIRED = /^(skillCdFlat|afterCastPct|fixedCast)|_(skillCdFlat|afterCastPct)$/;
 function build() {
-  const { ITEMS, CARDS, SKILLS } = loadGameData();
+  const { ITEMS, CARDS, SKILLS, JOB_TREE, MONSTERS } = loadGameData();
   const db = loadItemDb();
   const byAegis = new Map();
   db.forEach(it => byAegis.set(String(it.AegisName).toLowerCase(), it));
+  // 腳本裡的官方編號 → 本作 key（指定怪物傷害、指定道具、穿著某件裝備）
+  const mobKey = {}, itemKeys = {};
+  Object.values(MONSTERS).forEach(m => { if (m.imgId && !mobKey[m.imgId]) mobKey[m.imgId] = m.id; });
+  Object.values(ITEMS).forEach(x => { if (x.imgId) (itemKeys[x.imgId] = itemKeys[x.imgId] || []).push(x.id); });
+  const ctx = { skills: SKILLS, jobs: JOB_TREE, mobKey, itemKeys };
+  setContext(ctx);
   const out = {};
   const gaps = [];
   const stat = { items: 0, cards: 0, changed: 0, keptFam: 0, removedHand: 0 };
@@ -46,13 +52,17 @@ function build() {
     card ? stat.cards++ : stat.items++;
     const d = card || it;
     const entries = parseScript(ra.Script);
-    const conv = convert(entries, { skills: SKILLS, perStyle: card ? 'card' : 'item' });
+    const conv = convert(entries, { ...ctx, perStyle: card ? 'card' : 'item' });
     const { rec, skippedFam } = conv;
     /* 自動念咒：rAthena 有寫、而且整件都轉得了 → 以 rAthena 為準（取代手寫）；有任何一條轉不了 → 手寫整組保留。
        rAthena 沒寫的不動手寫（可能是台服敘述才有的） */
     const as = autoSpellsOf(entries, SKILLS, true);
-    const asDone = as.skipped.length ? new Set() : new Set(entries.filter(e => /^bAutoSpell(WhenHit|OnSkill)?$/.test(e.name)).map(e => e.raw));
-    const skipped = conv.skipped.filter(l => !asDone.has(l));
+    const asSkippedRaw = new Set(as.skipped);
+    const asDone = new Set(entries.filter(e => /^bAutoSpell(WhenHit|OnSkill)?$/.test(e.name) && /^bonus[345]$/.test(e.fn) && !asSkippedRaw.has(e.raw)).map(e => e.raw));
+    // 異常／擊殺掉落／賦予技能：同一套規則（整類都轉得了才取代手寫）
+    const sp = specialsOf(entries, ctx);
+    const isDone = l => asDone.has(l) || sp.done.has(l) || [...asDone, ...sp.done].some(r => l.startsWith(r + '  if('));
+    const skipped = conv.skipped.filter(l => !isDone(l));
     if (skipped.length) gaps.push({ id: it.id, name: it.name, lines: skipped });
     const keep = k => skippedFam.has(familyOf(k));
     const patch = {};
@@ -106,8 +116,22 @@ function build() {
         ['melee', 'useLearnedLv', 'upgradeIf'].forEach(f => { if (h[f]) e[f] = h[f]; });
       });
       const combo = hand.filter(x => x.when && (x.when.withCards || x.when.withItems));
-      const list = as.list.concat(combo);
+      // rAthena 那條轉不了的技能：手寫有就留著（可能是原作者的近似）
+      const done = new Set(as.list.map(e => e.on + ':' + e.skill));
+      const keepHand = as.skipped.length ? hand.filter(x => !combo.includes(x) && !done.has(x.on + ':' + x.skill)) : [];
+      const list = as.list.concat(combo, keepHand);
       patch.autoSpell = list.length ? list : null;
+    }
+    const SP_KIND = { ailment: ['bAddEff', 'bAddEffWhenHit'], killDrop: ['bAddMonsterDropItem'], grantSkill: ['skill'] };
+    for (const kind of sp.kinds) {
+      const failed = sp.skipped.some(l => entries.some(e => e.raw === l && SP_KIND[kind].includes(e.name)));
+      // 手寫裡搭配某張卡／某件裝備才生效的（官方寫在 item_combo）保留
+      const combo = (d[kind] || []).filter(x => x.when && (x.when.withCards || x.when.withItems));
+      const sig = x => kind === 'ailment' ? x.on + ':' + x.type : kind === 'killDrop' ? (x.race || '') + ':' + (x.items || [x.pool]).join(',') : x.id;
+      const got = new Set(sp.lists[kind].map(sig));
+      const keepHand = failed ? (d[kind] || []).filter(x => !combo.includes(x) && !got.has(sig(x))) : [];
+      const list = sp.lists[kind].concat(combo, keepHand);
+      patch[kind] = list.length ? list : null;
     }
     for (const k of Object.keys(d)) if (RETIRED.test(k)) patch[k] = null;
     // 沒變的欄位不寫
