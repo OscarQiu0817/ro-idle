@@ -29,13 +29,8 @@ const ITEM_EFFECTS_MANUAL = {
   /* 虎王卡片：官方是「無限霸體」（bNoWalkDelay，移動無延遲），本作沒有移動延遲。
      改成學會霸體 Lv10（使用者 2026-11-07），MHP −25% 照官方 */
   eddga_card: { bonus: { hpPct: -25 }, grantSkill: [{ id: 'sm_endure', lv: 10 }] },
-  /* 封印女王甲蟲卡片：對甲蟲家族（RC2_SCARABA）傷害 +15%，精煉 +15 以上 +25%。本作用指定怪物傷害寫甲蟲各隻 */
-  sld_q_scaraba_card: (() => {
-    const mons = ['horn_scaraba', 'horn_scaraba2', 'antler_scaraba', 'rake_scaraba', 'queen_scaraba',
-      'i_horn_scaraba', 'i_horn_scaraba2', 'i_antler_scaraba', 'i_rake_scaraba', 'i_queen_scaraba'];
-    const b = v => Object.fromEntries(mons.map(m => ['monDmg_' + m, v]));
-    return { bonus: b(15), condBonus: [{ when: { refineMin: 15 }, bonus: b(10) }] };
-  })(),
+  /* 黃金蟲卡片：官方是魔法傷害無效＋SP 消耗 +100%。原作者手寫的「怪物技能免疫」（monSkillImmune）連物理技能也擋，拿掉 */
+  golden_bug_card: { bonus: { magicImmunePct: 100, spCostPct: 100 } },
 };
 (function applyItemEffectsManual() {
   for (const [id, p] of Object.entries(ITEM_EFFECTS_MANUAL)) {

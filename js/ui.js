@@ -209,6 +209,7 @@ function showSlotSelect() {
 
 function backToTitle() {
   saveGame();
+  if (typeof cloudUpload === 'function') cloudUpload();   // 回標題時同步一次
   // 走 stopLoop() 而不是自己清計時器：那支還會把 loopRunning() 的旗標放下來（#135），
   // 少了那一步，切分頁的處理會以為迴圈還在跑，回來就不重啟了
   stopLoop();
@@ -5772,6 +5773,8 @@ function renderCodexDetail(id) {
      不補這一段，圖鑑會對 49 件遺物說「沒有怪物會掉」，那是錯的。
      實際規則：頭目掉遺物券（等級越高機率越高），券再拿去跟遺物商人換。 */
   const relicRows = relicSourceHtml(id, d);
+  // 商城、每日簽到、卡冊（2026-11-08）：不在掉落表與商店裡的取得管道
+  const otherRows = codexOtherSourcesHtml(id);
   const statBits = [];
   ['atk', 'matk', 'def', 'hp', 'sp', 'str', 'agi', 'vit', 'int', 'dex', 'luk', 'hit', 'flee', 'critRate'].forEach(k => {
     if (typeof d[k] === 'number' && d[k] !== 0) statBits.push(`${k.toUpperCase()} ${d[k] > 0 ? '+' : ''}${d[k]}`);
@@ -5817,12 +5820,33 @@ function renderCodexDetail(id) {
     ${(card && card.desc) || d.desc ? `<div class="codex-detail-desc">${(card && card.desc) || d.desc}</div>` : ''}
     ${unimpl}
     <div class="codex-detail-sec">去哪裡打<span class="codex-sec-hint">照出現率排序，點「前往」直接過去</span></div>
-    <div class="codex-spots">${relicRows}${shopRows}${srcRows || (relicRows || shopRows ? '' : (
+    <div class="codex-spots">${relicRows}${shopRows}${otherRows}${srcRows || (relicRows || shopRows || otherRows ? '' : (
       (typeof boxEligible === 'function' && boxEligible(id))
         ? '<div class="dim">沒有怪物會掉、商店也沒賣。神秘箱子與神秘紫箱有機會開到。</div>'
         : '<div class="dim">沒有怪物會掉，也不在商店販售</div>'
     ))}</div>
   </div>`;
+}
+
+/* 圖鑑「去哪裡打」的其他管道：商城（點數）、每日簽到第幾天、哪些卡冊開得到。
+   卡冊只列卡片類的池子（老舊／部位收集冊、具有魔力的卡片冊子、封印王卡卡冊）；
+   神秘箱子那種幾萬件的大池子不列，下面那句「神秘箱子有機會開到」已經涵蓋。 */
+function codexOtherSourcesHtml(id) {
+  const rows = [];
+  if (typeof cashShopPrice === 'function') {
+    const p = cashShopPrice(id);
+    if (p) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">💎 商城</span><span class="codex-spot-name">${p} ${CASH_POINT_NAME}</span></div>`);
+  }
+  if (typeof ATTENDANCE_REWARDS !== 'undefined') {
+    const days = ATTENDANCE_REWARDS.map((r, i) => ((r.items || []).some(([k]) => k === id) ? i + 1 : 0)).filter(Boolean);
+    if (days.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">📅 每日簽到</span><span class="codex-spot-name">第 ${days.join('、')} 天</span></div>`);
+  }
+  if (CARDS[id] && typeof boxPool === 'function') {
+    const kinds = ['card', 'cardFlat', 'sealed', ...Object.values(ALBUM_SLOT || {}).map(sl => 'card_' + sl)];
+    const boxes = Object.values(ITEMS).filter(x => x.boxOpen && kinds.includes(x.boxOpen) && (boxPool(x.boxOpen).ids || []).includes(id));
+    if (boxes.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">📕 卡冊</span><span class="codex-spot-name">${boxes.map(x => shopEsc(getItemDisplayName(x.id))).join('、')}</span></div>`);
+  }
+  return rows.join('');
 }
 
 const CARD_SLOT_LABELS = {

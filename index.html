@@ -47,6 +47,7 @@
           <button class="btn-small" onclick="exportFullBackupFile()" title="把全部存檔欄位＋倉庫打包成一個 JSON 檔">匯出全部（含倉庫）</button>
           <button class="btn-small" onclick="importFullBackupFile()" title="從備份檔還原全部存檔欄位與倉庫（會覆蓋）">匯入全部（含倉庫）</button>
         </div>
+        <button class="btn-small cloud-status cloud-title-btn" onclick="openCloudModal()" title="手機與電腦共用同一份存檔">☁ 雲端存檔</button>
       </div>
     </div>
     <div id="title-disclaimer-box" class="disclaimer-box">
@@ -167,6 +168,7 @@
           </div>
           <button id="btn-mute" class="hud-menu-row" onclick="toggleMute()" title="靜音/取消靜音">🔊 靜音</button>
           <button id="btn-idle-report" class="hud-menu-row" onclick="toggleIdleReport()" title="最近 3 筆離線／切分頁的結算">掛機收益</button>
+          <button class="hud-menu-row cloud-status" onclick="openCloudModal();closeHudMenu()">☁ 雲端存檔</button>
           <button class="hud-menu-row" onclick="openAboutModal();closeHudMenu()">關於本作</button>
         </div>
       </div>
@@ -315,6 +317,14 @@
   </div>
 </div>
 
+<div id="cloud-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeCloudModal()">
+  <div class="modal-box">
+    <h3 class="modal-title">☁ 雲端存檔</h3>
+    <div id="cloud-modal-body"></div>
+    <button class="btn btn-primary modal-confirm" onclick="closeCloudModal()">關閉</button>
+  </div>
+</div>
+
 <div id="stat-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeStatInfo()">
   <div class="modal-box">
     <div class="stat-modal-head">
@@ -393,6 +403,7 @@
 <script src="js/paperdoll_layers.js"></script>
 <script src="js/paperdoll.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/cloud_save.js"></script>
 <script>
   window.addEventListener('load', initApp);
   window.addEventListener('beforeunload', () => { if (typeof state !== 'undefined' && state) saveGame(); });

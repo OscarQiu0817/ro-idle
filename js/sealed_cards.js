@@ -19,13 +19,11 @@
   // 沒做到的部分：補在說明最後，圖鑑另列
   const GAP = {
     sealed_ifrit_card: ['被攻擊時自動施放地震（本作沒有這個技能）'],
-    sealed_samurai_card: ['無視一般怪物的防禦力', '定時扣 HP', '卸下時扣 HP'],
+    sealed_samurai_card: ['卸下時扣 HP'],
     sealed_eddga_card: ['移動無延遲'],
     sld_q_scaraba_card: ['額外掉落道具'],
-    sld_thanatos_card: ['依敵人 DEF 提高物理傷害'],
     sld_clown_card: ['裝備樂器／鞭子時可使用布萊奇之詩'],
     sld_gypsy_card: ['裝備樂器／鞭子時可使用女神之吻'],
-    sld_professor_card: ['被魔法攻擊時自動施放大地之盾'],
   };
   const PROCNOTE = /\s*（⚠ 本服實作：這張卡目前只有上面列出的固定加成有效[^）]*）/;
   for (const [id, lines] of Object.entries(GAP)) {

@@ -2596,3 +2596,10 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .bf-zone.bf-field.elem-ring-wind { background: rgba(200, 255, 140, 0.12); border-color: rgba(210, 255, 150, 0.8); }
 .monster-slot.ail-stone img { filter: grayscale(1) contrast(0.85) brightness(0.95) drop-shadow(0 4px 10px rgba(0,0,0,0.4)) !important; }
 .monster-slot.ail-freeze img { filter: saturate(0.4) brightness(1.15) sepia(0.2) hue-rotate(170deg) drop-shadow(0 0 3px #9fe0ff) drop-shadow(0 4px 10px rgba(0,0,0,0.4)) !important; }
+
+/* 雲端存檔 */
+.cloud-title-btn { display: block; margin: 10px auto 0; }
+.cloud-form { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.cloud-form input { max-width: none; width: 100%; box-sizing: border-box; }
+.cloud-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.cloud-msg { margin-top: 8px; color: #f5c46a; font-size: 13px; }

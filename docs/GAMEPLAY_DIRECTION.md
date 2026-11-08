@@ -198,6 +198,7 @@
 | T20 | 世界聊天室串接收尾 | 遊戲端已接（`chat/`）。剩 world-chat 那邊：Turnstile widget 加 `oscarqiu0817.github.io`（Dashboard 手動）、線上關測試頁（`ENABLE_TEST_UI`）、白名單拿掉 workers.dev。見 world-chat `CLAUDE.md`「延後的需求」 | 隨時 |
 | T21 | 裝備分享到聊天室 | 訊息帶 itemId＋精煉＋卡片快照，名稱／稀有度由 server 查裝備定義表填（不信任 client 文字）。world-chat 已預留 `type`、`payload`；要提供給 server 的：裝備定義表格式、精煉規則。有雲端存檔（T23）後改讀 server 真實資料 | T20 |
 | T22 | 意見回饋 | world-chat 規劃 `POST /feedback`（存 D1，與聊天分開）；遊戲端做回饋表單 | T20 |
+| T48 | 雲端存檔（整包同步） | **本機完成、待部署（2026-11-08）**：world-chat 新增帳號與存檔 API（`src/cloud-save.ts`、migration 0005），遊戲端 `js/cloud_save.js`：標題畫面與☰選單「☁ 雲端存檔」登入／註冊；開遊戲時下載、遊戲中每 5 分鐘／切到背景／回標題時上傳「全體備份」；同時只允許一台（另一台登入後這台停止同步，可「改在這台玩」）。忘記密碼無法重設。防不了改存檔（伺服器權威仍是 T23） | 待部署 |
 | T23 | 遊戲後端：帳號密碼＋雲端存檔＋server 權威 | 討論結論在 world-chat `docs/GAME-SERVER-PLAN.md`：Worker＋D1、client 只送操作、分段結算、在線共用種子掉落、離線二項分布、強化由 server 擲骰。對本 repo 的影響：公式／掉落表／亂數要拆成前端與 Worker 共用的模組（目前是全域 script、`Math.random`）；機率改整數；server 用「擊殺時間」估算，跟 v2 的即時戰鬥模擬差很多，要先決定 server 算到多細（與 3e 離線結算一起想）。開始前要提供：存檔結構、戰鬥／經驗公式、怪物與掉落表、精煉規則、玩家操作清單。未決：同步頻率、離線上限、忘記密碼、舊存檔匯入、帳號與聊天 `playerId` 綁定、是否同一個 Worker | v2 定版後 |
 | T24 | 技能特效與範圍標記 | 雙手劍加速那組非官方特效已拿掉（2026-11-02），`SKILL_FX` 機制保留。**低成本那批已做（2026-11-07）**：場地魔法範圍圈（`activeFieldEffects` 有 center／radius 的，依屬性上色、跟背景一起捲）、石化灰階、冰凍冰藍（怪物圖濾鏡）。剩正式特效：素材在 grf `data\texture\effect\`（貼圖、`.str`）與 `data\sprite\이팩트\`（spr/act）；技能→特效對照參考 roBrowser `SkillEffect.js`、`EffectTable.js`。spr/act 型可沿用現有解析；`.str` 與程式畫的 3D 效果（隕石、暴風雪）要另寫播放或手工近似 | 隨時 |
 | T25 ✕ | v2 上線並保留 v1.2 | 取消（使用者 2026-11-07：v1.2 不再保留） | — |
@@ -216,8 +217,10 @@
 | T38 ✅ | 補回有上地圖的怪物卡片 | 原作者 2026-08 依「怪沒上地圖」刪了 787 張卡；v2 地圖資料把怪放回去後有 141 隻怪沒卡。補回 131 種卡（台服名稱說明、效果走 gen_item_effects、掉率一律 0.05%），沒效果／部分沒效果的在說明註記。沒上地圖的 6 隻 MVP（水晶龍：rAthena 改任務召喚；詛咒蠅王：貝雷傑變身；其餘副本）不補 | 2026-11-07 |
 | T39 ✅ | 封印王卡卡冊照台服 | 41 張封印 MVP 卡依台服公告機率（engine `SEALED_CARD_RATES`），補上 40 張封印卡；改在商城 100 點購買（道具商人下架）。官方 item_combo 搭配效果與未實作註記在 `js/sealed_cards.js` | 2026-11-07 |
 | T40 ✅ | 道具效果轉換第 2、3 類 | `scripts/lib/item_script.js` 讀懂區域變數、素質／等級／技能等級／職業／三轉／武器種類／武器等級／武器精煉／穿著裝備條件、線性成長（perLv_／perJobLv_／perStat_／perSkill_）、pow、VIP（一律不成立）；補對應：異常抗性、攻擊／被打附帶異常、賦予技能、擊殺掉落、吸血吸魔、攻擊回 SP、恢復率、定時回復、反彈、無視防禦／魔防、範圍攻擊、攻擊屬性、對屬性魔法傷害、掉寶率、DEF／MDEF %、不消耗魔力礦石等；engine condMet 加 levelMin／jobLevelMin／skillMin／weaponLvMin／weaponCat／weaponRefineMin／tierMin／monthIn。缺口 4,495 → 1,659 條（`docs/ITEM_EFFECT_GAPS.md`）；轉不了的手動放 `js/item_effects_manual.js`（虎王卡改成可使用霸體 Lv10＋MHP −25%） | 2026-11-07 |
-| T41 | 道具效果第 4 類（新機制） | autobonus（機率觸發暫時加成）、即死、依敵人 DEF 增傷、使用技能時附帶異常、擊殺得鋅幣、魔法傷害免疫、依種族攻擊回 SP、指定群組掉落（寶石／礦石／回復品）；遊戲裡有的道具約 55 件卡在這裡 | 待辦 |
-| T42 | 具有魔力的卡片冊子照官方 | 現在從全部卡片平均開；官方 IG_MagicCardAlbum 是指定 85 張、權重不同 | 待決定 |
-| T43 | 水晶龍上地圖 | 冰穴封印的空間（ice_dun04）沒放怪；放了之後補水晶龍卡片 | 待辦 |
+| T41 | 道具效果第 4 類（新機制） | **大部分已做（2026-11-08）**：autobonus／autobonus2／autobonus3（機率觸發暫時裝備加成，engine `tryAutoBonus`、buff type `gearbonus`）、HP／SP 流失與百分比回復（regenTick 可負、regenTickHpPct）、魔法／遠距離擊殺回復、即死（comaRace_／comaNormalPct）、對種族攻擊回 SP、無視一般怪防禦／魔防、受指定怪物／某屬性怪物傷害、魔法傷害減免（黃金蟲）、使用技能附帶異常、自傷異常、群組／指定怪物掉落、擊殺得隨機鋅幣、群組道具回復量、SP 道具回復量、甲蟲家族（MONSTER_FAMILIES.scaraba）、魔法觸發的自動念咒（magic／hitMagic）；裝備加成快取簽章補上等級／技能／月份。缺口 1,659 → 1,384 條。依敵人 DEF 增傷照使用者提供的 RO 公式（前段、後段 DEF 減傷都視為 0，後段 DEF÷2 轉卡裝 ATK、不吃體型修正）；官方只寫「機率」沒給數字的擊殺掉落一律 0.5%。**剩**：受治癒量（bHealPower2）、指定技能減傷、完美命中、隨機技能的 autobonus 等 | 進行中 |
+| T42 ✅ | 卡冊權重照官方 | 具有魔力的卡片冊子：全部卡片都抽得到，MVP 卡權重 0.3、小王卡 0.5（約 2%／5%；engine MAGIC_ALBUM_WEIGHT）；老舊收集冊與 7 種部位收集冊照 rAthena IG_CardAlbum 系列不出 MVP 卡與小王卡。圖鑑「去哪裡打」補上商城、每日簽到、卡冊來源（ui codexOtherSourcesHtml） | 2026-11-08 |
+| T43 ✅ | 水晶龍上地圖 | 拉赫冰穴 封印的空間（ice_dun04）首領（gen_worldmap EXTRA_BOSSES，MVP 模式才出）；水晶龍卡片 11-07 那批已補 | 2026-11-08 |
 | T44 | 補回卡片的插圖 | 補回的 131 張與 19 張封印卡專案裡沒有卡片插圖，圖鑑不顯示（背包用通用圖示） | 待辦 |
 | T45 ✅ | 「樂園團」統一改「伊甸園」 | 台服同組織兩種譯名；名稱與說明全改，`scripts/gen_item_identity.js` 產生時也替換 | 2026-11-07 |
+| T46 ✅ | 場上同時只有一隻首領 | MVP 與迷你王任何一隻在場時不再刷另一隻（spawnMonster） | 2026-11-08 |
+| T47 ✅ | 合併重複卡片 | 11-07 補回時有 22 張跟原作者留下的卡冊限定卡（imgId 0）撞名而各多一份；刪掉新增那份、掉落指向原卡、原卡補官方編號 | 2026-11-08 |

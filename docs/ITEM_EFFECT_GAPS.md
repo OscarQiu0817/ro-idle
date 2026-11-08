@@ -3,7 +3,7 @@
 > 由 `node scripts/gen_item_effects.js --write` 產生。這些 rAthena 條目轉不成本作的加成鍵；
 > 同一類的手寫數值因此保留（可能是對的、也可能是原作者的近似）。
 
-共 894 件、1659 條。
+共 710 件、1380 條。
 
 | 種類 | 條數 |
 |---|---|
@@ -11,92 +11,65 @@
 | bPAtk | 245 |
 | bSMatk | 160 |
 | bPow | 136 |
-| autobonus | 112 |
 | bSpl | 84 |
-| bAutoSpell | 69 |
+| bAutoSpell | 65 |
 | bUnbreakableHelm | 52 |
-| bAutoSpellWhenHit | 31 |
+| bAutoSpellWhenHit | 26 |
 | bSpeedRate | 26 |
-| bHPLossRate | 25 |
 | bUnbreakableArmor | 19 |
 | bHealPower2 | 18 |
 | bRes | 18 |
 | bMRes | 17 |
-| bMagicSPGainValue | 16 |
+| autobonus | 16 |
 | bSkillUseSPrate | 15 |
-| bAddEff2 | 14 |
-| bAddDefMonster | 14 |
 | bMagicAddClass | 14 |
 | bCon | 14 |
-| bLongSPGainValue | 13 |
-| bAddItemGroupHealRate | 11 |
-| bIgnoreMdefClassRate | 11 |
 | bPerfectHitAddRate | 11 |
 | bCRate | 11 |
 | bAddRace | 10 |
 | bAddEle | 10 |
 | bUnbreakableGarment | 9 |
-| bIgnoreDefClassRate | 9 |
 | bAddMagicDamageClass | 9 |
-| bAddRace2 | 8 |
 | bNoKnockback | 7 |
 | bSubSkill | 7 |
-| bAddEffOnSkill | 6 |
 | bAddSkillBlow | 6 |
 | bWeaponDamageRate | 6 |
 | bAddClass | 6 |
-| bDef2Rate | 5 |
-| bIgnoreDefClass | 5 |
-| bAddMonsterDropItemGroup | 5 |
-| bComaRace | 5 |
+| autobonus2 | 5 |
 | bSetDefRace | 5 |
 | bSetMDefRace | 5 |
 | bSPVanishRaceRate | 5 |
 | bNearAtkDef | 5 |
-| bSubDefEle | 5 |
 | bUnbreakableShield | 4 |
-| bNoSizeFix | 4 |
-| bDefRatioAtkClass | 4 |
 | bAddEff | 4 |
-| bSPDrainValueRace | 4 |
 | bFixedCastrate | 4 |
 | bSta | 4 |
 | bCrt | 4 |
 | bSPVanishRate | 3 |
-| bSPLossRate | 3 |
 | bUnbreakableShoes | 3 |
 | bAllTraitStats | 3 |
 | bHPlus | 3 |
-| bMagicHPGainValue | 3 |
 | bWis | 3 |
 | bAddSize | 3 |
 | bMagicAddSize | 3 |
 | bNoWalkDelay | 2 |
-| bGetZenyNum | 2 |
 | bHPRegenRate | 2 |
 | bSPRegenRate | 2 |
 | bMaxHP | 2 |
 | bMaxSP | 2 |
-| bSubEle | 2 |
-| bAddMonsterIdDropItem | 2 |
 | bSubRace2 | 2 |
 | bSkillCooldown | 2 |
 | bStateNoRecoverRace | 2 |
 | bHPVanishRaceRate | 2 |
 | bDelayrate | 2 |
 | bMagicSubSize | 2 |
-| bNoMagicDamage | 1 |
-| bRestartFullRecover | 1 |
 | bClassChange | 1 |
 | bAutoSpellOnSkill | 1 |
-| bComaClass | 1 |
 | bMagicAtkDef | 1 |
 | bResEff | 1 |
 | skill | 1 |
+| bAddEff2 | 1 |
 | bAtkRange | 1 |
-| bRegenPercentHP | 1 |
-| bRegenPercentSP | 1 |
-| bAddItemSPHealRate | 1 |
 | bStr | 1 |
 | bVit | 1 |
 | bCriticalRate | 1 |
@@ -109,8 +82,10 @@
 | bAspdRate | 1 |
 | bFixedCast | 1 |
 | bCritAtkRate | 1 |
+| bIgnoreDefClassRate | 1 |
 | bBaseAtk | 1 |
 | bMatk | 1 |
+| autobonus3 | 1 |
 | bMagicAddRace2 | 1 |
 
 ## 逐件
@@ -127,8 +102,6 @@
 - **2012 RMSC 專屬紀念頭飾** `2012rmscno4`
   - `bonus bSpeedRate,10`
 - **潛能激發冒險帽 [1]** `2020maypay_05`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,5*(.@r/3)`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,5*(.@r/3)`
   - `bonus5 bAutoSpell,"RK_STORMBLAST",1,20,BF_SHORT,1`
 - **萬物與靈魂的真諦-LT [1]** `2023seppay_02`
   - `bonus bPAtk,7`
@@ -142,15 +115,11 @@
 - **潛能激發冒險帽-LT [1]** `2023seppay_06`
   - `bonus2 bAddClass,Class_Normal,7*(.@r/3)`
   - `bonus2 bMagicAddClass,Class_Normal,7*(.@r/3)`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,5*(.@r/3)`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,5*(.@r/3)`
   - `bonus3 bAutoSpell,"RK_STORMBLAST",1,20`
   - `bonus2 bAddClass,Class_Normal,4*(.@r/3)`
   - `bonus2 bMagicAddClass,Class_Normal,4*(.@r/3)`
   - `bonus bPAtk,7`
   - `bonus bSMatk,7`
-- **伊甸園高級帽子** `2para_cap_b`
-  - `autobonus "{ bonus2 bHPRegenRate,350,1000; bonus2 bSPRegenRate,80,1000; }",1,4000,BF_MAGIC,"{ specialeffect2 EF_HEAL; }"`
 - **沙漏項鍊** `4th_q_necklace`
   - `bonus bAllTraitStats,6-(JobLevel/5)`
 - **茂盛的狐尾草魔杖 [1]** `abundantly_foxtail`
@@ -190,64 +159,15 @@
 - **審判決議長靴-LT [1]** `agenda_boots_lt_tw`
   - `bonus bPAtk,2`
   - `bonus bSMatk,2`
-  - `autobonus "{ bonus bAtkRate,25; bonus bMatkRate,25; }",30,10000,BF_WEAPON|BF_MAGIC`
 - **死神絕命拳刃 [2]** `agudo_filo`
   - `bonus bUnbreakableWeapon`
-- **爾休披斯槍** `ahlspiess_c`
-  - `bonus bIgnoreDefClass,Class_Normal`
 - **機匠飛拳加農炮鐵錘** `ak_b_mace`
   - `bonus bUnbreakableWeapon`
-- **鍊金術手套 [1]** `alchemy_glove`
-  - `bonus5 bAutoSpell,"MG_FIREBALL",5,30,BF_MAGIC,1`
-- **愛麗絲女僕娃娃 [1]** `alice_doll`
-  - `bonus2 bAddEff2,Eff_Sleep,10`
-- **無精打採的愛麗絲女僕娃娃帽** `alicel_drooping_doll`
-  - `autobonus "{ bonus bAspdRate,100; }",10,7000,BF_WEAPON,"{ specialeffect2 EF_POTION_BERSERK; }"`
 - **神秘狐尾草魔杖 [3]** `amazing_foxtail`
   - `bonus bUnbreakableWeapon`
-- **Amdarais卡片** `amdarais_card`
-  - `bonus2 bHPLossRate,666,4000`
-  - `bonus2 bSPLossRate,66,4000`
-- **心神凝聚的艾咪斯可魯背包 [1]** `amistr_bag_concentrate`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **霸體的艾咪斯可魯背包 [1]** `amistr_bag_endure`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **貪婪的艾咪斯可魯背包 [1]** `amistr_bag_greed`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **隱匿的艾咪斯可魯背包 [1]** `amistr_bag_hiding`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **加速的艾咪斯可魯背包 [1]** `amistr_bag_incagi`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **怒爆的艾咪斯可魯背包 [1]** `amistr_bag_magnum`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **心神凝聚的艾咪斯可魯背包 [1]** `amistrbag_concentrate`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **霸體的艾咪斯可魯背包 [1]** `amistrbag_endure`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **貪婪的艾咪斯可魯背包 [1]** `amistrbag_greed`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **隱匿的艾咪斯可魯背包 [1]** `amistrbag_hiding`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **加速的艾咪斯可魯背包 [1]** `amistrbag_incagi`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
-- **怒爆的艾咪斯可魯背包 [1]** `amistrbag_magnum`
-  - `bonus bLongSPGainValue,3`
-  - `bonus bMagicSPGainValue,3`
 - **大主教十字驅魔謳歌權杖** `an_b_wand`
   - `bonus bUnbreakableWeapon`
 - **遠古短劍** `ancient_dagger`
-  - `bonus2 bAddEff2,Eff_Curse,20`
   - `bonus3 bAddEff,Eff_Curse,20,ATF_SELF`
 - **安妮摩斯面具** `anemos_mask`
   - `bonus bUnbreakableHelm`
@@ -257,17 +177,11 @@
   - `bonus2 bSkillUseSPrate,"WM_SEVERE_RAINSTORM",20`
 - **安畢斯頭盔** `anubis_helm`
   - `bonus bHealPower2,10`
-- **納迦鱗甲 [1]** `armor_of_naga`
-  - `autobonus "{ bonus bBaseAtk,20; }",5,10000,BF_WEAPON,"{ specialeffect2 EF_ENHANCE; }"`
 - **污染的白騎士卡片** `as_bdy_knight_card`
   - `bonus5 bAutoSpell,"RK_IGNITIONBREAK",5,20,BF_WEAPON,1`
 - **Immortal Wind Ghost卡片** `as_wind_ghost_card`
   - `bonus5 bAutoSpell,"SO_CLOUD_KILL",5,10,BF_MAGIC,1`
-- **阿斯加爾特的祝福 [1]** `asgard_blessing`
-  - `bonus2 bRegenPercentHP,2,10000`
-  - `bonus2 bRegenPercentSP,1,10000`
 - **阿斯普利卡** `asprika`
-  - `bonus3 bSubEle,Ele_All,30,BF_WEAPON`
   - `bonus bUnbreakableGarment`
 - **阿斯特莉亞斗篷-LT [1]** `astraea_cape_lt`
   - `bonus bRes,30`
@@ -282,8 +196,6 @@
   - `bonus2 bSubSkill,"WZ_METEOR",20+.@t`
   - `bonus2 bSubSkill,"WL_CRIMSONROCK",20+.@t`
   - `bonus2 bSubSkill,"WL_COMET",5`
-- **阿特羅斯卡片** `atroce_card`
-  - `autobonus "{ bonus bAspdRate,100; }",5,10000,0,"{ specialeffect2 EF_POTION_BERSERK; }"`
 - **強化小刀 [1]** `avd_knife`
   - `bonus bAllTraitStats,1`
   - `bonus bPow,.@r`
@@ -308,16 +220,10 @@
   - `bonus2 bMagicAddClass,Class_Boss,.@r/4`
   - `bonus bSMatk,.@r/2`
   - `bonus2 bMagicAddClass,Class_Boss,.@r/4`
-- **闇●超魔導師 凱特莉娜卡片** `b_katrinn_card`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,100`
 - **小花豹卡片** `baby_leopard_card`
   - `bonus bUnbreakableArmor`
-- **巴克斯裝甲 [1]** `bacchus_armor`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,getskilllv("GS_SINGLEACTION")`
 - **巴克斯裝甲-LT [1]** `bacchus_armor_lt`
   - `bonus bPAtk,.@r/2`
-- **長毛象胸章** `badge_of_manny`
-  - `bonus2 bAddEff2,Eff_Stun,300`
 - **巴基力的鎧甲 [1]** `baki_armor_`
   - `bonus bUnbreakableArmor`
 - **Bakonawa卡片** `bakonawa_card`
@@ -330,6 +236,7 @@
   - `bonus bHealPower2,7`
 - **愛爾蘭女妖之吻** `banshee_master_kiss`
   - `bonus bUnbreakableHelm`
+  - `autobonus2 "{ bonus2 bSubRace,RC_Player_Doram,100; bonus2 bSubRace,RC_Player_Human,100; }",10,3000,BF_WEAPON,"{ specialeffect2 EF_POTION_BERSERK; }"`
 - **倒鉤尖銳鞭-LT [2]** `barb_wire_k_lt`
   - `bonus bSMatk,1`
   - `bonus bSpl,2`
@@ -356,18 +263,12 @@
   - `autobonus "{ bonus bPow,10; bonus bAtkRate,10; }",30,10000,BF_WEAPON`
 - **新手狐尾草魔杖 [1]** `beginner_foxtail`
   - `bonus bUnbreakableWeapon`
-- **英勇吉他** `berserk_guitar`
-  - `bonus2 bHPLossRate,50,5000`
 - **角鬥士的法杖** `bf_staff1`
   - `bonus bUnbreakableWeapon`
 - **角鬥士的快速恢復魔杖** `bf_staff4`
   - `bonus bUnbreakableWeapon`
 - **巨大狐尾草魔杖 [1]** `bigsize_foxtail`
   - `bonus bUnbreakableWeapon`
-- **高級飛行魔書帽 [1]** `biting_off_rideword`
-  - `bonus2 bHPLossRate,10,5000`
-  - `autobonus "{ bonus2 bHPRegenRate,300,1000; }",40,4000,BF_MAGIC`
-  - `autobonus "{ bonus2 bSPRegenRate,70,1000; }",40,4000,BF_MAGIC`
 - **黑色邊框眼鏡** `black_glasses`
   - `bonus bUnbreakableHelm`
 - **黑無常帽 [1]** `black_musang_hat`
@@ -380,8 +281,6 @@
   - `bonus bPow,3`
 - **光明戰斧-OS [2]** `blasti_os`
   - `bonus bUnbreakableWeapon`
-- **火焰妖卡片** `blazzer_card`
-  - `bonus2 bAddMonsterDropItemGroup,IG_Food,10000`
 - **超幸運祝福短劍-LT [2]** `blessed_knife_lt`
   - `bonus bPAtk,1`
   - `bonus bPow,2`
@@ -396,12 +295,6 @@
   - `bonus3 bAutoSpell,"NPC_WIDEBLEEDING",(getrefine()>=9?2:1),30`
 - **席琳的沾血黑禮服 [1]** `bloody_celine_dress_tw`
   - `bonus bUnbreakableArmor`
-- **嗜血者 [2]** `bloody_eater`
-  - `autobonus "{ bonus bCritical,100; bonus bBaseAtk,50; }",1,5000,0,"{ specialeffect2 EF_FIRESPLASHHIT; }"`
-- **詛咒騎士盾牌 [1]** `bloody_knight_shield`
-  - `autobonus "{ bonus2 bHPRegenRate,150,1000; }",50,5000`
-- **血腥騎士盾牌 [1]** `bloody_knight_shield_`
-  - `autobonus "{ bonus2 bHPRegenRate,150,1000; }",50,5000`
 - **古代水晶之淚魔杖 [2]** `blue_crystal_staff`
   - `bonus bUnbreakableWeapon`
 - **水晶之淚魔杖-LT [2]** `blue_crystal_staff_lt`
@@ -415,25 +308,16 @@
   - `bonus bUnbreakableHelm`
 - **藍波利氣球** `blue_poring_bubble`
   - `bonus bUnbreakableHelm`
-- **土人魔角 [1]** `bogy_horn`
-  - `bonus2 bAddMonsterDropItemGroup,IG_Jewel,10000`
 - **妖道卡片** `bon_gun_card`
   - `bonus2 bAddSkillBlow,"SM_BASH",5`
-  - `bonus2 bAddDefMonster,1026,-100`
 - **酒瓶 [3]** `bottle`
   - `bonus bUnbreakableWeapon`
-- **魔力之石石錘** `bradium_stonehammer`
-  - `bonus3 bAddEffOnSkill,"BS_HAMMERFALL",Eff_Stun,500+(200*getrefine())`
 - **光明重錘 [2]** `bright_mace`
   - `bonus bUnbreakableWeapon`
 - **雙手重劍 [1]** `broad_sword`
   - `bonus bUnbreakableWeapon`
 - **雙手重劍 [2]** `broad_sword_`
   - `bonus bUnbreakableWeapon`
-- **貪慾胸針 [1]** `brooch_greed`
-  - `bonus bLongSPGainValue,2`
-  - `bonus bMagicSPGainValue,2`
-  - `bonus2 bHPLossRate,10,5000`
 - **血斧** `brood_axe`
   - `bonus bSpeedRate,25`
 - **布倫希爾德** `brynhild`
@@ -459,9 +343,6 @@
   - `bonus bPerfectHitAddRate,10`
 - **光碟** `cd_in_mouth`
   - `autobonus "{ bonus3 bAutoSpell,\"MG_FIREBOLT\",rand(1,5),400; bonus3 bAutoSpell,\"MG_LIGHTNINGBOLT\",rand(1,5),400; bonus3 bAutoSpell,\"MG_COLDBOLT\",rand(1,5),400; bonus3 bAutoSpell,\"WZ_EARTHSPIKE\",rand(1,5),400; bonus3 bAutoSpell,\"MG_SOULSTRIKE\",rand(1,5),400; }",60,5000,BF_NORMAL,"{ specialeffect2 EF_ENHANCE; }"`
-- **席琳的蝴蝶結 [1]** `celines_ribbon`
-  - `bonus bMagicHPGainValue,200`
-  - `bonus2 bHPLossRate,50,5000`
 - **大提琴 [3]** `cello`
   - `bonus2 bAddSkillBlow,"BA_MUSICALSTRIKE",2`
   - `bonus2 bAddSkillBlow,"CG_ARROWVULCAN",3`
@@ -473,9 +354,6 @@
   - `bonus3 bAutoSpell,"SO_DIAMONDDUST",3,50`
   - `bonus3 bAutoSpell,"SO_EARTHGRAVE",3,50`
   - `bonus3 bAutoSpell,"WL_CHAINLIGHTNING",3,50`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,15`
-- **聖誕展翅之翼 [1]** `chrismas_tree`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Neutral,20; bonus2 bMagicAtkEle,Ele_Holy,20; }",1,10000,BF_WEAPON`
 - **鉻合金單手劍** `chrome_sword`
   - `bonus bUnbreakableWeapon`
 - **鉻合金雙手巨劍** `chrome_twohand_sword`
@@ -495,8 +373,6 @@
   - `bonus bCRate,7`
 - **大法師凍僵連鎖電擊雙手杖** `cj_b_staff`
   - `bonus bUnbreakableWeapon`
-- **克拉麗絲娃娃帽子 [1]** `claris_doll_hat`
-  - `bonus bMagicHPGainValue,50`
 - **冷卻劑注射器 [2]** `coolant_injection`
   - `bonus bUnbreakableWeapon`
 - **卡那多斯卡片** `cornutus_card`
@@ -514,8 +390,6 @@
   - `bonus5 bAutoSpell,"NPC_WIDECURSE",1,50,BF_SHORT,0`
 - **馬刺靴 [1]** `cowboy_boots`
   - `bonus bSpeedRate,25`
-- **藍鼠卡片** `cramp_card`
-  - `bonus2 bGetZenyNum,500,3`
 - **紅玫瑰左輪手槍-LT [2]** `crimson_rose_lt`
   - `bonus bPAtk,1`
   - `bonus bPow,2`
@@ -528,10 +402,6 @@
   - `bonus bUnbreakableWeapon`
 - **詛咒之手 [1]** `cursed_hand`
   - `bonus3 bAutoSpell,"NPC_CRITICALWOUND",1,30`
-- **受詛咒的幸運別針** `cursed_lucky_brooch`
-  - `bonus2 bAddEff2,Eff_Curse,50`
-- **詛咒之星** `cursed_star`
-  - `bonus2 bHPLossRate,50,10000`
 - **黯淡冰晶斧 [1]** `d_glacier_axe`
   - `bonus bUnbreakableWeapon`
 - **黯淡冰晶之書 [1]** `d_glacier_book`
@@ -550,8 +420,6 @@
   - `bonus3 bAutoSpellWhenHit,"NPC_DRAGONFEAR",3,30`
   - `bonus3 bAutoSpellWhenHit,"NPC_DRAGONFEAR",2,20`
   - `bonus3 bAutoSpellWhenHit,"NPC_DRAGONFEAR",1,10`
-- **黑暗騎士手套A** `dark_knight_glove`
-  - `autobonus "{ bonus bAspdRate,2; }",10,5000,BF_NORMAL,"{ specialeffect2 EF_ENHANCE; }"`
 - **暗黑祭司卡片** `dark_priest_card`
   - `bonus3 bSPVanishRate,50,10,BF_WEAPON|BF_MAGIC|BF_MISC`
 - **大主教二道聖光審判錘** `dd_b_mace`
@@ -577,10 +445,8 @@
   - `bonus bSMatk,3*(.@r/2)`
 - **沙漠王子頭巾 [1]** `desert_prince`
   - `bonus bUnbreakableHelm`
-- **迪塔勒泰晤勒斯卡片** `detale_card`
-  - `bonus5 bAutoSpellWhenHit,"SA_LANDPROTECTOR",1,70,BF_MAGIC,0`
-- **黛安娜外套 [1]** `diana_suits`
-  - `autobonus "{ bonus bDex,80; }",50,5000`
+- **Morocc the Desparate god卡片** `despairgodmorocc_card`
+  - `autobonus3 "{ }",1000,5000,"NV_FIRSTAID","{ active_transform 3097,5000; }"`
 - **黛安娜外套-LT [1]** `diana_suits_lt`
   - `bonus bPAtk,.@r/2`
   - `bonus bSMatk,.@r/2`
@@ -612,21 +478,16 @@
   - `bonus bSMatk,3*(.@r/2)`
 - **天龍披風 [1]** `drag_manteau`
   - `bonus bHealPower2,15`
-- **龍爪頭盔 [1]** `dragon_claw_helm`
-  - `bonus2 bAddItemGroupHealRate,IG_Meat,200`
 - **坐著蜻蜓的狐尾草魔杖 [1]** `dragonfry_foxtail`
   - `bonus bUnbreakableWeapon`
 - **龍紋巨劍-LT [2]** `dragonic_slayer_lt`
   - `bonus bMRes,30`
   - `bonus bRes,30`
-- **海盜之王卡片** `drake_card`
-  - `bonus bNoSizeFix`
 - **麥秸** `dried_leaf`
   - `bonus bUnbreakableHelm`
 - **趴趴神槍手人偶帽 [1]** `droop_gunslinger`
   - `bonus bSpeedRate,25`
 - **懶洋洋的夢羅克門徒 [1]** `drooping_morocc_minion`
-  - `bonus bMagicSPGainValue,2`
   - `bonus4 bAutoSpellWhenHit,"NPC_CRITICALWOUND",3,5,1`
   - `bonus4 bAutoSpell,"NPC_CRITICALWOUND",3,5,1`
   - `bonus4 bAutoSpell,"NPC_WIDEBLEEDING",2,5,0`
@@ -634,8 +495,6 @@
 - **深淵飾品・Lv200** `drop_of_seven_colors`
   - `bonus bSpl,3`
   - `bonus2 bMagicAddClass,Class_All,10`
-- **杜內爾卡片** `duneirre_card`
-  - `autobonus "{ bonus bFlee2,10; }",10,4000,BF_NORMAL,"{ specialeffect2 EF_HASTEUP; }"`
 - **黃泉星塵權杖 [2]** `dust_grave`
   - `bonus bUnbreakableWeapon`
 - **深淵之耳** `ear_of_abyss`
@@ -651,15 +510,11 @@
   - `bonus2 bSPRegenRate,(MaxSp/100),10000 if(.@r >= 9)`
 - **獵靈士邪靈爆炸手杖** `ec_b_staff`
   - `bonus bUnbreakableWeapon`
-- **翡翠玉結晶戰靴 [1]** `ec_boots_tw`
-  - `autobonus "{ bonus bDex,200; bonus2 bSPLossRate,50,1000; }",30,10000,BF_WEAPON,"{ specialeffect2 EF_FLASHER; }"`
 - **月食守護之心 [1]** `eclipsedefmind_tw`
   - `bonus2 bSubSkill,"SJ_NEWMOONKICK",20`
   - `bonus2 bSubSkill,"SJ_FULLMOONKICK",20`
 - **虎王卡片** `eddga_card`
   - `bonus bNoWalkDelay`
-- **秘劍 慕戀** `edge`
-  - `bonus2 bComaClass,Class_Normal,10`
 - **埃吉爾鎧甲 [1]** `egir_armor_k`
   - `bonus bUnbreakableArmor`
 - **埃吉爾斗篷 [1]** `egir_manteau_k`
@@ -673,44 +528,20 @@
   - `bonus bUnbreakableArmor`
 - **埃吉爾尼安頭盔 [1]** `egirnion_helm`
   - `bonus bUnbreakableHelm`
-- **庇佑指南 [2]** `ein_1hbook`
-  - `autobonus "{ bonus2 bAddSize,Size_All,15; }",1,10000,BF_WEAPON`
-- **霹靂手槍 [2]** `ein_1hgun`
-  - `autobonus "{ bonus2 bAddSize,Size_All,20; }",1,10000,BF_WEAPON`
 - **木柄橡膠錘 [2]** `ein_1hhammer`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bMagicAddSize,Size_All,15; }",1,5000,BF_MAGIC`
-- **庇佑魯特琴 [2]** `ein_1hlute`
-  - `autobonus "{ bonus2 bAddSize,Size_All,15; }",1,10000,BF_WEAPON`
-- **寶石探測器Mk47 [2]** `ein_1hmagger`
-  - `autobonus "{ bonus2 bMagicAddSize,Size_All,15; }",1,10000,BF_WEAPON`
 - **焊接魔杖 [2]** `ein_1hwand`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bMagicAddSize,Size_All,15; }",1,10000,BF_MAGIC`
-- **庇佑鞭子 [2]** `ein_1hwhip`
-  - `autobonus "{ bonus2 bAddSize,Size_All,15; }",1,10000,BF_WEAPON`
-- **霹靂十字弓 [2]** `ein_bhbow`
-  - `autobonus "{ bonus2 bAddSize,Size_All,20; }",1,10000,BF_WEAPON`
-- **霹靂夾碎器 [2]** `ein_bhkatar`
-  - `autobonus "{ bonus2 bAddSize,Size_All,20; }",1,10000,BF_WEAPON`
 - **感測魔杖 [2]** `ein_bhstaff`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bMagicAddSize,Size_All,20; }",10,10000,BF_MAGIC`
-- **戰神巨劍 [2]** `ein_bhsword`
-  - `autobonus "{ bonus2 bAddSize,Size_All,20; }",1,5000,BF_WEAPON`
 - **電線狐尾草-OS-AD [2]** `electricfox_ad`
   - `bonus bUnbreakableWeapon`
 - **電線狐尾草-OS [2]** `electricfox_os`
   - `bonus bUnbreakableWeapon`
-- **四大元素魔靴 [1]** `elemental_boots_k`
-  - `autobonus "{ bonus bMatkRate,10; bonus bInt,70; }",30,5000,BF_WEAPON`
-- **四大元素魔靴 [1]** `elemental_bootsk`
-  - `autobonus "{ bonus bMatkRate,10; bonus bInt,70; }",30,5000,BF_WEAPON`
 - **深淵飾品・Lv200** `elemental_jewel`
   - `bonus bSpl,3`
 - **急凍戰斧 [1]** `end_sektura`
   - `bonus bUnbreakableWeapon`
-  - `bonus2 bAddEff2,Eff_Freeze,300`
 - **引擎衝擊錐 [2]** `engine_pilebuncker`
   - `bonus bUnbreakableWeapon`
 - **深淵鞋・Lv220** `entwined_shoes`
@@ -722,11 +553,8 @@
   - `bonus bUnbreakableWeapon`
 - **斯洛夫技術圖書 [2]** `ep172_1h_book`
   - `bonus bUnbreakableWeapon`
-- **斯洛夫聖書 [2]** `ep172_1h_book2`
-  - `autobonus "{ bonus2 bSubClass,Class_Normal,15; bonus2 bSPRegenRate,300,1000; }",1,5000,BF_WEAPON|BF_MAGIC`
 - **奧可軒狐尾杖 [2]** `ep172_1h_foxtail`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bSubClass,Class_Normal,15; bonus2 bSPRegenRate,300,1000; }",1,5000,BF_MAGIC`
 - **恩比聖光棒 [2]** `ep172_1h_hammer`
   - `bonus bUnbreakableWeapon`
 - **普里格蒂亞電吉他 [2]** `ep172_1h_inst`
@@ -748,8 +576,6 @@
   - `bonus bNoKnockback`
 - **邪靈手套 [1]** `evilspirit_gloves`
   - `bonus3 bAutoSpell,"SO_PSYCHIC_WAVE",1,20`
-  - `bonus5 bAutoSpell,"HW_MAGICPOWER",1,10,BF_MAGIC,0`
-  - `bonus5 bAutoSpell,"WZ_FROSTNOVA",10,10,BF_MAGIC,0`
 - **艾克塞利翁外套** `excelion_suit`
   - `bonus bUnbreakableArmor`
 - **深淵弓・Lv250** `f_ein_bhbow`
@@ -791,8 +617,6 @@
 - **深淵法杖・Lv205** `flame_staff_furious`
   - `bonus bUnbreakableWeapon`
   - `bonus bSMatk,4*(.@r/2)`
-- **闇●創造者卡片** `flamel_card`
-  - `bonus2 bAddItemGroupHealRate,IG_Flamel_Card,200`
 - **芙媞耶面具** `fortier_mask`
   - `bonus bUnbreakableHelm`
 - **強化光以太魔書 [2]** `fourth_1h_book`
@@ -833,8 +657,6 @@
   - `bonus3 bAutoSpellWhenHit,"SU_TUNAPARTY",max(1,getskilllv("SU_TUNAPARTY")),10`
 - **新鮮金槍魚符 [1]** `freshtunacharm`
   - `bonus3 bAutoSpellWhenHit,"SU_TUNAPARTY",max(1,getskilllv("SU_TUNAPARTY")),10`
-- **傅裡哥長靴** `fricco_shoes`
-  - `bonus2 bAddItemGroupHealRate,IG_Potion,20`
 - **深淵鞋・Lv220** `furiousboots`
   - `bonus2 bAddClass,Class_Normal,5`
   - `bonus2 bMagicAddClass,Class_Normal,5`
@@ -853,10 +675,6 @@
   - `bonus bUnbreakableWeapon`
 - **守護騎士十字巨劍 [2]** `g_knight_sword`
   - `bonus bUnbreakableWeapon`
-- **尋礦之劍** `gaia_sword`
-  - `bonus2 bAddMonsterDropItemGroup,IG_Ore,10000`
-- **啤酒企鵝卡片** `galapago_card`
-  - `bonus2 bAddItemGroupHealRate,IG_Juice,50`
 - **賭徒之印** `gambler_seal`
   - `bonus2 bSubSkill,"RA_ARROWSTORM",.@sub_arrowstorm`
   - `bonus2 bSubSkill,"SR_GATEOFHELL",.@sub_gateofhell`
@@ -871,10 +689,6 @@
   - `bonus bUnbreakableWeapon`
 - **巨人手劍 [1]** `giant_blade`
   - `bonus bUnbreakableWeapon`
-- **卡卡普劍** `ginnungagap`
-  - `bonus2 bAddEff2,Eff_Blind,50`
-- **卡卡普劍 [1]** `ginnungagap_`
-  - `bonus2 bAddEff2,Eff_Blind,50`
 - **冰晶斧** `glacier_axe`
   - `bonus bUnbreakableWeapon`
 - **冰晶之書** `glacier_book`
@@ -883,24 +697,15 @@
   - `bonus bUnbreakableWeapon`
 - **冰晶法杖** `glacier_wand`
   - `bonus bUnbreakableWeapon`
-- **哥布靈首領卡片** `goblin_leader_card`
-  - `bonus2 bAddRace2,RC2_Goblin,30`
-- **金色鮭魚帽 [1]** `gold_fish_hat`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Holy,10; }",10,60000,BF_MAGIC,"{ specialeffect2 EF_ASPERSIO; }"`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Holy,10; }",(10+(.@r*2)),60000,BF_MAGIC,"{ specialeffect2 EF_ASPERSIO; }"`
 - **金色鮭魚帽-LT [1]** `gold_fish_hat_lt`
   - `bonus bPAtk,2`
   - `bonus bSMatk,2`
   - `bonus bPAtk,2`
   - `bonus bSMatk,2`
-  - `autobonus "{ bonus bAtkEle,Ele_Holy; }",1,60000,BF_WEAPON`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Holy,20; }",1,60000,BF_MAGIC`
 - **黃金勒克斯手槍** `gold_lux`
   - `bonus3 bAutoSpell,"GS_GLITTERING",getskilllv("GS_GLITTERING"),100`
 - **黃金提阿拉** `gold_tiara_`
   - `bonus bUnbreakableHelm`
-- **黃金蟲卡片** `golden_bug_card`
-  - `bonus bNoMagicDamage,100`
 - **黃金帽** `golden_gear`
   - `bonus bUnbreakableHelm`
 - **黃金帽 [1]** `golden_gear_`
@@ -914,43 +719,26 @@
   - `bonus bPow,3`
 - **黃金專業扳手 [2]** `golden_wrench`
   - `bonus bUnbreakableWeapon`
-- **金色鮭魚帽 [1]** `goldfish_hat`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Holy,10; }",10,60000,BF_MAGIC,"{ specialeffect2 EF_ASPERSIO; }"`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Holy,10; }",(10+(.@r*2)),60000,BF_MAGIC,"{ specialeffect2 EF_ASPERSIO; }"`
 - **金色鮭魚帽-LT [1]** `goldfish_hat_lt`
   - `bonus bPAtk,2`
   - `bonus bSMatk,2`
   - `bonus bPAtk,2`
   - `bonus bSMatk,2`
-  - `autobonus "{ bonus bAtkEle,Ele_Holy; }",1,60000,BF_WEAPON`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Holy,20; }",1,60000,BF_MAGIC`
 - **巨石怪卡片** `golem_card`
   - `bonus bUnbreakableWeapon`
 - **金鋼猿頭飾** `gorilla_model_hat`
   - `bonus bStr,2 if(.@m == 1 || .@m == 2)`
   - `bonus bVit,2 if(.@m == 1 || .@m == 2)`
-- **聖錘 十字星** `grand_cross`
-  - `bonus2 bSPDrainValueRace,RC_Undead,1`
 - **滅絕木乃伊卡片** `grave_mummy_card`
   - `bonus3 bAutoSpellWhenHit,"NPC_WIDESLEEP",2,30`
 - **萬有引力法杖 [2]** `gravitation_staff`
   - `bonus bUnbreakableWeapon`
-- **魔短劍 闇噬** `grimtooth`
-  - `bonus bDef2Rate,-50`
-- **魔短劍 闇噬** `grimtooth_`
-  - `bonus bDef2Rate,-50`
 - **Grote卡片** `grote_card`
   - `bonus2 bMagicSubSize,Size_Small,1`
   - `bonus2 bMagicSubSize,Size_Small,2`
-- **斬首之斧** `guillotine`
-  - `bonus2 bComaRace,RC_DemiHuman,30`
-  - `bonus2 bComaRace,RC_Player_Human,30`
-  - `bonus2 bSPDrainValueRace,RC_DemiHuman,2`
-  - `bonus2 bSPDrainValueRace,RC_Player_Human,2`
 - **白帶魚劍** `hairtail`
   - `bonus2 bAddEff,Eff_Crystalize,30`
 - **封印阿斯普利卡** `half_asprika`
-  - `bonus3 bSubEle,Ele_All,15,BF_WEAPON`
   - `bonus bUnbreakableGarment`
 - **封印布倫希爾德** `half_brynhild`
   - `bonus bUnbreakableArmor`
@@ -969,8 +757,6 @@
   - `bonus2 bAddRace,RC_All,.@g`
 - **快樂的假髮** `happy_wig`
   - `bonus bSpeedRate,25`
-- **豬籠草豎琴 [2]** `harp_of_nepenthes`
-  - `bonus3 bAddEffOnSkill,"BA_MUSICALSTRIKE",Eff_Stun,(getrefine()>=9?2000:1000)`
 - **大天使之盾** `herald_of_god`
   - `bonus bUnbreakableShield`
 - **大天使之盾 [1]** `herald_of_god_`
@@ -1007,10 +793,6 @@
   - `bonus bSpeedRate,25`
 - **希斯利安之魂 [3]** `horn_of_hilthrion`
   - `bonus3 bAutoSpell,"NPC_CRITICALWOUND",1,30`
-- **破甲短錐** `house_auger`
-  - `bonus bDefRatioAtkClass,Class_All`
-- **破甲短錐 [1]** `house_auger_`
-  - `bonus bDefRatioAtkClass,Class_All`
 - **希羅斯里亞斧** `hs_bs_axe`
   - `bonus bUnbreakableWeapon`
 - **深淵雙手斧・Lv200** `hs_bs_giant_axe`
@@ -1053,11 +835,6 @@
   - `bonus bUnbreakableWeapon`
 - **希羅斯里亞巫師魔杖** `hs_wz_wand`
   - `bonus bUnbreakableWeapon`
-- **強運緞帶羽翼 [1]** `huse_luk_r_wing`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,20`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,20`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,10`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,10`
 - **兔斯拉卡片** `hylozoist_card`
   - `bonus bClassChange,100`
 - **伊夫利特卡片** `ifrit_card`
@@ -1072,24 +849,12 @@
   - `bonus bSMatk,2`
   - `bonus bPAtk,2`
   - `bonus bSMatk,2`
-  - `autobonus "{ bonus bAtkEle,Ele_Fire; }",1,60000,BF_WEAPON`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Fire,20; }",1,60000,BF_MAGIC`
-- **元靈武士卡片** `incant_samurai_card`
-  - `bonus bIgnoreDefClass,Class_Normal`
-  - `bonus2 bHPLossRate,666,10000`
-- **米糕卡片** `increase_soil_card`
-  - `bonus2 bAddDefMonster,1285,50`
-  - `bonus2 bAddDefMonster,1286,50`
-  - `bonus2 bAddDefMonster,1287,50`
-  - `bonus2 bAddDefMonster,1899,50`
-  - `bonus2 bAddDefMonster,1900,50`
 - **龍之咆哮** `inverse_scale`
   - `bonus3 bAutoSpell,"NPC_DRAGONFEAR",1,30`
 - **龍鱗拳刃 [2]** `inverse_scale_`
   - `bonus3 bAutoSpell,"NPC_DRAGONFEAR",1,30`
 - **鋼爪拳套** `iron_nail`
   - `bonus bUnbreakableWeapon`
-  - `bonus bIgnoreDefClass,Class_Normal`
 - **英雄拳套-LT [2]** `iron_nail_k_lt`
   - `bonus bPAtk,1`
   - `bonus bPow,2`
@@ -1106,10 +871,6 @@
   - `bonus bSMatk,1`
   - `bonus bSMatk,2`
   - `bonus bSpl,3`
-- **伊莎貝拉紅耳帽 [1]** `isabella_red_ear`
-  - `bonus2 bSubDefEle,Ele_Fire,10`
-- **依斯拉卡片** `isilla_card`
-  - `autobonus "{ bonus bVariableCastrate,-50; bonus bFlee,30; }",50,5000,BF_MAGIC,"{ specialeffect2 EF_SUFFRAGIUM; }"`
 - **機器人的機械手臂 [2]** `item_16033`
   - `bonus bUnbreakableWeapon`
 - **2012 RMSC 冠軍的專屬頭飾 [1]** `item_2012rmscno1`
@@ -1124,8 +885,6 @@
 - **2012 RMSC 專屬紀念頭飾** `item_2012rmscno4`
   - `bonus bSpeedRate,10`
 - **潛能激發冒險帽 [1]** `item_2020maypay_05`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,5*(.@r/3)`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,5*(.@r/3)`
   - `bonus5 bAutoSpell,"RK_STORMBLAST",1,20,BF_SHORT,1`
 - **萬物與靈魂的真諦-LT [1]** `item_2023seppay_02`
   - `bonus bPAtk,7`
@@ -1139,31 +898,20 @@
 - **潛能激發冒險帽-LT [1]** `item_2023seppay_06`
   - `bonus2 bAddClass,Class_Normal,7*(.@r/3)`
   - `bonus2 bMagicAddClass,Class_Normal,7*(.@r/3)`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,5*(.@r/3)`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,5*(.@r/3)`
   - `bonus3 bAutoSpell,"RK_STORMBLAST",1,20`
   - `bonus2 bAddClass,Class_Normal,4*(.@r/3)`
   - `bonus2 bMagicAddClass,Class_Normal,4*(.@r/3)`
   - `bonus bPAtk,7`
   - `bonus bSMatk,7`
-- **伊甸園高級帽子** `item_2para_cap_b`
-  - `autobonus "{ bonus2 bHPRegenRate,350,1000; bonus2 bSPRegenRate,80,1000; }",1,4000,BF_MAGIC,"{ specialeffect2 EF_HEAL; }"`
 - **沙漏項鍊** `item_4th_q_necklace`
   - `bonus bAllTraitStats,6-(JobLevel/5)`
 - **海賊的自尊心** `item_5501`
-  - `bonus2 bAddRace2,RC2_Ninja,5`
   - `bonus2 bSubRace2,RC2_Ninja,5`
-- **伊克西翁之翼 [1]** `ixion_wing`
-  - `autobonus "{ bonus bAspdRate,7; }",5+getrefine(),7000,BF_WEAPON,"{ specialeffect2 EF_HASTEUP; }"`
 - **傑克短劍 [2]** `jack_the_knife`
   - `bonus2 bSkillUseSPrate,"SC_FATALMENACE",10`
 - **雅努斯鎧甲-LT [1]** `janus_armor_lt`
   - `bonus bPAtk,.@r/2`
   - `bonus bSMatk,.@r/2`
-- **寶石戒指** `jewel_ring`
-  - `autobonus "{ bonus bAspd,2; bonus bVariableCastrate,-30; }",50,5000,BF_WEAPON|BF_MAGIC,"{ specialeffect2 EF_ENCHANCE; }"`
-- **尋寶之劍** `jewel_sword`
-  - `bonus2 bAddMonsterDropItemGroup,IG_Jewel,10000`
 - **狂歡節小丑帽子** `joker_jester_`
   - `bonus bSpeedRate,25`
 - **耶夢加得** `jormungand`
@@ -1176,26 +924,15 @@
   - `bonus bUnbreakableArmor`
 - **朱麗葉雷切爾拳刃 [2]** `katar_170`
   - `bonus bUnbreakableWeapon`
-- **大蝦帽子** `king_prawn_hat`
-  - `bonus2 bAddItemGroupHealRate,IG_Fish,100`
 - **趴趴虎王 [1]** `king_tiger_doll_hat`
   - `autobonus "{ bonus2 bSPLossRate,5,1000; bonus bBaseAtk,25*getrefine(); }",3*.@r,3000,BF_NORMAL,"{ active_transform 1115,3000; specialeffect2 EF_POTION_BERSERK; showscript \"Eddga Power !\"; }"`
-- **犬妖首領卡片** `kobold_leader_card`
-  - `bonus2 bAddRace2,RC2_Kobold,30`
+  - `autobonus2 "{ bonus2 bSPLossRate,5,1000; bonus bBaseAtk,25*getrefine(); }",.@r,3000,BF_NORMAL,"{ active_transform 1115,3000; specialeffect2 EF_POTION_BERSERK; showscript \"Eddga Power !\"; }"`
 - **魔鬼大烏賊卡片** `kraken_card`
   - `bonus5 bAutoSpellOnSkill,"RG_RAID","NPC_WIDEBLEEDING",1,250,1`
-- **戰爭短劍 [3]** `krieg`
-  - `bonus3 bAddEffOnSkill,"RG_BACKSTAP",Eff_Bleeding,1000`
 - **勇士擊刺長劍** `krieger_onehand_sword2`
   - `bonus bUnbreakableWeapon`
-- **拉塔卡片** `lata_card`
-  - `autobonus "{ bonus bFixedCastrate,-50; }",5,4000,BF_MAGIC,"{ specialeffect2 EF_SUFFRAGIUM; }"`
-- **熔巖巨石卡片** `lava_golem_card`
-  - `bonus2 bAddRace2,RC2_Golem,30`
 - **獅子座王冠** `leo_crown`
   - `bonus3 bAutoSpell,"TK_SEVENWIND",4,50`
-- **獅子座寶冠** `leo_diadem`
-  - `autobonus "{ bonus bSplashRange,1; }",10,10000,BF_WEAPON,"{ specialeffect2 EF_ENHANCE; }"`
 - **下級精靈的戒指** `lesser_elemental_ring`
   - `bonus3 bAutoSpell,"TF_PICKSTONE",1,100`
   - `bonus3 bAutoSpellWhenHit,"TK_RUN",5,20`
@@ -1222,8 +959,6 @@
   - `bonus bUnbreakableWeapon`
 - **章魚氣球** `long_octopus_balloon`
   - `bonus bUnbreakableHelm`
-- **戀愛的感覺** `love_feeling_tw`
-  - `autobonus "{ bonus2 bHPRegenRate,400,1000; bonus2 bSPRegenRate,80,1000; }",10,10000,BF_MAGIC`
 - **愛的氣球** `love_love_balloon`
   - `bonus bUnbreakableHelm`
 - **愛的氣球** `lovelove_balloon`
@@ -1238,9 +973,6 @@
   - `bonus bNearAtkDef,readparam(bWis)/10`
 - **月全食魔力外袍 [1]** `lunar_eclipse_armor_`
   - `bonus bUnbreakableArmor`
-- **新鮮玫瑰 [1]** `lush_rose`
-  - `bonus bMagicHPGainValue,100`
-  - `bonus2 bHPLossRate,50,5000`
 - **被詛咒的瘋狂兔寶寶** `mad_bunny_k`
   - `bonus5 bAutoSpellWhenHit,"NPC_MAGICMIRROR",8,100,BF_MAGIC,0`
 - **瘋狂兔寶寶 [1]** `mad_bunny_k_`
@@ -1250,8 +982,6 @@
   - `bonus bSpl,2`
   - `bonus bPAtk,2`
   - `bonus bSMatk,2`
-- **闇●神官卡片** `magaleta_card`
-  - `bonus5 bAutoSpellWhenHit,"PR_LEXDIVINA",5,150,BF_MAGIC,1`
 - **魔導劍 [2]** `magic_sword`
   - `bonus5 bAutoSpell,"SO_PSYCHIC_WAVE",3,50,BF_WEAPON|BF_SHORT,1`
 - **魔導劍-LT [2]** `magic_sword_lt`
@@ -1263,15 +993,6 @@
   - `bonus bSpl,3`
 - **魔力狐尾草魔杖 [2]** `magical_foxtail`
   - `bonus bUnbreakableWeapon`
-- **含有魔力的石頭** `magical_stone`
-  - `bonus2 bAddDefMonster,2048,-10`
-  - `bonus3 bAddMonsterIdDropItem,6152,2047,70`
-- **含有魔力的石頭** `magical_stone_`
-  - `bonus2 bAddDefMonster,2050,-10`
-  - `bonus3 bAddMonsterIdDropItem,6151,2049,70`
-- **惡靈山羊頭盔** `majestic_evil_horn`
-  - `bonus bMagicSPGainValue,1`
-  - `bonus bMagicSPGainValue,2`
 - **地精靈力量斗篷** `manteau_great_nature`
   - `bonus5 bAutoSpell,"NPC_WIDESTONE",2,5+.@val,BF_SHORT,0`
   - `bonus bUnbreakableGarment`
@@ -1285,8 +1006,6 @@
   - `bonus bPAtk,.@r/2`
 - **奇怪的假髮** `marvelous_wig`
   - `bonus bSpeedRate,25`
-- **秘刀 十六夜月** `masamune`
-  - `bonus bDef2Rate,-66`
 - **槍王靈魂來復槍-LT [2]** `master_soul_rifle_lt`
   - `bonus bSMatk,1`
   - `bonus bSpl,2`
@@ -1298,20 +1017,6 @@
   - `bonus2 bResEff,Eff_Burning,10000`
 - **奪命連環扳手 [2]** `maxi_spanner`
   - `bonus bUnbreakableWeapon`
-- **不朽力量戰靴 [1]** `md_airboat_boots`
-  - `autobonus "{ .@g = getenchantgrade(); if (.@g >= ENCHANTGRADE_D) { .@val = 25; if (.@g >= ENCHANTGRADE_C) { .@val += 25; } } bonus bStr,175+.@val; }",1,10000,BF_WEAPON`
-- **不朽靈巧戰靴 [1]** `md_airboat_boots2`
-  - `autobonus "{ .@g = getenchantgrade(); if (.@g >= ENCHANTGRADE_D) { .@val = 25; if (.@g >= ENCHANTGRADE_C) { .@val += 25; } } bonus bDex,175+.@val; }",1,10000,BF_WEAPON|BF_MAGIC`
-- **不朽生命力戰靴 [1]** `md_airboat_boots3`
-  - `autobonus "{ .@g = getenchantgrade(); if (.@g >= ENCHANTGRADE_D) { .@val = 25; if (.@g >= ENCHANTGRADE_C) { .@val += 25; } } bonus bVit,175+.@val; }",1,10000,BF_WEAPON|BF_MAGIC`
-- **不朽魔力戰靴 [1]** `md_airboat_boots4`
-  - `autobonus "{ .@g = getenchantgrade(); if (.@g >= ENCHANTGRADE_D) { .@val = 25; if (.@g >= ENCHANTGRADE_C) { .@val += 25; } } bonus bInt,175+.@val; }",1,10000,BF_MAGIC`
-- **不朽敏捷戰靴 [1]** `md_airboat_boots5`
-  - `autobonus "{ .@g = getenchantgrade(); if (.@g >= ENCHANTGRADE_D) { .@val = 25; if (.@g >= ENCHANTGRADE_C) { .@val += 25; } } bonus bAgi,175+.@val; }",1,10000,BF_WEAPON`
-- **不朽幸運戰靴 [1]** `md_airboat_boots6`
-  - `autobonus "{ .@g = getenchantgrade(); if (.@g >= ENCHANTGRADE_D) { .@val = 25; if (.@g >= ENCHANTGRADE_C) { .@val += 25; } } bonus bLuk,175+.@val; }",1,10000,BF_WEAPON`
-- **暴力魔法披肩 [1]** `md_geffen_hood4`
-  - `autobonus "{ bonus2 bHPRegenRate,350,1000; bonus2 bSPRegenRate,20,1000; }",1,10000,BF_WEAPON|BF_MAGIC`
 - **魔法護身長袍 [1]** `md_geffen_robe`
   - `bonus bHealPower2,10`
 - **光明聖耀戰袍 [1]** `md_geffen_suits`
@@ -1360,31 +1065,22 @@
   - `bonus3 bAutoSpell,"WM_LULLABY_DEEPSLEEP",1,30`
 - **礦工十字鎬 [2]** `mine_worker_pickax`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus bCritical,20; }",50,7000,BF_SHORT,"{ specialeffect2 EF_ENCHANCE; }"`
 - **淘氣妖精耳朵** `mischievous_fairy`
   - `bonus bUnbreakableHelm`
 - **蜂后的王冠** `mistress_crown`
   - `bonus bUnbreakableHelm`
-- **雷神之錘** `mjolnir`
-  - `autobonus "{ bonus bSplashRange,1; }",50,10000`
 - **深淵劍・Lv250** `mocadas_g_sword`
   - `bonus bSMatk,5`
 - **月夜貓卡片** `moonlight_flower_card`
   - `bonus bSpeedRate,25`
 - **慈母之心** `mother_heart`
   - `bonus bSpeedRate,25`
-- **名刀 不知火** `muramasa`
-  - `bonus2 bAddEff2,Eff_Curse,10`
-- **名刀不知火 [2]** `muramasa_`
-  - `bonus2 bAddEff2,Eff_Curse,10`
 - **納西斯弓-LT [2]** `narcis_bow_lt`
   - `bonus bPAtk,1`
   - `bonus bPow,2`
   - `bonus bPAtk,1`
   - `bonus bPAtk,2`
   - `bonus bPow,3`
-- **亡靈巫師卡片** `necromancer_card`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,2`
 - **尼普頓道服 [1]** `neptune_uniform`
   - `bonus2 bFixedCastrate,"SG_HATE",-50`
 - **尼普頓道服-LT [1]** `neptune_uniform_lt`
@@ -1405,12 +1101,6 @@
   - `bonus bSta,3`
   - `bonus bWis,3`
   - `bonus bCrt,3`
-- **榮耀十架 [1]** `noble_cross`
-  - `bonus2 bSPDrainValueRace,RC_Undead,1`
-- **將領軍帽 [1]** `officer_cap`
-  - `bonus2 bHPLossRate,10,5000`
-  - `autobonus "{ bonus2 bHPRegenRate,300,1000; }",40,4000,BF_MAGIC`
-  - `autobonus "{ bonus2 bSPRegenRate,70,1000; }",40,4000,BF_MAGIC`
 - **古代夢羅克貴族首飾 [1]** `old_moroc_acc`
   - `bonus bBaseAtk,.@a`
   - `bonus bMatk,.@b`
@@ -1421,13 +1111,6 @@
   - `bonus bPAtk,1`
   - `bonus bPAtk,2`
   - `bonus bPow,3`
-- **飯糰** `onigiri_in_mouth`
-  - `bonus2 bAddDefMonster,1400,5`
-  - `bonus2 bAddDefMonster,1406,5`
-  - `bonus2 bAddDefMonster,1404,5`
-  - `bonus2 bAddDefMonster,1402,5`
-- **獸人女戰士卡片** `orc_lady_card`
-  - `bonus2 bAddRace2,RC2_Orc,30`
 - **獸人刀** `orcish_sword`
   - `bonus bUnbreakableWeapon`
 - **獸人族的傳承象徵 [1]** `orcsuccessionhelm_tw`
@@ -1442,31 +1125,18 @@
   - `bonus bPAtk,1`
   - `bonus bPAtk,2`
   - `bonus bPow,3`
-- **俄塞里斯卡片** `osiris_card`
-  - `bonus bRestartFullRecover`
 - **深淵槍・Lv205** `overspear_furious`
   - `bonus bPAtk,3*(.@r/2)`
 - **近衛兵帽子 [1]** `palace_guard_cap`
   - `bonus bUnbreakableHelm`
 - **貓熊氣球** `panda_balloon`
   - `bonus bUnbreakableHelm`
-- **伊甸園圓帽 II [1]** `para_team_hat2`
-  - `autobonus "{ bonus bBaseAtk,10; }",70,5000,BF_WEAPON,"{ specialeffect2 EF_ENHANCE; }"`
-  - `autobonus "{ bonus bMatk,10; }",50,5000,BF_MAGIC,"{ specialeffect2 EF_SPELLBREAKER; }"`
-- **熱情足球帽 [1]** `passion_fb_hat`
-  - `autobonus "{ bonus bFlee,-15; bonus2 bAddClass,Class_All,5; }",20,10000,BF_NORMAL,"{ specialeffect2 EF_ENHANCE; }"`
 - **七彩大嘴鳥的翅膀** `pecopeco_hairband`
   - `bonus bSpeedRate,25`
 - **大嘴鳥的翅膀耳飾** `pecopeco_wing_ears`
   - `bonus bUnbreakableHelm`
 - **天馬羽翼耳飾** `pegasus_wing_ears`
   - `bonus bUnbreakableHelm`
-- **匹阿漫特頭巾 [1]** `piamette_hood`
-  - `bonus bNoSizeFix`
-- **飛行帽** `planewing_hat`
-  - `bonus2 bSPLossRate,5,10000`
-- **白金短劍 [2]** `platinum_dagger`
-  - `autobonus "{ bonus bMatk,100; bonus2 bMagicAddSize,Size_All,30; }",50,10000,BF_WEAPON,"{ specialeffect2 EF_ENHANCE; }"`
 - **懺悔覺醒神盾 [1]** `poenetentia_aegis`
   - `bonus bPow,1`
   - `bonus bSpl,1`
@@ -1581,16 +1251,12 @@
   - `bonus bUnbreakableWeapon`
   - `bonus bSMatk,1`
   - `bonus bSpl,2`
-- **劇毒長槍 [3]** `poison_forged_spear`
-  - `bonus2 bAddEff2,Eff_Poison,300`
 - **牛蛙卡片** `poison_toad_card`
   - `bonus2 bAddSkillBlow,52,5`
 - **耶誕北極熊帽** `polar_bear_cap`
   - `bonus bUnbreakableHelm`
 - **審判權杖 [2]** `ponitendtia`
   - `bonus bUnbreakableWeapon`
-- **托爾之力 [1]** `power_of_thor`
-  - `autobonus "{ bonus bMatk,40; bonus bBaseAtk,40; }",1,6000`
 - **精密單膛室手槍 [2]** `precision_pistol`
   - `bonus bCon,2`
   - `bonus bPAtk,2`
@@ -1612,12 +1278,6 @@
 - **純愛之心 [1]** `pure_heart_tw`
   - `bonus2 bAddClass,Class_Normal,5`
   - `bonus2 bMagicAddClass,Class_Normal,5`
-- **女王甲蟲卡片** `q_scaraba_card`
-  - `bonus2 bAddRace2,RC2_SCARABA,30`
-- **復仇者海盜帽 [1]** `queen_anz_revenge`
-  - `bonus bNoSizeFix`
-- **復仇者海盜帽 [1]** `queenanzrevenge`
-  - `bonus bNoSizeFix`
 - **皇室大提琴 [2]** `r_cello`
   - `bonus bUnbreakableWeapon`
 - **皇室教士手杖 [2]** `r_cleric_staff`
@@ -1636,14 +1296,10 @@
   - `bonus bUnbreakableWeapon`
 - **皇室舞鞭 [2]** `r_wheep`
   - `bonus bUnbreakableWeapon`
-- **競速頭盔(十字切割者) [1]** `racing_c_cross`
-  - `autobonus "{ bonus bCritAtkRate,20; }",50,5000,BF_WEAPON`
 - **競速頭盔(符文騎士) [1]** `racing_c_rune`
   - `bonus bUnbreakableWeapon`
 - **抗魔斗篷** `ragamuffin_cape`
   - `bonus bUnbreakableGarment`
-- **變異殭屍卡片** `ragged_zombie_card`
-  - `bonus2 bAddEff2,Eff_Bleeding,10`
 - **彩虹之星 [1]** `rainbow_star_`
   - `bonus bPerfectHitAddRate,30`
 - **瓦爾基里 蘭特克力斯卡片** `randgris_card`
@@ -1661,12 +1317,9 @@
 - **寶貝紅龍帽-LT [1]** `red_baby_dragon_lt`
   - `bonus bPow,3`
   - `bonus bPAtk,2`
-  - `autobonus "{ bonus bLongAtkRate,25; }",20,10000,BF_WEAPON,"{ active_transform 1714,10000; }"`
   - `bonus bPAtk,5`
 - **叼在嘴裡紅色鉛筆** `red_pencil_in_mouth`
   - `bonus bUnbreakableHelm`
-- **許願之杖** `release_of_wish`
-  - `autobonus "{ bonus2 bHPRegenRate,200,2000; bonus2 bSPRegenRate,50,2000; }",10,10000,BF_MAGIC,"{ specialeffect2 EF_HEAL; }"`
 - **求生哨** `rescue_whistle`
   - `bonus bFlee,10+.@a`
   - `bonus2 bAddEle,Ele_All,.@a+(readparam(bStr)/20)`
@@ -1681,16 +1334,6 @@
   - `bonus2 bAddEle,Ele_All,.@a+(readparam(bStr)/20)`
 - **活潑的髮帶** `ribbon_of_life`
   - `bonus bHealPower2,2`
-- **元宵童子卡片** `rice_cake_boy_card`
-  - `bonus2 bAddItemGroupHealRate,IG_Candy,50`
-- **地之戒指** `ring_of_earth`
-  - `bonus2 bSubDefEle,Ele_Earth,5`
-- **火之戒指** `ring_of_fire`
-  - `bonus2 bSubDefEle,Ele_Fire,5`
-- **水之戒指** `ring_of_water`
-  - `bonus2 bSubDefEle,Ele_Water,5`
-- **風之戒指** `ring_of_wind`
-  - `bonus2 bSubDefEle,Ele_Wind,5`
 - **莎拉的戰鬥外袍 [1]** `robe_of_sarah`
   - `autobonus "{ bonus bMatk,getrefine()*8; }",3,10000,BF_MAGIC,"{ specialeffect2 EF_STEAL; }"`
 - **RWC 專屬頭飾** `rocket_helm_rwc`
@@ -1717,7 +1360,6 @@
   - `bonus bUnbreakableWeapon`
 - **紅魔鬼法杖-OS [2]** `rutilus_stick_os`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bMagicAtkEle,Ele_Fire,30; }",40,10000,BF_MAGIC,"{ specialeffect2 255; }"`
 - **RWC勝利之冠(季軍) [1]** `rwc_champ_crown_black`
   - `bonus bUnbreakableHelm`
 - **RWC勝利之冠(亞軍) [1]** `rwc_champ_crown_blue`
@@ -1730,14 +1372,8 @@
   - `bonus bPerfectHitAddRate,3`
   - `bonus bPerfectHitAddRate,25+(4*(.@r/4))`
   - `bonus bPerfectHitAddRate,25+(4*(.@r/4))`
-- **暗靈之斧** `sabbath`
-  - `bonus2 bComaRace,RC_Demon,50`
 - **安全帽** `safety_helmet`
   - `bonus bUnbreakableHelm`
-- **射手座王冠** `sagittarius_crown`
-  - `autobonus "{ bonus bAgi,10; bonus bDex,10; }",3,10000,BF_NORMAL,"{ specialeffect2 EF_ENHANCE; }"`
-- **射手座寶冠** `sagittarius_diadem`
-  - `bonus5 bAutoSpell,"WZ_SIGHTRASHER",1,5,BF_MAGIC,0`
 - **古代聖殿審判錘 [2]** `saint_hall`
   - `bonus bUnbreakableWeapon`
 - **聖殿審判錘-LT [2]** `saint_hall_lt`
@@ -1747,18 +1383,10 @@
   - `bonus bSMatk,1`
   - `bonus bSMatk,2`
   - `bonus bSpl,3`
-- **聖誕波利氣球** `santa_poring_balloon`
-  - `bonus2 bAddItemGroupHealRate,IG_Candy,200`
-- **聖誕波利氣球** `santaporing_balloon`
-  - `bonus2 bAddItemGroupHealRate,IG_Candy,200`
 - **藍寶石之錘-OS [2]** `saphir_hall_os`
   - `bonus bUnbreakableWeapon`
-- **詛咒的惡魔髮帶 [1]** `satanic_chain_p`
-  - `bonus2 bAddEff2,Eff_Curse,10`
 - **竹莢魚劍** `saurel`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus bBaseAtk,30; }",15,7000,BF_NORMAL,"{ specialeffect2 EF_ENHANCE; }"`
-  - `autobonus "{ bonus bMatk,20; }",15,7000,BF_MAGIC,"{ specialeffect2 EF_SPELLBREAKER; }"`
 - **火龍穿心神弓-LT [2]** `scalet_dragon_l_bow_lt`
   - `bonus bPAtk,1`
   - `bonus bPow,2`
@@ -1790,12 +1418,6 @@
   - `bonus bNoWalkDelay`
 - **封印伊夫利特卡片** `sealed_ifrit_card`
   - `bonus3 bAutoSpellWhenHit,"NPC_EARTHQUAKE",2,1`
-- **封印元靈武士卡片** `sealed_samurai_card`
-  - `bonus bIgnoreDefClass,Class_Normal`
-  - `bonus2 bHPLossRate,777,8000`
-  - `bonus2 bHPLossRate,888,5000`
-- **海獺卡片** `see_otter_card`
-  - `bonus2 bAddItemGroupHealRate,IG_Fish,50`
 - **英雄魔杖-LT [2]** `shadow_staff_k_lt`
   - `bonus bUnbreakableWeapon`
   - `bonus bSMatk,1`
@@ -1803,8 +1425,6 @@
   - `bonus bSMatk,1`
   - `bonus bSMatk,2`
   - `bonus bSpl,3`
-- **陰影之靴** `shadow_walk`
-  - `bonus5 bAutoSpellWhenHit,"AS_CLOAKING",max(2,getskilllv("AS_CLOAKING")),100,BF_MAGIC,0`
 - **薩滿之帽  [1]** `shaman_hat`
   - `bonus5 bAutoSpell,"SL_STUN",5,10,BF_MAGIC,1`
 - **慈愛披肩** `shawl_of_affection`
@@ -1813,6 +1433,8 @@
 - **審判披肩** `shawl_of_judgement`
   - `bonus5 bAutoSpellWhenHit,"AB_ORATIO",.@i,30,BF_WEAPON,0`
   - `bonus5 bAutoSpellWhenHit,"AB_ORATIO",.@i,40,BF_MAGIC,0`
+- **納迦鱗盾 [1]** `shield_of_naga`
+  - `autobonus2 "{ bonus bShortWeaponDamageReturn,("+.@r+"*3); }",10,5000,BF_WEAPON,"{ specialeffect2 EF_GUARD; }"`
 - **明亮的聖水 [1]** `shiningholywater_`
   - `bonus2 bSubRace2,RC2_Ep16_def,20`
 - **陽光的假髮** `shiny_wig`
@@ -1823,8 +1445,6 @@
   - `bonus bPAtk,1`
   - `bonus bPAtk,2`
   - `bonus bPow,3`
-- **華麗高筒帽** `showy_high_cap`
-  - `bonus2 bAddItemSPHealRate,505,50`
 - **城戰鋼鐵盔甲 [1]** `siege_plate`
   - `bonus bHealPower2,12`
 - **星際創意徽章 [1]** `signet_of_crt_star`
@@ -1847,29 +1467,14 @@
   - `bonus bUnbreakableWeapon`
 - **邪念之雙手斧 [1]** `sinister_twohand_axe`
   - `bonus bUnbreakableWeapon`
-- **魔力之矛** `skewer`
-  - `bonus bIgnoreDefClass,Class_Normal`
-- **死神頭巾 [1]** `skull_hood`
-  - `autobonus "{ bonus bCritical,30; bonus bHit,10; }",10,10000,BF_NORMAL,"{ specialeffect2 EF_ENHANCE; }"`
 - **石板靈劍-LT [2]** `slate_sword_lt`
   - `bonus bPAtk,1`
   - `bonus bPow,2`
   - `bonus bPAtk,1`
   - `bonus bPAtk,2`
   - `bonus bPow,3`
-- **斯勒特斧** `slaughter`
-  - `bonus2 bComaRace,RC_Brute,40`
-  - `bonus2 bComaRace,RC_Player_Doram,40`
 - **深淵雙手劍・Lv205** `slayer_furious`
   - `bonus bPAtk,4*(.@r/2)`
-- **封印闇●智者 西里亞卡片** `sld_professor_card`
-  - `bonus5 bAutoSpellWhenHit,"SA_LANDPROTECTOR",1,1,BF_MAGIC,0`
-  - `bonus5 bAutoSpellWhenHit,"SA_LANDPROTECTOR",3,1,BF_MAGIC,0`
-- **封印女王甲蟲卡片** `sld_q_scaraba_card`
-  - `bonus2 bAddRace2,RC2_SCARABA,25`
-  - `bonus2 bAddRace2,RC2_SCARABA,15`
-- **封印魔劍士 達納托斯的記憶卡片** `sld_thanatos_card`
-  - `bonus bDefRatioAtkClass,Class_All`
 - **史雷普尼爾之靴** `sleipnir`
   - `bonus bUnbreakableShoes`
   - `bonus bSpeedRate,25`
@@ -1905,8 +1510,6 @@
   - `bonus bSMatk,2`
 - **雪花長靴 [1]** `snowflower_shoes`
   - `bonus bSMatk,2`
-- **烈陽之劍** `solar_sword`
-  - `bonus2 bSPLossRate,15,10000`
 - **堅韌秘劍 [2]** `solid_edge`
   - `bonus bPow,2`
   - `bonus bPAtk,2`
@@ -1926,8 +1529,6 @@
   - `bonus bUnbreakableWeapon`
   - `bonus bSpl,2`
   - `bonus bSMatk,2`
-- **繡靈娃娃帽子 [1]** `sorin_doll_hat`
-  - `autobonus "{ bonus bBaseAtk,50; }",20,10000,BF_NORMAL,"{ specialeffect2 EF_POTION_BERSERK; }"`
 - **量子靈魂石-LT [2]** `soul_weight_lt`
   - `bonus bUnbreakableWeapon`
   - `bonus bSMatk,1`
@@ -1947,19 +1548,7 @@
 - **南方十字星榴彈器 [1]** `southern_cross_r_`
   - `bonus4 bAutoSpell,"KO_JYUMONJIKIRI",1,100,1`
 - **劍旗魚槍** `spearfish_`
-  - `bonus3 bAddEffOnSkill,"KN_PIERCE",Eff_Bleeding,150`
-  - `bonus3 bAddEffOnSkill,"LK_SPIRALPIERCE",Eff_Bleeding,150`
   - `bonus2 bAddEff2,Eff_Freezing,100`
-- **闇盲之錘** `spike`
-  - `bonus bDef2Rate,-66`
-- **闇盲之錘 [2]** `spike_`
-  - `bonus bDef2Rate,-66`
-- **小青的靈魂 [1]** `spirit_of_chung_e`
-  - `autobonus "{ bonus bCritAtkRate,30; bonus bMatkRate,30; }",1,5000,BF_WEAPON|BF_MAGIC,"{ active_transform 1519,5000; }"`
-- **小青的靈魂 [1]** `spirit_of_chung_e_`
-  - `autobonus "{ bonus bCritAtkRate,30; bonus bMatkRate,30; }",1,5000,BF_WEAPON|BF_MAGIC,"{ active_transform 1519,5000; }"`
-- **彈簧兔卡片** `spring_rabbit_card`
-  - `bonus2 bAddItemGroupHealRate,IG_Meat,50`
 - **奔跑盔甲 [1]** `sprint_mail`
   - `bonus bHealPower2,3`
 - **深海電鰻卡片** `sropho_card`
@@ -2007,8 +1596,6 @@
   - `bonus bPAtk,(.@r/4)`
   - `bonus bCRate,(.@r/4)`
   - `bonus bPAtk,2*(.@r/4)`
-- **豬籠草的莖 [2]** `stem_of_nepenthes`
-  - `bonus3 bAddEffOnSkill,"DC_THROWARROW",Eff_Freeze,(getrefine()>=9?2000:1000)`
 - **奇妙狐尾草魔杖 [2]** `strange_foxtail`
   - `bonus bUnbreakableWeapon`
 - **樹林哥布靈鼻子** `stretched_nose_m`
@@ -2041,12 +1628,6 @@
   - `bonus bUnbreakableWeapon`
 - **太刀 [2]** `tae_goo_lyeon`
   - `autobonus "{ bonus bBaseAtk,50; }",10,10000,BF_WEAPON,"{ specialeffect2 EF_POTION_BERSERK; }"`
-- **魔刀 吞神** `tale_fing`
-  - `bonus2 bHPLossRate,35,10000`
-- **魔刀 吞神** `tale_fing_`
-  - `bonus2 bHPLossRate,35,10000`
-- **長長貓耳朵帽子 [1]** `tare_neko_cru`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,.@i+.@r`
 - **趴趴教皇帽子 [1]** `tare_pope`
   - `bonus bUnbreakableHelm`
 - **趴趴教皇帽子 [1]** `tare_pope_`
@@ -2090,34 +1671,16 @@
   - `bonus bCriticalRate,30`
 - **霧中暗影 [1]** `tenebris_latitantes`
   - `bonus4 bAutoSpellWhenHit,"KO_ZANZOU",1,50,1`
-- **天狗卡片** `tengu_card`
-  - `bonus2 bAddMonsterDropItemGroup,IG_Recovery,10000`
-- **魔劍士 達納托斯的記憶卡片** `thanatos_card`
-  - `bonus bDefRatioAtkClass,Class_All`
-- **塔諾斯的斧頭 [1]** `thanos_axe`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯戰斧-AD [2]** `thanos_axe_ad`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
-- **塔諾斯的弓 [1]** `thanos_bow`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯弓-AD [2]** `thanos_bow_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
-- **塔諾斯的短劍 [1]** `thanos_dagger`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯短劍-AD [2]** `thanos_dagger_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,1000,1000; bonus2 bSPRegenRate,100,1000; }",10,4000,BF_MAGIC`
   - `bonus5 bAutoSpell,"SO_PSYCHIC_WAVE",4,100,BF_SHORT|BF_WEAPON,1`
   - `bonus bSMatk,1`
-- **塔諾斯的巨劍 [1]** `thanos_great_sword`
-  - `bonus2 bHPLossRate,100,10000`
-- **塔諾斯的錘子 [1]** `thanos_hammer`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯鐵錘-AD [2]** `thanos_hammer_ad`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
 - **塔諾斯近戰頭盔-LT [1]** `thanos_helm1_lt`
   - `bonus bPAtk,2`
@@ -2131,48 +1694,25 @@
 - **塔諾斯暴力頭盔-LT [1]** `thanos_helm4_lt`
   - `bonus bPAtk,2`
   - `bonus bPow,2`
-- **塔諾斯的拳刃 [1]** `thanos_katar`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯拳刃-AD [2]** `thanos_katar_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
-- **塔諾斯的拳套 [1]** `thanos_knuckle`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯拳套-AD [2]** `thanos_knuckle_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
-- **塔諾斯的雙手槍 [1]** `thanos_long_spear`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯雙手杖-AD [2]** `thanos_rod_ad`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bHPRegenRate,1000,1000; bonus2 bSPRegenRate,100,1000; }",10,4000,BF_MAGIC`
   - `bonus bSMatk,1`
-- **塔諾斯的槍 [1]** `thanos_spear`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯長矛-AD [2]** `thanos_spear_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
 - **塔諾斯魔杖-AD [2]** `thanos_staff_ad`
   - `bonus bUnbreakableWeapon`
-  - `autobonus "{ bonus2 bHPRegenRate,1000,1000; bonus2 bSPRegenRate,100,1000; }",10,4000,BF_MAGIC`
   - `bonus bSMatk,1`
-- **塔諾斯的劍 [1]** `thanos_sword`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯寶劍-AD [2]** `thanos_sword_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
 - **塔諾斯大刀-AD [2]** `thanos_tsword_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
-- **塔諾斯的小提琴 [1]** `thanos_violin`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯小提琴-AD [2]** `thanos_violin_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
-- **塔諾斯的鞭刃 [1]** `thanos_whip`
-  - `bonus2 bHPLossRate,100,10000`
 - **塔諾斯鞭刃-AD [2]** `thanos_whip_ad`
-  - `autobonus "{ bonus2 bHPRegenRate,2500,1000; }",1,4000,BF_WEAPON`
   - `bonus bPAtk,1`
 - **地獄黑光格林機槍 [2]** `the_black_gatling`
   - `bonus2 bSkillUseSPrate,"RL_R_TRIP",-10`
@@ -2182,8 +1722,6 @@
   - `bonus bPAtk,1`
   - `bonus bPAtk,2`
   - `bonus bPow,3`
-- **黑暗的荊棘骷髏杖 [1]** `thorn_staff_`
-  - `bonus2 bIgnoreMdefClassRate,Class_Normal,.@r`
 - **深淵雙手槍・Lv250** `time_gap_dk_spear`
   - `bonus bCRate,5`
   - `bonus bPAtk,5`
@@ -2225,8 +1763,6 @@
   - `bonus bPow,3+.@r`
 - **烏爾帝奧流星錘-OS [2]** `ultio_spes_os`
   - `bonus bUnbreakableWeapon`
-- **超輕魔法盾牌 [1]** `ultra_light_mshield`
-  - `bonus2 bIgnoreDefClassRate,Class_Normal,10`
 - **水精靈保庇長矛-LT [2]** `undine_spear_k_lt`
   - `bonus bPAtk,1`
   - `bonus bPow,2`
@@ -2271,10 +1807,6 @@
   - `bonus bUnbreakableWeapon`
 - **神話英雄魔杖 [2]** `up_shadow_staff_k`
   - `bonus bUnbreakableWeapon`
-- **神話量子靈魂石 [2]** `up_soul_weight`
-  - `autobonus "{ bonus2 bSPRegenRate,230,10000; }",70,10000,BF_MAGIC`
-- **神話量子靈魂石 [2]** `up_soulweight`
-  - `autobonus "{ bonus2 bSPRegenRate,230,10000; }",70,10000,BF_MAGIC`
 - **神話紅蓮劍 [2]** `up_sword_of_bluefire`
   - `bonus2 bSkillUseSPrate,"GN_CARTCANNON",10`
 - **神話地獄黑光格林機槍 [2]** `up_the_black_gatling`
@@ -2293,10 +1825,6 @@
   - `bonus bUnbreakableShoes`
   - `bonus bMaxHP,(BaseLevel*5) if(BaseClass == Job_Mage || BaseClass == Job_Archer || BaseClass == Job_Acolyte)`
   - `bonus bMaxSP,(JobLevel*2) if(!(BaseClass == Job_Mage || BaseClass == Job_Archer || BaseClass == Job_Acolyte) && BaseClass == Job_Swordman || BaseClass == Job_Merchant || BaseClass == Job_Thief)`
-- **凡貝爾克卡片** `vanberk_card`
-  - `autobonus "{ bonus bCritical,100; }",5,5000,BF_NORMAL,"{ specialeffect2 EF_ENHANCE; }"`
-- **多變拳刃 [4]** `various_jur`
-  - `bonus2 bAddEff2,Eff_Bleeding,10`
 - **戰神埃布爾雷弓** `velum_arbalest`
   - `bonus3 bSPVanishRaceRate,RC_Player_Human,1000,4`
 - **戰神言靈魔杖** `velum_arc_wand`
@@ -2310,8 +1838,6 @@
 - **戰神大馬士革短劍** `velum_damascus`
   - `bonus4 bSetDefRace,RC_Player_Human,10000,5000,1`
   - `bonus4 bSetMDefRace,RC_Player_Human,10000,5000,1`
-- **戰神大百科全書** `velum_encyclopedia`
-  - `autobonus "{ bonus bBaseAtk,200; }",30,3000,BF_WEAPON,"{ specialeffect2 EF_BASH3D; }"`
 - **戰神流星錘** `velum_flail`
   - `bonus bUnbreakableWeapon`
   - `bonus3 bStateNoRecoverRace,RC_Player_Human,10000,10000`
@@ -2335,8 +1861,6 @@
   - `bonus4 bSetMDefRace,RC_Player_Human,10000,5000,1`
   - `bonus4 bSetDefRace,RC_Player_Doram,10000,5000,1`
   - `bonus4 bSetMDefRace,RC_Player_Doram,10000,5000,1`
-- **勝利足球帽 [1]** `victory_fb_hat`
-  - `autobonus "{ bonus bMatkRate,5; bonus bDef,-30; }",3,10000,BF_MAGIC,"{ specialeffect2 EF_SUFFRAGIUM; }"`
 - **巡衛隊徽章** `vigilante_bedge`
   - `bonus2 bWeaponDamageRate,W_BOW,5`
 - **巡衛隊天弓 [2]** `vigilante_bow`
@@ -2346,9 +1870,6 @@
 - **維納斯羽甲-LT [1]** `vinus_armor_tw_lt`
   - `bonus bPAtk,.@r/2`
   - `bonus bSMatk,.@r/2`
-- **處女座王冠** `virgo_crown`
-  - `autobonus "{ bonus bDex,20; }",30,6000,BF_MAGIC,"{ specialeffect2 EF_WIND; }"`
-  - `autobonus "{ bonus bDex,20; }",30,6000,BF_NORMAL,"{ specialeffect2 EF_WIND; }"`
 - **生命樹之靴** `vital_tree_shoes`
   - `bonus bHealPower2,5`
 - **信念意志頭盔(大主教) [1]** `viva_adul_hat_ab1`
@@ -2598,6 +2119,7 @@
   - `bonus bPAtk,.@r/2`
 - **白色趴趴虎王頭飾** `w_king_tiger_doll_hat`
   - `autobonus "{ bonus2 bSPLossRate,5,1000; bonus bBaseAtk,25*max(1,getrefine()); }",3*.@r,3000,BF_NORMAL,"{ active_transform 1115,3000; specialeffect2 EF_POTION_BERSERK; showscript \"Traaaansformation-!! Eddga form!!\"; }"`
+  - `autobonus2 "{ bonus2 bSPLossRate,5,1000; bonus bBaseAtk,25*max(1,getrefine()); }",.@r,3000,BF_NORMAL,"{ active_transform 1115,3000; specialeffect2 EF_POTION_BERSERK; showscript \"Traaaansformation-!! Eddga form!!\"; }"`
 - **虛空陰暗長靴 [1]** `walk_of_dark_void`
   - `bonus2 bSkillCooldown,"RG_RAID",60000 if(.@r>=12 && !(eaclass()&EAJL_THIRD && BaseJob == Job_Rogue))`
 - **虛空陰暗長靴 [1]** `walk_of_darkvoid`
@@ -2613,8 +2135,6 @@
   - `bonus2 bAddSkillBlow,"CG_ARROWVULCAN",3`
 - **無常帽 [1]** `white_musang_hat`
   - `bonus bUnbreakableHelm`
-- **白翼斗篷** `white_wing_manteau`
-  - `autobonus "{ bonus bFlee,20; }",20,7000,BF_LONG,"{ specialeffect2 EF_CHAINCOMBO; }"`
 - **深淵劍・Lv205** `whitesword_furious`
   - `bonus bPAtk,3*(.@r/2)`
 - **深淵雙手斧・Lv220** `wicked_axe`
@@ -2639,11 +2159,6 @@
   - `bonus bSMatk,1`
 - **巨魔指甲 [1]** `wild_beast_claw`
   - `bonus3 bAutoSpell,"NPC_CRITICALWOUND",(getrefine()>=9?2:1),100`
-- **人參精卡片** `wild_ginseng_card`
-  - `bonus2 bAddItemGroupHealRate,IG_Herb,50`
-- **疲倦戰士的意志** `will_of_exhausted_angel`
-  - `bonus2 bAddDefMonster,1761,50`
-  - `bonus2 bAddDefMonster,1762,50`
 - **深紅魔術之靴-LT [1]** `wine_shoes_lt`
   - `bonus bPAtk,.@r/3`
   - `bonus bSMatk,.@r/3`
@@ -2654,14 +2169,11 @@
   - `bonus bSMatk,2`
   - `bonus bSMatk,1`
   - `bonus bSpl,3`
-- **狼紋護手 [1]** `wolf_armguard`
-  - `autobonus "{ bonus bBaseAtk,100; bonus bFlee,-50; }",20,5000,BF_WEAPON,"{ specialeffect2 EF_TEIHIT1; }"`
 - **Celine Kimi卡片** `xm_celine_kimi_card`
   - `bonus5 bAutoSpell,"NPC_WIDECRITICALWOUND",8,5+(10*(getrefine()/3)),BF_MAGIC,1`
 - **素貞娃娃頭飾 [1]** `zaha_doll_hat`
   - `autobonus "{ .@r = max(1,getrefine()); bonus bMatk,30*.@r; bonus bFixedCast,-80*.@r; bonus2 bSPLossRate,10,1000; }",15,.@t,BF_MAGIC,"{ active_transform 1518,3000; specialeffect2 EF_POTION_BERSERK; showscript \"This is my magic Power!\"; }"`
-- **金幣短劍** `zeny_knife`
-  - `bonus2 bGetZenyNum,100,40`
+  - `autobonus2 "{ .@r = max(1,getrefine()); bonus bMatk,30*.@r; bonus bFixedCast,-80*.@r; bonus2 bSPLossRate,10,1000; }",15,.@t,BF_MAGIC,"{ active_transform 1518,3000; specialeffect2 EF_POTION_BERSERK; showscript \"How dare you! I punish you to endless sleep!\"; }"`
 - **拉鏈熊卡片** `zipper_bear_card`
   - `bonus bUnbreakableWeapon`
 - **巨大雙手劍** `zweihander`

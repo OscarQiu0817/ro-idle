@@ -638,6 +638,7 @@ function buffSourceLabel(b) {
       return lv > 0 ? `${nm} Lv${lv}` : nm;
     }
   }
+  if (b.buffName) return b.buffName;   // 裝備／卡片觸發的（autobonus、onAttackBuff）
   return BUFF_TYPE_LABELS[b.type] || b.type;
 }
 
@@ -2355,6 +2356,10 @@ function recomputeDerived(fullHeal) {
   state.cardRangedDmgPct = getCardBonus('rangedDmgPct');
   state.cardMeleeDmgPct = getCardBonus('meleeDmgPct');   // 近距離物理傷害（bShortAtkRate，5d）
   state.cardIgnoreSizePenalty = getCardBonus('ignoreSizePenalty') > 0;
+  /* 破甲短錐／魔劍士 達納托斯的記憶卡片（rAthena bDefRatioAtkClass，使用者 2026-11-08 提供的 RO 公式）：
+     ① 敵人的後段 DEF（硬防，(4000+DEF)/(4000+10×DEF) 那段）與前段 DEF（軟防的固定減算）都視為 0
+     ② 敵人原本的後段 DEF ÷ 2 轉成卡裝 ATK，不吃體型修正 */
+  state.cardDefRatioAtk = getCardBonus('defRatioAtk') > 0;
   state.cardSplashAttack = getCardBonus('splashAttack') > 0;   // 巴風特卡片（#136）：普攻濺射
   state.cardBossDmgTakenPct = getCardBonus('bossDmgTakenPct');
   state.cardNormalDmgTakenPct = getCardBonus('normalDmgTakenPct');
@@ -2426,8 +2431,9 @@ function recomputeDerived(fullHeal) {
   state.itemHealBonus = {};     // 指定道具的回復量加成（道具id → %）
   state.ailResist = {};         // 玩家的異常狀態抗性（狀態 → %，100 以上＝免疫）
   // 自動念咒與異常狀態：都依觸發時機分籃，戰鬥時直接取用不必再掃卡片
-  state.cardAutoSpells = { attack: [], hit: [], chain: [] };
-  state.cardAilments = { attack: [], hit: [], magic: [] };
+  state.cardAutoSpells = { attack: [], hit: [], chain: [], magic: [], hitMagic: [] };
+  state.cardAilments = { attack: [], hit: [], magic: [], skill: [] };
+  state.cardAutoBonus = { attack: [], hit: [], magic: [], skill: [] };
   state.cardAttackBuffs = { attack: [], hit: [] };
   state.cardKillDrops = [];
   {
@@ -2458,6 +2464,7 @@ function recomputeDerived(fullHeal) {
         if (bucket) bucket.push(e);
       });
       (c.killDrop || []).forEach(e => { if (pass(e)) state.cardKillDrops.push(e); });
+      (c.autoBonus || []).forEach(e => { if (pass(e) && state.cardAutoBonus[e.on]) state.cardAutoBonus[e.on].push({ ...e, src: cardId }); });
     });
     /* 裝備**自己**的觸發型特效（#127）。跟卡片走同一組籃子、同一套資料格式——
        官方有一整批武器寫著「攻擊時有一定機率施展○○」「機率讓敵人中毒」，
@@ -2484,6 +2491,7 @@ function recomputeDerived(fullHeal) {
         if (bucket) bucket.push(e);
       });
       (def.killDrop || []).forEach(e => { if (pass(e)) state.cardKillDrops.push(e); });
+      (def.autoBonus || []).forEach(e => { if (pass(e) && state.cardAutoBonus[e.on]) state.cardAutoBonus[e.on].push({ ...e, src: d.itemId }); });
     });
   }
   state.cardHpRegenPct = 0;
@@ -2747,11 +2755,14 @@ function defOf(mon, scale, magic, inst) {
   const s = (scale === undefined ? 1 : scale) * (inst ? ailDefMult(inst) : 1) * fm;
   if (magic) {
     const ig = (state.cardMdefIgnorePct || 0) + (mon.isBoss ? (state.cardBossMdefIgnorePct || 0) : 0)
-      + (mon.race ? getCardBonus('mdefIgnoreRace_' + mon.race) : 0);
+      + (mon.race ? getCardBonus('mdefIgnoreRace_' + mon.race) : 0)
+      + (!mon.isBoss ? getCardBonus('normalMdefIgnorePct') : 0);
     const ms = s * Math.max(0, 1 - ig / 100) * monDebuffMdef(inst);
     return [(mon.mdef || 0) * ms, (mon.mdefSoft || 0) * ms];
   }
   const d = s * monDebuffDef(inst) * Math.max(0, 1 - physDefIgnorePct(mon) / 100);
+  // 破甲短錐／魔劍卡：前段（軟防）、後段（硬防）的減傷全部消失
+  if (state.cardDefRatioAtk) return [0, 0];
   return [(mon.def || 0) * d, (mon.defSoft || 0) * d];
 }
 /* 無視**物理**防禦（#127）。魔防那邊本來就有（cardMdefIgnorePct），物防這邊沒有——
@@ -2767,7 +2778,8 @@ function physDefIgnorePct(mon) {
   const byRace = (state.cardDefIgnoreRace && mon && state.cardDefIgnoreRace[mon.race]) || 0;
   // 無視首領防禦（rAthena bIgnoreDefClass,Class_Boss：爾休披斯槍、鋼爪拳套）
   const boss = mon && mon.isBoss ? getCardBonus('bossDefIgnorePct') : 0;
-  return Math.min(100, all + byRace + boss);
+  const normal = mon && !mon.isBoss ? getCardBonus('normalDefIgnorePct') : 0;
+  return Math.min(100, all + byRace + boss + normal);
 }
 
 /* 卡片的「從某個魔物家族受到的傷害 +N%」（妖道：從殭屍受到的傷害 +100%）。
@@ -2775,11 +2787,14 @@ function physDefIgnorePct(mon) {
    殭屍在本作的 race 是不死族，但「殭屍家族」只涵蓋名字真的是殭屍那 16 隻，
    拿 race 代替會連骷髏、木乃伊一起算進去。 */
 function cardFamilyDmgTakenMult(monDef) {
-  if (!state.cardFamilyDmgTaken || !monDef) return 1;
+  if (!monDef) return 1;
+  // 指定怪物（monDmgTaken_<怪>，負值＝減傷）與怪物本身屬性（monEleDmgTaken_<屬性>）
+  const extra = (1 + getCardBonus('monDmgTaken_' + monDef.id) / 100) * (1 + getCardBonus('monEleDmgTaken_' + (monDef.element || 'none')) / 100);
+  if (!state.cardFamilyDmgTaken) return extra;
   const fam = familyOfMonster(monDef);
   // 跟其他 cardXxxDmg 桶子一致，分流迴圈已經把百分比除成比例了（+100% → 1）
   const ratio = fam && state.cardFamilyDmgTaken[fam];
-  return ratio ? 1 + ratio : 1;
+  return (ratio ? 1 + ratio : 1) * extra;
 }
 /* 種族版承傷（天龍防具「受到龍族怪的傷害-2%」）。同樣吃分流迴圈除好的比例。 */
 function cardRaceDmgTakenMult(monDef) {
@@ -3380,7 +3395,7 @@ function tickBleed() {
      race   限定種族，省略代表任何魔物
      items  候選道具 id 陣列，隨機挑一個
      pool   改用分類池（'food' 食品類／'elementResist' 屬性抵抗藥水）
-     chance 百分比。本作的規範是**限定種族 5%、不限種族 1%**
+     chance 百分比。官方腳本寫明的照官方；官方只寫「機率」沒給數字的一律 0.5%（使用者 2026-11-08）
    跟 autoSpell / ailment 一樣支援 when（目前沒有卡片用到，留著格式一致）。 */
 const ITEM_POOLS = {
   // 食品：有回血值的道具，扣掉藥水藥草那一類（那是藥品不是食品）
@@ -3397,8 +3412,15 @@ function tryCardKillDrops(monDef) {
   if (!state.cardKillDrops || !state.cardKillDrops.length) return;
   state.cardKillDrops.forEach(e => {
     if (e.race && monDef.race !== e.race) return;
+    if (e.mon && monDef.id !== e.mon) return;
     if (Math.random() * 100 >= e.chance) return;
-    // 掉的是錢不是道具（藍鼠：擊殺時機率得到一筆金幣）
+    // 掉的是錢不是道具（藍鼠：擊殺時機率得到一筆金幣；zenyMax＝隨機 1～N，rAthena bGetZenyNum）
+    if (e.zenyMax && !e.zeny) {
+      const z = 1 + Math.floor(Math.random() * e.zenyMax);
+      state.gold += z;
+      if (state.dpsTracker) state.dpsTracker.gold += z;
+      return;
+    }
     if (e.zeny) {
       state.gold += e.zeny;
       if (state.dpsTracker) state.dpsTracker.gold += e.zeny;
@@ -3488,6 +3510,9 @@ const BOX_POOLS = {
    王卡的判定：從 MONSTER_CARD_DROPS 反查來源怪，怪是 BOSS 階級就算。
    MVP 30 張、迷你王 39 張。 */
 const CARD_ALBUM_WEIGHT = { mvp: 0.02, miniBoss: 0.1, normal: 1 };
+/* 具有魔力的卡片冊子（使用者 2026-11-08）：全部卡片都抽得到，MVP 卡與小王卡權重壓低。
+   （約 MVP 2%、小王卡 5%；原本完全平均是 MVP 6.7%、小王卡 8.8%） */
+const MAGIC_ALBUM_WEIGHT = { mvp: 0.3, miniBoss: 0.5, normal: 1 };
 let _bossCardKind = null;
 function bossCardKind(cardId) {
   if (!_bossCardKind) {
@@ -3546,13 +3571,13 @@ Object.assign(BOX_POOLS, {
     build: () => Object.keys(ALBUM_ITEMS).filter(k => ITEMS[k]),
     weight: id => ALBUM_ITEMS[id],
   },
-  card: { build: cardDrawable, weight: cardWeight },
-  cardFlat: { build: cardDrawable },     // 完全平均
+  /* 老舊收集冊與部位收集冊：照官方（rAthena IG_CardAlbum 系列）開不出 MVP 卡與小王卡（使用者 2026-11-08） */
+  card: { build: () => cardDrawable().filter(k => bossCardKind(k) === 'normal') },
+  cardFlat: { build: cardDrawable, weight: id => MAGIC_ALBUM_WEIGHT[bossCardKind(id)] },
 });
 Object.entries(ALBUM_SLOT).forEach(([album, slot]) => {
   BOX_POOLS['card_' + slot] = {
-    build: () => cardDrawable().filter(k => CARDS[k].slot === slot || CARDS[k].slot === 'any'),
-    weight: cardWeight,
+    build: () => cardDrawable().filter(k => (CARDS[k].slot === slot || CARDS[k].slot === 'any') && bossCardKind(k) === 'normal'),
   };
 });
 
@@ -5944,13 +5969,15 @@ function passiveRegen() {
   /* 卡片的定時回復（闇●劍士 賽尼亞：每 10 秒 +50HP +10SP）。
      跟下面的自然回復是兩回事——這是固定量的獨立心跳，
      所以**不吃 hpRegenPct，也不受出血的「完全不回復」影響**（官方就是這樣寫的）。 */
-  const tickHp = getCardBonus('regenTickHp'), tickSp = getCardBonus('regenTickSp');
+  // regenTickHpPct／SpPct：每 10 秒回最大值的 N%（rAthena bRegenPercentHP／SP 換算）
+  const tickHp = getCardBonus('regenTickHp') + Math.floor((state.maxHp || 0) * getCardBonus('regenTickHpPct') / 100);
+  const tickSp = getCardBonus('regenTickSp') + Math.floor((state.maxSp || 0) * getCardBonus('regenTickSpPct') / 100);
   if (tickHp || tickSp) {
     const now = Date.now();
     if (now >= (state.cardRegenTickAt || 0)) {
       state.cardRegenTickAt = now + 10000;
-      if (tickHp && state.hp > 0) state.hp = Math.min(state.maxHp, state.hp + tickHp);
-      if (tickSp) state.sp = Math.min(state.maxSp, state.sp + tickSp);
+      if (tickHp && state.hp > 0) state.hp = Math.max(1, Math.min(state.maxHp, state.hp + tickHp));
+      if (tickSp) state.sp = Math.max(0, Math.min(state.maxSp, state.sp + tickSp));
     }
   }
   const { hp: hpRegen, sp: spRegen } = regenPerSecond();
@@ -6879,8 +6906,10 @@ function spawnMonster() {
        兩邊都中的時候不是各生一隻（一輪只有一個空位），而是從中選一個。
        這樣任一邊單獨開啟時的機率跟以前一模一樣，兩邊都開也不會變成 40%。 */
     let defId;
-    const hit = bossLists.filter(l =>
-      !state.monsters.some(m => l.includes(m.defId)) && Math.random() * 100 < MVP_SPAWN_CHANCE_PCT);
+    /* 場上已經有首領（MVP 或迷你王，任何一隻）就不再刷另一隻（使用者 2026-11-08）。
+       以前只擋「同一份名單的還活著」，MVP 與迷你王可以同時在場。 */
+    const bossAlive = state.monsters.some(m => m.hp > 0 && MONSTERS[m.defId] && MONSTERS[m.defId].isBoss);
+    const hit = bossAlive ? [] : bossLists.filter(l => Math.random() * 100 < MVP_SPAWN_CHANCE_PCT);
     if (hit.length) {
       const l = hit[Math.floor(Math.random() * hit.length)];
       defId = l[Math.floor(Math.random() * l.length)];
@@ -7045,7 +7074,9 @@ function weaponChainDamage(monDef, elemMult, roll, sk, hand) {
      刺客想吃滿這個技能就得去堆武器——官方的意圖正是如此。 */
   wpn *= buffMult('weaponatk').mult;
 
-  const nonWpn = left ? 0 : ((state._atkStatus || 0) + (state._atkMastery || 0));
+  // 破甲短錐那類：敵人後段 DEF 的一半算進卡裝 ATK（跟素質 ATK 同一桶，不吃體型修正）
+  const defRatio = !left && state.cardDefRatioAtk && monDef ? (monDef.def || 0) / 2 : 0;
+  const nonWpn = left ? 0 : ((state._atkStatus || 0) + (state._atkMastery || 0) + defRatio);
 
   const wLv = w ? (typeof getRefineWeaponLv === 'function' ? getRefineWeaponLv(w) : (w.weaponLv || 1)) : 1;
 
@@ -7308,10 +7339,16 @@ function playerAttackInner() {
      與怪物的攻擊，被動的追擊、連段、偷錢、卸除全部搬到中間。
      被動打死怪時的擊殺與經驗訊息也跟著進技能欄，跟主動技能打死怪的行為一致
      （`castSkill()` 本來就整支包在 skill 欄裡）。 */
+  state._lastDmgMagic = false;
   withLogLane('skill', () => {
     tryCardAilments('attack', target);
     tryAutoSpells('attack', target);
     tryAttackBuffs('attack', target);
+    tryAutoBonus('attack');
+    tryComa(target, monDef);
+    // 對某種族攻擊時回 SP（rAthena bSPDrainValueRace）
+    { const v = monDef && monDef.race ? getCardBonus('spOnAttackRace_' + monDef.race) : 0;
+      if (v) state.sp = Math.max(0, Math.min(state.maxSp, state.sp + v)); }
     tryOnAttackStrikes(target, monDef);  // 傷害增壓／巧打（#58）
     tryEdpProc(target);                  // 致命塗毒（#59）：目標中毒時才觸發
     tryMeltdown(target, monDef);         // 野蠻凶砍（#60）：削弱目標的攻防
@@ -7650,6 +7687,8 @@ function monsterCastSkillInner(mon, monDef, sk) {
     // 魔法技能吃怪物魔攻、物理技能吃物攻（詛咒只降 ATK）
     let raw = sk.magic ? monsterBaseMatk(monDef, mon) * sk.mult * stripMult(mon, 'matk')   // 卸除頭盔（#69）
       : monsterBaseAtk(monDef, undefined, mon) * sk.mult * ailAtkMult(mon);
+    // 魔法傷害減免（rAthena bNoMagicDamage：黃金蟲卡片 100%）
+    if (sk.magic) raw *= Math.max(0, 1 - getCardBonus('magicImmunePct') / 100);
     // 防守側的屬性是玩家的鎧甲屬性（#17）。沒有鎧甲屬性卡時就是 none，行為跟以前一樣
     raw *= getElementMultiplier(el, state.playerElement || 'none');
     // 卡片的屬性/種族/體型減傷跟普攻共用同一組
@@ -7689,6 +7728,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
     }
     state.hp -= dmg;
     logMsg(`✨ ${nameOf()} 造成了 ${dmg} 點傷害！`);
+    if (sk.magic && state.hp > 0) tryAutoSpells('hitMagic', mon);   // 被魔法打到時（BF_MAGIC 的 autoSpellWhenHit）
     if (typeof showPlayerFloat === 'function') showPlayerFloat('-' + dmg, 'normal');
     playerAilBreakOnDamage();
     castBreakOnDamage(dmg);
@@ -7984,6 +8024,7 @@ function monsterAttackSingle(mon) {
   tryFrenzyProc();
   // 卡片的受擊反擊型異常狀態（惡魔女僕那一大類「受到物理傷害時讓敵人得到XX」）
   tryCardAilments('hit', mon);
+  tryAutoBonus('hit');
   // 卡片自動念咒（受擊觸發）：放在最後，此時玩家確定還活著、傷害也結算完了
   tryAutoSpells('hit', mon);
 }
@@ -8517,6 +8558,15 @@ function killMonster(def, monObj) {
      跟上面回 SP 那條同一個「近戰」判準——沒裝弓就算近戰。
      這批卡片的設計是「回復力歸零，改成靠擊殺回血」，所以是站著回不了血、
      打得動才活得下去，兩半要一起看（見 hpRegenPct）。 */
+  /* 魔法擊殺（最後一擊是魔法技能）回 SP／HP、遠距離擊殺（裝弓）回 SP
+     （rAthena bMagicSPGainValue／bMagicHPGainValue／bLongSPGainValue） */
+  {
+    const bow = isBowWeapon(getEquipBaseItemId('weapon'));
+    const sp = (state._lastDmgMagic ? getCardBonus('spOnMagicKill') : 0) + (!state._lastDmgMagic && bow ? getCardBonus('spOnRangedKill') : 0);
+    const hp = state._lastDmgMagic ? getCardBonus('hpOnMagicKill') : 0;
+    if (sp) state.sp = Math.min(state.maxSp, state.sp + sp);
+    if (hp && state.hp > 0) state.hp = Math.min(state.maxHp, state.hp + hp);
+  }
   const hpKill = state.cardHpOnMeleeKill || 0;
   if (hpKill && state.hp > 0 && !isBowWeapon(getEquipBaseItemId('weapon'))) {
     const before = state.hp;
@@ -10278,6 +10328,43 @@ function tryAttackBuffs(trigger, mon) {
   }
 }
 
+/* 機率觸發的暫時裝備加成（rAthena autobonus／autobonus2，2026-11-08）。
+   資料：{ on:'attack'|'hit'|'magic', chance(%), durMs, bonus:{加成鍵…}, name }。
+   觸發後推一個 type:'gearbonus' 的 buff，effectiveGearBonuses() 在持續期間把 bonus 併進來；
+   同一件裝備／卡片的同一條觸發中不重複疊，到期由 tickBuffs 移除。 */
+function tryAutoBonus(trigger, skillId) {
+  const list = state.cardAutoBonus && state.cardAutoBonus[trigger];
+  if (!list || !list.length) return;
+  list.forEach((e, i) => {
+    if (e.skill && e.skill !== skillId) return;   // autobonus3：只有施放指定技能時
+    if (Math.random() * 100 >= e.chance) return;
+    const id = 'autobonus_' + e.src + '_' + trigger + '_' + i;
+    const cur = state.buffs.find(b => b.skillId === id);
+    if (cur) return;
+    state.buffs.push({ type: 'gearbonus', bonus: e.bonus, mult: 1, flatBonus: 0, msRemaining: e.durMs, skillId: id, buffName: (ITEMS[e.src] && ITEMS[e.src].name) || '裝備觸發' });
+    recomputeDerived(false);
+  });
+}
+/* 使用指定技能時對目標施加異常（rAthena bAddEffOnSkill）：{ on:'skill', skill, type, chance } */
+function tryCardSkillAilments(sk, mon) {
+  const list = state.cardAilments && state.cardAilments.skill;
+  if (!list || !list.length || !sk || !mon) return;
+  const monDef = MONSTERS[mon.defId];
+  list.forEach(e => {
+    if (e.skill !== sk.id || Math.random() * 100 >= e.chance) return;
+    if (monDef) applyAilment(mon, monDef, e.type);
+  });
+}
+/* 一般怪即死（rAthena bComaRace／bComaClass）：普攻命中時機率讓非首領怪 HP 變 1 */
+function tryComa(mon, monDef) {
+  if (!mon || !monDef || monDef.isBoss || mon.hp <= 1) return;
+  const pct = getCardBonus('comaNormalPct') + (monDef.race ? getCardBonus('comaRace_' + monDef.race) : 0);
+  if (pct > 0 && Math.random() * 100 < pct) {
+    mon.hp = 1;
+    logMsg('💀 即死效果發動！' + monDef.name + ' 的 HP 剩下 1。');
+  }
+}
+
 function skillReady(skillId) {
   return !state.cooldowns[skillId];
 }
@@ -10672,6 +10759,7 @@ function castSkillInner(skillId, opts) {
   // 'magic_aoe'（例如火球術、雷爆術、光獵、怒雷強擊）先前漏判，導致誤用ATK而非MATK計算傷害
   // 傷害基底一律走 skillBaseDamage(useMag, 怪, 屬性倍率)，物理走官方武器鏈、魔法用 MATK
   const useMag = sk.type === 'magic' || sk.type === 'magic_aoe';
+  state._lastDmgMagic = useMag;   // 擊殺時分魔法／物理（魔法擊殺回 SP／HP 那批裝備）
 
   // 屬性相剋：技能屬性 vs 怪物屬性
   const skElement = sk.element || 'none';
@@ -10701,6 +10789,7 @@ function castSkillInner(skillId, opts) {
      記的是**施放前那批 buff 物件本身**而不是陣列長度：#68 的演奏／合奏技能會先
      把同一互斥組的舊 buff 撤掉再推新的，長度會先變短再變長，用索引切割會切錯位置
      ——實測是「暴擊 +10 被吃掉、暴擊傷害 +20% 留著」這種只掉一半的怪現象。 */
+  tryAutoBonus('skill', sk.id);   // 施放指定技能時觸發的裝備加成（autobonus3：天使指環的治癒量）
   const buffsBefore = new Set(state.buffs);
   // 護盾不走 state.buffs（自己一張 state.shields），全體分享要另外抓（#95）
   const shieldsBefore = new Set(state.shields || []);
@@ -10814,7 +10903,8 @@ function castSkillInner(skillId, opts) {
       if (sk.type !== 'magic' && typeof playHitSound === 'function') playHitSound();
       ailBreakOnDamage(target, def);   // 睡眠被打就醒
       // 卡片的「魔法攻擊時對敵人施以XX」
-      if (useMag) tryCardAilments('magic', target);
+      if (useMag) { tryCardAilments('magic', target); tryAutoBonus('magic'); tryAutoSpells('magic', target); }
+      tryCardSkillAilments(sk, target);
       // 冰凍術/石化術：魔法傷害命中會提前喚醒被反制暈眩的目標
       if (sk.type === 'magic') wakeIfFrozen(target);
       // 雷鳴術：命中必定使目標暈眩
@@ -10913,6 +11003,7 @@ function castSkillInner(skillId, opts) {
         mon.hp -= dmg;
         ailBreakOnDamage(mon, monDef);   // 睡眠被打就醒
         if (useMag) tryCardAilments('magic', mon);
+        tryCardSkillAilments(sk, mon);
         // 冰凍術/石化術：魔法傷害命中會提前喚醒被反制暈眩的目標
         if (sk.type === 'magic_aoe') wakeIfFrozen(mon);
         // 怒雷強擊：範圍技附加機率暈眩
@@ -13632,7 +13723,7 @@ function useItem(itemId) {
     }
     if (def.restoreSp) {
       // 禪心：SP恢復道具效果+10%~100%
-      const boosted = Math.round(def.restoreSp * (1 + (state.spItemEffectBonusPct || 0) / 100));
+      const boosted = Math.round(def.restoreSp * (1 + ((state.spItemEffectBonusPct || 0) + (getCardBonus('itemSpHeal_' + itemId) || 0)) / 100));
       state.sp = Math.min(state.maxSp, state.sp + boosted);
       healed = true;
     }
@@ -14430,7 +14521,12 @@ function effectiveGearBonuses() {
     + '#' + (state.pets && state.pets.active
       ? state.pets.active + ':' + (petTier((state.pets.list || []).find(x => x.id === state.pets.active)) || '-')
       : '-');
-  if (_gearBonusCache && _gearBonusKey === key) return _gearBonusCache;
+  const ls = state.learnedSkills || {};
+  const key2 = key + '#' + (state.baseLevel || 1) + ',' + (state.jobLevel || 1)
+    + '#' + Object.keys(ls).length + ':' + Object.values(ls).reduce((a, b) => a + (b || 0), 0)
+    + '#' + new Date(Date.now() + 8 * 3600 * 1000).getUTCMonth()
+    + '#' + (state.buffs || []).filter(b => b.type === 'gearbonus').map(b => b.skillId).join(',');
+  if (_gearBonusCache && _gearBonusKey === key2) return _gearBonusCache;
 
   const total = {};
   const sets = [];
@@ -14572,8 +14668,10 @@ function effectiveGearBonuses() {
   const petBonus = activePetBonus();
   if (petBonus) mergeBonus(total, petBonus);
 
-  _gearBonusKey = key;
+  _gearBonusKey = key2;
   _activeSets = sets;
+  // 觸發中的裝備增益（autobonus）：持續期間把那份加成併進來
+  (state.buffs || []).forEach(b => { if (b.type === 'gearbonus' && b.bonus) mergeBonus(total, b.bonus); });
   _gearBonusCache = total;
   return total;
 }
@@ -16264,6 +16362,7 @@ function computeOfflineProgress(minMs, opts) {
     const hitShare = e.race ? (raceShare[e.race] || 0) : 1;
     const rate = (e.chance / 100) * hitShare;
     if (!(rate > 0)) return;
+    if (e.zenyMax && !e.zeny) { killDropZenyPerKill += (1 + e.zenyMax) / 2 * rate; return; }   // 隨機 1～N 的期望值
     if (e.zeny) { killDropZenyPerKill += e.zeny * rate; return; }
     const list = e.pool ? itemPool(e.pool) : e.items;
     if (!list || !list.length) return;

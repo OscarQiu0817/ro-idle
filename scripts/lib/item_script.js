@@ -128,6 +128,7 @@ function parseScript(src) {
       const b = t.match(/^(bonus\d?)\s+(b\w+)\s*(?:,\s*([\s\S]+))?$/);
       if (b) out.push({ fn: b[1], name: b[2], args: b[3] ? splitArgs(b[3]) : [], conds, vars: { ...vars }, raw: t });
       else if (/^skill\s/.test(t)) out.push({ fn: 'skill', name: 'skill', args: splitArgs(t.replace(/^skill\s+/, '')), conds, vars: { ...vars }, raw: t });
+      else if (/^autobonus[23]?\s/.test(t)) { const nm = t.match(/^(autobonus[23]?)/)[1]; out.push({ fn: nm, name: nm, args: splitArgs(t.slice(nm.length).trim()), conds, vars: { ...vars }, raw: t }); }
       else if (/^(bonus|autobonus)\b/.test(t)) out.push({ fn: 'other', name: t.split(/[\s,]/)[0], args: [], conds, vars: { ...vars }, raw: t });
     }
   };
@@ -231,8 +232,9 @@ const B1X = {
 const X_EXACT = ['hpRegenPct', 'spRegenPct', 'itemHealPct', 'hpOnMeleeKill', 'lifeStealChance', 'lifeStealPct', 'spStealChance', 'spStealPct',
   'spOnAttack', 'reflectPct', 'magicReflectChance', 'splashAttack', 'rangedDmgTakenPct', 'meltdownAtkChance', 'meltdownDefChance',
   'defIgnorePct', 'mdefIgnorePct', 'bossMdefIgnorePct', 'regenTickHp', 'regenTickSp', 'rangedCritRate', 'bossDefIgnorePct'];
-const X_PREFIX = ['ailResist_', 'raceCrit_', 'spOnKillRace_', 'monDmg_', 'itemHeal_', 'spCost_', 'armorEle_', 'atkEle_', 'magicTargetEleDmg_', 'mdefIgnoreRace_'];
-X_EXACT.push('dropPct');
+const X_PREFIX = ['monDmgTaken_', 'monEleDmgTaken_', 'comaRace_', 'spOnAttackRace_', 'itemSpHeal_', 'familyDmg_', 'ailResist_', 'raceCrit_', 'spOnKillRace_', 'monDmg_', 'itemHeal_', 'spCost_', 'armorEle_', 'atkEle_', 'magicTargetEleDmg_', 'mdefIgnoreRace_'];
+X_EXACT.push('dropPct', 'spOnMagicKill', 'spOnRangedKill', 'hpOnMagicKill', 'regenTickHpPct', 'regenTickSpPct', 'comaNormalPct',
+  'normalDefIgnorePct', 'normalMdefIgnorePct', 'ignoreSizePenalty', 'defRatioAtk', 'reviveFullRestore', 'magicImmunePct');
 X_EXACT.forEach(k => OWN_EXACT.add(k));
 OWN_PREFIX.push(...X_PREFIX);
 
@@ -246,6 +248,24 @@ function keysOf(en, skills, opt) {
   if (en.fn === 'bonus' && en.name === 'bSPGainValue') return Object.values(RACE).map(r => ({ key: 'spOnKillRace_' + r, expr: A[0] }));
   if (en.fn === 'bonus' && en.name === 'bDefEle' && ELE[A[0]]) return [{ key: 'armorEle_' + ELE[A[0]], expr: '1' }];
   if (en.fn === 'bonus' && en.name === 'bSplashRange') return [{ key: 'splashAttack', expr: '1' }];
+  // ---- 第 4 類（2026-11-08）----
+  const X4 = { bMagicSPGainValue: 'spOnMagicKill', bLongSPGainValue: 'spOnRangedKill', bMagicHPGainValue: 'hpOnMagicKill', bNoMagicDamage: 'magicImmunePct' };
+  if (en.fn === 'bonus' && X4[en.name]) return [{ key: X4[en.name], expr: A[0] }];
+  if (en.fn === 'bonus' && en.name === 'bNoSizeFix') return [{ key: 'ignoreSizePenalty', expr: '1' }];
+  if (en.fn === 'bonus' && en.name === 'bDefRatioAtkClass') return A[0] === 'Class_All' ? [{ key: 'defRatioAtk', expr: '1' }] : null;
+  if (en.fn === 'bonus' && en.name === 'bRestartFullRecover') return [{ key: 'reviveFullRestore', expr: '1' }];
+  if (en.fn === 'bonus' && en.name === 'bDef2Rate') return [];   // 本作 DEF% 硬防軟防一起打折，同件的 bDefRate 已涵蓋
+  if (en.fn === 'bonus2' && (en.name === 'bHPLossRate' || en.name === 'bSPLossRate') && /^\d+$/.test(A[1])) return [{ key: en.name === 'bHPLossRate' ? 'regenTickHp' : 'regenTickSp', expr: `-(${A[0]})`, scale: 10000 / +A[1] }];
+  if (en.fn === 'bonus2' && (en.name === 'bRegenPercentHP' || en.name === 'bRegenPercentSP') && /^\d+$/.test(A[1])) return [{ key: en.name === 'bRegenPercentHP' ? 'regenTickHpPct' : 'regenTickSpPct', expr: A[0], scale: 10000 / +A[1] }];
+  if (en.fn === 'bonus2' && en.name === 'bAddDefMonster') { const k = opt.mobKey && opt.mobKey[+A[0]]; return k ? [{ key: 'monDmgTaken_' + k, expr: `-(${A[1]})` }] : []; }
+  if (en.fn === 'bonus2' && en.name === 'bSubDefEle') { const l = ALL[A[0]] || (ELE[A[0]] ? [ELE[A[0]]] : null); return l ? l.map(e => ({ key: 'monEleDmgTaken_' + e, expr: `-(${A[1]})` })) : null; }
+  if (en.fn === 'bonus3' && en.name === 'bSubEle') { const l = ALL[A[0]] || (ELE[A[0]] ? [ELE[A[0]]] : null); return l ? l.map(e => ({ key: 'eleReduce_' + e, expr: A[1] })) : null; }
+  if (en.fn === 'bonus2' && en.name === 'bComaRace') { if (/^RC_Player_/.test(A[0])) return []; const l = ALL[A[0]] || (RACE[A[0]] ? [RACE[A[0]]] : null); return l ? l.map(r => ({ key: 'comaRace_' + r, expr: A[1], scale: 0.01 })) : null; }
+  if (en.fn === 'bonus2' && en.name === 'bComaClass') return (A[0] === 'Class_Normal' || A[0] === 'Class_All') ? [{ key: 'comaNormalPct', expr: A[1], scale: 0.01 }] : [];
+  if (en.fn === 'bonus2' && en.name === 'bSPDrainValueRace') { if (/^RC_Player_/.test(A[0])) return []; const l = ALL[A[0]] || (RACE[A[0]] ? [RACE[A[0]]] : null); return l ? l.map(r => ({ key: 'spOnAttackRace_' + r, expr: A[1] })) : null; }
+  if (en.fn === 'bonus2' && en.name === 'bAddRace2') { const f = { RC2_Goblin: 'goblin', RC2_Kobold: 'kobold', RC2_Golem: 'golem', RC2_Orc: 'orc', RC2_SCARABA: 'scaraba' }[A[0]]; return f ? [{ key: 'familyDmg_' + f, expr: A[1] }] : []; }
+  if (en.fn === 'bonus2' && en.name === 'bAddItemGroupHealRate') { const ks = opt.groups && opt.groups[String(A[0]).replace(/^IG_/, '').toUpperCase()]; return ks ? ks.map(k => ({ key: 'itemHeal_' + k, expr: A[1] })) : []; }
+  if (en.fn === 'bonus2' && en.name === 'bAddItemSPHealRate') { const ks = opt.itemKeys && opt.itemKeys[+A[0]]; return ks ? ks.map(k => ({ key: 'itemSpHeal_' + k, expr: A[1] })) : []; }
   if (en.fn === 'bonus' && en.name === 'bAgiVit') return [{ key: 'agi', expr: A[0] }, { key: 'vit', expr: A[0] }];
   if (en.fn === 'bonus' && en.name === 'bAgiDexStr') return ['agi', 'dex', 'str'].map(k => ({ key: k, expr: A[0] }));
   if (en.fn === 'bonus' && en.name === 'bCriticalLong') return [{ key: 'rangedCritRate', expr: A[0] }];
@@ -259,9 +279,9 @@ function keysOf(en, skills, opt) {
   if (en.fn === 'bonus' && en.name === 'bBreakArmorRate') return [{ key: 'meltdownDefChance', expr: A[0], scale: 0.01 }];
   if (en.fn === 'bonus' && en.name === 'bNoRegen') return [{ key: String(A[0]) === '2' ? 'spRegenPct' : 'hpRegenPct', expr: '-100' }];
   if (en.fn === 'bonus' && en.name === 'bIgnoreDefRace') return A[0] === 'RC_All' ? [{ key: 'defIgnorePct', expr: '100' }] : RACE[A[0]] ? [{ key: 'defIgnoreRace_' + RACE[A[0]], expr: '100' }] : (/^RC_Player_/.test(A[0]) ? [] : null);
-  if (en.fn === 'bonus' && en.name === 'bIgnoreDefClass') return A[0] === 'Class_All' ? [{ key: 'defIgnorePct', expr: '100' }] : A[0] === 'Class_Boss' ? [{ key: 'bossDefIgnorePct', expr: '100' }] : null;
-  if (en.fn === 'bonus2' && en.name === 'bIgnoreDefClassRate') return A[0] === 'Class_All' ? [{ key: 'defIgnorePct', expr: A[1] }] : null;
-  if (en.fn === 'bonus2' && en.name === 'bIgnoreMdefClassRate') return A[0] === 'Class_All' ? [{ key: 'mdefIgnorePct', expr: A[1] }] : A[0] === 'Class_Boss' ? [{ key: 'bossMdefIgnorePct', expr: A[1] }] : null;
+  if (en.fn === 'bonus' && en.name === 'bIgnoreDefClass') return A[0] === 'Class_All' ? [{ key: 'defIgnorePct', expr: '100' }] : A[0] === 'Class_Boss' ? [{ key: 'bossDefIgnorePct', expr: '100' }] : A[0] === 'Class_Normal' ? [{ key: 'normalDefIgnorePct', expr: '100' }] : null;
+  if (en.fn === 'bonus2' && en.name === 'bIgnoreDefClassRate') return A[0] === 'Class_All' ? [{ key: 'defIgnorePct', expr: A[1] }] : A[0] === 'Class_Normal' ? [{ key: 'normalDefIgnorePct', expr: A[1] }] : null;
+  if (en.fn === 'bonus2' && en.name === 'bIgnoreMdefClassRate') return A[0] === 'Class_All' ? [{ key: 'mdefIgnorePct', expr: A[1] }] : A[0] === 'Class_Boss' ? [{ key: 'bossMdefIgnorePct', expr: A[1] }] : A[0] === 'Class_Normal' ? [{ key: 'normalMdefIgnorePct', expr: A[1] }] : null;
   // 每 t 毫秒回 n（本作的定時回復固定 10 秒一次，換算成每 10 秒的量）
   if (en.fn === 'bonus2' && (en.name === 'bHPRegenRate' || en.name === 'bSPRegenRate') && /^\d+$/.test(A[1])) return [{ key: en.name === 'bHPRegenRate' ? 'regenTickHp' : 'regenTickSp', expr: A[0], scale: 10000 / +A[1] }];
   if (en.fn === 'bonus2' && A.length >= 2) {
@@ -501,7 +521,7 @@ function convert(entries, opt) {
    條件或數值只隨精煉變的依精煉分段；用到其他原子的不轉（列缺口）。對象本作沒有的（技能、道具）直接略過。 */
 function specialsOf(entries, opt) {
   opt = opt || {};
-  const lists = { ailment: [], killDrop: [], grantSkill: [] }, done = new Set(), skipped = [], kinds = new Set();
+  const lists = { ailment: [], killDrop: [], grantSkill: [], autoBonus: [] }, done = new Set(), skipped = [], kinds = new Set();
   const segs = (fns, mk) => {
     const at = r => JSON.stringify(fns.map(f => f(r)));
     const out = [];
@@ -524,6 +544,40 @@ function specialsOf(entries, opt) {
         const on = en.name === 'bAddEff' ? (/ATF_MAGIC/.test(flag) && !/ATF_WEAPON/.test(flag) ? 'magic' : 'attack') : 'hit';
         parts = { exprs: [A[1]], mk: ([rate]) => (rate > 0 ? { on, type, chance: rate / 100 } : null) };
       }
+    } else if (en.name === 'bAddEff2' && en.fn === 'bonus2') {
+      kind = 'ailment';
+      const type = EFF[A[0]];
+      if (type) parts = { exprs: [A[1]], mk: ([rate]) => (rate > 0 ? { on: 'attack', type, chance: rate / 100, target: 'self' } : null) };
+    } else if (en.name === 'bAddEffOnSkill' && en.fn === 'bonus3') {
+      kind = 'ailment';
+      const sk = String(A[0]).replace(/"/g, '').toLowerCase(), type = EFF[A[1]];
+      if (!opt.skills || !opt.skills[sk]) parts = 'none';
+      else if (type) parts = { exprs: [A[2]], mk: ([rate]) => (rate > 0 ? { on: 'skill', skill: sk, type, chance: rate / 100 } : null) };
+    } else if (en.name === 'bAddMonsterDropItemGroup' && en.fn === 'bonus2') {
+      kind = 'killDrop';
+      const ks = opt.groups && opt.groups[String(A[0]).replace(/^IG_/, '').toUpperCase()];
+      // 官方機率要再乘群組內各道具的權重，換算不直觀；沒寫明數字的一律 0.5%（使用者 2026-11-08）
+      if (!ks || !ks.length) parts = 'none';
+      else parts = { exprs: ['1'], mk: () => ({ items: ks, chance: 0.5 }) };
+    } else if (en.name === 'bAddMonsterIdDropItem' && en.fn === 'bonus3') {
+      kind = 'killDrop';
+      const ks = opt.itemKeys && opt.itemKeys[+A[0]], mk = opt.mobKey && opt.mobKey[+A[1]];
+      if (!ks || !mk) parts = 'none';
+      else parts = { exprs: [A[2]], mk: ([rate]) => (rate > 0 ? { mon: mk, items: [ks[0]], chance: rate / 100 } : null) };
+    } else if (en.name === 'bGetZenyNum' && en.fn === 'bonus2') {
+      kind = 'killDrop';
+      parts = { exprs: [A[0], A[1]], mk: ([n, rate]) => (n > 0 && rate > 0 ? { zenyMax: n, chance: rate } : null) };
+    } else if (/^autobonus[23]?$/.test(en.fn)) {
+      kind = 'autoBonus';
+      // autobonus "{ 腳本 }",機率(千分比),持續(ms),flag,"{ 特效 }"；autobonus2 是被打時
+      const inner = String(A[0] || '').replace(/^"\{|\}"$/g, '');
+      const sub = convert(parseScript(inner), opt);
+      const flag = String(A[3] || '');
+      const sk3 = en.fn === 'autobonus3' ? String(A[3] || '').replace(/"/g, '').toLowerCase() : null;
+      if (sk3 && (!opt.skills || !opt.skills[sk3])) { done.add(en.raw); continue; }
+      const ons = en.fn === 'autobonus3' ? ['skill'] : en.fn === 'autobonus2' ? ['hit'] : /BF_MAGIC/.test(flag) && !/BF_WEAPON/.test(flag) ? ['magic'] : /BF_MAGIC/.test(flag) ? ['attack', 'magic'] : ['attack'];
+      if (!sub.skipped.length && sub.rec.bonus && !sub.rec.condBonus && Object.keys(sub.rec).length === 1)
+        parts = { exprs: [A[1], A[2]], mk: ([rate, dur]) => (rate > 0 && dur > 0 ? { ons, chance: rate / 10, durMs: dur, bonus: sub.rec.bonus, ...(sk3 ? { skill: sk3 } : {}) } : null) };
     } else if (en.name === 'bAddMonsterDropItem' && /^bonus[23]$/.test(en.fn)) {
       kind = 'killDrop';
       const keys = opt.itemKeys && opt.itemKeys[+A[0]];
@@ -554,7 +608,9 @@ function specialsOf(entries, opt) {
       continue;
     }
     const g = fns.map(f => r => (fc.every(c => c(r)) ? f(r) : 0));
-    lists[kind].push(...segs(g, parts.mk));
+    const got = segs(g, parts.mk);
+    if (kind === 'autoBonus') got.forEach(e => e.ons.forEach(on => { const x = { ...e, on }; delete x.ons; lists.autoBonus.push(x); }));
+    else lists[kind].push(...got);
     done.add(en.raw);
   }
   return { lists, done, skipped, kinds };
@@ -579,7 +635,10 @@ function autoSpellsOf(entries, skills, refineOk) {
     const [skArg, lvArg, rateArg, flag, other] = chain ? en.args.slice(1) : en.args;
     const id = String(skArg || '').replace(/"/g, '').toLowerCase();
     const fl0 = String(flag || '') + ' ' + String(other || '');
-    if (!skills || !skills[id] || (/BF_(MAGIC|SKILL|MISC)/.test(fl0) && !/BF_(WEAPON|SHORT|LONG|NORMAL)/.test(fl0))) { skipped.push(en.raw); continue; }
+    const magicOnly = /BF_MAGIC/.test(fl0) && !/BF_(WEAPON|SHORT|LONG|NORMAL)/.test(fl0);
+    if (!skills || !skills[id] || (/BF_(SKILL|MISC)/.test(fl0) && !/BF_(WEAPON|SHORT|LONG|NORMAL|MAGIC)/.test(fl0))) { skipped.push(en.raw); continue; }
+    const onOf = () => (magicOnly ? (en.name === 'bAutoSpellWhenHit' ? 'hitMagic' : en.name === 'bAutoSpell' ? 'magic' : null) : AUTOSPELL_ON[en.name]);
+    if (!onOf()) { skipped.push(en.raw); continue; }
     let lvExpr = lvArg, learned = false;
     const m = String(lvArg || '').match(/^max\(getskilllv\("(\w+)"\),\s*(\d+)\)$/);
     if (m && m[1].toLowerCase() === id) { lvExpr = m[2]; learned = true; }
@@ -601,7 +660,7 @@ function autoSpellsOf(entries, skills, refineOk) {
       const terms = decompose(env => (fc.every(c => c(env)) ? fr(env) : 0), dims, { skills, jobs: AUTOSPELL_CTX.jobs, itemKeys: AUTOSPELL_CTX.itemKeys });
       if (!terms || terms.some(t => t.v < 0) || lv <= 0) { skipped.push(en.raw); continue; }
       terms.forEach(t => {
-        const e = { on: AUTOSPELL_ON[en.name], skill: id, lv, chance: t.v / 10 };
+        const e = { on: onOf(), skill: id, lv, chance: t.v / 10 };
         if (chain) e.after = after;
         if (learned) e.useLearnedLv = true;
         if (Object.keys(t.when).length) e.when = t.when;
@@ -617,7 +676,7 @@ function autoSpellsOf(entries, skills, refineOk) {
       while (b < REFINE_MAX && JSON.stringify(at(b + 1)) === cur) b++;
       const v = at(a);
       if (v && v[0] > 0 && v[1] > 0) {
-        const e = { on: AUTOSPELL_ON[en.name], skill: id, lv: v[0], chance: v[1] / 10 };
+        const e = { on: onOf(), skill: id, lv: v[0], chance: v[1] / 10 };
         if (chain) e.after = after;
         if (learned) e.useLearnedLv = true;
         if (a > 0 || b < REFINE_MAX) e.when = b === REFINE_MAX ? { refineMin: a } : { refineMin: a, refineMax: b };

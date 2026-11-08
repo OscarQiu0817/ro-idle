@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const { loadGameData, ROOT } = require('./lib/game_data');
-const { loadItemDb } = require('./lib/rathena');
+const { loadItemDb, readYamlBody } = require('./lib/rathena');
 const { parseScript, convert, autoSpellsOf, specialsOf, setContext, ownKey, familyOf } = require('./lib/item_script');
 
 const WRITE = process.argv.includes('--write');
@@ -38,7 +38,14 @@ function build() {
   const mobKey = {}, itemKeys = {};
   Object.values(MONSTERS).forEach(m => { if (m.imgId && !mobKey[m.imgId]) mobKey[m.imgId] = m.id; });
   Object.values(ITEMS).forEach(x => { if (x.imgId) (itemKeys[x.imgId] = itemKeys[x.imgId] || []).push(x.id); });
-  const ctx = { skills: SKILLS, jobs: JOB_TREE, mobKey, itemKeys };
+  // 道具群組（rAthena item_group_db：IG_Food、IG_Meat…）→ 本作有的道具 key
+  const groups = {};
+  for (const gr of readYamlBody('grf_ex/item_group_db.yml')) {
+    const ks = [...new Set((gr.SubGroups || []).flatMap(sg => sg.List || []).map(x => byAegis.get(String(x.Item).toLowerCase()))
+      .filter(Boolean).flatMap(it => itemKeys[it.Id] || []))];
+    if (ks.length) groups[String(gr.Group).toUpperCase()] = ks;
+  }
+  const ctx = { skills: SKILLS, jobs: JOB_TREE, mobKey, itemKeys, groups };
   setContext(ctx);
   const out = {};
   const gaps = [];
@@ -122,12 +129,14 @@ function build() {
       const list = as.list.concat(combo, keepHand);
       patch.autoSpell = list.length ? list : null;
     }
-    const SP_KIND = { ailment: ['bAddEff', 'bAddEffWhenHit'], killDrop: ['bAddMonsterDropItem'], grantSkill: ['skill'] };
+    const SP_KIND = { ailment: ['bAddEff', 'bAddEffWhenHit', 'bAddEff2', 'bAddEffOnSkill'], killDrop: ['bAddMonsterDropItem', 'bAddMonsterDropItemGroup', 'bAddMonsterIdDropItem', 'bGetZenyNum'],
+      grantSkill: ['skill'], autoBonus: ['autobonus', 'autobonus2', 'autobonus3'] };
     for (const kind of sp.kinds) {
       const failed = sp.skipped.some(l => entries.some(e => e.raw === l && SP_KIND[kind].includes(e.name)));
       // 手寫裡搭配某張卡／某件裝備才生效的（官方寫在 item_combo）保留
       const combo = (d[kind] || []).filter(x => x.when && (x.when.withCards || x.when.withItems));
-      const sig = x => kind === 'ailment' ? x.on + ':' + x.type : kind === 'killDrop' ? (x.race || '') + ':' + (x.items || [x.pool]).join(',') : x.id;
+      const sig = x => kind === 'ailment' ? x.on + ':' + x.type + ':' + (x.skill || '') : kind === 'killDrop' ? (x.race || '') + ':' + (x.mon || '') + ':' + (x.items || [x.pool || x.zeny || x.zenyMax]).join(',')
+        : kind === 'autoBonus' ? x.on + ':' + (x.skill || '') + ':' + JSON.stringify(x.bonus) : x.id;
       const got = new Set(sp.lists[kind].map(sig));
       const keepHand = failed ? (d[kind] || []).filter(x => !combo.includes(x) && !got.has(sig(x))) : [];
       const list = sp.lists[kind].concat(combo, keepHand);

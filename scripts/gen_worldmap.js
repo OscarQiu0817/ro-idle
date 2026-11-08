@@ -224,6 +224,10 @@ const FERRIES = [
   { from: 'hugel', to: 'odin_tem01', via: '毀葛港口的船' },
   { from: 'prontera', to: 'prt_mk', via: '普隆德拉城內的 NPC' },
 ];
+/* 官方刷怪檔沒有、本作手動放的首領（使用者 2026-11-08）：
+   水晶龍——rAthena 把冰穴的刷點改成任務召喚，本作放回「拉赫冰穴 封印的空間」（MVP 模式才出） */
+const EXTRA_BOSSES = { ice_dun04: ['ktullanux'] };
+for (const [m, l] of Object.entries(EXTRA_BOSSES)) { const b = bosses[m] = bosses[m] || []; l.forEach(k => { if (!b.includes(k)) b.push(k); }); }
 const game = {
   main: { img: 'images/worldmap/worldmap.jpg', w: 1280, h: 1024, tiles, dungeons },
   links: [...links].map(l => l.split('|')),
