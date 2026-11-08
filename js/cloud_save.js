@@ -9,7 +9,9 @@
 
    這是「整包上傳」，存檔仍在瀏覽器裡算，防不了改存檔（伺服器權威是之後的 T23）。 */
 
-const CLOUD_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+// 測試治具（Node）沒有 location／window：當成本機、不啟動同步
+const CLOUD_HAS_DOM = typeof location !== 'undefined' && typeof window !== 'undefined';
+const CLOUD_LOCAL = !CLOUD_HAS_DOM || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const CLOUD_BASE = CLOUD_LOCAL ? 'http://localhost:8787' : 'https://world-chat.oq-ro-idle.workers.dev';
 // 本機用 Cloudflare 官方測試金鑰（一律通過）；線上用聊天室同一把
 const CLOUD_TURNSTILE_KEY = CLOUD_LOCAL ? '1x00000000000000000000AA' : '0x4AAAAAAFqwdmZg7-wjGQnZ';
@@ -129,9 +131,12 @@ function cloudHandleError(code) {
 }
 
 /* 開遊戲時：雲端版本比這台新就下載（標題畫面還沒進角色，可以直接換） */
+let cloudBootPromise = null;
 async function cloudBoot() {
   const c = cloudConf();
   if (!c) { cloudRefreshUi(); return; }
+  cloud.booting = true;
+  cloudRefreshUi();
   try {
     const r = await cloudPost('/save/get', { token: c.token });
     if (r.status === 200) {
@@ -148,6 +153,18 @@ async function cloudBoot() {
   } catch (e) {
     cloud.msg = cloudErr();
   }
+  cloud.booting = false;
+  cloudRefreshUi();
+}
+/* 切回這個分頁時立刻問一次：別台已經接手就馬上停，不要繼續在舊進度上玩 */
+async function cloudCheckDevice() {
+  const c = cloudConf();
+  if (!c || cloud.status === 'other_device' || cloud.busy) return;
+  try {
+    const r = await cloudPost('/save/get', { token: c.token });
+    if (r.status !== 200) cloudHandleError(r.data.error);
+    else if (r.data.save && r.data.save.version > (c.version || 0)) cloudHandleError('VERSION_CONFLICT');
+  } catch (e) { /* 連不上就等下次 */ }
   cloudRefreshUi();
 }
 
@@ -186,13 +203,20 @@ async function cloudSubmit(mode) {
 }
 /* 套用雲端存檔：在遊戲中就重新整理頁面（記憶體裡的角色是舊的），在標題就重畫欄位 */
 function cloudApplyAndRefresh(save) {
-  cloudApply(save);
-  if (cloudInGame()) {
-    window.removeEventListener('beforeunload', cloudOnUnload);
+  const inGame = cloudInGame();
+  if (inGame) {
+    if (typeof stopLoop === 'function') stopLoop();
+    _suppressSave = true;                 // engine：saveGame() 看到就不存
     window.__cloudReloading = true;
+  }
+  cloudApply(save);
+  if (inGame) {
+    window.removeEventListener('beforeunload', cloudOnUnload);
     location.reload();
     return;
   }
+  // 標題畫面：記憶體裡可能還留著回標題前的角色，清掉免得之後被存回去
+  if (typeof state !== 'undefined') state = null;
   if (typeof renderSlotList === 'function') renderSlotList();
   cloud.msg = '已下載雲端存檔。';
 }
@@ -331,6 +355,7 @@ function cloudRenderTurnstile() {
 function cloudRefreshUi() {
   const c = cloudConf();
   const text = !c ? '☁ 雲端存檔：未登入'
+    : cloud.booting ? '☁ 同步中…'
     : cloud.status === 'other_device' ? '☁ 已在其他裝置登入（未同步）'
     : `☁ ${c.username}｜${cloudTimeText(c.lastSyncAt)}`;
   document.querySelectorAll('.cloud-status').forEach(e => { e.textContent = text; });
@@ -341,9 +366,24 @@ function cloudOnUnload() {
   cloudUpload({ keepalive: true });
 }
 (function cloudStart() {
-  if (location.protocol === 'file:') return;   // 本機直接開檔案時沒有網路來源，不同步
-  window.addEventListener('load', () => setTimeout(cloudBoot, 0));
+  if (!CLOUD_HAS_DOM || location.protocol === 'file:') return;   // 測試治具／本機直接開檔案時不同步
+  window.addEventListener('load', () => { cloudBootPromise = cloudBoot(); });
+  // 進角色前等開遊戲時的雲端檢查（最多 8 秒，連不上就照本機存檔玩）
+  if (typeof continueGame === 'function') {
+    const orig = continueGame;
+    continueGame = async function () {
+      if (cloudBootPromise && cloud.booting) {
+        if (typeof showToast === 'function') showToast('☁ 正在檢查雲端存檔…');
+        await Promise.race([cloudBootPromise, new Promise(res => setTimeout(res, 8000))]);
+        if (cloud.status === 'other_device') return;   // 已在別台登入：先回答「要不要改在這台玩」
+      }
+      return orig.apply(this, arguments);
+    };
+  }
   setInterval(() => { if (cloudInGame()) cloudUpload(); }, CLOUD_SYNC_MS);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cloudUpload({ keepalive: true }); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') cloudUpload({ keepalive: true });
+    else if (cloudInGame()) cloudCheckDevice();
+  });
   window.addEventListener('beforeunload', cloudOnUnload);
 })();
