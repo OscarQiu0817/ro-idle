@@ -34,7 +34,10 @@ function initApp() {
   bindSearchComposition();
   renderDisclaimers();          // 免責聲明（#118）：四個位置一次填好
   showScreen('screen-title');
+  showTitleMenu();
   maybeShowConsent();           // 首次開啟才出現的一次性確認（#121）
+  // 瀏覽器要使用者先互動才能出聲：標題畫面第一次點擊時開始播標題音樂
+  document.addEventListener('pointerdown', ensureTitleMusic, { once: true });
 }
 /* 後開的分頁寫一筆鎖，先開的分頁收到 storage 事件就停手。
    同一個分頁自己寫入不會觸發 storage，所以後開的那個留著。 */
@@ -198,13 +201,53 @@ function playTitleMusic() {
   audio.load();
 }
 
-function showSlotSelect() {
-  document.getElementById('title-buttons').classList.add('hidden');
-  document.getElementById('slot-select').classList.remove('hidden');
-  slotPage = 0;
-  renderSlotList();
-  // 點擊開始冒險後播放標題音樂
+/* 標題畫面（使用者 2026-11-09）：一打開就是登入；已登入雲端或選過「只存在這台」就直接到角色選單 */
+const TITLE_LOCAL_ONLY_KEY = 'ro_idle_local_only';
+function titleLocalOnly() {
+  try { return localStorage.getItem(TITLE_LOCAL_ONLY_KEY) === '1'; } catch (e) { return false; }
+}
+function showTitleMenu() {
+  const noCloud = typeof cloudConf !== 'function';
+  if (noCloud || cloudConf() || titleLocalOnly()) showSlotSelect();
+  else showTitleLogin();
+}
+function showTitleLogin() {
+  document.getElementById('slot-select').classList.add('hidden');
+  document.getElementById('title-login').classList.remove('hidden');
+  if (typeof cloud !== 'undefined') cloud.view = null;
+  if (typeof renderCloudModal === 'function') renderCloudModal();
+}
+function titleLoginVisible() {
+  const el = document.getElementById('title-login');
+  const scr = document.getElementById('screen-title');
+  return !!el && !el.classList.contains('hidden') && !!scr && scr.classList.contains('active');
+}
+/* 「不登入，只存在這台」：記住，下次直接進角色選單（之後仍可從選單下方的雲端按鈕登入） */
+function titleSkipLogin() {
+  try { localStorage.setItem(TITLE_LOCAL_ONLY_KEY, '1'); } catch (e) { /* 存不了就每次問 */ }
+  showSlotSelect();
+}
+function ensureTitleMusic() {
+  const scr = document.getElementById('screen-title');
+  if (!scr || !scr.classList.contains('active')) return;
+  if (bgmAudio && !bgmAudio.paused && /0000\.mp3$/.test(bgmAudio.src)) return;
   playTitleMusic();
+}
+
+let csSel = null;   // 角色選單目前選中的欄位
+function showSlotSelect() {
+  document.getElementById('title-login').classList.add('hidden');
+  document.getElementById('title-login-body').innerHTML = '';   // 雲端彈窗也有同一組 id，隱藏的這份要清掉
+  document.getElementById('slot-select').classList.remove('hidden');
+  // 預設選最近玩的角色，並翻到它那一頁
+  let best = null, bestAt = -1;
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const s = readSlotSummary(i);
+    if (s && !s.broken && (s.lastActiveAt || 0) > bestAt) { best = i; bestAt = s.lastActiveAt || 0; }
+  }
+  csSel = best != null ? best : 0;
+  slotPage = Math.floor(csSel / SLOTS_PER_PAGE);
+  renderSlotList();
 }
 
 function backToTitle() {
@@ -217,11 +260,27 @@ function backToTitle() {
   if (animCanvas) animCanvas.style.display = 'none';
   const img = document.getElementById('player-img');
   if (img) img.style.display = '';
-  document.getElementById('title-buttons').classList.remove('hidden');
-  document.getElementById('slot-select').classList.add('hidden');
   showScreen('screen-title');
+  showTitleMenu();
   playTitleMusic();
 }
+
+/* 讀欄位存檔（壞檔回 { broken: true }，空欄位回 null） */
+function readSlotSummary(i) {
+  const raw = localStorage.getItem(getSlotKey(i));
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return { broken: true }; }
+}
+function relTimeText(t) {
+  if (!t) return '—';
+  const sec = Math.max(0, (Date.now() - t) / 1000);
+  const rel = sec < 60 ? '剛剛' : sec < 3600 ? `${Math.floor(sec / 60)} 分鐘前`
+    : sec < 86400 ? `${Math.floor(sec / 3600)} 小時前` : `${Math.floor(sec / 86400)} 天前`;
+  const d = new Date(t);
+  const pad = n => String(n).padStart(2, '0');
+  return `${rel}<small>${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}</small>`;
+}
+const csEsc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function renderSlotList() {
   const list = document.getElementById('slot-list');
@@ -229,41 +288,128 @@ function renderSlotList() {
   if (!list) return;
   const start = slotPage * SLOTS_PER_PAGE;
   const end = Math.min(start + SLOTS_PER_PAGE, MAX_SLOTS);
+  if (csSel == null || csSel < start || csSel >= end) csSel = start;
   let html = '';
   for (let i = start; i < end; i++) {
-    const raw = localStorage.getItem(getSlotKey(i));
-    if (raw) {
-      try {
-        const s = JSON.parse(raw);
-        const job = JOB_TREE[s.jobId] || { icon: '?', name: '???' };
-        html += `<div class="slot-item has-save" onclick="selectSlot(${i})">
-          <div class="slot-header">欄位 ${i + 1}</div>
-          <div class="slot-info">${job.icon} ${s.name || '無名'} Lv.${s.baseLevel || '?'} ${job.name}</div>
-          <button class="btn-small ghost" onclick="event.stopPropagation();exportSlotSave(${i})" title="把這個存檔匯出成 JSON 檔">匯出</button>
-          <button class="btn-small ghost" onclick="event.stopPropagation();importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位（會覆蓋）">匯入</button>
-          <button class="btn-small ghost" onclick="event.stopPropagation();deleteSlotConfirm(${i})">刪除</button>
-        </div>`;
-      } catch(e) {
-        html += `<div class="slot-item" onclick="selectSlot(${i})"><div class="slot-header">欄位 ${i + 1}</div><div class="slot-info">損壞的存檔</div></div>`;
-      }
+    const s = readSlotSummary(i);
+    const sel = i === csSel ? ' sel' : '';
+    if (!s) {
+      html += `<div class="cs-card empty${sel}" onclick="csPick(${i})" ondblclick="selectSlot(${i})">
+        <div class="cs-doll cs-plus">＋</div><div class="cs-name">空欄位</div><div class="cs-sub">欄位 ${i + 1}</div></div>`;
+    } else if (s.broken) {
+      html += `<div class="cs-card broken${sel}" onclick="csPick(${i})">
+        <div class="cs-doll cs-plus">？</div><div class="cs-name">損壞的存檔</div><div class="cs-sub">欄位 ${i + 1}</div></div>`;
     } else {
-      html += `<div class="slot-item empty-slot" onclick="selectSlot(${i})">
-        <div class="slot-header">欄位 ${i + 1}</div>
-        <div class="slot-info">空欄位</div>
-        <button class="btn-small ghost" onclick="event.stopPropagation();importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位">匯入</button>
-      </div>`;
+      const job = JOB_TREE[s.jobId] || { name: '???' };
+      html += `<div class="cs-card${sel}" onclick="csPick(${i})" ondblclick="selectSlot(${i})">
+        <div class="cs-doll"><canvas data-slot="${i}"></canvas></div>
+        <div class="cs-name">${csEsc(s.name || '無名')}</div>
+        <div class="cs-sub">Lv ${s.baseLevel || 1}・${csEsc(job.name)}</div></div>`;
     }
   }
   list.innerHTML = html;
+  list.querySelectorAll('canvas[data-slot]').forEach(c => {
+    const s = readSlotSummary(+c.dataset.slot);
+    const parts = s && !s.broken && typeof paperdollLookParts === 'function' ? paperdollLookParts(s) : null;
+    const paint = () => paintDollStill(c, parts, paint);
+    paint();
+  });
+  renderSlotInfo();
 
   // 分頁按鈕
   const totalPages = Math.ceil(MAX_SLOTS / SLOTS_PER_PAGE);
-  let pagHtml = `<button class="btn-small" onclick="if(slotPage>0){slotPage--;renderSlotList();}" ${slotPage===0?'disabled':''}>◀</button>`;
+  let pagHtml = `<button class="btn-small" onclick="if(slotPage>0){slotPage--;csSel=null;renderSlotList();}" ${slotPage===0?'disabled':''}>◀</button>`;
   for (let p = 0; p < totalPages; p++) {
-    pagHtml += `<button class="btn-small ${p===slotPage?'active':''}" onclick="slotPage=${p};renderSlotList();">${p + 1}</button>`;
+    pagHtml += `<button class="btn-small ${p===slotPage?'active':''}" onclick="slotPage=${p};csSel=null;renderSlotList();">${p + 1}</button>`;
   }
-  pagHtml += `<button class="btn-small" onclick="if(slotPage<${totalPages - 1}){slotPage++;renderSlotList();}" ${slotPage>=totalPages-1?'disabled':''}>▶</button>`;
+  pagHtml += `<button class="btn-small" onclick="if(slotPage<${totalPages - 1}){slotPage++;csSel=null;renderSlotList();}" ${slotPage>=totalPages-1?'disabled':''}>▶</button>`;
   pagination.innerHTML = pagHtml;
+}
+function csPick(i) {
+  if (csSel === i) return;
+  csSel = i;
+  document.querySelectorAll('#slot-list .cs-card').forEach((el, k) => el.classList.toggle('sel', slotPage * SLOTS_PER_PAGE + k === i));
+  renderSlotInfo();
+}
+/* 下方資訊欄：比照 RO 選角畫面（名稱、職業、等級、所在地圖、上次上線、六項素質） */
+function renderSlotInfo() {
+  const el = document.getElementById('cs-info');
+  if (!el) return;
+  const i = csSel;
+  const s = readSlotSummary(i);
+  const io = `<button class="btn-small ghost" onclick="exportSlotSave(${i})" title="把這個存檔匯出成 JSON 檔">匯出</button>
+    <button class="btn-small ghost" onclick="importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位（會覆蓋）">匯入</button>`;
+  if (!s) {
+    el.innerHTML = `<div class="cs-empty">欄位 ${i + 1}：空欄位</div>
+      <div class="cs-btns"><button class="btn btn-primary" onclick="selectSlot(${i})">建立角色</button>
+      <button class="btn-small ghost" onclick="importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位">匯入</button></div>`;
+    return;
+  }
+  if (s.broken) {
+    el.innerHTML = `<div class="cs-empty">欄位 ${i + 1}：存檔損壞，無法讀取</div>
+      <div class="cs-btns">${io}<button class="btn-small ghost" onclick="deleteSlotConfirm(${i})">刪除</button></div>`;
+    return;
+  }
+  const job = JOB_TREE[s.jobId] || { name: '???' };
+  const st = s.stats || {};
+  const map = s.mapId && typeof mapNameOf === 'function' ? mapNameOf(s.mapId) : '—';
+  const row = (k, v) => `<div class="cs-row"><span>${k}</span><b>${v}</b></div>`;
+  el.innerHTML = `<div class="cs-cols">
+      <div class="cs-col">
+        ${row('名稱', csEsc(s.name || '無名'))}
+        ${row('職業', csEsc(job.name))}
+        ${row('等級', `Base ${s.baseLevel || 1}／Job ${s.jobLevel || 1}`)}
+        ${row('所在地圖', csEsc(map))}
+        ${row('上次上線', relTimeText(s.lastActiveAt))}
+      </div>
+      <div class="cs-col cs-stats">
+        ${['str', 'agi', 'vit', 'int', 'dex', 'luk'].map(k => row(k.toUpperCase(), st[k] || 1)).join('')}
+      </div>
+    </div>
+    <div class="cs-btns">
+      <button class="btn btn-primary" onclick="selectSlot(${i})">▶ 進入遊戲</button>
+      ${io}<button class="btn-small ghost" onclick="deleteSlotConfirm(${i})">刪除</button>
+    </div>`;
+}
+
+/* 靜態紙娃娃（正面站姿第一格）：角色選單與裝備欄共用。圖層還沒載完時，載完再呼叫 retry */
+function paintDollStill(canvas, parts, retry) {
+  if (!canvas || !parts || !window.PAPERDOLL) return false;
+  let act = 'idle';
+  if (!paperdollFrameCount(parts[0], act)) act = 'idle_s';
+  const body = paperdollFrame(parts[0], act, 0);
+  if (!body) return false;
+  const box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  paperdollExpand(parts[0], body, 0, 0, box);
+  const layers = [];
+  for (let p = 1; p < parts.length; p++) {
+    const fr = paperdollFrame(parts[p], act, 0);
+    if (!fr) continue;
+    const al = paperdollAlign(parts[p], body, fr);
+    layers.push([parts[p], fr, al[0], al[1]]);
+    paperdollExpand(parts[p], fr, al[0], al[1], box);
+  }
+  if (!isFinite(box.minX)) return false;
+  const pad = 2;
+  const minX = Math.floor(box.minX) - pad;
+  const minY = Math.floor(box.minY) - pad;
+  canvas.width = Math.max(1, Math.ceil(box.maxX) + pad - minX);
+  canvas.height = Math.max(1, Math.ceil(box.maxY) + pad - minY);
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const ox = -minX, oy = -minY;
+  let pending = !drawPaperdollLayers(ctx, parts[0], body, ox, oy);
+  layers.forEach(layer => {
+    if (!drawPaperdollLayers(ctx, layer[0], layer[1], ox + layer[2], oy + layer[3])) pending = true;
+  });
+  if (pending && retry) {
+    parts.forEach(part => {
+      const im = paperdollImage(part);
+      if (im && !im.complete) im.addEventListener('load', retry, { once: true });
+    });
+  }
+  return true;
 }
 
 function selectSlot(slot) {
@@ -6579,46 +6725,13 @@ function paintEquipDoll() {
   if (!host || !window.PAPERDOLL || typeof paperdollParts !== 'function') return;
   const parts = paperdollParts();
   if (!parts) { host.replaceChildren(); return; }
-  /* 裝備欄用正面站姿（idle），不用備戰側面圖。 */
-  let act = 'idle';
-  if (!paperdollFrameCount(parts[0], act)) act = 'idle_s';
-  const body = paperdollFrame(parts[0], act, 0);
-  if (!body) return;
   let canvas = host.querySelector('canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
     host.appendChild(canvas);
   }
-  const box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-  paperdollExpand(parts[0], body, 0, 0, box);
-  const layers = [];
-  for (let p = 1; p < parts.length; p++) {
-    const fr = paperdollFrame(parts[p], act, 0);
-    if (!fr) continue;
-    const al = paperdollAlign(parts[p], body, fr);
-    layers.push([parts[p], fr, al[0], al[1]]);
-    paperdollExpand(parts[p], fr, al[0], al[1], box);
-  }
-  if (!isFinite(box.minX)) return;
-  const pad = 2;
-  const minX = Math.floor(box.minX) - pad;
-  const minY = Math.floor(box.minY) - pad;
-  canvas.width = Math.max(1, Math.ceil(box.maxX) + pad - minX);
-  canvas.height = Math.max(1, Math.ceil(box.maxY) + pad - minY);
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const ox = -minX, oy = -minY;
-  let pending = !drawPaperdollLayers(ctx, parts[0], body, ox, oy);
-  layers.forEach(layer => {
-    if (!drawPaperdollLayers(ctx, layer[0], layer[1], ox + layer[2], oy + layer[3])) pending = true;
-  });
-  if (pending) {
-    parts.forEach(part => {
-      const im = paperdollImage(part);
-      if (im && !im.complete) im.addEventListener('load', paintEquipDoll, { once: true });
-    });
-  }
+  /* 裝備欄用正面站姿（idle），不用備戰側面圖。 */
+  paintDollStill(canvas, parts, paintEquipDoll);
 }
 function equipWinLabel(itemId) {
   return String(getItemDisplayName(itemId) || '')
@@ -8902,8 +9015,8 @@ function renderRefineWin() {
       title="鐵匠的祝福（持有 ${bless.have}）：失敗不降級、不損壞" onclick="setRefineBless()">
       ${bless.on ? `<img class="rf-sel" src="${rfImg('slot_select_red.png')}" alt="">` : ''}
       ${icon('blacksmith_blessing', 'rf-mat-ic')}<span class="rf-qty">${bless.need ? '×' + bless.need : '—'}</span></button>`;
-    if (sel) overlay += `<div class="rf-hex" style="left:64px">${icon(sel.mat.id, 'rf-hex-ic')}</div>`;
-    if (bless.on) overlay += `<div class="rf-hex" style="left:144px" onclick="setRefineBless()">${icon('blacksmith_blessing', 'rf-hex-ic')}</div>`;
+    if (sel) overlay += `<div class="rf-hex" style="left:70px">${icon(sel.mat.id, 'rf-hex-ic')}</div>`;
+    if (bless.on) overlay += `<div class="rf-hex" style="left:149px" onclick="setRefineBless()">${icon('blacksmith_blessing', 'rf-hex-ic')}</div>`;
   }
   if (ph !== 'proc') overlay += `<div class="rf-item">${icon(ctx.itemId, 'rf-item-ic')}</div>`;
 

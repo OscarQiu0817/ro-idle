@@ -6540,13 +6540,25 @@ function tickRoam(dt, now) {
    傳點存世界座標（state.worldX／worldY 那一套），畫面每拍換算成 d／a。 */
 const TRAVEL_PORTAL_CELLS = { town: 20, dungeon: 30, field: 40 };
 const TRAVEL_ENTER_CELLS = 0.6;
+/* 趕路被怪卡住（使用者 2026-11-09）：同一張圖打滿這麼多隻就不再停下來打，比照回城直接走（怪照樣會追著打） */
+const TRAVEL_FIGHT_MAX = 30;
+function travelForcedThrough() {
+  const t = state.travel;
+  return !!t && (t.flee || (t.kills || 0) >= TRAVEL_FIGHT_MAX);
+}
+function noteTravelKill() {
+  const t = allyOwnerState().travel;
+  if (!t || t.flee) return;
+  t.kills = (t.kills || 0) + 1;
+  if (t.kills === TRAVEL_FIGHT_MAX) logMsg(`🧭 這張圖已經打了 ${TRAVEL_FIGHT_MAX} 隻，不再停下來打，直接走向傳點。`);
+}
 function isTravelThreat(mon) {
   return mon && mon.hp > 0 && (monMove(mon).aggressive || mon.hp < mon.maxHp);
 }
 // 有沒有要停下來打的：沒在趕路＝場上有怪就打；趕路中＝只看擋路的
 function hasFightTarget() {
   const ms = state.monsters || [];
-  if (state.travel && state.travel.flee) return false;   // 回城：不打，直接走（怪照樣會追著打）
+  if (travelForcedThrough()) return false;   // 回城、或這張圖已打滿 TRAVEL_FIGHT_MAX：不打，直接走（怪照樣會追著打）
   return state.travel ? ms.some(isTravelThreat) : ms.length > 0;
 }
 function travelPortalPolar() {
@@ -6571,6 +6583,7 @@ function placeTravelPortal() {
   const m = currentMap() || {};
   const dist = m.town ? TRAVEL_PORTAL_CELLS.town : m.bg === 'map-dungeon' ? TRAVEL_PORTAL_CELLS.dungeon : TRAVEL_PORTAL_CELLS.field;
   t.portal = { x: (state.worldX || 0) + dist * Math.cos(ang), y: (state.worldY || 0) + dist * Math.sin(ang), to: next };
+  t.kills = 0;   // 每張圖重新計算打了幾隻
   state.roamDir = ang;      // 怪偏向前方出生（rollMonsterPos）
 }
 function startTravel(destId, opt) {
@@ -8540,6 +8553,7 @@ function killMonster(def, monObj) {
   if (monObj) {
     if (monObj._killed) return;
     monObj._killed = true;
+    noteTravelKill();
     if (typeof playMonsterDie === 'function') playMonsterDie(monObj.id);
   }
   // 查表一律用 MONSTERS 的 key，不要用 def.id：有 72 隻怪的 def.id 帶著去重時加上的底線

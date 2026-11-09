@@ -28,27 +28,29 @@
     <h1 class="game-title">諸神放置錄</h1>
     <p class="game-subtitle">RAGNAROK-STYLE IDLE ADVENTURE</p>
     <div class="title-menu">
-      <div id="title-buttons">
-        <button class="btn btn-primary" onclick="showSlotSelect()">開始冒險</button>
-        <details class="proto-links">
-          <summary>🧪 原型試玩</summary>
-          <a href="proto/bossview/index.html">Boss 預警與閃避</a>
-          <a href="proto/pvptower/index.html">PVP 爬塔</a>
-          <a href="proto/worldmap/index.html">世界地圖</a>
-          <a href="proto/warpscene/index.html">過圖傳送</a>
-          <a href="proto/combat1d/demo.html">一維戰鬥</a>
-        </details>
+      <!-- 登入（使用者 2026-11-09）：還沒登入雲端、也沒選過「只存在這台」才出現；有的話直接到角色選單 -->
+      <div id="title-login" class="title-login hidden">
+        <h3 class="slot-title">登入</h3>
+        <div id="title-login-body"></div>
       </div>
       <div id="slot-select" class="hidden">
-        <h3 class="slot-title">選擇存檔欄位</h3>
-        <div id="slot-list" class="slot-list"></div>
+        <div id="slot-list" class="cs-grid"></div>
         <div id="slot-pagination" class="slot-pagination"></div>
+        <div id="cs-info" class="cs-info"></div>
         <div class="slot-backup-btns">
           <button class="btn-small" onclick="exportFullBackupFile()" title="把全部存檔欄位＋倉庫打包成一個 JSON 檔">匯出全部（含倉庫）</button>
           <button class="btn-small" onclick="importFullBackupFile()" title="從備份檔還原全部存檔欄位與倉庫（會覆蓋）">匯入全部（含倉庫）</button>
         </div>
         <button class="btn-small cloud-status cloud-title-btn" onclick="openCloudModal()" title="手機與電腦共用同一份存檔">☁ 雲端存檔</button>
       </div>
+      <details class="proto-links">
+        <summary>🧪 原型試玩</summary>
+        <a href="proto/bossview/index.html">Boss 預警與閃避</a>
+        <a href="proto/pvptower/index.html">PVP 爬塔</a>
+        <a href="proto/worldmap/index.html">世界地圖</a>
+        <a href="proto/warpscene/index.html">過圖傳送</a>
+        <a href="proto/combat1d/demo.html">一維戰鬥</a>
+      </details>
     </div>
     <div id="title-disclaimer-box" class="disclaimer-box">
       <div class="disclaimer-badge">💚 完全免費　🚫 禁止販售　🕹️ 純為懷舊</div>

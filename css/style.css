@@ -92,6 +92,45 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .slot-pagination { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
 .slot-pagination .btn-small.active { background: var(--gold); color: var(--bg-deep); }
 .slot-backup-btns { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+/* 登入（標題畫面一打開就是登入，使用者 2026-11-09） */
+.title-login { width: min(360px, 100%); }
+.title-login .cloud-form { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.title-login .cloud-form input { width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 14px; }
+.title-login .cloud-btns { display: flex; justify-content: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.title-login .empty-hint { font-size: 12px; text-align: left; padding: 2px 0; margin: 0; }
+/* 角色選單：比照 RO 選角，三格紙娃娃＋下方資訊 */
+#slot-select { width: min(560px, 100%); }
+#screen-title { overflow-x: hidden; }
+.title-stage { box-sizing: border-box; width: 100%; padding-left: min(32px, 4vw); padding-right: min(32px, 4vw); }
+.title-menu > div { max-width: 100%; }
+.cs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.cs-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px 8px;
+  background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; user-select: none; }
+.cs-card:hover { border-color: var(--gold); }
+.cs-card.sel { border-color: var(--gold); background: var(--bg-panel-2); box-shadow: 0 0 0 1px var(--gold) inset, 0 0 14px rgba(212,175,55,.25); }
+.cs-card.empty, .cs-card.broken { border-style: dashed; }
+.cs-card.empty:not(.sel) { opacity: .6; }
+.cs-doll { height: 120px; width: 100%; display: flex; align-items: flex-end; justify-content: center;
+  background: radial-gradient(ellipse 40% 8% at 50% 94%, rgba(0,0,0,.45), transparent 70%); }
+.cs-doll canvas { height: 100%; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
+.cs-plus { align-items: center; font-size: 36px; color: var(--ink-dim); background: none; }
+.cs-name { font-weight: 700; color: var(--gold-soft); font-size: 14px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-sub { font-size: 12px; color: var(--ink-dim); }
+.cs-info { margin-top: 12px; padding: 10px 14px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; text-align: left; }
+.cs-cols { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; }
+.cs-row { display: flex; gap: 10px; font-size: 13px; line-height: 1.7; }
+.cs-row span { color: var(--ink-dim); min-width: 4.5em; }
+.cs-row b { color: var(--ink); font-weight: 500; }
+.cs-row small { display: block; font-size: 11px; color: var(--ink-dim); line-height: 1.2; }
+.cs-stats { display: grid; grid-template-columns: repeat(2, auto); gap: 0 14px; align-content: start; }
+.cs-stats .cs-row span { min-width: 2.6em; }
+.cs-empty { color: var(--ink-dim); font-size: 13px; text-align: center; padding: 6px 0; }
+.cs-btns { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .cs-doll { height: 90px; }
+  .cs-cols { grid-template-columns: 1fr; }
+  .cs-stats { grid-template-columns: repeat(3, auto); border-top: 1px dashed var(--line); padding-top: 4px; }
+}
 
 .title-disclaimer {
   position: relative; z-index: 1;
@@ -2571,7 +2610,7 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .rf-qty { position: absolute; left: 0; right: 0; bottom: -3px; font-size: 8px; font-weight: bold; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; pointer-events: none; }
 .rf-hex { position: absolute; top: 122px; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; }
 .rf-hex-ic { width: 28px; height: 28px; object-fit: contain; }
-.rf-item { position: absolute; left: 108px; top: 184px; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; }
+.rf-item { position: absolute; left: 108px; top: 182px; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; }
 .rf-item-ic { width: 32px; height: 32px; object-fit: contain; }
 .rf-btn { position: absolute; border: 0; padding: 0; background: no-repeat 0 0; cursor: pointer; color: #fff; font-weight: bold; font-size: 11px; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
 .rf-btn:disabled { cursor: not-allowed; }
@@ -2580,7 +2619,8 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .rf-go .rf-btn-t { position: absolute; left: 0; right: 0; top: 5px; }
 .rf-cost { position: absolute; left: 24px; right: 10px; top: 29px; text-align: right; font-size: 9px; color: #ffe9a8; }
 .rf-cost.short { color: #ff8a8a; }
-.rf-again { left: 141px; top: 250px; width: 101px; height: 50px; }
+/* 再精煉一次的原圖下面多 12px 底圖，跟返回一樣只取上面 38px，不然底部突出 */
+.rf-again { left: 141px; top: 250px; width: 101px; height: 38px; }
 .rf-ret { left: 19px; top: 250px; width: 101px; height: 38px; }
 .rf-info { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: center; font-size: 12px; color: var(--ink-dim); max-width: 420px; }
 .rf-info b { color: var(--gold); }
