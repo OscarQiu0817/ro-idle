@@ -148,6 +148,7 @@ function main() {
       return gameOk;
     }).length && !scopeJobs.some(job => (raAll || !!raJobs[SCOPE_JOB_TO_RA[job]]))) {
       R.outOfScope.push({ ...row, tier: 'jobs:' + Object.keys(raJobs).join(',') });
+      put(it.id, 'reqJobs', []);   // 沒有範圍內職業能裝：標成空陣列，gen_item_prune 才會刪（原本漏標，忍者專用武器變成全職業能裝）
       continue;
     }
     const allowed = scopeJobs.filter(job => {

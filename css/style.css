@@ -480,6 +480,13 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .exp-pair b { font-weight: 600; text-align: right; }
 .ally-note .exp-pair { margin-top: 2px; }
 .ally-row .btn-small.danger { border-color: #a35; color: #e79; }
+/* 站位 */
+.form-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.form-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-panel-2); font-size: 12px; }
+.form-row.down { opacity: 0.55; }
+.form-rank { color: var(--gold, #e8c66a); font-weight: 700; }
+.form-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.form-row .btn-small { padding: 3px 7px; font-size: 11px; }
 .ally-opt { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: var(--ink-dim); }
 .ally-opt label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .ally-slot-row { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 3px 0; border-top: 1px dashed var(--line); }
@@ -2603,3 +2610,21 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .cloud-form input { max-width: none; width: 100%; box-sizing: border-box; }
 .cloud-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .cloud-msg { margin-top: 8px; color: #f5c46a; font-size: 13px; }
+
+/* 遇怪列表可收合 */
+summary.map-preview-title { cursor: pointer; list-style: none; }
+summary.map-preview-title::-webkit-details-marker { display: none; }
+summary.map-preview-title::after { content: " ▾"; color: var(--gold-soft); }
+details.map-preview-box:not([open]) > summary.map-preview-title { margin-bottom: 0; }
+details.map-preview-box:not([open]) > summary.map-preview-title::after { content: " ▸"; }
+
+/* 裝備頁數值面板（浮在右側面板左邊；窄螢幕放進裝備頁最上面） */
+.equip-stat-float { position: fixed; z-index: 40; width: 210px; padding: 8px 10px; background: var(--bg-panel, #1c1a17); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); font-size: 12px; color: var(--ink); pointer-events: none; }
+.equip-stat-float.inline { position: static; width: auto; margin-bottom: 10px; box-shadow: none; }
+.esf-title { font-weight: 700; color: var(--gold, #e8c66a); margin-bottom: 6px; }
+.esf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; }
+.esf-grid > div { display: flex; justify-content: space-between; gap: 4px; }
+.esf-grid span { color: var(--ink-dim); }
+.esf-grid b { font-weight: 600; white-space: nowrap; }
+.esf-grid b i { font-style: normal; color: var(--gold, #e8c66a); margin-left: 2px; }
+.esf-derived { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); }

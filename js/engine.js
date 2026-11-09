@@ -631,7 +631,9 @@ function skillDisplayName(nameOrSkill) {
 }
 function buffSourceLabel(b) {
   if (b.skillId && typeof findSkillById === 'function') {
-    const sk = findSkillById(b.skillId);
+    /* 隊友施放的、其他職業的技能（祭司隊友放的天使之賜福）findSkillById 查不到——它只查自己的技能樹。
+       查不到就翻全技能表，等級用 buff 身上記的（隊友的等級），不是玩家自己學到的（使用者 2026-11-09：狀態欄顯示英文） */
+    const sk = findSkillById(b.skillId) || (typeof findSkillAnywhere === 'function' ? findSkillAnywhere(b.skillId) : null);
     if (sk) {
       const lv = b.skillLv || skillLv(b.skillId) || 0;
       const nm = skillDisplayName(sk);
@@ -639,7 +641,7 @@ function buffSourceLabel(b) {
     }
   }
   if (b.buffName) return b.buffName;   // 裝備／卡片觸發的（autobonus、onAttackBuff）
-  return BUFF_TYPE_LABELS[b.type] || b.type;
+  return BUFF_TYPE_LABELS[b.type] || (typeof BATTLE_BUFF_NAMES !== 'undefined' && BATTLE_BUFF_NAMES[b.type]) || '增益效果';
 }
 
 /* ---------------- 卡片賦予的技能（#17）----------------
@@ -5785,6 +5787,7 @@ function gameTick() {
   state._lastMoveTick = moveNow;
   tickGroundUnits(moveNow);
   tickMonsterMovement(moveDt, moveNow);
+  tickAllyFormation(moveDt);
   tickCasting(moveNow);
   alliesCastTick(moveNow);
   /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
@@ -5807,7 +5810,7 @@ function gameTick() {
     const atkInterval = state.attackInterval / Math.max(0.2, 1 + pDebuff('aspdPct') / 100);
     /* 目標不在普攻距離內：走過去（只縮短目標的距離），這段時間不累積攻擊 */
     const tgt = state.monsters[0];
-    const engage = playerEngageRange();
+    const engage = partyEngageRange();
     if (state.casting) state.attackAccumulator = 0;   // 詠唱中不普攻、不走路
     else if (state.autoAttack === false && tgt && Number.isFinite(tgt.d) && tgt.d <= engage + DIST_EPS) {
       state.attackAccumulator = 0;   // 自動普攻關：站定只放技能
@@ -6643,7 +6646,7 @@ function monMove(mon) {
 }
 /* 舊存檔的怪沒有 d：視為已在射程內，行為跟改版前一樣 */
 function monInRange(mon) {
-  return !Number.isFinite(mon.d) || mon.d <= monMove(mon).range + DIST_EPS;
+  return !Number.isFinite(mon.d) || monTargetDist(mon) <= monMove(mon).range + DIST_EPS;
 }
 /* 玩家普攻距離：武器的 range（js/item_identity.js），弓再加鷹眼等級 */
 function playerAttackRange() {
@@ -6678,6 +6681,9 @@ function fieldCooldownSec(sk, lv) {
 function groundUnitsFull(sk) {
   return !!sk.maxUnits && (state.groundUnits || []).filter(u => u.skillId === sk.id).length >= sk.maxUnits;
 }
+/* 玩家的交戰距離。站位系統（2026-11-09）起隊員各有位置、打不到會自己往前走（tickAllyFormation），
+   玩家只要管自己走到射程。 */
+function partyEngageRange() { return playerEngageRange(); }
 function playerEngageRange() {
   const weapon = playerAttackRange();
   const cfg = state.autoSkillConfig;
@@ -6759,7 +6765,7 @@ function ensureNearestTarget() {
   if (!ms || !ms.length) { state._targetId = null; return; }
   const cur = ms[0];
   const locked = cur.id === state._targetId;
-  if (locked && Number.isFinite(cur.d) && cur.d <= playerEngageRange() + DIST_EPS) return;
+  if (locked && Number.isFinite(cur.d) && cur.d <= partyEngageRange() + DIST_EPS) return;
   let best = null;
   for (const m of ms) if (m.hp > 0 && Number.isFinite(m.d) && (!state.travel || isTravelThreat(m)) && (!best || m.d < best.d)) best = m;
   /* 優先目標（使用者 2026-11-05）：場上有勾選的怪就先打牠，即使比較遠——
@@ -6850,11 +6856,13 @@ function tickMonsterMovement(dtMs, now) {
     const mv = monMove(mon);
     if (mon._lastHp != null && mon.hp < mon._lastHp) mon.flinchUntil = now + mv.damageMotion;
     mon._lastHp = mon.hp;
-    if (mv.immobile || mon.d <= mv.range + DIST_EPS) continue;
+    if (mv.immobile || monInRange(mon)) continue;
     if (!mv.aggressive && mon.hp >= mon.maxHp) continue;
     if ((mon.stunnedUntil && now < mon.stunnedUntil) || (mon.flinchUntil && now < mon.flinchUntil)) continue;
     if (mon.rootUntil && now < mon.rootUntil) continue;   // 定位陷阱
-    const nd = Math.max(mv.range, mon.d - dtMs / (mv.walkMs * zoneSlowMult(mon)));
+    // 走向最前排那個人（站位系統）：走到牠的射程就停
+    const gap = Math.max(0, monTargetDist(mon) - mv.range);
+    const nd = Math.max(0, mon.d - Math.min(gap, dtMs / (mv.walkMs * zoneSlowMult(mon))));
     const wall = (state.groundUnits || []).find(w => w.kind === 'wall' && w.hits > 0 && mon.d > w.d && nd <= w.d && wallCovers(w, mon));
     if (wall) { hitByWall(mon, wall); continue; }
     if (iceWallBlocks(mon, nd, mv, now)) continue;
@@ -7131,8 +7139,11 @@ function skillBaseDamage(useMag, monDef, elemMult, sk) {
   return weaponChainDamage(monDef, elemMult, state.buffs.some(b => b.type === 'maxroll'), sk);
 }
 
-function showExtraHitFloat(dmg, isCrit) {
-  if (typeof showDamageFloat === 'function') showDamageFloat('-' + dmg, isCrit ? 'crit' : 'normal');
+/* monId：這一段打的是哪一隻。不帶的話飄字落在「目前的目標」——主目標剛被打死時，
+   那是下一隻怪，看起來像二刀連擊打到第二隻、射程變長（使用者 2026-11-09 回報） */
+function showExtraHitFloat(dmg, isCrit, monId) {
+  if (monId != null && typeof showDamageFloatAt === 'function') showDamageFloatAt(monId, '-' + dmg, isCrit ? 'crit' : 'normal');
+  else if (typeof showDamageFloat === 'function') showDamageFloat('-' + dmg, isCrit ? 'crit' : 'normal');
   if (typeof triggerMonsterHit === 'function') triggerMonsterHit(!!isCrit);
 }
 
@@ -7389,7 +7400,7 @@ function playerAttackInner() {
     const katarDmg = mitigateDamage(raw * (KATAR_BONUS_DMG_PCT / 100), monDefVal, monSoftVal);
     target.hp -= katarDmg;
     logMsg(`🗡️ 拳刃附加了 ${katarDmg} 點傷害！${isCrit ? '（暴擊）' : ''}`);
-    showExtraHitFloat(katarDmg, isCrit);
+    showExtraHitFloat(katarDmg, isCrit, target.id);
     playExtraHitSound(isCrit);
     if (target.hp <= 0) {
       killMonster(monDef, target);
@@ -7405,7 +7416,7 @@ function playerAttackInner() {
     target.hp -= bonusDmg;
     logMsg(`🔥 怒爆之火附加了 ${bonusDmg} 點火屬性傷害！`);
     // 這段是獨立的火屬性傷害，不吃主攻擊的暴擊
-    showExtraHitFloat(bonusDmg, false);
+    showExtraHitFloat(bonusDmg, false, target.id);
     if (target.hp <= 0) {
       killMonster(monDef, target);
       return;
@@ -7433,7 +7444,7 @@ function playerAttackInner() {
       if (isCrit && !_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += daDmg;
       target.hp -= daDmg;
       logMsg(`⚔️ 二刀連擊！對 ${monDef.name} 造成 ${daDmg} 點傷害！${isCrit ? '（暴擊）' : ''}`);
-      showExtraHitFloat(daDmg, isCrit);
+      showExtraHitFloat(daDmg, isCrit, target.id);
       playExtraHitSound(isCrit);
       if (typeof showComboTotal === 'function') showComboTotal(target.id, dmg + daDmg);
       if (target.hp <= 0) {
@@ -7461,7 +7472,7 @@ function playerAttackInner() {
     const leftId = target.id;
     setTimeout(() => {
       if (typeof showDamageFloatAt === 'function') showDamageFloatAt(leftId, '-' + leftShown, leftCrit ? 'crit' : 'normal');
-      else showExtraHitFloat(leftShown, leftCrit);
+      else showExtraHitFloat(leftShown, leftCrit, target.id);
       playExtraHitSound(leftCrit);
     }, 240);
     if (target.hp <= 0) killMonster(monDef, target);
@@ -7559,8 +7570,13 @@ function playerAttackInner() {
 
    本作的怪物沒有 MATK 資料，魔法類就用 ATK × 倍率 再多給 20%，
    並且**跳過迴避判定**（官方魔法無視閃避）。 */
-function monsterCastSkill(mon, monDef, sk) {
+/* ally：站位系統（2026-11-09）最前排是隊友時，技能打他——換身成那位隊友跑同一支，
+   命中、防禦、異常、吸 SP 全照玩家那套算在他身上。自我增益／回復跟目標無關，不換身。 */
+function monsterCastSkill(mon, monDef, sk, ally) {
   if (mon.charmUntil && Date.now() < mon.charmUntil && !sk.buff) return;   // 眨眼之誘：迷惑中不對玩家放技能
+  if (ally && !sk.buff && !sk.heal) {
+    return withAlly(ally, () => withLogLane('ally', () => monsterCastSkillInner(mon, monDef, sk)));
+  }
   return withLogLane('skill', () => monsterCastSkillInner(mon, monDef, sk));
 }
 function monsterCastSkillInner(mon, monDef, sk) {
@@ -7770,6 +7786,10 @@ function monsterCastSkillInner(mon, monDef, sk) {
 
   if (state.hp <= 0) {
     state.hp = 0;
+    if (_allyActing) {   // 隊友被技能打倒：走隊友倒地，不是玩家死亡
+      if (!state._downed) allyTakeDamage(state, 0, monDef.name);
+      return;
+    }
     if (tryAutoRevive()) return;
     onPlayerDown();
   }
@@ -7826,10 +7846,15 @@ function monsterAttackSingle(mon) {
   /* 隊友承傷（使用者 2026-08-15 指定）：怪 60% 打玩家、40% 平分給未倒地的隊友。
      倒地的不列入分配，那份會自動退回玩家——不然隊友一死怪的攻擊就憑空少掉，
      變成「隊友死光反而比較安全」。
-     只攔普通攻擊：怪物技能仍然一律打玩家（本作 1,536 筆怪物技能全是單體）。 */
+     技能也打最前排（站位系統 2026-11-09）：擲中技能就換身成隊友放。 */
   if (!mon.stunnedUntil || Date.now() >= mon.stunnedUntil) {
     const target = pickMonsterTarget();
-    if (target) { monsterAttackAlly(mon, monDef, target); return; }
+    if (target) {
+      const sk = monsterSkillFor(mon, monDef);
+      if (sk) monsterCastSkill(mon, monDef, sk, target);
+      else monsterAttackAlly(mon, monDef, target);
+      return;
+    }
   }
 
   if (mon.charmUntil && Date.now() < mon.charmUntil) return;   // 眨眼之誘：迷惑中不攻擊玩家
@@ -8820,6 +8845,109 @@ let _allyOwnerState = null;
    再 `withAlly()` 一次。內層寫死 `_allyActing = null` 的話，回到外層時旗標已經沒了：
    後半段的訊息會跑錯欄、獎勵導回錯人，而且 castSkill 尾端那次 `saveGame()`
    會失去保護，直接把隊友快照寫進玩家的存檔格。 */
+/* ---- 站位系統（使用者 2026-11-09）----
+   前、中、後三排，玩家隨時互換：state.formation 由前到後，'p'＝自己，其餘是隊友的 _fid。
+   怪的普攻打最前排還站著的人；每個隊員都有位置，要在自己的射程內才打得到，打不到就往前走（_adv）。
+   座標跟怪一樣：以玩家為原點的 d（格）／a（弧度）；「前方」＝目前目標的方向。 */
+const FORMATION_GAP = 2;        // 相鄰兩排差幾格
+const ALLY_WALK_MS = 150;       // 隊員走一格（跟玩家一樣）
+const ALLY_ADV_MAX = 20;
+function allyFid(a) { return a._fid || (a._fid = 'a' + Math.random().toString(36).slice(2, 9)); }
+function formationOrder() {
+  const owner = allyOwnerState();
+  const keys = ['p'].concat((owner.allies || []).filter(Boolean).map(allyFid));
+  const order = Array.isArray(owner.formation) ? owner.formation.filter(k => keys.includes(k)) : [];
+  keys.forEach(k => { if (!order.includes(k)) order.push(k); });
+  return order;
+}
+function formationMember(key) {
+  const owner = allyOwnerState();
+  return key === 'p' ? owner : (owner.allies || []).find(a => a && a._fid === key) || null;
+}
+function formationKeyOf(m) { return m === allyOwnerState() ? 'p' : allyFid(m); }
+/* 跟相鄰那排互換；dir −1＝往前、+1＝往後 */
+function moveFormation(key, dir) {
+  const order = formationOrder();
+  const i = order.indexOf(key), j = i + dir;
+  if (i < 0 || j < 0 || j >= order.length) return false;
+  [order[i], order[j]] = [order[j], order[i]];
+  allyOwnerState().formation = order;
+  saveGame();
+  return true;
+}
+/* 最前排還站著（沒倒地、在這張圖）的人 */
+function frontMember() {
+  const owner = allyOwnerState();
+  for (const k of formationOrder()) {
+    const m = formationMember(k);
+    if (m === owner) return owner;
+    if (m && !m._downed && allyOnThisMap(m)) return m;
+  }
+  return owner;
+}
+function formationFacing() {
+  const owner = allyOwnerState();
+  const t = owner.monsters && owner.monsters[0];
+  if (t && Number.isFinite(t.d) && t.d > 0.01) owner._formAng = t.a || 0;
+  return owner._formAng != null ? owner._formAng : 0;
+}
+/* 隊員在玩家前方幾格（負數＝在後面）。隊友往前走不會穿過目標 */
+function memberForward(m) {
+  const owner = allyOwnerState();
+  if (m === owner) return 0;
+  const order = formationOrder();
+  let f = (order.indexOf('p') - order.indexOf(formationKeyOf(m))) * FORMATION_GAP + (m._adv || 0);
+  const t = owner.monsters && owner.monsters[0];
+  if (t && Number.isFinite(t.d)) f = Math.min(f, t.d - 1);
+  return f;
+}
+function memberPos(m) {
+  const f = memberForward(m), a = formationFacing();
+  return f >= 0 ? { d: f, a } : { d: -f, a: a + Math.PI };
+}
+/* 怪到「牠要打的那個人」的距離 */
+function monTargetDist(mon) {
+  const t = frontMember();
+  return t === allyOwnerState() ? mon.d : planarDist(mon, memberPos(t));
+}
+/* 座標原點平移 P（sign −1＝改成以 P 為原點，+1＝換回來） */
+function shiftMonsters(list, P, sign) {
+  if (!P || !(P.d > 0)) return;
+  const px = P.d * Math.cos(P.a) * sign, py = P.d * Math.sin(P.a) * sign;
+  for (const m of list) {
+    if (!Number.isFinite(m.d)) continue;
+    const x = m.d * Math.cos(m.a || 0) + px, y = m.d * Math.sin(m.a || 0) + py;
+    m.d = Math.hypot(x, y);
+    m.a = Math.atan2(y, x);
+  }
+}
+/* 每拍：打不到目標的隊友往前走；沒目標或太近就退回自己那排 */
+function tickAllyFormation(dtMs) {
+  if (!state || _allyActing) return;
+  const t = state.monsters && state.monsters[0];
+  const step = dtMs / ALLY_WALK_MS;
+  allyList().forEach(a => {
+    if (!a) return;
+    if (a._downed || !allyOnThisMap(a)) { a._adv = 0; return; }
+    // 被目標擋住（memberForward 的上限）就不再累積，換目標時才不會瞬間出現在新目標旁邊
+    if (t && Number.isFinite(t.d) && a._adv > 0) {
+      const order = formationOrder();
+      const base = (order.indexOf('p') - order.indexOf(allyFid(a))) * FORMATION_GAP;
+      a._adv = Math.max(0, Math.min(a._adv, t.d - 1 - base));
+    }
+    let need = -Infinity;
+    if (t && Number.isFinite(t.d) && !state.travel) {
+      need = withAlly(a, () => {
+        const tt = state.monsters[0], rr = playerEngageRange();
+        return tt && Number.isFinite(rr) ? tt.d - rr : -Infinity;
+      });
+    }
+    const adv = a._adv || 0;
+    if (need > DIST_EPS) a._adv = Math.min(ALLY_ADV_MAX, adv + Math.min(need, step));
+    else if (adv > 0 && (need === -Infinity || need < -1)) a._adv = Math.max(0, adv - step);
+  });
+}
+
 function withAlly(ally, fn) {
   const saved = state;
   const savedActing = _allyActing;
@@ -8827,6 +8955,9 @@ function withAlly(ally, fn) {
   const savedMonsters = ally.monsters, savedMonster = ally.monster;
   ally.monsters = saved.monsters;      // 共用同一個場，隊友才打得到玩家面前的怪
   ally.monster = saved.monster;
+  // 站位：最外層換身時，怪的 d／a 改成以這位隊友為原點（射程、技能範圍照他自己的位置算），結束再換回來
+  const frameP = !savedActing && saved.monsters && saved.monsters.length ? memberPos(ally) : null;
+  if (frameP) shiftMonsters(saved.monsters, frameP, -1);
   _allyActing = ally;
   // 巢狀時「真正的玩家」還是最外層那個，不是上一層的隊友
   _allyOwnerState = savedOwner || saved;
@@ -8838,6 +8969,7 @@ function withAlly(ally, fn) {
   ally.mapId = _allyOwnerState.mapId;
   state = ally;
   try { return fn(); } finally {
+    if (frameP) shiftMonsters(saved.monsters, frameP, 1);
     ally.mapId = homeMap;
     state = saved;
     _allyActing = savedActing;
@@ -9115,6 +9247,7 @@ function keepAllyCombat(fresh, prev, keepSettings = true) {
   fresh.cooldowns = prev.cooldowns || {};
   fresh._atkAccum = prev._atkAccum || 0;
   fresh._lastAttackAt = prev._lastAttackAt || 0;
+  if (prev._fid) fresh._fid = prev._fid;   // 站位認人用
   if (keepSettings) {
     if (prev.autoSkill != null) fresh.autoSkill = prev.autoSkill;
     if (prev.autoAttack != null) fresh.autoAttack = prev.autoAttack;
@@ -9274,7 +9407,8 @@ function alliesTick() {
        跑在攻擊之前：先開 buff 再打，跟玩家的慢心跳順序一致。
        `withAlly` 期間 `saveGame()` 會自己跳過（見 saveGame 的註解）——
        castSkill 尾端就有一次，沒有那道保險這裡會把玩家的存檔蓋成隊友。 */
-    const engaged = state.monsters.length > 0 && now - (state._walkAt || 0) > 300;   // 玩家站定在打
+    // 站位系統起隊友有自己的位置，射程內就打，不再等玩家站定
+    const engaged = state.monsters.length > 0;
     try {
       withAlly(ally, () => {
         tickCasting(now);   // 主要在 alliesCastTick 每拍結算；這裡再檢查一次沒有副作用
@@ -9289,8 +9423,12 @@ function alliesTick() {
     if (ally._downed) return;   // 自傷類技能（聖十字審判、HP轉換）可能把自己放倒
     // 詠唱中不普攻（官方規則，跟玩家一樣）；累積的攻擊時間也不留，免得詠唱完一口氣補刀
     if (ally.casting) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
-    // 玩家還在走（追怪或漫遊）時隊友也不打，等玩家開打才一起打（隊友攻擊不看距離，至少節奏跟玩家一致）
-    if (!engaged) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
+    // 目標不在自己的普攻距離內（還在往前走）：不打
+    const inReach = withAlly(ally, () => {
+      const t = state.monsters[0];
+      return !t || !Number.isFinite(t.d) || t.d <= playerAttackRange() + DIST_EPS;
+    });
+    if (!engaged || !inReach) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
     // 自動普攻關（使用者 2026-11-06）：純輔助帶人，不搶怪
     if (ally.autoAttack === false) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
     if (!ally._lastAttackAt) ally._lastAttackAt = now - 1000;
@@ -9581,22 +9719,21 @@ function setAutoBuyAllyArrow(v) { state.autoBuyAllyArrow = !!v; saveGame(); }
 /* 隊友承傷。倒地的不列入分配，那 20% 要退回玩家——
    不然隊友一死怪的攻擊就憑空少掉，變成「死光反而安全」。
    十字軍犧牲：有該 buff 的隊友優先被攻擊（65%~80%）。 */
+/* 怪的普攻打誰（站位系統 2026-11-09）：最前排還站著的人。回傳 null＝打玩家。
+   牧師遺物：額外機率把怪引到玩家身上。最前排是玩家時，掛著犧牲的隊友照機率替他擋。 */
 function pickMonsterTarget() {
   const alive = allyAliveList();
   if (!alive.length) return null;
-  // 找有犧牲 buff 的隊友
-  const devotionAlly = alive.find(a => {
-    const b = (a.buffs || []).find(x => x.type === 'devotion' && (x.msRemaining || 0) > 0);
-    return b ? b.targetPlayerPct : 0;
-  });
+  const taunt = relicPlayerTargetPct() - ALLY_MONSTER_TARGET_PLAYER_PCT;
+  if (taunt > 0 && Math.random() * 100 < taunt) return null;
+  const front = frontMember();
+  if (front !== allyOwnerState()) return front;
+  const devotionAlly = alive.find(a => (a.buffs || []).some(x => x.type === 'devotion' && (x.msRemaining || 0) > 0));
   if (devotionAlly) {
     const b = devotionAlly.buffs.find(x => x.type === 'devotion');
-    const pct = b ? b.targetPlayerPct : 75;
-    if (Math.random() * 100 < pct) return devotionAlly;
+    if (Math.random() * 100 < ((b && b.targetPlayerPct) || 75)) return devotionAlly;
   }
-  // 基礎機率：打玩家 60%，其餘平分給隊友（含牧師遺物加成）
-  if (Math.random() * 100 < relicPlayerTargetPct()) return null;
-  return alive[Math.floor(Math.random() * alive.length)];
+  return null;
 }
 
 function allyTakeDamage(ally, dmg, sourceName) {
@@ -12168,7 +12305,7 @@ function castSkillInner(skillId, opts) {
         landed++;
         target.hp -= dmg;
         if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, 'normal');
-        if (target.hp <= 0) break;
+        // 怪倒下也打完全部段數（RO：二連矢 100＋100 打 50 血也顯示 200）
       }
       if (landed >= 2 && typeof showComboTotal === 'function') showComboTotal(target.id, totalDmg);
       logMsg(`⚡ 「${sk.name}」Lv${lv} 造成 ${hits} 段攻擊，共 ${totalDmg} 點傷害！`);
