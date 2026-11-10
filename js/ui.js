@@ -34,7 +34,10 @@ function initApp() {
   bindSearchComposition();
   renderDisclaimers();          // 免責聲明（#118）：四個位置一次填好
   showScreen('screen-title');
+  showTitleMenu();
   maybeShowConsent();           // 首次開啟才出現的一次性確認（#121）
+  // 瀏覽器要使用者先互動才能出聲：標題畫面第一次點擊時開始播標題音樂
+  document.addEventListener('pointerdown', ensureTitleMusic, { once: true });
 }
 /* 後開的分頁寫一筆鎖，先開的分頁收到 storage 事件就停手。
    同一個分頁自己寫入不會觸發 storage，所以後開的那個留著。 */
@@ -198,13 +201,53 @@ function playTitleMusic() {
   audio.load();
 }
 
-function showSlotSelect() {
-  document.getElementById('title-buttons').classList.add('hidden');
-  document.getElementById('slot-select').classList.remove('hidden');
-  slotPage = 0;
-  renderSlotList();
-  // 點擊開始冒險後播放標題音樂
+/* 標題畫面（使用者 2026-11-09）：一打開就是登入；已登入雲端或選過「只存在這台」就直接到角色選單 */
+const TITLE_LOCAL_ONLY_KEY = 'ro_idle_local_only';
+function titleLocalOnly() {
+  try { return localStorage.getItem(TITLE_LOCAL_ONLY_KEY) === '1'; } catch (e) { return false; }
+}
+function showTitleMenu() {
+  const noCloud = typeof cloudConf !== 'function';
+  if (noCloud || cloudConf() || titleLocalOnly()) showSlotSelect();
+  else showTitleLogin();
+}
+function showTitleLogin() {
+  document.getElementById('slot-select').classList.add('hidden');
+  document.getElementById('title-login').classList.remove('hidden');
+  if (typeof cloud !== 'undefined') cloud.view = null;
+  if (typeof renderCloudModal === 'function') renderCloudModal();
+}
+function titleLoginVisible() {
+  const el = document.getElementById('title-login');
+  const scr = document.getElementById('screen-title');
+  return !!el && !el.classList.contains('hidden') && !!scr && scr.classList.contains('active');
+}
+/* 「不登入，只存在這台」：記住，下次直接進角色選單（之後仍可從選單下方的雲端按鈕登入） */
+function titleSkipLogin() {
+  try { localStorage.setItem(TITLE_LOCAL_ONLY_KEY, '1'); } catch (e) { /* 存不了就每次問 */ }
+  showSlotSelect();
+}
+function ensureTitleMusic() {
+  const scr = document.getElementById('screen-title');
+  if (!scr || !scr.classList.contains('active')) return;
+  if (bgmAudio && !bgmAudio.paused && /0000\.mp3$/.test(bgmAudio.src)) return;
   playTitleMusic();
+}
+
+let csSel = null;   // 角色選單目前選中的欄位
+function showSlotSelect() {
+  document.getElementById('title-login').classList.add('hidden');
+  document.getElementById('title-login-body').innerHTML = '';   // 雲端彈窗也有同一組 id，隱藏的這份要清掉
+  document.getElementById('slot-select').classList.remove('hidden');
+  // 預設選最近玩的角色，並翻到它那一頁
+  let best = null, bestAt = -1;
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const s = readSlotSummary(i);
+    if (s && !s.broken && (s.lastActiveAt || 0) > bestAt) { best = i; bestAt = s.lastActiveAt || 0; }
+  }
+  csSel = best != null ? best : 0;
+  slotPage = Math.floor(csSel / SLOTS_PER_PAGE);
+  renderSlotList();
 }
 
 function backToTitle() {
@@ -217,11 +260,27 @@ function backToTitle() {
   if (animCanvas) animCanvas.style.display = 'none';
   const img = document.getElementById('player-img');
   if (img) img.style.display = '';
-  document.getElementById('title-buttons').classList.remove('hidden');
-  document.getElementById('slot-select').classList.add('hidden');
   showScreen('screen-title');
+  showTitleMenu();
   playTitleMusic();
 }
+
+/* 讀欄位存檔（壞檔回 { broken: true }，空欄位回 null） */
+function readSlotSummary(i) {
+  const raw = localStorage.getItem(getSlotKey(i));
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return { broken: true }; }
+}
+function relTimeText(t) {
+  if (!t) return '—';
+  const sec = Math.max(0, (Date.now() - t) / 1000);
+  const rel = sec < 60 ? '剛剛' : sec < 3600 ? `${Math.floor(sec / 60)} 分鐘前`
+    : sec < 86400 ? `${Math.floor(sec / 3600)} 小時前` : `${Math.floor(sec / 86400)} 天前`;
+  const d = new Date(t);
+  const pad = n => String(n).padStart(2, '0');
+  return `${rel}<small>${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}</small>`;
+}
+const csEsc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function renderSlotList() {
   const list = document.getElementById('slot-list');
@@ -229,41 +288,128 @@ function renderSlotList() {
   if (!list) return;
   const start = slotPage * SLOTS_PER_PAGE;
   const end = Math.min(start + SLOTS_PER_PAGE, MAX_SLOTS);
+  if (csSel == null || csSel < start || csSel >= end) csSel = start;
   let html = '';
   for (let i = start; i < end; i++) {
-    const raw = localStorage.getItem(getSlotKey(i));
-    if (raw) {
-      try {
-        const s = JSON.parse(raw);
-        const job = JOB_TREE[s.jobId] || { icon: '?', name: '???' };
-        html += `<div class="slot-item has-save" onclick="selectSlot(${i})">
-          <div class="slot-header">欄位 ${i + 1}</div>
-          <div class="slot-info">${job.icon} ${s.name || '無名'} Lv.${s.baseLevel || '?'} ${job.name}</div>
-          <button class="btn-small ghost" onclick="event.stopPropagation();exportSlotSave(${i})" title="把這個存檔匯出成 JSON 檔">匯出</button>
-          <button class="btn-small ghost" onclick="event.stopPropagation();importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位（會覆蓋）">匯入</button>
-          <button class="btn-small ghost" onclick="event.stopPropagation();deleteSlotConfirm(${i})">刪除</button>
-        </div>`;
-      } catch(e) {
-        html += `<div class="slot-item" onclick="selectSlot(${i})"><div class="slot-header">欄位 ${i + 1}</div><div class="slot-info">損壞的存檔</div></div>`;
-      }
+    const s = readSlotSummary(i);
+    const sel = i === csSel ? ' sel' : '';
+    if (!s) {
+      html += `<div class="cs-card empty${sel}" onclick="csPick(${i})" ondblclick="selectSlot(${i})">
+        <div class="cs-doll cs-plus">＋</div><div class="cs-name">空欄位</div><div class="cs-sub">欄位 ${i + 1}</div></div>`;
+    } else if (s.broken) {
+      html += `<div class="cs-card broken${sel}" onclick="csPick(${i})">
+        <div class="cs-doll cs-plus">？</div><div class="cs-name">損壞的存檔</div><div class="cs-sub">欄位 ${i + 1}</div></div>`;
     } else {
-      html += `<div class="slot-item empty-slot" onclick="selectSlot(${i})">
-        <div class="slot-header">欄位 ${i + 1}</div>
-        <div class="slot-info">空欄位</div>
-        <button class="btn-small ghost" onclick="event.stopPropagation();importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位">匯入</button>
-      </div>`;
+      const job = JOB_TREE[s.jobId] || { name: '???' };
+      html += `<div class="cs-card${sel}" onclick="csPick(${i})" ondblclick="selectSlot(${i})">
+        <div class="cs-doll"><canvas data-slot="${i}"></canvas></div>
+        <div class="cs-name">${csEsc(s.name || '無名')}</div>
+        <div class="cs-sub">Lv ${s.baseLevel || 1}・${csEsc(job.name)}</div></div>`;
     }
   }
   list.innerHTML = html;
+  list.querySelectorAll('canvas[data-slot]').forEach(c => {
+    const s = readSlotSummary(+c.dataset.slot);
+    const parts = s && !s.broken && typeof paperdollLookParts === 'function' ? paperdollLookParts(s) : null;
+    const paint = () => paintDollStill(c, parts, paint);
+    paint();
+  });
+  renderSlotInfo();
 
   // 分頁按鈕
   const totalPages = Math.ceil(MAX_SLOTS / SLOTS_PER_PAGE);
-  let pagHtml = `<button class="btn-small" onclick="if(slotPage>0){slotPage--;renderSlotList();}" ${slotPage===0?'disabled':''}>◀</button>`;
+  let pagHtml = `<button class="btn-small" onclick="if(slotPage>0){slotPage--;csSel=null;renderSlotList();}" ${slotPage===0?'disabled':''}>◀</button>`;
   for (let p = 0; p < totalPages; p++) {
-    pagHtml += `<button class="btn-small ${p===slotPage?'active':''}" onclick="slotPage=${p};renderSlotList();">${p + 1}</button>`;
+    pagHtml += `<button class="btn-small ${p===slotPage?'active':''}" onclick="slotPage=${p};csSel=null;renderSlotList();">${p + 1}</button>`;
   }
-  pagHtml += `<button class="btn-small" onclick="if(slotPage<${totalPages - 1}){slotPage++;renderSlotList();}" ${slotPage>=totalPages-1?'disabled':''}>▶</button>`;
+  pagHtml += `<button class="btn-small" onclick="if(slotPage<${totalPages - 1}){slotPage++;csSel=null;renderSlotList();}" ${slotPage>=totalPages-1?'disabled':''}>▶</button>`;
   pagination.innerHTML = pagHtml;
+}
+function csPick(i) {
+  if (csSel === i) return;
+  csSel = i;
+  document.querySelectorAll('#slot-list .cs-card').forEach((el, k) => el.classList.toggle('sel', slotPage * SLOTS_PER_PAGE + k === i));
+  renderSlotInfo();
+}
+/* 下方資訊欄：比照 RO 選角畫面（名稱、職業、等級、所在地圖、上次上線、六項素質） */
+function renderSlotInfo() {
+  const el = document.getElementById('cs-info');
+  if (!el) return;
+  const i = csSel;
+  const s = readSlotSummary(i);
+  const io = `<button class="btn-small ghost" onclick="exportSlotSave(${i})" title="把這個存檔匯出成 JSON 檔">匯出</button>
+    <button class="btn-small ghost" onclick="importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位（會覆蓋）">匯入</button>`;
+  if (!s) {
+    el.innerHTML = `<div class="cs-empty">欄位 ${i + 1}：空欄位</div>
+      <div class="cs-btns"><button class="btn btn-primary" onclick="selectSlot(${i})">建立角色</button>
+      <button class="btn-small ghost" onclick="importSlotFile(${i})" title="從 JSON 檔匯入到這個欄位">匯入</button></div>`;
+    return;
+  }
+  if (s.broken) {
+    el.innerHTML = `<div class="cs-empty">欄位 ${i + 1}：存檔損壞，無法讀取</div>
+      <div class="cs-btns">${io}<button class="btn-small ghost" onclick="deleteSlotConfirm(${i})">刪除</button></div>`;
+    return;
+  }
+  const job = JOB_TREE[s.jobId] || { name: '???' };
+  const st = s.stats || {};
+  const map = s.mapId && typeof mapNameOf === 'function' ? mapNameOf(s.mapId) : '—';
+  const row = (k, v) => `<div class="cs-row"><span>${k}</span><b>${v}</b></div>`;
+  el.innerHTML = `<div class="cs-cols">
+      <div class="cs-col">
+        ${row('名稱', csEsc(s.name || '無名'))}
+        ${row('職業', csEsc(job.name))}
+        ${row('等級', `Base ${s.baseLevel || 1}／Job ${s.jobLevel || 1}`)}
+        ${row('所在地圖', csEsc(map))}
+        ${row('上次上線', relTimeText(s.lastActiveAt))}
+      </div>
+      <div class="cs-col cs-stats">
+        ${['str', 'agi', 'vit', 'int', 'dex', 'luk'].map(k => row(k.toUpperCase(), st[k] || 1)).join('')}
+      </div>
+    </div>
+    <div class="cs-btns">
+      <button class="btn btn-primary" onclick="selectSlot(${i})">▶ 進入遊戲</button>
+      ${io}<button class="btn-small ghost" onclick="deleteSlotConfirm(${i})">刪除</button>
+    </div>`;
+}
+
+/* 靜態紙娃娃（正面站姿第一格）：角色選單與裝備欄共用。圖層還沒載完時，載完再呼叫 retry */
+function paintDollStill(canvas, parts, retry) {
+  if (!canvas || !parts || !window.PAPERDOLL) return false;
+  let act = 'idle';
+  if (!paperdollFrameCount(parts[0], act)) act = 'idle_s';
+  const body = paperdollFrame(parts[0], act, 0);
+  if (!body) return false;
+  const box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  paperdollExpand(parts[0], body, 0, 0, box);
+  const layers = [];
+  for (let p = 1; p < parts.length; p++) {
+    const fr = paperdollFrame(parts[p], act, 0);
+    if (!fr) continue;
+    const al = paperdollAlign(parts[p], body, fr);
+    layers.push([parts[p], fr, al[0], al[1]]);
+    paperdollExpand(parts[p], fr, al[0], al[1], box);
+  }
+  if (!isFinite(box.minX)) return false;
+  const pad = 2;
+  const minX = Math.floor(box.minX) - pad;
+  const minY = Math.floor(box.minY) - pad;
+  canvas.width = Math.max(1, Math.ceil(box.maxX) + pad - minX);
+  canvas.height = Math.max(1, Math.ceil(box.maxY) + pad - minY);
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const ox = -minX, oy = -minY;
+  let pending = !drawPaperdollLayers(ctx, parts[0], body, ox, oy);
+  layers.forEach(layer => {
+    if (!drawPaperdollLayers(ctx, layer[0], layer[1], ox + layer[2], oy + layer[3])) pending = true;
+  });
+  if (pending && retry) {
+    parts.forEach(part => {
+      const im = paperdollImage(part);
+      if (im && !im.complete) im.addEventListener('load', retry, { once: true });
+    });
+  }
+  return true;
 }
 
 function selectSlot(slot) {
@@ -774,6 +920,27 @@ function closeNoticeModal() { const el = document.getElementById('notice-stack')
    **不能每秒整個重畫**：innerHTML 一換，正在展開的 <select> 就被刪掉重建，
    藥水選單永遠選不下去（使用者 2026-08-15 回報）。跟三個搜尋框那個注音問題
    同一個病——重畫把使用者正在互動的元素抽掉了。 */
+/* 站位（2026-11-09）：前到後排，隨時可換；怪的普攻打最前排還站著的人 */
+const FORMATION_ROW_NAMES = ['前排', '中排', '後排'];
+function formationHtml() {
+  const order = formationOrder();
+  const rows = order.map((k, i) => {
+    const m = formationMember(k);
+    const name = k === 'p' ? '你' : (m && m._allyName) || '隊友';
+    const down = m && m !== state && m._downed;
+    return `<div class="form-row${down ? ' down' : ''}">
+      <span class="form-rank">${FORMATION_ROW_NAMES[i] || ''}</span>
+      <span class="form-name">${shopEsc(name)}${down ? '（倒地）' : ''}</span>
+      <button class="btn-small" ${i === 0 ? 'disabled' : ''} onclick="formationAction('${k}',-1)" title="往前">▲</button>
+      <button class="btn-small" ${i === order.length - 1 ? 'disabled' : ''} onclick="formationAction('${k}',1)" title="往後">▼</button>
+    </div>`;
+  }).join('');
+  return `<div class="ally-sec">站位<span class="codex-sec-hint">怪物優先打前排；打不到目標的隊員會自己往前走</span></div>
+    <div class="form-list">${rows}</div>`;
+}
+function formationAction(key, dir) {
+  if (moveFormation(key, dir)) renderAllyPanel();
+}
 function renderAllyPanel() {
   const el = document.getElementById('ally-panel-body');
   if (!el) return;
@@ -804,6 +971,7 @@ function renderAllyPanel() {
         </div>
       </div>`;
     }).join('');
+    html += formationHtml();
   }
 
   /* 「其他存檔的角色」在戰鬥地圖預設收起——那邊本來就雇不了，
@@ -1113,7 +1281,12 @@ const BATTLE_BUFF_NAMES = {
   skillcd: '冷卻', exp: '經驗', atkflat: 'ATK', defflat: 'DEF', spcost: '耗SP',
   songelereduce: '耐性', songailresist: '抗性', gemfree: '礦石', dontforgetme: '勿忘我',
   dmgtaken: '減傷', eleweapon: '屬性', eledmg_fire: '火傷', eledmg_water: '水傷',
-  eledmg_wind: '風傷', eledmg_earth: '地傷', eleresist: '抗屬'
+  eledmg_wind: '風傷', eledmg_earth: '地傷', eleresist: '抗屬',
+  // 2026-11-09 補齊（沒有名字時狀態欄會顯示英文）
+  allstat: '全素質', gearbonus: '裝備觸發', elearmor: '屬性鎧甲', maxhpflat: 'HP', ailimmune: '免疫', eledmg_: '屬傷', doublecast: '雙重施法',
+  devotion: '犧牲', ignoresize: '無視體型', fogwall: '濃霧', gate: '傳送門', defender: '防禦姿態', castcut: '詠唱', memorize: '記憶',
+  energycoat: '能量外套', matk: 'MATK', mdefflat: 'MDEF', eledmg_holy: '聖傷', targetele: '屬性', healrecv: '治癒量', aspddelay: '攻速',
+  aspdmax: '攻速', expboost: '經驗加倍', dropboost: '掉寶加倍', jobexpboost: '職業經驗加倍'
 };
 /* 加成欄浮層的效果文字（T5）：照 buff 的實際欄位寫出加了什麼，不再只印「名稱 +數字」 */
 const pctOf = m => Math.round((m - 1) * 100);
@@ -1222,6 +1395,18 @@ const SKILL_LV_COLS = {
   slowPct: ['減速', v => v + '%'], castCutPct: ['詠唱減', v => v + '%'], delayCutPct: ['延遲減', v => v + '%'],
   zenyCost: ['Zeny'], hpCost: ['HP 消耗'], doubleAttackChance: ['連擊率', v => v + '%'],
 };
+const SKILL_DAMAGE_TYPES = ['damage', 'damage_aoe', 'magic', 'magic_aoe', 'damage_multihit', 'damage_multi', 'ground_trap',
+  'field_aoe_magic', 'field_phys_aoe', 'bomb_random'];
+// 非攻擊技能的 mult 代表什麼：[欄名, 顯示]
+const SKILL_MULT_AS = {
+  as_left: ['左手傷害', v => v + '%'], as_right: ['右手傷害', v => v + '%'],
+  ac_owl: ['DEX', v => '+' + v], ac_vulture: ['命中', v => '+' + v], ac_concentration: ['AGI／DEX', v => '+' + Math.round(v * 100) + '%'],
+  sm_sword: ['ATK', v => '+' + v], sm_twohand: ['ATK', v => '+' + v], kn_spearmastery: ['ATK', v => '+' + v],
+  al_demonbane: ['ATK', v => '+' + v], al_dp: ['DEF', v => '+' + v], tf_miss: ['迴避', v => '+' + v],
+  mg_srecovery: ['SP 回復', v => '+' + v], sm_recovery: ['HP 回復', v => '+' + v], tf_steal: ['偷竊率', v => v + '%'],
+  mc_discount: ['折扣', v => Math.round((1 - v) * 100) + '%'], mc_overcharge: ['加價', v => Math.round((v - 1) * 100) + '%'],
+  ht_steelcrow: ['獵鷹傷害', v => '+' + v], al_heal: ['治癒倍率', v => Math.round(v * 100) + '%'], nv_firstaid: ['回復倍率', v => Math.round(v * 100) + '%'],
+};
 function skillLevelTableHtml(sk) {
   const n = sk.maxLv || 1;
   if (n < 2) return '';
@@ -1230,8 +1415,14 @@ function skillLevelTableHtml(sk) {
   const row = typeof skillCastRow === 'function' ? skillCastRow(sk.id) : null;
   // 每欄 val(i) 回傳顯示字串，0／沒有回傳 ''
   const cols = [];
+  /* mult／mult2 只有攻擊技能才是「傷害倍率」。非攻擊技能的 mult 是各自的參數（使用者 2026-11-09：
+     左手修練顯示 8000%、鶚梟之眼顯示 1000%），有對照的照對照寫，沒有的不顯示 */
+  const isDamage = SKILL_DAMAGE_TYPES.includes(sk.type);
+  const multAs = SKILL_MULT_AS[sk.id];
+  if (!isDamage && multAs && Array.isArray(sk.mult)) cols.push({ label: multAs[0], val: i => { const v = pick(sk.mult, i); return v ? String(multAs[1](v)) : ''; } });
   for (const [k, [label, fmt]] of Object.entries(SKILL_LV_COLS)) {
     if (!Array.isArray(sk[k]) || typeof sk[k][0] !== 'number') continue;
+    if ((k === 'mult' || k === 'mult2') && !isDamage) continue;
     cols.push({ label, val: i => { const v = pick(sk[k], i); return v ? String(fmt ? fmt(v) : v) : ''; } });
   }
   cols.push({ label: 'SP', val: i => String(pick(sk.spCost, i) || 0) });
@@ -1267,8 +1458,8 @@ function buffChipIconSrc(group) {
 }
 function buffChipLabel(group) {
   const b = group[0];
-  if (b.skillId && typeof buffSourceLabel === 'function') return buffSourceLabel(b);
-  return BATTLE_BUFF_NAMES[b.type] || b.type || '';
+  if ((b.skillId || b.buffName) && typeof buffSourceLabel === 'function') return buffSourceLabel(b);
+  return BATTLE_BUFF_NAMES[b.type] || '增益效果';
 }
 function pdebuffChipRemain(key) {
   const b = state.pdebuff && state.pdebuff[key];
@@ -1441,6 +1632,7 @@ function switchTab(name) {
   if (name === 'attendance') renderAttendanceTab();
   if (name === 'quests') renderQuestsTab();
   if (name === 'pets') renderPetsTab();
+  if (name !== 'equip') syncEquipStatFloat();
 }
 
 function pct(a, b) { return Math.max(0, Math.min(100, (a / b) * 100)); }
@@ -2279,8 +2471,28 @@ let _floatDelayMs = 0; // 累積延遲，讓連續飄字錯開
    engine.js 以前是自己 `pendingFloatTargetId = mon.id`（跨檔案寫 ui.js 的變數），
    而且另外兩處乾脆自己 createElement 拼一顆飄字出來——等於同一件事有三份實作，
    偏移錯開、暴擊特效、存活時間都對不上。統一走這支。 */
+/* 怪倒下、格子拿掉後，飄字仍要出在牠原本的位置（二連矢 100＋100 打 50 血的怪，也要看到兩下與合計 200）。
+   格子還在時記下位置；拿掉後回傳一個只會報位置的替身，不退回「目前的目標」（那會飄到別隻頭上）。 */
+const _monSlotRects = new Map();
+function rememberMonSlot(id, slot) {
+  if (!slot) return;
+  const r = slot.getBoundingClientRect();
+  if (r.width || r.height) _monSlotRects.set(String(id), { rect: r, at: Date.now() });
+  if (_monSlotRects.size > 40) _monSlotRects.delete(_monSlotRects.keys().next().value);
+}
+function monSlotAnchor(id) {
+  if (id == null) return null;
+  const slot = document.getElementById('monster-slot-' + id);
+  if (slot) return slot;
+  const c = _monSlotRects.get(String(id));
+  if (!c || Date.now() - c.at > 3000) return null;
+  return { getBoundingClientRect: () => c.rect, ghost: true };
+}
 function showDamageFloatAt(monsterInstanceId, dmg, type, element) {
-  if (type !== 'heal' && type !== 'miss') playMonsterHit(monsterInstanceId);
+  const slot = document.getElementById('monster-slot-' + monsterInstanceId);
+  if (slot) rememberMonSlot(monsterInstanceId, slot);
+  else if (!monSlotAnchor(monsterInstanceId)) return;
+  if (slot && type !== 'heal' && type !== 'miss') playMonsterHit(monsterInstanceId);
   const prev = pendingFloatTargetId;
   pendingFloatTargetId = monsterInstanceId;
   try { showDamageFloat(dmg, type, element); }
@@ -2348,7 +2560,15 @@ function showPlayerFloat(dmg, type) {
   else if (type === 'buddha') el.classList.add('buddha-text');
   el.textContent = dmg;
 
-  const playerEl = document.getElementById('player-sprite');
+  // 換身中（隊友被打、隊友自己的 MISS）飄在那位隊友頭上
+  let playerEl = null;
+  const ally = (typeof _allyActing !== 'undefined') ? _allyActing : null;
+  if (ally) {
+    const owner = (typeof _allyOwnerState !== 'undefined' && _allyOwnerState) || state;
+    const i = ((owner && owner.allies) || []).indexOf(ally);
+    if (i >= 0) playerEl = document.getElementById('ally-sprite-' + i);
+  }
+  if (!playerEl) playerEl = document.getElementById('player-sprite');
   if (playerEl) {
     const rect = playerEl.getBoundingClientRect();
     el.style.position = 'fixed';
@@ -2369,7 +2589,7 @@ const ELEMENT_FLOAT_LABEL = {
   poison: '毒', holy: '聖', shadow: '暗', ghost: '念', undead: '不死',
 };
 function showElementFloat(monsterInstanceId, element, mult) {
-  let targetEl = monsterInstanceId != null ? document.getElementById('monster-slot-' + monsterInstanceId) : null;
+  let targetEl = monsterInstanceId != null ? monSlotAnchor(monsterInstanceId) : null;
   if (!targetEl) targetEl = document.querySelector('.monster-slot.target');
   if (!targetEl) return;
 
@@ -2427,7 +2647,8 @@ function showDamageFloat(dmg, type, element) {
   // 找到目標怪物 DOM 元素來取得座標
   let targetEl = null;
   if (pendingFloatTargetId != null) {
-    targetEl = document.getElementById('monster-slot-' + pendingFloatTargetId);
+    targetEl = monSlotAnchor(pendingFloatTargetId);
+    if (!targetEl) return;   // 指定的那隻已不在、位置也過期：不飄到別隻頭上
   }
   if (!targetEl) targetEl = document.querySelector('.monster-slot.target');
 
@@ -2488,9 +2709,8 @@ let _comboTotalTimer = 0;
 function pinComboTotal(el) {
   const node = el || _comboTotalEl;
   if (!node) return;
-  let target = node._monId != null ? document.getElementById('monster-slot-' + node._monId) : null;
-  if (!target) target = document.querySelector('.monster-slot.target');
-  if (!target) return;
+  let target = node._monId != null ? monSlotAnchor(node._monId) : document.querySelector('.monster-slot.target');
+  if (!target) return;   // 那隻已倒下：黃字停在原處
   const rect = target.getBoundingClientRect();
   node.style.left = (rect.left + rect.width / 2) + 'px';
   node.style.top = (rect.top - 4) + 'px';
@@ -2501,8 +2721,7 @@ function showComboTotal(monsterId, total) {
   clearTimeout(_comboTotalTimer);
   _comboTotalTimer = setTimeout(() => {
     if (_comboTotalEl) { _comboTotalEl.remove(); _comboTotalEl = null; }
-    let targetEl = monsterId != null ? document.getElementById('monster-slot-' + monsterId) : null;
-    if (!targetEl) targetEl = document.querySelector('.monster-slot.target');
+    const targetEl = monsterId != null ? monSlotAnchor(monsterId) : document.querySelector('.monster-slot.target');
     if (!targetEl) return;
     const el = document.createElement('div');
     el.className = 'damage-float combo-total';
@@ -2697,6 +2916,7 @@ function playMonsterHit(id) {
 function playMonsterDie(id) {
   const slot = document.getElementById('monster-slot-' + id);
   if (!slot || slot.classList.contains('dying')) return;
+  rememberMonSlot(id, slot);
   slot.classList.add('dying');
   const bar = document.getElementById('monster-hp-bar-' + id);
   const text = document.getElementById('monster-hp-text-' + id);
@@ -2799,14 +3019,31 @@ function bfScrollBackground() {
 /* 隊友跟在玩家身後兩側（面向的反方向退一步、上下錯開） */
 const BF_ALLY_OFFSET = [{ back: 9, side: -11 }, { back: 9, side: 11 }];
 let bfAllyFaceRight = true;
+const BF_ALLY_SIDE = 7;          // 隊友往旁邊錯開（場景 %）
+const bfAllyPos = [];
+let bfAllyLast = 0;
 function layoutAllySprites(faceRight) {
   bfAllyFaceRight = !!faceRight;
   const sign = faceRight ? 1 : -1;
+  const now = Date.now();
+  const dt = bfAllyLast ? Math.min(0.12, (now - bfAllyLast) / 1000) : 0;
+  bfAllyLast = now;
+  const list = (state && state.allies) || [];
   for (let i = 0; i < 2; i++) {
     const el = document.getElementById('ally-sprite-' + i);
     if (!el || !el.offsetParent) continue;
     const o = BF_ALLY_OFFSET[i];
-    const local = sceneToLocal(el.offsetParent, bfClamp(bfPlayer.x - sign * o.back, 4, 96), bfClamp(bfPlayer.y + o.side, 8, 94));
+    /* 站位系統：照引擎的位置（memberPos，以玩家為原點）畫，往旁邊錯開一點免得跟玩家疊在一起 */
+    let goal = { x: bfPlayer.x - sign * o.back, y: bfPlayer.y + o.side };
+    if (list[i] && typeof memberPos === 'function') {
+      const p = bfPolarPoint(memberPos(list[i]));
+      goal = { x: p.x, y: p.y + (i ? 1 : -1) * BF_ALLY_SIDE };
+    }
+    goal = { x: bfClamp(goal.x, 4, 96), y: bfClamp(goal.y, 8, 94) };
+    const cur = bfAllyPos[i] || goal;
+    const st = dt ? bfStep(cur, goal, dt) : goal;
+    bfAllyPos[i] = { x: st.x, y: st.y };
+    const local = sceneToLocal(el.offsetParent, st.x, st.y);
     if (!local) continue;
     el.style.left = (local.x - el.offsetWidth / 2) + 'px';
     el.style.top = (local.y - el.offsetHeight) + 'px';
@@ -4273,15 +4510,23 @@ function renderMapTab() {
     </div>
     ${mapTravelBox()}
     ${isCity ? townNpcPanelHtml() : ''}
-    ${isCity ? '' : `<div class="map-preview-box">
-      <div class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvRangeText(currentMapObj)}</div>
+    ${isCity ? '' : `<details class="map-preview-box" ${encounterListOpen ? 'open' : ''} ontoggle="setEncounterListOpen(this.open)">
+      <summary class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvRangeText(currentMapObj)}</summary>
       <div class="map-preview-body">${monsterPreview}</div>
       ${!isCity ? mapPetCatchLine(currentMapObj) : ''}
       <div class="map-preview-hint">怪物強度不設限，越級挑戰有風險，也可能有意外的收穫——探索本身就是樂趣！</div>
-    </div>`}
+    </details>`}
     ${!isCity ? renderMapYieldBox(currentMapObj) : ''}
     ${!isCity ? bossModeBox(currentMapObj) : ''}
 `;   // 轉生改到朱諾找女武神（T29，openTownNpc 的 job 面板）
+}
+
+/* 遇怪列表展開／收合（使用者 2026-11-09），記在瀏覽器裡 */
+let encounterListOpen = true;
+try { encounterListOpen = localStorage.getItem('roEncounterOpen') !== '0'; } catch (_) {}
+function setEncounterListOpen(v) {
+  encounterListOpen = !!v;
+  try { localStorage.setItem('roEncounterOpen', v ? '1' : '0'); } catch (_) {}
 }
 
 /* 打寶模式（#110）。放在自動戰鬥分頁而不是地圖分頁——它是全域的模式，
@@ -6480,46 +6725,13 @@ function paintEquipDoll() {
   if (!host || !window.PAPERDOLL || typeof paperdollParts !== 'function') return;
   const parts = paperdollParts();
   if (!parts) { host.replaceChildren(); return; }
-  /* 裝備欄用正面站姿（idle），不用備戰側面圖。 */
-  let act = 'idle';
-  if (!paperdollFrameCount(parts[0], act)) act = 'idle_s';
-  const body = paperdollFrame(parts[0], act, 0);
-  if (!body) return;
   let canvas = host.querySelector('canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
     host.appendChild(canvas);
   }
-  const box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-  paperdollExpand(parts[0], body, 0, 0, box);
-  const layers = [];
-  for (let p = 1; p < parts.length; p++) {
-    const fr = paperdollFrame(parts[p], act, 0);
-    if (!fr) continue;
-    const al = paperdollAlign(parts[p], body, fr);
-    layers.push([parts[p], fr, al[0], al[1]]);
-    paperdollExpand(parts[p], fr, al[0], al[1], box);
-  }
-  if (!isFinite(box.minX)) return;
-  const pad = 2;
-  const minX = Math.floor(box.minX) - pad;
-  const minY = Math.floor(box.minY) - pad;
-  canvas.width = Math.max(1, Math.ceil(box.maxX) + pad - minX);
-  canvas.height = Math.max(1, Math.ceil(box.maxY) + pad - minY);
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const ox = -minX, oy = -minY;
-  let pending = !drawPaperdollLayers(ctx, parts[0], body, ox, oy);
-  layers.forEach(layer => {
-    if (!drawPaperdollLayers(ctx, layer[0], layer[1], ox + layer[2], oy + layer[3])) pending = true;
-  });
-  if (pending) {
-    parts.forEach(part => {
-      const im = paperdollImage(part);
-      if (im && !im.complete) im.addEventListener('load', paintEquipDoll, { once: true });
-    });
-  }
+  /* 裝備欄用正面站姿（idle），不用備戰側面圖。 */
+  paintDollStill(canvas, parts, paintEquipDoll);
 }
 function equipWinLabel(itemId) {
   return String(getItemDisplayName(itemId) || '')
@@ -6929,10 +7141,62 @@ function canJobEquip(def) {
   return true;
 }
 
+/* 裝備頁的數值面板（使用者 2026-11-09）：像 RO 的狀態視窗，浮在右側面板的左邊，
+   換裝馬上看到素質與 ATK／DEF 變化。左邊放不下（窄螢幕）就放進裝備頁最上面。 */
+function equipStatFloatHtml() {
+  const jb = computeJobBonuses();
+  const critBuff = buffMult('crit'), hitBuff = buffMult('hit');
+  const crit = Math.min(100, Math.round(state.critRate * critBuff.mult + critBuff.flatBonus));
+  const hit = Math.round(state.hit * hitBuff.mult + hitBuff.flatBonus);
+  const stats = STAT_KEYS.map(k => {
+    const bd = (state._statBreakdown && state._statBreakdown[k]) || null;
+    const extra = (jb[k] || 0) + equippedStatBonus(k) + getCardBonus(k) + (bd ? bd.skill + bd.buff + bd.pct : 0);
+    return `<div><span>${k.toUpperCase()}</span><b>${state.stats[k]}${extra ? `<i>${extra > 0 ? '+' : '−'}${Math.abs(extra)}</i>` : ''}</b></div>`;
+  }).join('');
+  const row = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`;
+  return `<div class="esf-title">${shopEsc(state.name)}　Lv.${state.baseLevel}</div>
+    <div class="esf-grid">${stats}</div>
+    <div class="esf-grid esf-derived">
+      ${row('ATK', state.atk)}${row('MATK', `${state.matkMin}～${state.matkMax}`)}
+      ${row('HIT', hit)}${row('暴擊', crit + '%')}
+      ${row('DEF', `${state.defHard || 0}+${state.defSoft || 0}`)}${row('MDEF', `${state.mdefHard || 0}+${state.mdefSoft || 0}`)}
+      ${row('FLEE', `${state.flee}+${state.perfectDodge}`)}${row('ASPD', state.aspd)}
+      ${row('HP', `${state.hp}/${state.maxHp}`)}${row('SP', `${state.sp}/${state.maxSp}`)}
+    </div>`;
+}
+let equipStatTimer = null;
+function syncEquipStatFloat() {
+  let box = document.getElementById('equip-stat-float');
+  const panel = document.querySelector('.side-panel');
+  const show = !!state && activeTab === 'equip' && equipPickCat !== 'relic' && panel && panel.offsetParent;
+  if (!show) {
+    if (box) box.remove();
+    clearInterval(equipStatTimer); equipStatTimer = null;
+    return;
+  }
+  const rect = panel.getBoundingClientRect();
+  const W = 210;
+  const inline = rect.left < W + 16;
+  const host = inline ? document.getElementById('tab-equip') : document.body;
+  if (!box || box.parentElement !== host) {
+    if (box) box.remove();
+    box = document.createElement('div');
+    box.id = 'equip-stat-float';
+    if (inline) host.prepend(box); else host.appendChild(box);
+  }
+  box.className = 'equip-stat-float' + (inline ? ' inline' : '');
+  box.style.left = inline ? '' : (rect.left - W - 8) + 'px';
+  box.style.top = inline ? '' : (rect.top + 8) + 'px';
+  box.innerHTML = equipStatFloatHtml();
+  if (!equipStatTimer) equipStatTimer = setInterval(syncEquipStatFloat, 1000);
+}
+window.addEventListener('resize', () => { if (typeof state !== 'undefined' && state) syncEquipStatFloat(); });
+
 function renderEquipTab() {
   const el = document.getElementById('tab-equip');
   if (!el) return;
   hideEquipTooltip();
+  setTimeout(syncEquipStatFloat, 0);   // innerHTML 換完再放（窄螢幕要插在裝備頁最上面）
 
   /* 遺物頁走完全獨立的一條路：它沒有精煉、沒有卡片、沒有職業限制，
      跟下面那段（比較徽章、孔數、個體裝備）沒有一行是共用的。 */
@@ -8521,6 +8785,15 @@ document.addEventListener('visibilitychange', () => {
     else state.lastActiveAt = Date.now();
     saveGame();
   } else if (!loopRunning()) {
+    /* 雲端存檔（2026-11-09）：登入時先確認還是由這台同步，確認了才結算。
+       不先問的話，另一台在玩的那段時間會被這台當成離線再領一次經驗（換裝置經驗暴增）。 */
+    if (typeof cloudBeforeResume === 'function' && cloudBeforeResume(resumeFromHidden)) return;
+    resumeFromHidden();
+  }
+});
+function resumeFromHidden() {
+  if (!state || loopRunning()) return;
+  {
     let off = null;
     try { off = computeOfflineProgress(IDLE_SETTLE_MIN_MS); }
     catch (e) { console.error('切回分頁結算失敗', e); }
@@ -8539,7 +8812,7 @@ document.addEventListener('visibilitychange', () => {
     deliverOfflineResult(off);
     renderAll();
   }
-});
+}
 
 window.addEventListener('focus', () => {
   if (!state || (typeof tabSessionBlocked === 'function' && tabSessionBlocked())) return;
@@ -8742,8 +9015,8 @@ function renderRefineWin() {
       title="鐵匠的祝福（持有 ${bless.have}）：失敗不降級、不損壞" onclick="setRefineBless()">
       ${bless.on ? `<img class="rf-sel" src="${rfImg('slot_select_red.png')}" alt="">` : ''}
       ${icon('blacksmith_blessing', 'rf-mat-ic')}<span class="rf-qty">${bless.need ? '×' + bless.need : '—'}</span></button>`;
-    if (sel) overlay += `<div class="rf-hex" style="left:64px">${icon(sel.mat.id, 'rf-hex-ic')}</div>`;
-    if (bless.on) overlay += `<div class="rf-hex" style="left:144px" onclick="setRefineBless()">${icon('blacksmith_blessing', 'rf-hex-ic')}</div>`;
+    if (sel) overlay += `<div class="rf-hex" style="left:70px">${icon(sel.mat.id, 'rf-hex-ic')}</div>`;
+    if (bless.on) overlay += `<div class="rf-hex" style="left:149px" onclick="setRefineBless()">${icon('blacksmith_blessing', 'rf-hex-ic')}</div>`;
   }
   if (ph !== 'proc') overlay += `<div class="rf-item">${icon(ctx.itemId, 'rf-item-ic')}</div>`;
 

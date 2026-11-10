@@ -2,7 +2,7 @@
 
   python scripts/gen_refine_ui.py
 
-背景（262×301）每段動畫拼成一條橫向 webp；按鈕／格子轉 png，品紅 #FF00FF 當透明。
+背景（262×301）每段動畫拼成一條橫向 webp（成功／失敗畫面的右按鈕底框修成跟左邊一樣高）；按鈕／格子轉 png，品紅 #FF00FF 當透明。
 """
 import os
 from PIL import Image
@@ -27,10 +27,21 @@ def keyed(path):
   return im
 
 
+def even_buttons(f):
+  """成功／失敗畫面：右邊「再精煉一次」的底框比左邊「返回」高 12px（按鈕 50 vs 38），看起來底部突出。
+  把右格 y 252 以下換成左格的左右鏡像，兩格一樣高（使用者 2026-11-09）。"""
+  w, h = f.size
+  patch = f.crop((w - 1 - 243, 252, w - 1 - 140 + 1, h)).transpose(Image.FLIP_LEFT_RIGHT)
+  f.paste(patch, (140, 252))
+  return f
+
+
 def main():
   os.makedirs(OUT, exist_ok=True)
   for name, (pat, rng) in SEQS.items():
     frames = [Image.open(os.path.join(SRC, (pat % i) + '.bmp')).convert('RGB') for i in rng]
+    if name in ('success', 'fail'):
+      frames = [even_buttons(f) for f in frames]
     w, h = frames[0].size
     strip = Image.new('RGB', (w * len(frames), h))
     for k, f in enumerate(frames):

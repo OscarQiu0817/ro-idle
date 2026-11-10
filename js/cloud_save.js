@@ -156,6 +156,26 @@ async function cloudBoot() {
   cloud.booting = false;
   cloudRefreshUi();
 }
+/* 切回分頁時（ui.js 的 visibilitychange 呼叫）：登入中就先問伺服器，還是這台才結算離線收益。
+   回傳 true＝由這裡接手（之後會呼叫 resume 或等玩家回答）；false＝沒登入，照原本流程。 */
+function cloudBeforeResume(resume) {
+  if (!cloudConf() || cloud.status === 'other_device') {
+    if (cloud.status === 'other_device') { cloud.pendingResume = resume; cloudShowOtherDevice(); return true; }
+    return false;
+  }
+  cloudCheckDevice().then(() => {
+    if (cloud.status === 'other_device') cloud.pendingResume = resume;   // 等玩家選「改在這台玩」或「先不要」
+    else resume();
+  });
+  return true;
+}
+/* 「先不要」：只在這台繼續玩（不再同步），補上剛才擋住的結算 */
+function cloudContinueLocal() {
+  closeCloudModal();
+  const r = cloud.pendingResume;
+  cloud.pendingResume = null;
+  if (r) r();
+}
 /* 切回這個分頁時立刻問一次：別台已經接手就馬上停，不要繼續在舊進度上玩 */
 async function cloudCheckDevice() {
   const c = cloudConf();
@@ -199,6 +219,11 @@ async function cloudSubmit(mode) {
     cloud.busy = false;
     renderCloudModal();
     cloudRefreshUi();
+    if (cloudConf() && cloud.view !== 'choose' && cloudOnTitleLogin()) {
+      if (cloud.msg) showToast('☁ ' + cloud.msg);
+      cloud.msg = '';
+      showSlotSelect();
+    }
   }
 }
 /* 套用雲端存檔：在遊戲中就重新整理頁面（記憶體裡的角色是舊的），在標題就重畫欄位 */
@@ -233,6 +258,11 @@ async function cloudChoose(useCloud) {
   }
   renderCloudModal();
   cloudRefreshUi();
+  if (cloudOnTitleLogin()) {
+    if (cloud.msg) showToast('☁ ' + cloud.msg);
+    cloud.msg = '';
+    showSlotSelect();
+  }
 }
 /* 改在這台玩：取得同步權，下載雲端進度蓋掉這台 */
 async function cloudClaim() {
@@ -255,8 +285,15 @@ function cloudLogout() {
   if (!confirm('登出後這台裝置不再同步（存檔仍留在這台與雲端）。確定登出？')) return;
   cloudSetConf(null);
   cloud.status = 'off'; cloud.msg = '已登出。';
-  renderCloudModal();
   cloudRefreshUi();
+  const scr = document.getElementById('screen-title');
+  if (scr && scr.classList.contains('active') && typeof showTitleLogin === 'function') {
+    try { localStorage.removeItem(TITLE_LOCAL_ONLY_KEY); } catch (e) { /* 忽略 */ }
+    closeCloudModal();
+    showTitleLogin();
+    return;
+  }
+  renderCloudModal();
 }
 
 /* ---------------- 畫面 ---------------- */
@@ -283,8 +320,15 @@ function cloudTimeText(t) {
   const d = new Date(t);
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
+/* 標題畫面一打開就是登入（使用者 2026-11-09）：登入表單畫在標題上，其他時候畫在彈窗裡 */
+function cloudOnTitleLogin() {
+  return typeof titleLoginVisible === 'function' && titleLoginVisible();
+}
 function renderCloudModal() {
-  const el = document.getElementById('cloud-modal-body');
+  const onTitle = cloudOnTitleLogin();
+  const modalBody = document.getElementById('cloud-modal-body');
+  if (onTitle && modalBody) modalBody.innerHTML = '';   // 同一組 id 只能有一份
+  const el = onTitle ? document.getElementById('title-login-body') : modalBody;
   if (!el) return;
   const c = cloudConf();
   const msg = cloud.msg ? `<div class="cloud-msg">${shopEsc(cloud.msg)}</div>` : '';
@@ -293,7 +337,7 @@ function renderCloudModal() {
       <div class="empty-hint">要改在這台玩嗎？會下載雲端進度、蓋掉這台目前的進度。</div>${msg}
       <div class="cloud-btns">
         <button class="btn btn-primary" onclick="cloudClaim()">改在這台玩</button>
-        <button class="btn-small" onclick="closeCloudModal()">先不要（只存在這台）</button>
+        <button class="btn-small" onclick="cloudContinueLocal()">先不要（只存在這台）</button>
       </div>`;
     return;
   }
@@ -316,7 +360,7 @@ function renderCloudModal() {
       </div>`;
     return;
   }
-  el.innerHTML = `<div class="empty-hint">登入後手機和電腦共用同一份存檔（所有角色＋倉庫）。同時只能一台在玩。</div>
+  el.innerHTML = `<div class="empty-hint">登入雲端存檔後，手機和電腦共用同一份存檔（所有角色＋倉庫）。同時只能一台在玩。</div>
     <div class="empty-hint">⚠ 沒有 Email 驗證，<b>忘記密碼就無法找回帳號</b>。</div>
     <div class="cloud-form">
       <input id="cloud-user" class="ab-select" placeholder="帳號（3～20 個英數或底線）" maxlength="20" autocomplete="username">
@@ -326,7 +370,7 @@ function renderCloudModal() {
     <div class="cloud-btns">
       <button class="btn btn-primary" ${cloud.busy ? 'disabled' : ''} onclick="cloudSubmit('login')">登入</button>
       <button class="btn-small" ${cloud.busy ? 'disabled' : ''} onclick="cloudSubmit('register')">註冊新帳號</button>
-    </div>`;
+    </div>${onTitle ? `<div class="cloud-btns"><button class="btn-small ghost" onclick="titleSkipLogin()">不登入，只存在這台</button></div>` : ''}`;
   cloudRenderTurnstile();
 }
 /* 註冊才需要人機驗證；Turnstile 的程式第一次打開表單時才載入 */
@@ -381,9 +425,9 @@ function cloudOnUnload() {
     };
   }
   setInterval(() => { if (cloudInGame()) cloudUpload(); }, CLOUD_SYNC_MS);
+  // 切回分頁的檢查由 ui.js 呼叫 cloudBeforeResume（要在結算前問）；這裡只管切走時上傳
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') cloudUpload({ keepalive: true });
-    else if (cloudInGame()) cloudCheckDevice();
   });
   window.addEventListener('beforeunload', cloudOnUnload);
 })();
