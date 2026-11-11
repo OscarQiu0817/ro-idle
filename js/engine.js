@@ -2820,10 +2820,32 @@ function mitigateDamage(rawDmg, def, softDef) {
   const dmg = Math.max(1, Math.round(rawDmg * defMultiplier - (softDef || 0)));
   // DPS 統計：玩家造成的傷害全都會經過這裡（怪打玩家走 mitigatePlayerIncoming），
   // 是唯一乾淨的收斂點。離線結算也會呼叫本函式，那時要跳過，否則會灌水。
-  if (!_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += dmg;
+  noteDealtDamage(dmg);
   return dmg;
 }
 let _dpsPaused = false;   // 離線估算期間暫停累計
+/* 造成的傷害統計（使用者 2026-11-10：隊伍傷害占比，之後也可當怪物仇恨值的依據）。
+   玩家自己的照舊進 dpsTracker.damage（DPS）；每個人（含隊友）另記一份在 dpsTracker.by[站位 key]。
+   換身中 state 是隊友，記到真正的玩家身上。 */
+function noteDealtDamage(dmg) {
+  if (_dpsPaused || !state || !(dmg > 0)) return;
+  const owner = typeof allyOwnerState === 'function' ? allyOwnerState() : state;
+  const t = owner && owner.dpsTracker;
+  if (!t) return;
+  const key = _allyActing ? allyFid(_allyActing) : 'p';
+  if (!t.by) t.by = {};
+  t.by[key] = (t.by[key] || 0) + dmg;
+  if (!_allyActing) t.damage += dmg;
+}
+/* 隊伍傷害占比：[{ key, name, dmg, pct }]，由高到低 */
+function partyDamageShare() {
+  const owner = typeof allyOwnerState === 'function' ? allyOwnerState() : state;
+  const by = (owner && owner.dpsTracker && owner.dpsTracker.by) || {};
+  const total = Object.values(by).reduce((a, b) => a + b, 0);
+  const nameOf = k => k === 'p' ? owner.name : ((owner.allies || []).find(a => a && a._fid === k) || {})._allyName || '已離隊的隊友';
+  return Object.keys(by).map(k => ({ key: k, name: nameOf(k), dmg: by[k], pct: total ? by[k] / total * 100 : 0 }))
+    .sort((a, b) => b.dmg - a.dmg);
+}
 
 /* ---------------- 怪物的基礎攻擊力（官方 renewal 公式）----------------
    rAthena `battle_calc_base_damage()` 的怪物分支：
@@ -3101,7 +3123,7 @@ function estimateMapYield(mapObj) {
     const share = o.weight / wSum;
     // 走跟實戰同一條傷害鏈（weaponChainDamage），浮動取中間值。
     // 暴擊分開算：官方暴擊無視 DEF，用「暴擊率加權」把兩種結果混起來才會準
-    const hitPct = hitChancePctVsMonster(effectiveHitWithBuff(), mon) / 100;
+    const hitPct = hitChancePctVsMonster(effectiveHitWithBuff(), mon, null, true) / 100;
     const elemMult = getElementMultiplierVsMonster(atkElement, mon);
     const base = weaponChainDamage(mon, elemMult, 'mid') * cardTargetDmgMult(mon);
     const critRaw = base * 1.5 * (1 + (state.cardCritDmgPct || 0) / 100);
@@ -3184,7 +3206,14 @@ function monsterFleeOf(def) { return def.flee || (80 + def.level * 4); }
 const REQ_HIT_OFFSET = 20;
 const REQ_FLEE_OFFSET = 75;
 
-function hitChancePctVsMonster(playerHit, monDef, inst) {
+/* normal：普攻。完美命中（T41，bPerfectHitAddRate → perfectHitPct）只作用在普攻：
+   沒打中的部分有 N% 改成打中（官方：N% 機率無視迴避） */
+function hitChancePctVsMonster(playerHit, monDef, inst, normal) {
+  const pct = hitChancePctVsMonsterBase(playerHit, monDef, inst);
+  const perfect = normal ? Math.min(100, getCardBonus('perfectHitPct') || 0) : 0;
+  return perfect > 0 ? Math.min(100, pct + (100 - pct) * perfect / 100) : pct;
+}
+function hitChancePctVsMonsterBase(playerHit, monDef, inst) {
   let threshold = monDef.hitReq || monsterFleeOf(monDef);
   // 黑暗讓怪物的迴避下降（門檻變低＝更好打中）；冰凍與睡眠則是必定命中
   if (inst) {
@@ -3386,7 +3415,7 @@ function tickBleed() {
     const dmg = Math.max(1, Math.round(mon.maxHp * MON_AILMENTS.bleed.dotPctMaxHp / 100));
     noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
-    if (!_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += dmg;
+    noteDealtDamage(dmg);
     logMsg(`🩸 出血對 ${monDef.name} 造成 ${dmg} 點傷害！`);
     if (mon.hp <= 0) killMonster(monDef, mon);
   }
@@ -3924,7 +3953,7 @@ function applyPlayerReflect(mon, monDef, dmgTaken) {
   const back = Math.max(1, Math.round(dmgTaken * pct / 100));
   noteMonsterDamage(mon, back);
   mon.hp -= back;
-  if (!_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += back;
+  noteDealtDamage(back);
   logMsg(`🔁 反射！對 ${monDef.name} 彈回 ${back} 點傷害。`);
   if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + back, 'normal');
   if (mon.hp <= 0) killMonster(monDef, mon);
@@ -3968,6 +3997,8 @@ function monsterHealAmount(monDef, skillLv) {
 }
 
 function monsterSkillFor(mon, monDef) {
+  // 打王戰鬥（T51）：首領只用紅圈技能（js/boss_fight.js），原本的 pre-RE 技能停用
+  if (monDef && monDef.isBoss && typeof tickBossFight === 'function') return null;
   const list = (typeof MONSTER_SKILLS !== 'undefined') && MONSTER_SKILLS[mon.defId];
   if (!list || !list.length) return null;
   const now = Date.now();
@@ -5543,7 +5574,7 @@ function tickFieldEffects() {
       f.ticksThisRound = ticks;
       if (f.kind === 'selfheal') {
         const before = state.hp;
-        state.hp = Math.min(state.maxHp, state.hp + f.amount);
+        state.hp = Math.min(state.maxHp, state.hp + Math.round(f.amount * healRecvMult()));
         if (state.hp > before) logMsg(`💚 「${f.name}」持續恢復了 ${state.hp - before} 點HP。`);
         /* 光耀之堂是範圍治療，站在裡面的隊友也該回血（#131）。
            倒地的不算——復活是天使之嘆息那條路，不能靠站在陣裡自己爬起來。 */
@@ -5551,7 +5582,7 @@ function tickFieldEffects() {
           const healed = [];
           forEachPartyMate(mate => {
             const b = state.hp;
-            state.hp = Math.min(state.maxHp, state.hp + f.amount);
+            state.hp = Math.min(state.maxHp, state.hp + Math.round(f.amount * healRecvMult()));   // 換身中：state 是隊友
             if (state.hp > b) healed.push(mate);
           });
           if (healed.length) pushCombatLog(`  → 「${f.name}」也治療了 ${partyMateNames(healed)}。`, 'ally');
@@ -5788,12 +5819,14 @@ function gameTick() {
   tickGroundUnits(moveNow);
   tickMonsterMovement(moveDt, moveNow);
   tickAllyFormation(moveDt);
+  if (typeof tickBossFight === 'function') tickBossFight(moveDt, moveNow);   // 打王：紅圈與自動閃避（js/boss_fight.js）
   tickCasting(moveNow);
   alliesCastTick(moveNow);
   /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
      施放卻要等下一秒，中間角色會站在技能射程上乾等、普攻也打不到。隊友仍在 alliesTick（每秒）。 */
   ensureNearestTarget();
-  if (state.autoSkill) tryAutoCastSkill();
+  const dodging = typeof bossDodging === 'function' && bossDodging(state);   // 打王閃避中：不放技能、不普攻、不追怪
+  if (state.autoSkill && !dodging) tryAutoCastSkill();
   if (hasFightTarget()) {
     // 使用攻擊間隔控制攻擊頻率（累積時間差模式）
     const now = Date.now();
@@ -5811,7 +5844,7 @@ function gameTick() {
     /* 目標不在普攻距離內：走過去（只縮短目標的距離），這段時間不累積攻擊 */
     const tgt = state.monsters[0];
     const engage = partyEngageRange();
-    if (state.casting) state.attackAccumulator = 0;   // 詠唱中不普攻、不走路
+    if (state.casting || dodging) state.attackAccumulator = 0;   // 詠唱中、閃避中不普攻、不走路
     else if (state.autoAttack === false && tgt && Number.isFinite(tgt.d) && tgt.d <= engage + DIST_EPS) {
       state.attackAccumulator = 0;   // 自動普攻關：站定只放技能
     }
@@ -5840,8 +5873,8 @@ function gameTick() {
         const interval = ((monDef && monDef.atkInterval) ? monDef.atkInterval * 1000 : 1000)
           / (1 + monBuff(mon, 'aspdPct') / 100)
           / monDebuffAspd(mon);              // 勿忘我（#68）：攻速下降＝間隔拉長
-        // 還沒走到射程內：不攻擊，抵達後從頭計一次攻擊間隔
-        if (!monInRange(mon)) { mon.lastAttackTime = now; return; }
+        // 還沒走到射程內：不攻擊，抵達後從頭計一次攻擊間隔；打王時王在蓄力紅圈也不普攻
+        if (!monInRange(mon) || mon._bossCast) { mon.lastAttackTime = now; return; }
         if (now - mon.lastAttackTime >= interval) {
           mon.lastAttackTime = now;
           monsterAttackSingle(mon);
@@ -5851,7 +5884,8 @@ function gameTick() {
   } else {
     state._prevHadMonsters = false;
     _pendingSwing = null;
-    if (state.travel) tickTravel(moveDt);   // 趕路：沒有擋路的就往傳點走
+    if (state.bossHunt) { /* 討伐首領中：完全停下（js/boss_fight.js） */ }
+    else if (state.travel) tickTravel(moveDt);   // 趕路：沒有擋路的就往傳點走
     else if (state.townTarget && typeof tickTownWalk === 'function') tickTownWalk(moveDt);   // T27：城裡走向 NPC
     else tickRoam(moveDt, moveNow);         // 沒怪：漫遊找怪
   }
@@ -6423,11 +6457,14 @@ function bossListOf(mapId, kind) {
     return kind === 'mvp' ? !!m.isMvp : !m.isMvp;
   });
 }
-// 這張圖、依目前勾選的兩個開關，實際會出現的 BOSS 名單（離線結算也讀這一支）
+/* 這張圖實際會出現的 BOSS 名單（離線結算也讀這一支）。
+   T51 第 3 期（2026-11-12）起取代 MVP／迷你王模式開關：只有挑戰打贏解鎖、而且玩家沒關掉的王（js/boss_fight.js bossEnabled） */
 function activeBossLists(mapId) {
   const out = [];
-  if (state.mvpMode) { const l = bossListOf(mapId, 'mvp'); if (l.length) out.push(l); }
-  if (state.miniMode) { const l = bossListOf(mapId, 'mini'); if (l.length) out.push(l); }
+  const on = id => typeof bossEnabled === 'function' && bossEnabled(id);
+  const mvp = bossListOf(mapId, 'mvp').filter(on), mini = bossListOf(mapId, 'mini').filter(on);
+  if (mvp.length) out.push(mvp);
+  if (mini.length) out.push(mini);
   return out;
 }
 
@@ -6519,6 +6556,8 @@ function playerMoveBy(step, ang) {
     });
     (o.activeFieldEffects || []).forEach(f => shift(f.center));
   });
+  // 打王的紅圈畫在地上（x／y），一起平移
+  (state.bossCasts || []).forEach(c => c.zones.forEach(z => { z.x -= dx; z.y -= dy; }));
   state.worldX = (state.worldX || 0) + dx;
   state.worldY = (state.worldY || 0) + dy;
   state._walkAt = Date.now();
@@ -6869,7 +6908,7 @@ function tickMonsterMovement(dtMs, now) {
     const mv = monMove(mon);
     if (mon._lastHp != null && mon.hp < mon._lastHp) mon.flinchUntil = now + mv.damageMotion;
     mon._lastHp = mon.hp;
-    if (mv.immobile || monInRange(mon)) continue;
+    if (mv.immobile || monInRange(mon) || mon._bossCast) continue;   // 打王：蓄力紅圈時不走
     if (!mv.aggressive && mon.hp >= mon.maxHp) continue;
     if ((mon.stunnedUntil && now < mon.stunnedUntil) || (mon.flinchUntil && now < mon.flinchUntil)) continue;
     if (mon.rootUntil && now < mon.rootUntil) continue;   // 定位陷阱
@@ -6883,6 +6922,7 @@ function tickMonsterMovement(dtMs, now) {
   }
 }
 function spawnMonster() {
+  if (state.bossChallenge || state.bossHunt) return;   // 挑戰首領中（只有王與小弟）、討伐中（停下來結算）不生怪（js/boss_fight.js）
   const map = currentMap();
   if (state.encounterMode === 'off') {
     state.monsters = [];
@@ -6934,6 +6974,8 @@ function spawnMonster() {
     if (hit.length) {
       const l = hit[Math.floor(Math.random() * hit.length)];
       defId = l[Math.floor(Math.random() * l.length)];
+      // T51 第 3 期：王不實際打，進入「討伐中」用最佳擊殺時間結算（跟離線同一條規則）
+      if (typeof startBossHunt === 'function' && startBossHunt(defId)) return;
     } else {
       defId = pickWeightedMonster(map.monsters);
     }
@@ -7250,7 +7292,7 @@ function playerAttackInner() {
   const effectiveCritRate = Math.min(100, state.critRate * critBuff.mult + critBuff.flatBonus + raceCrit);
   const isCrit = Math.random() * 100 < effectiveCritRate;
   if (!isCrit) {
-    const hitPct = hitChancePctVsMonster(effectiveHitWithBuff(), monDef, target);
+    const hitPct = hitChancePctVsMonster(effectiveHitWithBuff(), monDef, target, true);
     if (Math.random() * 100 > hitPct) {
       logMsg(`你的攻擊被 ${monDef.name} 閃避了！`);
       // 揮空音效
@@ -7342,7 +7384,7 @@ function playerAttackInner() {
        會被洗掉。只報稀有的那兩段（5 倍以上），2 倍安靜生效。 */
     if (relicMult >= 5) logMsg(`🗡️ 遺物發動！本次傷害 ${relicMult} 倍！`, 'skill');
   }
-  if (isCrit && !_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += dmg;
+  if (isCrit) noteDealtDamage(dmg);
 
   /* 怪物身上的增益（#36）：自動防禦擋下整下、防禦型增益減傷、反射盾把傷害彈回來。
      只有近距離攻擊會被反射（官方 CR_REFLECTSHIELD 就是這樣）。 */
@@ -7454,7 +7496,7 @@ function playerAttackInner() {
          第二段以前仍走 mitigateDamage，高防怪物會把暴擊吃掉。
          暴擊時第二段跟第一段一樣無視防禦。 */
       const daDmg = isCrit ? Math.max(1, Math.round(daRaw)) : mitigateDamage(daRaw, monDefVal, monSoftVal);
-      if (isCrit && !_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += daDmg;
+      if (isCrit) noteDealtDamage(daDmg);
       target.hp -= daDmg;
       logMsg(`⚔️ 二刀連擊！對 ${monDef.name} 造成 ${daDmg} 點傷害！${isCrit ? '（暴擊）' : ''}`);
       showExtraHitFloat(daDmg, isCrit, target.id);
@@ -7477,7 +7519,7 @@ function playerAttackInner() {
     leftRaw *= elementDmgMult(atkElement);
     leftRaw *= ailDmgTakenMult(target);
     const leftDmg = isCrit ? Math.max(1, Math.round(leftRaw)) : mitigateDamage(leftRaw, monDefVal, monSoftVal);
-    if (isCrit && !_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += leftDmg;
+    if (isCrit) noteDealtDamage(leftDmg);
     target.hp -= leftDmg;
     logMsg(`🗡️ 左手攻擊對 ${monDef.name} 造成 ${leftDmg} 點傷害！${isCrit ? '（暴擊）' : ''}`);
     const leftShown = leftDmg;
@@ -7707,7 +7749,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
         * getElementMultiplierVsMonster(el, monDef, mon)));
       noteMonsterDamage(mon, back);
       mon.hp -= back;
-      if (!_dpsPaused && state && state.dpsTracker) state.dpsTracker.damage += back;
+      noteDealtDamage(back);
       logMsg(`🪞 魔法反射！${nameOf()} 被自己的法術打了 ${back} 點傷害。`);
       if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + back, 'normal');
       if (mon.hp <= 0) killMonster(monDef, mon);
@@ -8553,6 +8595,8 @@ function killMonster(def, monObj) {
   if (monObj) {
     if (monObj._killed) return;
     monObj._killed = true;
+    // 挑戰首領（T51）：結算挑戰；重複挑戰不給獎勵，直接結束
+    if (typeof bossChallengeKill === 'function' && bossChallengeKill(def, monObj)) return;
     noteTravelKill();
     if (typeof playMonsterDie === 'function') playMonsterDie(monObj.id);
   }
@@ -8917,7 +8961,12 @@ function memberForward(m) {
 }
 function memberPos(m) {
   const f = memberForward(m), a = formationFacing();
-  return f >= 0 ? { d: f, a } : { d: -f, a: a + Math.PI };
+  const p = f >= 0 ? { d: f, a } : { d: -f, a: a + Math.PI };
+  // 打王閃避：隊友在站位位置上再加一個偏移（js/boss_fight.js）
+  const o = m && m._dodgeOff;
+  if (!o) return p;
+  const x = p.d * Math.cos(p.a) + o.x, y = p.d * Math.sin(p.a) + o.y;
+  return { d: Math.hypot(x, y), a: Math.atan2(y, x) };
 }
 /* 怪到「牠要打的那個人」的距離 */
 function monTargetDist(mon) {
@@ -9422,7 +9471,8 @@ function alliesTick() {
        `withAlly` 期間 `saveGame()` 會自己跳過（見 saveGame 的註解）——
        castSkill 尾端就有一次，沒有那道保險這裡會把玩家的存檔蓋成隊友。 */
     // 站位系統起隊友有自己的位置，射程內就打，不再等玩家站定
-    const engaged = state.monsters.length > 0;
+    // 打王閃避中：不放攻擊技、不普攻（輔助照放）
+    const engaged = state.monsters.length > 0 && !(typeof bossDodging === 'function' && bossDodging(ally));
     try {
       withAlly(ally, () => {
         tickCasting(now);   // 主要在 alliesCastTick 每拍結算；這裡再檢查一次沒有副作用
@@ -9579,7 +9629,8 @@ function shareBuffsWithAllies(fresh, freshShields, sk) {
     const pm = sk.partyBuffMult || {};
     fresh.forEach(b => {
       const m = pm[b.type] && lvArr(pm[b.type], lv);
-      tg.buffs.push(Object.assign({}, b, m ? { mult: m } : null));
+      // 記下施放等級：收禮的人自己沒學這招，狀態欄查不到等級（使用者 2026-11-10）
+      tg.buffs.push(Object.assign({}, b, { skillLv: b.skillLv || lv }, m ? { mult: m } : null));
     });
     /* 護盾的耐久要照**收禮那個人自己的** maxHp 重算——霸邪之陣寫的是「最大HP 的 12~30%」，
        照抄施術者那份的話，血薄的祭司會發給坦克一面只有自己血量三成的盾。 */
@@ -11868,10 +11919,10 @@ function castSkillInner(skillId, opts) {
       break;
     }
     case 'heal': {
-      const amt = Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult());
       let tgt = state._healTarget || state;
       state._healTarget = null;
       if (tgt !== state && (tgt._downed || !(tgt.hp > 0))) tgt = state;   // 詠唱期間倒了就補自己
+      const amt = Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult() * healRecvMult(tgt));
       tgt.hp = Math.min(tgt.maxHp, tgt.hp + amt);
       const who = tgt === state ? '' : `${tgt === allyOwnerState() ? '玩家' : (tgt._allyName || '隊友')} `;
       logMsg(`💚 「${sk.name}」Lv${lv} 為${who || '自己'}恢復了 ${amt} 點HP。`);
@@ -11882,7 +11933,7 @@ function castSkillInner(skillId, opts) {
       break;
     }
     case 'heal_over_time': {
-      const amt = Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult());
+      const amt = Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult() * healRecvMult());
       state.hp = Math.min(state.maxHp, state.hp + amt);
       logMsg(`💫 「${sk.name}」Lv${lv} 持續恢復HP。`);
       break;
@@ -14513,8 +14564,15 @@ function healTargetBelow(ratio) {
 }
 function healOutputMult() {
   // 裝備的治癒量加成（bHealPower，5d）跟冥想相加
-  const passive = 1 + ((state.healBonusPct || 0) + getCardBonus('healPower')) / 100;
-  return passive * buffMult('healrecv').mult;
+  return 1 + ((state.healBonusPct || 0) + getCardBonus('healPower')) / 100;
+}
+/* 受到的治癒量（T41，2026-11-11）：收治療那個人身上的加成——裝備 bHealPower2（healRecvPct）
+   與聖母之祈福（buff 'healrecv'）。以前聖母之祈福算在施術者那邊，等於「誰身上有就讓自己補別人更多」。 */
+function healRecvMult(tgt) {
+  const calc = () => (1 + (getCardBonus('healRecvPct') || 0) / 100) * buffMult('healrecv').mult;
+  if (!tgt || tgt === state) return calc();
+  if (tgt === allyOwnerState()) return withOwner(calc);
+  return withAlly(tgt, calc);
 }
 
 /* ---------------- 條件式裝備加成 ----------------

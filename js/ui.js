@@ -591,6 +591,8 @@ function onTickUI() {
     updateSkillAura();
     updateBuffCountdown();
     refreshMapYieldBox();
+    refreshMapTravelBox();
+    refreshBossChallengeBox();
     updatePlayerSprite();   // 換武器要即時換騎乘圖；key 沒變時這個函式會直接 return
     renderGmPanel();
     applyFarmModeTheme();     // 打寶模式的介面染色（#111）
@@ -1292,28 +1294,36 @@ const BATTLE_BUFF_NAMES = {
 const pctOf = m => Math.round((m - 1) * 100);
 const sgn = (v, unit) => (v > 0 ? '+' : '') + v + (unit || '');
 const ELE_ZH = e => (typeof ELEMENT_NAMES !== 'undefined' && ELEMENT_NAMES[e]) || e;
+/* 同一個 buff 型別有的推固定值（flatBonus）、有的推倍率（mult），兩種都寫出來。
+   以前只讀其中一種：聖母之祈福是 DEF +250 固定值、mult 1，顯示成「DEF 0%」（使用者 2026-11-10） */
+const flatPct = (label, b, flatUnit) => {
+  const parts = [];
+  if (b.flatBonus) parts.push(`${label} ${sgn(b.flatBonus, flatUnit)}`);
+  if (typeof b.mult === 'number' && Math.abs(b.mult - 1) > 1e-9) parts.push(`${label} ${sgn(pctOf(b.mult), '%')}`);
+  return parts.join('、');
+};
 const BUFF_EFFECT_TEXT = {
   blessing: b => `STR/INT/DEX ${sgn(b.strBonus || 0)}`,
   flatstat: b => [b.strBonus ? `STR ${sgn(b.strBonus)}` : '', b.flatBonus ? `ATK ${sgn(b.flatBonus)}` : ''].filter(Boolean).join('、'),
   statpct: b => `DEX/AGI ${sgn(Math.round(b.mult * 100), '%')}`,
-  agiflat: b => `AGI ${sgn(b.flatBonus)}`,
-  lukflat: b => `LUK ${sgn(b.flatBonus)}`,
-  allstat: b => `全素質 ${sgn(b.flatBonus)}`,
-  hit: b => `命中 ${sgn(b.flatBonus)}`,
-  crit: b => `暴擊 ${sgn(b.flatBonus)}`,
-  maxhpflat: b => `MaxHP ${sgn(b.flatBonus)}`,
+  agiflat: b => flatPct('AGI', b),
+  lukflat: b => flatPct('LUK', b),
+  allstat: b => flatPct('全素質', b),
+  hit: b => flatPct('命中', b),
+  crit: b => flatPct('暴擊', b),
+  maxhpflat: b => flatPct('MaxHP', b),
   maxhppct: b => `MaxHP ${sgn(b.flatBonus, '%')}`,
   maxsppct: b => `MaxSP ${sgn(b.flatBonus, '%')}`,
-  atk: b => `ATK ${sgn(pctOf(b.mult), '%')}`,
-  def: b => `DEF ${sgn(pctOf(b.mult), '%')}`,
-  matk: b => b.flatBonus ? `MATK ${sgn(b.flatBonus)}` : `MATK ${sgn(pctOf(b.mult), '%')}`,
-  flee: b => b.flatBonus ? `迴避 ${sgn(b.flatBonus)}` : `迴避 ${sgn(pctOf(b.mult), '%')}`,
-  aspd: b => `攻速 ${sgn(pctOf(b.mult), '%')}`,
+  atk: b => flatPct('ATK', b),
+  def: b => flatPct('DEF', b),
+  matk: b => flatPct('MATK', b),
+  flee: b => flatPct('迴避', b),
+  aspd: b => flatPct('攻速', b),
   sprate: b => `SP 回復 ×${b.mult}`,
   spcost: b => `SP 消耗 ${sgn(b.flatBonus, '%')}`,
   exp: b => `經驗 ${sgn(b.flatBonus, '%')}`,
-  atkflat: b => `ATK ${sgn(b.flatBonus)}`,
-  defflat: b => `DEF ${sgn(b.flatBonus)}`,
+  atkflat: b => flatPct('ATK', b),
+  defflat: b => flatPct('DEF', b),
   eleweapon: b => `武器屬性：${ELE_ZH(b.element)}`,
   elearmor: b => `鎧甲屬性：${ELE_ZH(b.element)}`,
   holyweapon: () => `武器屬性：${ELE_ZH('holy')}`,
@@ -1330,7 +1340,15 @@ const BUFF_EFFECT_TEXT = {
   gemfree: b => `${b.flatBonus}% 不消耗礦石`,
   songelereduce: b => `屬性耐性 ${sgn(b.flatBonus, '%')}`,
   songailresist: b => `異常狀態抗性 ${sgn(b.flatBonus, '%')}`,
-  weaponatk: b => `武器 ATK ${sgn(pctOf(b.mult), '%')}`,
+  weaponatk: b => flatPct('武器 ATK', b),
+  dmgtaken: b => `受到傷害 ${sgn(pctOf(b.mult), '%')}`,
+  magnumfire: b => `普攻追加 ${Math.round((b.flatBonus || 0) * 100)}% 火屬性傷害`,
+  dontforgetme: b => `周圍敵人攻速 −${b.flatBonus}%`,
+  reflect: b => `反射近戰傷害 ${b.flatBonus}%`,
+  gold: b => `金錢 ${sgn(pctOf(b.mult), '%')}`,
+  eleresist: b => `受${ELE_ZH(b.element)}屬性傷害 −${b.reducePct}%`,
+  aspdmax: () => '攻速最大',
+  gearbonus: b => Object.keys(b.bonus || {}).map(k => formatCardBonus(k, b.bonus[k], b.bonus)).filter(Boolean).join('、') || '裝備加成',
   sacrifice: b => `捨命攻擊剩 ${b.charges} 次（每次扣 HP ${b.hpCostPct}%）`,
   fogwall: () => '遠程普攻傷害 −75%',
   doublecast: b => `雙倍投擲 ${b.flatBonus}%`,
@@ -1343,7 +1361,7 @@ const BUFF_EFFECT_TEXT = {
   aspddelay: b => `攻擊後延遲 −${b.flatBonus}%`,
   castcut: b => `變動詠唱 −${b.flatBonus}%`,
   acdcut: b => `技能後延遲 −${b.flatBonus}%`,
-  mdefflat: b => `MDEF ${sgn(b.flatBonus)}`,
+  mdefflat: b => flatPct('MDEF', b),
   ailimmune: b => `免疫${(typeof MON_AILMENTS !== 'undefined' && MON_AILMENTS[b.ailType] && MON_AILMENTS[b.ailType].name) || b.ailType}`,
 };
 function buffEffectLine(b) {
@@ -2388,7 +2406,7 @@ function renderMonster() {
   if (!state.monsters || state.monsters.length === 0) {
     lastMonsterDefId = null;
     const map = currentMap();
-    if (map && map.monsters.length === 0) {
+    if ((map && map.monsters.length === 0) || state.bossHunt) {   // 討伐首領中畫面上有討伐條，不顯示「搜尋中」
       wrap.innerHTML = '';
     } else {
       wrap.innerHTML = '<div class="monster-empty">搜尋中…</div>';
@@ -3051,6 +3069,50 @@ function layoutAllySprites(faceRight) {
     if (fig) fig.classList.toggle('face-left', !faceRight);
   }
 }
+/* 打王紅圈（T51，js/boss_fight.js）：紅圈存成以玩家為原點的 x／y（格）。
+   畫面上一格橫 BF_CELL_X%、直 BF_CELL_Y%（不是正方形），所以用 SVG（viewBox 0~100、不保持比例）畫，
+   圓變成橢圓、扇形和直線照點換算。 */
+function bossZonesSvg(casts) {
+  if (!casts.length) return '';
+  const now = Date.now();
+  const P = (x, y) => [bfPlayer.x + (x + bfWorldLag.x) * BF_CELL_X, bfPlayer.y + (y + bfWorldLag.y) * BF_CELL_Y];
+  const pt = (x, y) => P(x, y).map(v => v.toFixed(2)).join(',');
+  const ell = (z, r) => { const [cx, cy] = P(z.x, z.y); return { cx, cy, rx: r * BF_CELL_X, ry: r * BF_CELL_Y }; };
+  let out = '', labels = '';
+  casts.forEach(c => {
+    const k = Math.max(0, Math.min(1, (now - c.t0) / Math.max(1, c.end - c.t0)));
+    /* 兩層（使用者 2026-11-12）：淺色＝完整範圍；深色從中心（扇形、直線從起點）往外長，長滿跟淺色重疊的那一刻技能生效 */
+    const light = `fill="rgba(255,60,40,.16)" stroke="rgba(255,70,50,.9)" stroke-width="1.5" vector-effect="non-scaling-stroke"`;
+    const dark = `fill="rgba(200,0,0,.5)"`;
+    const shape = (z, f, attrs) => {
+      if (z.type === 'circle') {
+        const e = ell(z, z.r * f);
+        return `<ellipse cx="${e.cx}" cy="${e.cy}" rx="${e.rx}" ry="${e.ry}" ${attrs}/>`;
+      }
+      if (z.type === 'donut') {   // 甜甜圈：深色從內圈往外長
+        const a = ell(z, z.r0 + (z.r1 - z.r0) * f), b = ell(z, z.r0);
+        const ring = e => `M${e.cx - e.rx},${e.cy} a${e.rx},${e.ry} 0 1,0 ${e.rx * 2},0 a${e.rx},${e.ry} 0 1,0 ${-e.rx * 2},0 Z`;
+        return `<path d="${ring(a)} ${ring(b)}" fill-rule="evenodd" ${attrs}/>`;
+      }
+      if (z.type === 'cone') {
+        const pts = [pt(z.x, z.y)];
+        for (let i = 0; i <= 12; i++) { const a = z.ang - z.half + (2 * z.half) * i / 12; pts.push(pt(z.x + Math.cos(a) * z.len * f, z.y + Math.sin(a) * z.len * f)); }
+        return `<polygon points="${pts.join(' ')}" ${attrs}/>`;
+      }
+      if (z.type === 'line') {
+        const ux = Math.cos(z.ang), uy = Math.sin(z.ang), sx = -uy * z.w / 2, sy = ux * z.w / 2;
+        const ex = z.x + ux * z.len * f, ey = z.y + uy * z.len * f;
+        return `<polygon points="${[pt(z.x + sx, z.y + sy), pt(ex + sx, ey + sy), pt(ex - sx, ey - sy), pt(z.x - sx, z.y - sy)].join(' ')}" ${attrs}/>`;
+      }
+      return '';
+    };
+    c.zones.forEach(z => { out += shape(z, 1, light) + (k > 0 ? shape(z, k, dark) : ''); });
+    // 技能名與倒數寫在第一個形狀上（HTML：SVG 不保持比例，字會被拉寬）
+    const [lx, ly] = P(c.zones[0].x, c.zones[0].y);
+    labels += `<span class="bf-gu bf-boss-name" style="left:${lx}%;top:${ly}%">${c.name} ${Math.max(0, (c.end - now) / 1000).toFixed(1)}</span>`;
+  });
+  return `<svg class="bf-boss-zones" viewBox="0 0 100 100" preserveAspectRatio="none">${out}</svg>${labels}`;
+}
 /* 場地物件（工作 4）：火牆畫成弧上的火焰、陷阱一個圖示、減速區一個橢圓。座標跟怪一樣用 bfPolarPoint */
 function syncGroundUnits() {
   const scene = document.getElementById('battle-scene');
@@ -3072,8 +3134,14 @@ function syncGroundUnits() {
   /* T24：場地魔法（暴風雪、隕石術、十字驅魔…）的範圍圈，半徑照 fieldRadius；
      中心存在 activeFieldEffects[].center，玩家走動時 engine 會一起平移 */
   const fields = ((state && state.activeFieldEffects) || []).filter(f => f.center && f.radius > 0 && Date.now() < f.endsAt);
-  if (!units.length && !fields.length) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
-  let html = '';
+  const bossCasts = (state && state.bossCasts) || [];
+  const hunt = state && state.bossHunt;
+  if (!units.length && !fields.length && !bossCasts.length && !hunt) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
+  let html = bossZonesSvg(bossCasts);
+  if (hunt && MONSTERS[hunt.defId]) {
+    const k = Math.min(1, (Date.now() - hunt.startAt) / Math.max(1, hunt.endAt - hunt.startAt));
+    html += `<div class="bf-hunt">🗡️ 討伐 ${MONSTERS[hunt.defId].name} 中…<i style="width:${(k * 100).toFixed(1)}%"></i></div>`;
+  }
   for (const f of fields) {
     const p = at(f.center.d, f.center.a);
     html += `<span class="bf-gu bf-zone bf-field elem-ring-${f.element || 'neutral'}" title="${f.name}" style="left:${p.x}%;top:${p.y}%;width:${(f.radius * 2 + 1) * BF_CELL_X}%;height:${(f.radius * 2 + 1) * BF_CELL_Y}%"></span>`;
@@ -3118,7 +3186,7 @@ function syncTravelPortal(scene, at) {
   el.style.top = pt.y + '%';
   el.classList.toggle('blue', state.travel.portal.color === 'blue');   // 傳送之陣是藍色，走路的傳點是黃色
   const to = state.travel.portal.to;
-  const label = '→ ' + ((MAPS.find(m => m.id === to) || {}).name || to);
+  const label = '→ ' + ((MAPS.find(m => m.id === to) || {}).name || to) + travelFightText(true);
   const em = el.querySelector('em');
   if (em.textContent !== label) em.textContent = label;
 }
@@ -3768,6 +3836,16 @@ function renderLogNow() {
   });
 }
 
+/* 趕路時這張圖打了幾隻（打滿 TRAVEL_FIGHT_MAX 就不再停下來打，直接走向傳點） */
+function travelFightText(short) {
+  const t = state.travel;
+  if (!t || typeof TRAVEL_FIGHT_MAX === 'undefined') return '';
+  if (t.flee) return short ? '' : '・不停下來打';
+  const k = Math.min(t.kills || 0, TRAVEL_FIGHT_MAX);
+  if (k >= TRAVEL_FIGHT_MAX) return short ? '（直接走）' : `・本圖已打 ${k} 隻，直接走`;
+  return short ? `（${k}/${TRAVEL_FIGHT_MAX}）` : `・本圖擋路的怪 ${k}／${TRAVEL_FIGHT_MAX}（打滿就直接走）`;
+}
+
 /* ---------------- 地圖分頁 ---------------- */
 // 趕路中：目的地、第幾張、下一張；可以停下來
 function mapTravelBox() {
@@ -3776,7 +3854,7 @@ function mapTravelBox() {
   const nm = id => shopEsc((MAPS.find(m => m.id === id) || {}).name || id);
   const i = Math.max(0, t.path.indexOf(state.mapId));
   const next = travelNextMapId();
-  return `<div class="map-travel">🧭 前往 <b>${nm(t.dest)}</b>　第 ${i + 1}／${t.path.length} 張${next ? `・下一張 ${nm(next)}` : ''}
+  return `<div class="map-travel" id="map-travel-box">🧭 前往 <b>${nm(t.dest)}</b>　第 ${i + 1}／${t.path.length} 張${next ? `・下一張 ${nm(next)}` : ''}${travelFightText()}
     <button class="btn-small" onclick="cancelTravel(); renderMapTab();">停止</button></div>`;
 }
 
@@ -3797,7 +3875,7 @@ function fmtDur(sec) {
   return Math.floor(m / 60) + ' 小時 ' + (m % 60) + ' 分';
 }
 
-/* 產出估算（使用者 2026-11-05 改版）：左＝實測（從上次重置到現在），右＝離線預估（現在離線的話每 10 分鐘拿多少）。
+/* 產出估算（使用者 2026-11-05 改版）：左＝隊伍傷害占比（2026-11-10 改；原本是實測產出），右＝離線預估（現在離線的話每 10 分鐘拿多少）。
    右邊照離線結算同一條規則：這張圖的線上實測滿 1 分鐘就用實測速度，未滿用原地估算 ×0.1。
    兩欄每 10 秒自己更新（refreshMapYieldBox），不用切分頁 */
 function renderMapYieldBox() {
@@ -3808,9 +3886,14 @@ function renderMapYieldBox() {
       + row('職業經驗／10分', off.jobExpPer10m) + row('金錢／10分', off.goldPer10m, 'z')
       + (off.full ? '' : `<div class="yield-warn">這張圖的實測未滿 1 分鐘（${Math.floor(off.sec)} 秒），離線數字 ×0.1</div>`)
     : '<div class="yield-empty">無法估算</div>';
-  const actRows = (act && act.sec >= 10) ? row('DPS', act.dps) + row('擊殺／10分', act.kills / act.sec * 600)
-      + row('經驗／10分', act.expPer10m) + row('職業經驗／10分', act.jobExpPer10m) + row('金錢／10分', act.goldPer10m, 'z')
-    : '<div class="yield-empty">統計中…（滿 10 秒後顯示）</div>';
+  /* 左欄改成隊伍傷害占比（使用者 2026-11-10）：看誰輸出高，之後也可當怪物仇恨值的依據 */
+  const share = typeof partyDamageShare === 'function' ? partyDamageShare() : [];
+  const sec = act ? act.sec : 0;
+  const actRows = share.length ? share.map(m => `<div class="dmg-share">
+        <div class="dmg-share-top"><span>${shopEsc(m.name)}</span><b>${m.pct.toFixed(1)}%</b></div>
+        <div class="dmg-share-bar"><i style="width:${m.pct.toFixed(1)}%"></i></div>
+        <div class="dmg-share-sub">${fmtNum(m.dmg)}・DPS ${fmtNum(m.dmg / Math.max(1, sec))}</div></div>`).join('')
+    : '<div class="yield-empty">還沒有造成傷害</div>';
   return `
   <div class="map-yield-box" id="map-yield-box">
     <div class="map-yield-head">
@@ -3819,7 +3902,7 @@ function renderMapYieldBox() {
     </div>
     <div class="map-yield-cols">
       <div class="yield-col">
-        <div class="yield-col-title">實測 · ${act ? fmtDur(act.sec) : '—'}</div>
+        <div class="yield-col-title">隊伍傷害占比 · ${act ? fmtDur(act.sec) : '—'}</div>
         ${actRows}
       </div>
       <div class="yield-col">
@@ -3827,11 +3910,19 @@ function renderMapYieldBox() {
         ${offRows}
       </div>
     </div>
-    <div class="map-yield-hint">實測＝從上次重置到現在的實際表現。離線預估＝現在離線的話，每 10 分鐘會拿到多少：依這張圖最近一段（最多 10 分鐘）的實際打怪表現推算，已含走路、挨打、喝水、等怪的時間，離線時照這個速度結算。這張圖的實測未滿 1 分鐘時，離線預估與離線結算 ×0.1。兩欄每 10 秒更新。</div>
+    <div class="map-yield-hint">隊伍傷害占比＝從上次重置到現在，每個人造成的傷害（含技能、反彈、出血）。離線預估＝現在離線的話，每 10 分鐘會拿到多少：依這張圖最近一段（最多 10 分鐘）的實際打怪表現推算，已含走路、挨打、喝水、等怪的時間，離線時照這個速度結算。這張圖的實測未滿 1 分鐘時，離線預估與離線結算 ×0.1。兩欄每 10 秒更新。</div>
   </div>`;
 }
 // 每 10 秒換掉表格（只換這一塊，不重畫整個地圖分頁）
 let _yieldBoxAt = 0;
+/* 趕路框跟著擊殺數更新 */
+function refreshMapTravelBox() {
+  const el = document.getElementById('map-travel-box');
+  if (!el || !el.offsetParent) return;
+  const html = mapTravelBox();
+  if (!html) { el.remove(); return; }
+  if (el._html !== html) { el.outerHTML = html; const n = document.getElementById('map-travel-box'); if (n) n._html = html; }
+}
 function refreshMapYieldBox() {
   if (Date.now() - _yieldBoxAt < 10000) return;
   const el = document.getElementById('map-yield-box');
@@ -3840,6 +3931,25 @@ function refreshMapYieldBox() {
   el.outerHTML = renderMapYieldBox();
 }
 
+/* 推薦等級（使用者 2026-11-10）：這張圖的怪依出現權重加權平均等級，首領不算。
+   以前格子上的 Lv 是客戶端世界地圖的文字，有的圖沒有、有的只看得出某一隻怪的等級 */
+function mapRecommendLv(m) {
+  if (!m || m.town || !m.monsters || !m.monsters.length) return 0;
+  let sum = 0, w = 0;
+  m.monsters.forEach(o => {
+    const md = MONSTERS[o.id];
+    if (!md || !md.level || md.isBoss) return;
+    const k = o.weight > 0 ? o.weight : 1;
+    sum += md.level * k; w += k;
+  });
+  return w ? Math.round(sum / w) : 0;
+}
+const mapRecLvById = id => mapRecommendLv(MAPS.find(x => x.id === id));
+/* 推薦等級＋怪物等級範圍（世界地圖、地圖分頁、遇怪列表共用） */
+function mapLvText(m) {
+  const rl = mapRecommendLv(m);
+  return rl ? `推薦 Lv ${rl} ${mapLvRangeText(m)}` : mapLvRangeText(m);
+}
 function mapLvRangeText(m) {
   if (!m || !m.monsters || !m.monsters.length) return '';
   let lo = Infinity, hi = -Infinity;
@@ -4499,7 +4609,7 @@ function renderMapTab() {
   const monsterPreview = isCity ? '' : renderMapMonsterChips(currentMapObj);
 
   el.innerHTML = `
-    <h3 class="panel-title">📍 ${shopEsc(currentMapObj.name)} <span class="map-here-lv">${isCity ? '（安全區）' : mapLvRangeText(currentMapObj)}</span></h3>
+    <h3 class="panel-title">📍 ${shopEsc(currentMapObj.name)} <span class="map-here-lv">${isCity ? '（安全區）' : mapLvText(currentMapObj)}</span></h3>
     <div class="map-actions">
       <button class="btn-small" onclick="openWorldMap()">🗺️ 世界地圖</button>
       <button class="btn-small" onclick="goNearestSafeZone()" title="沿傳送點最近的城鎮">🏠 回最近的城鎮</button>
@@ -4511,7 +4621,7 @@ function renderMapTab() {
     ${mapTravelBox()}
     ${isCity ? townNpcPanelHtml() : ''}
     ${isCity ? '' : `<details class="map-preview-box" ${encounterListOpen ? 'open' : ''} ontoggle="setEncounterListOpen(this.open)">
-      <summary class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvRangeText(currentMapObj)}</summary>
+      <summary class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvText(currentMapObj)}</summary>
       <div class="map-preview-body">${monsterPreview}</div>
       ${!isCity ? mapPetCatchLine(currentMapObj) : ''}
       <div class="map-preview-hint">怪物強度不設限，越級挑戰有風險，也可能有意外的收穫——探索本身就是樂趣！</div>
@@ -4997,7 +5107,71 @@ function bossModeBox(map) {
   const mvp = bossListOf(map.id, 'mvp');
   const mini = bossListOf(map.id, 'mini');
   if (!mvp.length && !mini.length) return '';
-  return bossModeRow('mvp', mvp) + bossModeRow('mini', mini);
+  // T51 第 3 期：MVP／迷你王模式開關拿掉，改成每隻王打贏解鎖後各自勾「出現」
+  return bossChallengeBox(map, mini, mvp);
+}
+/* 首領挑戰（T51 第 2 期）：這張圖的迷你王與 MVP，每隻一個「挑戰」按鈕；挑戰中顯示倒數與放棄 */
+const fmtMs = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function bossChallengeBox(map, mini, mvp) {
+  const c = state.bossChallenge;
+  let head = '';
+  const h = state.bossHunt;
+  if (h) {
+    const hd = MONSTERS[h.defId];
+    head += `<div class="boss-ch-live hunt">🗡️ 討伐中：<b>${shopEsc(hd.name)}</b>　剩 <span id="boss-hunt-left">${fmtMs(Math.max(0, h.endAt - Date.now()))}</span>
+      <span class="boss-ch-sub">（用最佳擊殺紀錄結算，時間到拿經驗與掉落；換圖、趕路會中斷）</span></div>`;
+  }
+  if (c) {
+    const def = MONSTERS[c.defId];
+    const left = Math.max(0, c.limitMs - (Date.now() - c.startAt));
+    const boss = (state.monsters || []).find(m => m.id === c.monId);
+    const hpPct = boss ? Math.max(0, boss.hp / boss.maxHp * 100) : 0;
+    head += `<div class="boss-ch-live">⚔️ 挑戰中：<b>${shopEsc(def.name)}</b>　剩 <span id="boss-ch-left">${fmtMs(left)}</span>　王 HP <span id="boss-ch-hp">${hpPct.toFixed(1)}%</span>
+      <button class="btn-small" onclick="abandonBossChallenge(); renderMapTab();">放棄</button></div>`;
+  }
+  const row = id => {
+    const def = MONSTERS[id];
+    const why = bossChallengeBlockReason(id);
+    const best = bossBestMs(id);
+    const st = bossUnlocked(id)
+      ? `<span class="boss-ch-ok">✅${best ? ' 最佳 ' + fmtMs(best) : ' 已解鎖'}</span>
+         <label class="boss-ch-on" title="勾了這隻王才會在這張圖出現（出現時用最佳紀錄結算）"><input type="checkbox" ${bossEnabled(id) ? 'checked' : ''} onchange="setBossEnabled('${id}', this.checked)"> 出現</label>`
+      : '<span class="boss-ch-lock">🔒 未解鎖</span>';
+    return `<div class="boss-ch-row">
+      <span class="boss-ch-name">${def.icon || ''}${shopEsc(def.name)} <small>Lv${def.level}・${def.isMvp ? 'MVP' : '迷你王'}</small></span>
+      ${st}
+      <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="startBossChallenge('${id}'); renderMapTab();">挑戰</button>
+    </div>`;
+  };
+  return `<div class="boss-ch-box" id="boss-ch-box">
+    <div class="boss-ch-title">👑 首領挑戰</div>
+    ${head}
+    ${mini.concat(mvp).map(row).join('')}
+    <div class="boss-ch-hint">按「挑戰」當場清掉小怪、只剩王（MVP 帶小弟），王會放紅圈技能、隊伍自動閃避；限時內打贏就解鎖。首次打贏給經驗與掉落，之後再挑戰只刷新紀錄。<br>解鎖並勾「出現」的王，平常打怪時會出現（每次補怪約 20%）：不再實際打，而是停下來「討伐」，花掉最佳紀錄的時間後拿經驗與掉落，離線也照這個算。紀錄越快，討伐越短。</div>
+  </div>`;
+}
+/* 挑戰中每拍更新倒數與王的血量：只改這兩段文字（整塊重畫會把「放棄」按鈕換掉，點不到）；
+   開始／結束挑戰、解鎖數變了才整塊重畫 */
+let _bossChKey = '';
+function refreshBossChallengeBox() {
+  const el = document.getElementById('boss-ch-box');
+  if (!el || !el.offsetParent) return;
+  const c = state.bossChallenge;
+  const h = state.bossHunt;
+  const key = (c ? c.defId : 'none') + '|' + (h ? h.defId + h.startAt : '') + '|' + Object.keys(state.bossUnlocked || {}).length;
+  if (key !== _bossChKey || (c && !document.getElementById('boss-ch-left')) || (h && !document.getElementById('boss-hunt-left'))) {
+    _bossChKey = key;
+    const map = currentMap();
+    if (map) el.outerHTML = bossChallengeBox(map, bossListOf(map.id, 'mini'), bossListOf(map.id, 'mvp'));
+    return;
+  }
+  const hl = document.getElementById('boss-hunt-left');
+  if (h && hl) hl.textContent = fmtMs(Math.max(0, h.endAt - Date.now()));
+  if (!c) return;
+  const boss = (state.monsters || []).find(m => m.id === c.monId);
+  const left = document.getElementById('boss-ch-left'), hp = document.getElementById('boss-ch-hp');
+  if (left) left.textContent = fmtMs(Math.max(0, c.limitMs - (Date.now() - c.startAt)));
+  if (hp) hp.textContent = (boss ? Math.max(0, boss.hp / boss.maxHp * 100) : 0).toFixed(1) + '%';
 }
 function doToggleMiniMode(checked) {
   toggleMiniMode(checked);
@@ -6301,6 +6475,8 @@ function formatCardBonus(k, v, all) {
   if (k === 'atkPct') return `ATK ${signed(v, 1)}`;
   if (k === 'meleeDmgPct') return `近距離物理傷害 ${signed(v, 1)}`;
   if (k === 'healPower') return `治癒量 ${signed(v, 1)}`;
+  if (k === 'healRecvPct') return `受到的治癒量 ${signed(v, 1)}`;
+  if (k === 'perfectHitPct') return `完美命中 ${v}%（普攻無視迴避）`;
   { const m = /^per(\d+)Refine_(.+)$/.exec(k); if (m) return `精煉每 +${m[1]}：${formatCardBonus(m[2], v, {})}`; }
   if (k === 'spawnSpeedPct') return `生怪速度 ${signed(v, 1)}`;
   // #17 第四批
@@ -8231,7 +8407,7 @@ function wmBuild() {
     <div class="wm-view">
       <div class="wm-inner" style="width:${W.w}px;height:${W.h}px">
         <img src="${W.img}" alt="" draggable="false">
-        ${W.tiles.map(t => `<div class="wm-tile" data-id="${t.id}" style="${box(t.x1, t.y1, t.x2, t.y2)}">${t.lv ? `<span class="wm-lv">Lv${t.lv}</span>` : ''}</div>`).join('')}
+        ${W.tiles.map(t => { const rl = mapRecLvById(t.id); return `<div class="wm-tile" data-id="${t.id}" style="${box(t.x1, t.y1, t.x2, t.y2)}">${rl ? `<span class="wm-lv">Lv${rl}</span>` : ''}</div>`; }).join('')}
         ${W.dungeons.map((d, i) => `<div class="wm-dun" data-i="${i}" style="${box(d.x1 - 3, d.y1 - 3, d.x2 + 3, d.y2 + 3)}"></div>`).join('')}
         <svg class="wm-route" viewBox="0 0 ${W.w} ${W.h}" width="${W.w}" height="${W.h}"></svg>
         <div class="wm-me"></div>
@@ -8370,11 +8546,13 @@ function wmTileDungeons(id) {
 function wmSelectDungeon(d) {
   WM.dun = d; WM.sel = null; WM.hint = []; WM.route = null;
   const here = d.floors.some(f => f.id === state.mapId);
-  wmSheet(`<div class="wm-sheet-title">${shopEsc(d.name)} <small>${d.lv ? 'Lv ' + d.lv : ''}</small>${here ? '<span class="wm-tag">你在這裡</span>' : ''}</div>
+  const rls = d.floors.map(f => mapRecLvById(f.id)).filter(Boolean);
+  const dLv = rls.length ? (Math.min(...rls) === Math.max(...rls) ? `推薦 Lv ${rls[0]}` : `推薦 Lv ${Math.min(...rls)}~${Math.max(...rls)}`) : '';
+  wmSheet(`<div class="wm-sheet-title">${shopEsc(d.name)} <small>${dLv}</small>${here ? '<span class="wm-tag">你在這裡</span>' : ''}</div>
     <div class="wm-floors">${d.floors.map(f => {
       const m = wmMapOf(f.id);
       const nm = m ? m.name.replace(d.name, '').trim() || m.name : f.id;
-      return `<button class="wm-floor${f.id === state.mapId ? ' here' : ''}" data-act="floor" data-id="${f.id}"><span>${shopEsc(nm)}</span><small>${f.lv ? 'Lv ' + f.lv : ''}</small></button>`;
+      return `<button class="wm-floor${f.id === state.mapId ? ' here' : ''}" data-act="floor" data-id="${f.id}"><span>${shopEsc(nm)}</span><small>${mapRecLvById(f.id) ? '推薦 Lv ' + mapRecLvById(f.id) : ''}</small></button>`;
     }).join('')}</div>`);
   wmRefresh();
 }
@@ -8425,7 +8603,7 @@ function wmSelect(id) {
   const plan = wmPlan(id);
   const can = plan.kind !== 'here' && plan.kind !== 'none';
   wmSheet(`${dun ? '<button class="wm-back" data-act="back">← 樓層</button>' : ''}
-    <div class="wm-sheet-title">${shopEsc(m.name)} <small>${m.town ? '城鎮' : (m.lv ? 'Lv ' + m.lv : mapLvRangeText(m))}${inTile.length ? '（含地城）' : ''}</small></div>
+    <div class="wm-sheet-title">${shopEsc(m.name)} <small>${m.town ? '城鎮' : mapLvText(m)}${inTile.length ? '（含地城）' : ''}</small></div>
     ${inTile.length ? `<div class="wm-row"><span>地城</span><span>${inTile.map(d =>
       `<button class="wm-dun-link" data-act="dun" data-i="${WORLD.main.dungeons.indexOf(d)}">${shopEsc(d.name)} ›</button>`).join(' ')}</span></div>` : ''}
     ${m.town ? '' : `<div class="wm-row"><span>怪物</span><span>${mons || '沒有怪物'}</span></div>`}

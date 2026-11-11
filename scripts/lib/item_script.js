@@ -28,6 +28,7 @@ const B1 = {
   bVariableCastrate: 'castVarPct', bCastrate: 'castVarPct', bFixedCastrate: 'castFixedPct', bFixedCast: 'castFixedMs',
   bDelayrate: 'acdPct', bNoCastCancel: 'noCastCancel',
   bDefRate: 'defPct', bMdefRate: 'mdefPct', bNoGemStone: 'noGemStone',
+  bHealPower2: 'healRecvPct', bPerfectHitAddRate: 'perfectHitPct',   // T41（2026-11-11）
 };
 /* bonus2 bX,類別,N → 鍵前綴＋類別 */
 const B2 = {
@@ -299,6 +300,8 @@ function keysOf(en, skills, opt) {
       return ks ? ks.map(k => ({ key: 'itemHeal_' + k, expr: A[1] })) : (/^\d+$/.test(cat) ? [] : null);
     }
     if (en.name === 'bSkillUseSP') { const id = cat.toLowerCase(); return skills && !skills[id] ? [] : [{ key: 'spCost_' + id, expr: `-(${A[1]})` }]; }
+    // 技能 SP 消耗率：現有資料全指向三轉／槍手技能，本作沒有就略過；有的話留在缺口清單（還沒有對應的鍵）
+    if (en.name === 'bSkillUseSPrate') { const id = cat.toLowerCase(); return skills && !skills[id] ? [] : null; }
     if (en.name === 'bHPDrainRate' || en.name === 'bSPDrainRate') {
       const p = en.name === 'bHPDrainRate' ? 'life' : 'sp';
       return [{ key: p + 'StealChance', expr: A[0], scale: 0.1 }, { key: p + 'StealPct', expr: A[1] }];
