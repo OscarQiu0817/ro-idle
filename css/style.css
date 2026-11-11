@@ -2668,3 +2668,30 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
 .esf-grid b { font-weight: 600; white-space: nowrap; }
 .esf-grid b i { font-style: normal; color: var(--gold, #e8c66a); margin-left: 2px; }
 .esf-derived { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); }
+/* 產出估算左欄：隊伍傷害占比（2026-11-10） */
+.dmg-share { margin: 4px 0 6px; }
+.dmg-share-top { display: flex; justify-content: space-between; font-size: 12px; gap: 6px; }
+.dmg-share-top span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dmg-share-top b { color: var(--gold); }
+.dmg-share-bar { height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; margin-top: 2px; }
+.dmg-share-bar i { display: block; height: 100%; background: linear-gradient(90deg, #c9a24a, #f0d68a); }
+.dmg-share-sub { font-size: 10px; color: var(--ink-dim); margin-top: 1px; }
+/* 打王紅圈（T51） */
+.bf-boss-zones { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.bf-boss-name { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; text-shadow: 0 0 3px #800, 0 0 3px #800; }
+/* 首領挑戰（T51 第 2 期） */
+.boss-ch-box { margin: 12px 0; padding: 10px 12px; border: 1px solid rgba(212,175,55,.45); border-radius: 10px; background: rgba(60,20,20,.25); }
+.boss-ch-title { font-weight: 700; color: var(--gold-soft); margin-bottom: 6px; }
+.boss-ch-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px dashed var(--line); font-size: 13px; }
+.boss-ch-row:first-of-type { border-top: 0; }
+.boss-ch-name { flex: 1; min-width: 0; }
+.boss-ch-name small { color: var(--ink-dim); }
+.boss-ch-ok { color: #8fd18f; font-size: 12px; white-space: nowrap; }
+.boss-ch-lock { color: var(--ink-dim); font-size: 12px; white-space: nowrap; }
+.boss-ch-live { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; margin-bottom: 6px; border-radius: 6px; background: rgba(200,40,30,.25); font-size: 13px; }
+.boss-ch-hint { font-size: 11px; color: var(--ink-dim); margin-top: 6px; }
+.boss-ch-on { font-size: 12px; white-space: nowrap; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+.boss-ch-live.hunt { background: rgba(180,130,30,.25); }
+.boss-ch-sub { font-size: 11px; color: var(--ink-dim); }
+.bf-hunt { position: absolute; left: 50%; top: 12%; transform: translateX(-50%); padding: 6px 14px 9px; border-radius: 8px; background: rgba(0,0,0,.6); color: #ffe7a0; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; }
+.bf-hunt i { position: absolute; left: 0; bottom: 0; height: 3px; background: #f0c040; }

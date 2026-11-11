@@ -16,6 +16,19 @@ const WRITE = process.argv.includes('--write');
 const OUT = path.join(ROOT, 'js', 'equip_sets.js');
 
 const cardSetKey = (cid, withCards) => [cid, ...withCards.slice().sort()].join('+');
+/* 把 v 的成員排成跟 ref 同一順序：同一道具優先，其次裝備部位相同（全排列找最高分，套裝成員最多 6 件左右） */
+function alignTo(ref, v, ITEMS) {
+  const slotOf = id => { const it = ITEMS[id] || {}; return (it.type || '') + '/' + (it.armorType || it.weaponType || ''); };
+  const score = perm => perm.reduce((s, id, i) => s + (id === ref[i] ? 2 : slotOf(id) === slotOf(ref[i]) ? 1 : 0), 0);
+  let best = v, bestS = score(v);
+  const permute = (rest, acc) => {
+    if (!rest.length) { const s = score(acc); if (s > bestS) { best = acc; bestS = s; } return; }
+    rest.forEach((x, i) => permute(rest.slice(0, i).concat(rest.slice(i + 1)), acc.concat([x])));
+  };
+  if (v.length <= 6) permute(v, []);
+  return best;
+}
+
 function build() {
   const { ITEMS, CARDS, SKILLS, EQUIP_SETS } = loadGameData('js/item_prune.js');   // 套裝名稱要用台服名稱、刪掉的道具不收
   const db = loadItemDb();
@@ -37,8 +50,10 @@ function build() {
     const variants = (e.Combos || []).map(c => c.Combo.map(gid)).filter(v => v.every(Boolean));
     if (!variants.length) continue;
     // 依位置合併：成員數相同的寫法，同一位置的不同道具視為「任一件都算」
+    // 先把每種寫法依「裝備部位」對齊第一種的順序：rAthena 有的寫法成員順序顛倒（腳鍊＋血跡鐵球那組第 4 種是鐵球在前），
+    // 不對齊的話腳鍊會被當成鐵球那格的替代品，單穿腳鍊就成套（使用者 2026-11-10）
     const len = variants[0].length;
-    const same = variants.filter(v => v.length === len);
+    const same = variants.filter(v => v.length === len).map(v => alignTo(variants[0], v, ITEMS));
     const items = [];
     for (let i = 0; i < len; i++) {
       const alts = [...new Set(same.map(v => v[i]))];
