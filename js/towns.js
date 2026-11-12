@@ -221,6 +221,14 @@ function buildTownLayout(mapId) {
       return o;
     }),
   };
+  // 副本區（T51 第 6 期）：吉芬是吉芬魔法大賽報名處＋兌換員；其他城的副本管理員只說明大賽在吉芬
+  L.npcs = L.npcs.map(n => {
+    if (n.id !== 'dungeon') return n;
+    return mapId === 'geffen'
+      ? Object.assign({}, n, { name: '吉芬魔法大賽報名處', role: 'gmt' })
+      : Object.assign({}, n, { soon: '吉芬魔法大賽在吉芬舉行，其他副本還沒開放。' });
+  });
+  if (mapId === 'geffen') L.npcs.push({ id: 'gmt_shop', name: '大賽兌換員', role: 'gmtshop', district: 'dungeon', x: -13, y: -1, spr: '4_m_sage_a' });
   // 有公會的城多一區「職業公會」，在城門口正下方；NPC 排一列、間隔 2 格
   const guilds = JOB_GUILDS.filter(g => g.town === mapId);
   if (guilds.length) {

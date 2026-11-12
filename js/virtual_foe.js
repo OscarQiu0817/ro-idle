@@ -32,6 +32,9 @@ const VFOE_JOBS = {
   priest: { name: '祭司', weapon: 'mace', range: 1, walkMs: 160, skills: [
     { shape: 'burst', name: '十字驅魔', r: 3, kind: 'magic', wind: 1800, dmg: 0.30, heal: 0.10 },
     { shape: 'burst', name: '光耀之堂', r: 2.5, kind: 'magic', wind: 1500, dmg: 0.20, heal: 0.08 }] },
+  rogue: { name: '流氓', weapon: 'dagger', range: 1, walkMs: 130, skills: [
+    { use: 'pounce', name: '背刺', wind: 800, dmg: 0.30 },
+    { shape: 'spot', name: '箭雨', r: 2.5, wind: 1500, dmg: 0.25 }] },
   blacksmith: { name: '鐵匠', weapon: 'axe2', range: 1, walkMs: 150, skills: [
     { shape: 'ring', name: '大地之擊', r0: 2.5, r1: 6, wind: 1700, dmg: 0.35 },
     { use: 'sweep', name: '猛擊' }] },
@@ -47,7 +50,7 @@ const VFOE_TRANS = {
   highpriest: { base: 'priest', name: '神官', extra: { use: 'share', name: '聖母之祈福', dmg: 0.40 } },
   whitesmith: { base: 'blacksmith', name: '神工匠', extra: { use: 'charge', name: '手推車終結技', dmg: 0.45 } },
 };
-const VFOE_NAMES = ['艾倫', '莉亞', '凱恩', '蜜雪', '雷歐', '娜塔', '亞瑟', '琳恩', '迪克', '菲歐', '馬可', '伊芙', '洛基', '希兒', '巴特', '諾亞'];
+const VFOE_NAMES = { male: ['艾倫', '凱恩', '雷歐', '亞瑟', '迪克', '馬可', '洛基', '巴特', '諾亞', '盧恩'], female: ['莉亞', '蜜雪', '娜塔', '琳恩', '菲歐', '伊芙', '希兒', '艾瑪', '蘿絲', '妮可'] };
 
 // 可重現的亂數（同一個種子＝同一個對手，大賽「同一天大家遇到的一樣」要用）
 function vfoeRand(seed) {
@@ -74,11 +77,14 @@ function vfoeTemplate(level) {
 
 let _vfoeSeq = 0;
 /* 造一個虛擬對手，回傳 MONSTERS 的 key。
-   opts = { job, level, hpMult（預設 8）, atkMult（預設 1.2）, skills（取前幾招，預設全部）, seed, gender } */
+   opts = { job, level, hpMult（預設 8）, atkMult（預設 1.2）, skills（取前幾招，預設全部）, seed, gender,
+            name（自訂名字，冠軍用）, extraSkills（額外招式）, windMult（預警時間倍率，<1＝更快）,
+            displayLevel（畫面上顯示的等級；數值仍照 level 算）, like（照這隻怪的屬性與屬性抗性，官方參賽者用）,
+            skillList（整份換掉招式）, lookJob（紙娃娃用的職業，沒有外觀的職業換成現有的）, weapon, range, isMvp } */
 function makeVirtualFoe(opts) {
   const o = opts || {};
-  const info = vfoeJobInfo(o.job);
-  if (!info) return null;
+  const base = vfoeJobInfo(o.job) || vfoeJobInfo(o.lookJob) || VFOE_JOBS.knight;
+  const info = Object.assign({}, base, o.weapon ? { weapon: o.weapon } : {}, o.range ? { range: o.range } : {}, o.skillList ? { skills: o.skillList } : {});
   const level = Math.max(1, Math.round(o.level || 50));
   const rnd = vfoeRand(o.seed != null ? o.seed : Date.now());
   const tpl = vfoeTemplate(level);
@@ -89,22 +95,30 @@ function makeVirtualFoe(opts) {
   const views = pd && pd.view ? Object.values(pd.view).filter(v => v) : [];
   const hat = views.length && rnd() < 0.8 ? views[Math.floor(rnd() * views.length)] : 0;
   const look = {
-    job: (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[o.job]) || o.job, gender,
+    job: o.lookJob || (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[o.job]) || o.job, gender,
     hairStyle: 1 + Math.floor(rnd() * 20), hairColor: Math.floor(rnd() * 9), hatViews: [0, 0, hat], weaponCat: info.weapon,
   };
   const hp = Math.round(tpl.hp * (o.hpMult || 8));
+  const like = o.like && MONSTERS[o.like];
   const def = Object.assign({}, tpl, {
-    id, name: `${info.name}・${VFOE_NAMES[Math.floor(rnd() * VFOE_NAMES.length)]}`, icon: '🧑',
-    level, hp, atk: Math.round(tpl.atk * (o.atkMult || 1.2)), race: 'humanoid', size: 'medium', element: 'none',
-    elementResistance: { none: 100, water: 100, earth: 100, fire: 100, wind: 100, poison: 100, holy: 100, shadow: 100, ghost: 100, undead: 100 },
-    isBoss: true, isMvp: false, isVirtual: true, exp: 0, jobExp: 0, drops: [], look, vfoeJob: o.job,
+    id, name: o.name || `${info.name}・${VFOE_NAMES[gender][Math.floor(rnd() * VFOE_NAMES[gender].length)]}`, icon: '🧑',
+    level: o.displayLevel || level, hp, atk: Math.round(tpl.atk * (o.atkMult || 1.2)), race: 'humanoid', size: 'medium',
+    element: like ? like.element : 'none',
+    elementResistance: like && like.elementResistance ? Object.assign({}, like.elementResistance)
+      : { none: 100, water: 100, earth: 100, fire: 100, wind: 100, poison: 100, holy: 100, shadow: 100, ghost: 100, undead: 100 },
+    isBoss: true, isMvp: !!o.isMvp, isVirtual: true, exp: 0, jobExp: 0, drops: [], look, vfoeJob: o.job,
   });
   MONSTERS[id] = def;
   if (typeof MOB_MOVE !== 'undefined') {
     MOB_MOVE[id] = Object.assign({}, MOB_MOVE[tpl.id] || {}, { range: info.range, walkMs: info.walkMs || 150, aggressive: true, immobile: false, drops: undefined });
   }
-  const skills = o.skills ? info.skills.slice(0, o.skills) : info.skills;
-  BOSS_PATTERNS[id] = skills.map(s => Object.assign({}, s));
+  const skills = (o.skills ? info.skills.slice(0, o.skills) : info.skills).concat(o.extraSkills || []);
+  const wm = o.windMult || 1;
+  BOSS_PATTERNS[id] = skills.map(s => {
+    const e = Object.assign({}, s);
+    if (wm !== 1) e.wind = Math.round((e.wind || (BOSS_SKILL_LIB[e.use || e.shape] || {}).wind || 1500) * wm);
+    return e;
+  });
   return id;
 }
 function removeVirtualFoe(id) {
@@ -121,7 +135,7 @@ const VDUEL_LIMIT_MS = 3 * 60 * 1000;
 const _vduelHooks = [];
 function onVirtualDuelEnd(fn) { _vduelHooks.push(fn); }
 function virtualDuelBlockReason() {
-  if (isInTown()) return '城裡不能開打。';
+  if (isInTown() && !state.gmt) return '城裡不能開打。';   // 吉芬魔法大賽的競技場沒有野怪，算城鎮，但可以打
   if (state.travel) return '趕路中不能開打，先停下來。';
   if (state.bossChallenge) return '正在挑戰首領。';
   if (state.bossHunt) return '正在討伐首領，等討伐結束。';

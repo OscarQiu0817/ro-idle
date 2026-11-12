@@ -14105,6 +14105,8 @@ function useItem(itemId) {
       if (typeof openHairPick === 'function') openHairPick(itemId);
       return true;
     }
+    // 吉芬魔法大賽 12 精煉方塊（T51 第 6 期）
+    if (itemId === 'geffen_refine_cube' && typeof useGmtRefineCube === 'function') return useGmtRefineCube();
     /* 天地樹葉子（#83）：扶起倒地的隊友。沒有人倒地就不消耗——
        這條要放在最前面，因為它沒有 heal/restoreSp 那些欄位，
        走到下面會被當成「沒有可以使用的效果」擋掉。 */
@@ -16192,6 +16194,7 @@ function loadGame() {
     // 虛擬對手是臨時資料，不跨存檔：讀檔時對戰作廢、場上找不到定義的怪拿掉
     state.vDuel = null;
     if (Array.isArray(state.monsters)) state.monsters = state.monsters.filter(m => m && MONSTERS[m.defId]);
+    if (typeof gmtOnLoad === 'function') gmtOnLoad();   // 吉芬魔法大賽中斷：照打贏的輪數結算
     // 舊存檔沒有 DPS 統計，補一份空的（從讀檔當下開始算）
     if (!state.dpsTracker || typeof state.dpsTracker.damage !== 'number') {
       state.dpsTracker = { since: Date.now(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };

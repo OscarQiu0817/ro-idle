@@ -3312,6 +3312,7 @@ function layoutBattlefield() {
   bfScrollBackground();   // 先算補間落差，場地物件要用
   syncGroundUnits();
   syncBossHud();
+  syncGmtHud();
   layoutAllySprites(faceRight);
   syncFalcons(faceRight);
   syncPlayerBattleAnim(walking || (stepped.moved && !town));
@@ -4559,6 +4560,7 @@ function openTownNpc(id) {
   if (!el) return;
   const back = '<button class="btn-small" onclick="renderMapTab()">← 返回地圖</button>';
   if (n.role === 'job') { el.innerHTML = guildNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
+  if (n.role === 'gmt' || n.role === 'gmtshop') { el.innerHTML = gmtNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'kafra') {
     el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💁 ${shopEsc(n.name)}</h3></div>
       <div class="town-npc-say">歡迎光臨卡普拉服務，今天需要什麼服務呢？</div>
@@ -4603,7 +4605,7 @@ function townNpcPanelHtml() {
   }
   const here = townDistrictHere();
   const icon = n => n.role === 'shop' ? ((NPC_SHOPS[n.shop] || {}).icon || '🏪')
-    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : '🧑';
+    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : '🧑';
   return `<div class="town-npcs">
     <h4 class="town-npc-title">🏙️ 城內　<span class="town-here">目前在：${here ? shopEsc(here.name) : '—'}</span></h4>
     ${L.districts.map(d => {
@@ -10527,4 +10529,51 @@ function vfoeDollDraw(canvas, mon, moved, arrived) {
   const res = drawPaperdollFrame(ctx, parts, act, frame, canvas._ox || 0, canvas._oy || 0);
   if (res && res.ready) { canvas._plFrame = frame; canvas._plAct = act; canvas._face = faceRight; }
   applyPaperTransform(canvas, facingFlip(act, faceRight));
+}
+
+
+/* ---------------- 吉芬魔法大賽（T51 第 6 期） ---------------- */
+function gmtNpcPanelHtml(n, back) {
+  const coin = getItemQty(GMT_COIN);
+  const last = state.gmtLast;
+  const why = gmtBlockReason();
+  if (n.role === 'gmtshop') {
+    const rows = GMT_SHOP.map(e => {
+      const it = ITEMS[e.item];
+      return `<div class="town-npc-card">
+        <img class="shop-item-icon" src="${itemImgSrc(e.item)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+        <div class="town-npc-name">${shopEsc(it.name)}</div>
+        <div class="gmt-price">🪙 ${e.price}</div>
+        <button class="btn-small" ${coin < e.price ? 'disabled' : ''} onclick="gmtBuy('${e.item}');openTownNpc('gmt_shop')">兌換</button></div>`;
+    }).join('');
+    return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🪙 ${shopEsc(n.name)}</h3></div>
+      <div class="town-npc-say">用吉芬魔法大賽硬幣兌換獎品。你有 <b>${coin}</b> 枚。12 精煉方塊：穿著吉芬魔法袍或披肩時使用，直接精煉到 +12。</div>
+      <div class="town-npc-list">${rows}</div></div>`;
+  }
+  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🏟️ ${shopEsc(n.name)}</h3></div>
+    <div class="town-npc-say">歡迎參加吉芬魔法大賽！一輪一場，連續打贏 13 輪就是冠軍。</div>
+    <ul class="gmt-rules">
+      <li>入場：基本等級 ${GMT_ENTRY_LV} 以上，每個角色每天 1 次</li>
+      <li>只能單人參加，隊友會留在吉芬等你</li>
+      <li>對手比照官方：阿爾西、戴奧・阿奈默斯…準決賽（黛外或飛依・卡娜比昂）、決賽潘利爾，全部 1 對 1</li>
+      <li>每關限時 3 分鐘（準決賽、決賽 5 分鐘），總時限 30 分鐘；第 3、6、9、12 關後治療師補滿；倒下或離開競技場就結束</li>
+      <li>硬幣照官方：第 1 關 1 枚…第 10 關 10 枚、之後 15／20／20 枚（全破 110 枚）；第一次全破送 ${GMT_FIRST_CLEAR_POINTS} 商城點數</li>
+    </ul>
+    <div class="gmt-stat">最佳紀錄：第 ${state.gmtBest || 0} 輪　硬幣：${coin} 枚${last ? `　上次：第 ${last.cleared} 輪、${last.coins} 枚` : ''}</div>
+    <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gmtEnter();renderMapTab()">報名參加</button>
+    ${why ? `<div class="ab-info-text">${shopEsc(why)}</div>` : ''}</div>`;
+}
+// 戰鬥畫面上方：輪次、總剩餘時間、放棄
+function syncGmtHud() {
+  const scene = document.getElementById('battle-scene');
+  if (!scene) return;
+  let el = document.getElementById('bf-gmt-hud');
+  const g = state && state.gmt;
+  if (!g) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'bf-gmt-hud'; el.className = 'bf-gmt-hud'; scene.appendChild(el); }
+  const left = Math.max(0, g.endAt - Date.now());
+  const wait = g.nextAt && !state.vDuel ? `　下一輪 ${Math.max(0, Math.ceil((g.nextAt - Date.now()) / 1000))} 秒` : '';
+  const html = `🏟️ 吉芬魔法大賽　第 ${Math.max(1, g.round)}／${GMT_ROUNDS} 輪　剩 ${fmtMs(left)}${wait}
+    <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定放棄？會照已打贏的輪數給硬幣。'))gmtAbandon()">放棄</button>`;
+  if (el._html !== html) { el.innerHTML = html; el._html = html; }
 }

@@ -2709,3 +2709,11 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
 
 /* T52 獵鷹（戰鬥畫面） */
 .bf-falcon { position: absolute; z-index: 12; pointer-events: none; image-rendering: pixelated; }
+
+/* 吉芬魔法大賽（T51 第 6 期） */
+.bf-gmt-hud { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); z-index: 30; padding: 4px 10px; border-radius: 8px; background: rgba(0,0,0,.65); color: #ffe7a0; font-size: 12px; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.gmt-rules { margin: 6px 0 6px 18px; padding: 0; font-size: 13px; line-height: 1.6; }
+.gmt-stat { margin: 6px 0; font-size: 13px; color: var(--ink-dim); }
+.gmt-price { font-weight: 700; color: #f0c040; }
+/* 虛擬對手：紙娃娃的對齊（applyPaperTransform 的 translateX(-錨點)）假設畫布左緣在角色中心 */
+.monster-slot canvas.vfoe-paper { display: block; position: relative; left: 50%; }

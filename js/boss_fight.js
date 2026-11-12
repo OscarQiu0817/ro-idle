@@ -135,6 +135,7 @@ function bossResolve(c) {
   ms.forEach(m => { if (!inside.includes(m) && m._sawCast === c.uid) bossNoteDodge(m, true); });
   // 分攤：圈裡每多一人，每人少吃一份
   const shareDiv = c.share ? Math.max(1, inside.length) : 1;
+  if (!(c.dmg > 0)) inside.length = 0;   // 純回復的招（虛擬對手的治癒術）：只回施術者的血
   inside.forEach(m => {
     const base = m.maxHp * c.dmg * lpMult * (0.9 + Math.random() * 0.2) / shareDiv;
     const dmg = bossMitigate(m, base, c);
@@ -150,7 +151,7 @@ function bossResolve(c) {
   const z = c.zones[0];
   if (c.id === 'charge') Object.assign(mon, xyPolar(z.x + Math.cos(z.ang) * z.len * 0.85, z.y + Math.sin(z.ang) * z.len * 0.85));
   if (c.id === 'jump') Object.assign(mon, xyPolar(z.x, z.y));
-  if (!inside.length) logMsg(`✨ 全員閃過了「${c.name}」！`);
+  if (!inside.length && c.dmg > 0) logMsg(`✨ 全員閃過了「${c.name}」！`);
   if (mon._bossCast === c.uid) mon._bossCast = null;
 }
 /* 紅圈傷害減免（第 4 期）：以前是最大 HP 的固定比例，什麼都減不了，硬扛沒有意義。
@@ -303,6 +304,7 @@ function tickBossFight(dt, now) {
   tickBossChallenge(now);
   tickBossHunt(now);
   if (typeof tickVirtualDuel === 'function') tickVirtualDuel(now);
+  if (typeof tickGmt === 'function') tickGmt(now);
   const active = bossFightActive() && !state.travel;
   if (!active) {
     if (state.bossCasts && state.bossCasts.length) state.bossCasts = [];
