@@ -6215,7 +6215,7 @@ function tryAutoBuyArrow() {
 }
 function setAutoBuyArrow(v) { state.autoBuyArrow = !!v; saveGame(); }
 
-/* 自動補耗材（使用者 2026-11-12）：技能吃的魔力礦石與陷阱道具，剩 20 個以下自動買 100 個。
+/* 自動補耗材（使用者 2026-11-12）：技能吃的魔力礦石與陷阱道具（含隊友），剩 20 個以下自動買 100 個。
    只補「現在真的會用到」的：學了的被動觸發技（陷阱、火柱、毒霧…）、咖般塔音、隨機技能，
    以及放在攻擊欄或勾了自動輔助的主動技。背包＋倉庫一起算（扣的時候也會從倉庫拿）。
    買不起就安靜跳過，跟自動補箭同一套規則。 */
@@ -6235,9 +6235,16 @@ function matsInUse() {
   });
   return AUTO_BUY_MAT_IDS.filter(id => need.has(id));
 }
+/* 全隊會用到的耗材：隊友的道具本來就共用玩家背包（getItemQty／removeItem 都導回玩家），
+   所以把每個隊友換身算一次、取聯集，一起補（使用者 2026-11-12） */
+function matsInUseParty() {
+  const set = new Set(matsInUse());
+  if (!_allyActing) allyList().forEach(a => { try { withAlly(a, () => matsInUse()).forEach(id => set.add(id)); } catch (e) { /* 隊友資料不完整就跳過 */ } });
+  return AUTO_BUY_MAT_IDS.filter(id => set.has(id));
+}
 function tryAutoBuyMats() {
   if (!state.autoBuyMats) return;
-  for (const id of matsInUse()) {
+  for (const id of matsInUseParty()) {
     if (getItemQty(id) + sageWarehouseQty(id) > AUTO_BUY_MAT_THRESHOLD) continue;
     const def = ITEMS[id];
     if (!def || !def.buyPrice) continue;
@@ -7312,15 +7319,21 @@ function playExtraHitSound(isCrit) {
 /* T1：普攻動畫播完才結算傷害（以前揮擊一開始就扣血，怪常在動畫打到前就倒了）。
    揮擊開始先播動畫、記下目標，到點（下一個 tick 檢查）才跑 playerAttack()。
    長度由畫面給（attackSwingMs，跟動畫同一套算法）；沒有畫面（測試、harness）用攻擊間隔與 SWING_HIT_MS 取小。
-   只管玩家的即時普攻：隊友（每秒批次）、離線結算仍直接 playerAttack()。
+   只管玩家的即時普攻：隊友（allySwingTick 每拍）、離線結算仍直接 playerAttack()。
    不存進 state：存檔不必帶，讀檔後落空即可。 */
 const SWING_HIT_MS = 400;
 let _pendingSwing = null;   // { at, tgt }
 let _swingResolving = false;
+/* 目標在普攻距離內才打（2026-11-12）：以前揮擊開始與打中都不看距離，近身那隻一死，
+   下一下就打到新目標，不管它在幾格外（實測 80 下有 40 下打到 8 格外）。
+   沒有位置的（離線結算抽樣）不擋。 */
+function targetInAttackRange(tgt) {
+  return !!tgt && (!Number.isFinite(tgt.d) || tgt.d <= playerAttackRange() + DIST_EPS);
+}
 function startPlayerSwing(now, interval) {
   if (_pendingSwing) resolvePlayerSwing();   // 高攻速補拍：上一下還沒到點就輪到下一下，先結算，DPS 不掉
   const tgt = state.monsters[0];
-  if (!tgt) return;
+  if (!tgt || !targetInAttackRange(tgt)) return;
   const ms = typeof attackSwingMs === 'function' ? attackSwingMs(interval) : Math.min(interval, SWING_HIT_MS);
   if (!(ms > 0)) { playerAttack(); return; }
   if (typeof playAttackAnim === 'function') playAttackAnim();
@@ -7329,7 +7342,7 @@ function startPlayerSwing(now, interval) {
 function resolvePlayerSwing() {
   const sw = _pendingSwing;
   _pendingSwing = null;
-  if (!sw || state.monsters[0] !== sw.tgt) return;   // 目標已死或換了：這下落空
+  if (!sw || state.monsters[0] !== sw.tgt || !targetInAttackRange(sw.tgt)) return;   // 目標已死、換了或被打出範圍：這下落空
   _swingResolving = true;
   try { playerAttack(); } finally { _swingResolving = false; }
 }
@@ -9537,11 +9550,47 @@ function claimMercLedger() {
 /* 隊友的詠唱每拍結算（跟玩家的 tickCasting 同一拍）。
    以前放在 alliesTick（每秒、而且沒怪就 return）：詠唱滿了最多晚 1 秒才放，
    城內沒怪時永遠放不出來、詠唱條卡在滿格（使用者 2026-11-06 回報天使之光） */
+/* 攻擊技也每拍檢查（2026-11-12）：以前只在 alliesTick（每秒）放，技能後延遲一過，
+   交戰距離就把隊友留在技能射程上等，但要到下一秒才真的放——中間既不放技能也走不到普攻距離。
+   實測刺客隊友帶無影之牙：2 分鐘 0 次普攻。輔助、喝水仍每秒一次（tryAutoCastSkill(true) 跳過輔助）。 */
 function alliesCastTick(now) {
+  const hasMon = !!(state.monsters && state.monsters.length);
   allyList().forEach(ally => {
-    if (!ally || !ally.casting || ally._downed || !allyOnThisMap(ally)) return;
-    try { withAlly(ally, () => tickCasting(now)); } catch (e) { console.error('隊友詠唱結算失敗', e); }
+    if (!ally || ally._downed || !allyOnThisMap(ally)) return;
+    const engaged = hasMon && !(typeof bossDodging === 'function' && bossDodging(ally));
+    try {
+      if (ally.casting) withAlly(ally, () => tickCasting(now));
+      else if (engaged && ally.autoSkill) withAlly(ally, () => tryAutoCastSkill(true));
+    } catch (e) { console.error('隊友詠唱結算失敗', e); }
+    allySwingTick(ally, now, engaged);
   });
+}
+/* 隊友普攻每拍結算（2026-11-12）：以前在 alliesTick 每秒一次批次補齊，攻速 193 的一秒 7 下
+   擠在同一瞬間打完，畫面只播一次動作、數字一起跳，看起來像一秒一下。
+   次數照舊由累積時間決定；每一下都重新確認目標在自己的普攻距離內（打死一隻不會直接打到遠處那隻）。 */
+function allySwingTick(ally, now, engaged) {
+  const reset = () => { ally._lastAttackAt = now; ally._atkAccum = 0; };
+  // 詠唱中不普攻（官方規則，跟玩家一樣）；累積的攻擊時間也不留，免得詠唱完一口氣補刀
+  if (!engaged || ally._downed || ally.casting || ally.autoAttack === false) return reset();
+  const inReach = () => withAlly(ally, () => targetInAttackRange(state.monsters[0]));
+  if (!inReach()) return reset();   // 還在往前走
+  if (!ally._lastAttackAt) ally._lastAttackAt = now - TICK_MS;
+  ally._atkAccum = (ally._atkAccum || 0) + Math.min(1000, now - ally._lastAttackAt);
+  ally._lastAttackAt = now;
+  const iv = Math.max(100, ally.attackInterval || 1000);
+  let swings = 0;
+  while (ally._atkAccum >= iv && swings < 3) {
+    ally._atkAccum -= iv;
+    swings++;
+    if (!state.monsters.length || !inReach()) { ally._atkAccum = 0; break; }
+    /* 一位隊友出錯不能拖垮其他人 */
+    let hit = false;
+    try { hit = withAlly(ally, () => playerAttack()); }
+    catch (e) { console.error('隊友行動失敗', ally && ally._allyName, e); break; }
+    // 真的打出去才給 UI 播動作（沒箭的弓箭手不該有攻擊動畫）
+    if (hit) ally._swingAt = Date.now();
+    if (ally._downed) break;
+  }
 }
 function alliesTick() {
   const list = allyList();
@@ -9585,35 +9634,7 @@ function alliesTick() {
         tickFieldEffects();
       });
     } catch (e) { console.error('隊友施法失敗', ally && ally._allyName, e); }
-    if (ally._downed) return;   // 自傷類技能（聖十字審判、HP轉換）可能把自己放倒
-    // 詠唱中不普攻（官方規則，跟玩家一樣）；累積的攻擊時間也不留，免得詠唱完一口氣補刀
-    if (ally.casting) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
-    // 目標不在自己的普攻距離內（還在往前走）：不打
-    const inReach = withAlly(ally, () => {
-      const t = state.monsters[0];
-      return !t || !Number.isFinite(t.d) || t.d <= playerAttackRange() + DIST_EPS;
-    });
-    if (!engaged || !inReach) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
-    // 自動普攻關（使用者 2026-11-06）：純輔助帶人，不搶怪
-    if (ally.autoAttack === false) { ally._lastAttackAt = now; ally._atkAccum = 0; return; }
-    if (!ally._lastAttackAt) ally._lastAttackAt = now - 1000;
-    ally._atkAccum = (ally._atkAccum || 0) + (now - ally._lastAttackAt);
-    ally._lastAttackAt = now;
-    const iv = Math.max(100, ally.attackInterval || 1000);
-    let swings = 0;
-    while (ally._atkAccum >= iv && swings < 20) {
-      ally._atkAccum -= iv;
-      swings++;
-      if (!state.monsters.length) break;
-      /* 一位隊友出錯不能拖垮其他人：例外從 withAlly 竄出來的話，
-         forEach 會整個中斷，排在後面的隊友那一秒完全不會動。 */
-      let hit = false;
-      try { hit = withAlly(ally, () => playerAttack()); }
-      catch (e) { console.error('隊友行動失敗', ally && ally._allyName, e); break; }
-      // 真的打出去才給 UI 播動作（沒箭的弓箭手不該有攻擊動畫）
-      if (hit) ally._swingAt = Date.now();
-      if (ally._downed) break;
-    }
+    // 普攻改在 alliesCastTick 每拍結算（2026-11-12），這裡只剩喝水、輔助、場域
   });
 }
 
@@ -10745,8 +10766,10 @@ function tickPassiveProcs(now) {
     state._procTargetId = tgt.id;
     for (const { sk, lv } of passiveProcEntries('newTarget')) {
       const d = tgt.d;
+      if (!procReady(sk, now)) continue;   // 內部冷卻（模擬騎士經驗 +70%～150%，使用者 2026-11-12 加 10 秒）
       if (!Number.isFinite(d) || d < (sk.proc.minDist || 0) || d > skillRangeCells(sk, lv) + DIST_EPS) continue;
       if (!weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) continue;
+      markProc(sk, now);
       const cap = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
       const m = Math.min(cap, 3 + Math.floor((d - 1) / 3));
       if (!playerImmobile()) playerMoveBy(Math.max(0, d - playerAttackRange()), tgt.a || 0);
@@ -12819,7 +12842,8 @@ function migrateAutoSkillConfig(cfg) {
   return cfg;
 }
 
-function tryAutoCastSkill() {
+/* skipSupport：隊友每拍補放攻擊技時用（輔助仍在 alliesTick 每秒檢查一次，省效能） */
+function tryAutoCastSkill(skipSupport) {
   if (!state.autoSkillConfig) state.autoSkillConfig = defaultAutoSkillConfig();
   const slots = autoSkillSlots(state.autoSkillConfig).filter(sl => sl && sl.skillId);
   /* 沒設定就什麼都不放（使用者 2026-08-15 指定：選「不使用技能」就真的不要放，不自動撈技能） */
@@ -12827,7 +12851,7 @@ function tryAutoCastSkill() {
   if (state.casting || Date.now() < (state.acdUntil || 0)) return;
   /* 輔助技能優先：攻擊欄每拍都在搶詠唱／後延遲的空檔，輔助（每秒檢查一次）會一直排不進去，
      祭司就只會放攻擊技、增益永遠補不上。這裡先補需要補的輔助，有放出去（開始詠唱或進後延遲）就讓出這一拍。 */
-  tryAutoCastSupportSkills();
+  if (!skipSupport) tryAutoCastSupportSkills();
   if (state.casting || Date.now() < (state.acdUntil || 0)) return;
   const spPct = (state.sp / state.maxSp) * 100;
   const monsterCount = state.monsters ? state.monsters.length : 0;

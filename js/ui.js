@@ -4930,9 +4930,9 @@ function renderAutoBattleTab() {
     <div class="ab-section">
       <h4 class="ab-section-title">💎 技能耗材</h4>
       <div class="potion-toggles">
-        <label class="auto-toggle"><input type="checkbox" ${state.autoBuyMats ? 'checked' : ''} onchange="setAutoBuyMats(this.checked)"> 技能用的魔力礦石／陷阱道具剩 ${AUTO_BUY_MAT_THRESHOLD} 個以下自動買 ${AUTO_BUY_MAT_QTY} 個</label>
+        <label class="auto-toggle"><input type="checkbox" ${state.autoBuyMats ? 'checked' : ''} onchange="setAutoBuyMats(this.checked)"> 技能用的魔力礦石／陷阱道具（含隊友）剩 ${AUTO_BUY_MAT_THRESHOLD} 個以下自動買 ${AUTO_BUY_MAT_QTY} 個</label>
       </div>
-      <div class="ab-info-text">${(() => { const ids = matsInUse(); return ids.length ? '目前會用到：' + ids.map(id => `${ITEMS[id].name} ×${getItemQty(id)}`).join('、') : '目前沒有會用到耗材的技能。'; })()}</div>
+      <div class="ab-info-text">${(() => { const ids = matsInUseParty(); return ids.length ? '目前會用到：' + ids.map(id => `${ITEMS[id].name} ×${getItemQty(id)}`).join('、') : '目前沒有會用到耗材的技能。'; })()}</div>
     </div>
 
     <div class="ab-section">

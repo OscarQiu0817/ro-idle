@@ -130,9 +130,9 @@ const SKILLS = {
   /* 放置模式轉被動（使用者 2026-11-12）：原作靠衝刺距離，改成「換新目標、而且離得遠」時自動衝過去 */
   kn_chargeatk: {
     id: 'kn_chargeatk', name: '衝鋒攻擊 Charge Attack', maxLv: 1, isQuest: true,
-    type: 'passive', passiveStat: 'procCast', procType: 'damage', proc: { on: 'newTarget', minDist: 2 },
+    type: 'passive', passiveStat: 'procCast', procType: 'damage', proc: { on: 'newTarget', minDist: 2, icd: 10 },
     spCost: [0], cooldown: [0], mult: [7],
-    desc: '被動技能。換新目標且距離 2 格以上時，自動衝到目標面前，造成 ATK 300%~700% 的近距離物理傷害（距離越遠越高，每 3 格 +100%），不耗 SP。'
+    desc: '被動技能。換新目標且距離 2 格以上時，自動衝到目標面前，造成 ATK 300%~700% 的近距離物理傷害（距離越遠越高，每 3 格 +100%；內部冷卻 10 秒），不耗 SP。'
   },
   kn_cavaliermastery: {"id":"kn_cavaliermastery","name":"騎兵修練 Cavalier Mastery","maxLv":1,"type":"passive","passiveStat":"cavalierBonus","element":"neutral","spCost":[0],"cooldown":[0],"mult":[5],"atkBonus":[10],"critBonus":[3],"desc":"被動技能，永久提升ATK+10、迴避+5、暴擊率+3%。"},
   kn_bowlingbash: {"id":"kn_bowlingbash","name":"怪物互擊 Bowling Bash","maxLv":10,"type":"damage_multihit","element":"neutral","spCost":[13,14,15,16,17,18,20,22,24,28],"cooldown":[5,5,5,5,5,5,5,5,5,5],"mult":[2,2.3,2.6,2.9,3.2,3.5,3.8,4.1,4.5,5],"mult2":[2,2,2,2,2,2,2,2,2,2],"desc":"強力一擊造成2段傷害：第一段ATK×200%~500%，第二段範圍ATK×200%。"},
