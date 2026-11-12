@@ -2695,3 +2695,8 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
 .boss-ch-sub { font-size: 11px; color: var(--ink-dim); }
 .bf-hunt { position: absolute; left: 50%; top: 12%; transform: translateX(-50%); padding: 6px 14px 9px; border-radius: 8px; background: rgba(0,0,0,.6); color: #ffe7a0; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; }
 .bf-hunt i { position: absolute; left: 0; bottom: 0; height: 3px; background: #f0c040; }
+
+/* 打王站姿列（T51 第 4 期） */
+.boss-stance-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.boss-stance-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.boss-stance-name { min-width: 5em; font-weight: 600; }
