@@ -6999,7 +6999,7 @@ function tickMonsterMovement(dtMs, now) {
   }
 }
 function spawnMonster() {
-  if (state.bossChallenge || state.bossHunt) return;   // 挑戰首領中（只有王與小弟）、討伐中（停下來結算）不生怪（js/boss_fight.js）
+  if (state.bossChallenge || state.bossHunt || state.vDuel) return;   // 挑戰首領中（只有王與小弟）、討伐中（停下來結算）、虛擬對手對戰中不生怪
   const map = currentMap();
   if (state.encounterMode === 'off') {
     state.monsters = [];
@@ -7714,6 +7714,7 @@ function playerAttackInner() {
       const bbElemMult = getElementMultiplierVsMonster(bbSkill.element || 'none', monDef, target);
       let bbDmg = mitigateDamage(skillBaseDamage(false, monDef, bbElemMult) * passiveMultVal, ...defOf(monDef));
       if (state.falconFlatBonus) bbDmg += state.falconFlatBonus;
+      state._falconStrike = { at: Date.now(), monId: target.id };   // T52：畫面上獵鷹飛出去
       target.hp -= bbDmg;
       logMsg(`🦅 獵鷹突襲！對 ${monDef.name} 造成 ${bbDmg} 點傷害！`);
       if (target.hp <= 0) killMonster(monDef, target);
@@ -8704,6 +8705,8 @@ function killMonster(def, monObj) {
   }
   // 召喚專用版護衛（官方 G_ 怪）：不給經驗、鋅幣、掉落
   if (monObj && monObj.noLoot) { removeKilledFromField(monObj); return; }
+  // 虛擬對手（T51 第 5 期）：不給經驗、掉落、圖鑑，交給對戰結算
+  if (def && def.isVirtual) { removeKilledFromField(monObj); if (typeof onVirtualFoeKilled === 'function') onVirtualFoeKilled(def, monObj); return; }
   // 查表一律用 MONSTERS 的 key，不要用 def.id：有 72 隻怪的 def.id 帶著去重時加上的底線
   // 後綴（例如 poring 的 def.id 是 'poring_'），拿 def.id 去查 MONSTER_CARD_DROPS 會落空，
   // 波利/綠棉蟲/小惡魔/耳語的卡片因此一直掉不出來。所有呼叫端都有傳 monObj，用它的 defId 最準。
@@ -9563,7 +9566,11 @@ function alliesCastTick(now) {
     const engaged = hasMon && !(typeof bossDodging === 'function' && bossDodging(ally));
     try {
       if (ally.casting) withAlly(ally, () => tickCasting(now));
-      else if (engaged && ally.autoSkill) withAlly(ally, () => tryAutoCastSkill(true));
+      else {
+        if (engaged && ally.autoSkill) withAlly(ally, () => tryAutoCastSkill(true));
+        // 轉被動的攻擊技（衝鋒、投擲、貼身、逼近、被包圍）隊友也吃得到（T50 後續，使用者 2026-11-13）
+        if (engaged && !ally.casting) withAlly(ally, () => tickPassiveProcs(now));
+      }
     } catch (e) { console.error('隊友詠唱結算失敗', e); }
     allySwingTick(ally, now, engaged);
   });
@@ -10775,7 +10782,9 @@ function tickPassiveProcs(now) {
       markProc(sk, now);
       const cap = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
       const m = Math.min(cap, 3 + Math.floor((d - 1) / 3));
-      if (!playerImmobile()) playerMoveBy(Math.max(0, d - playerAttackRange()), tgt.a || 0);
+      // 隊友不能 playerMoveBy（那會把整個場景平移）：改成往前推進站位（_adv）
+      if (_allyActing) _allyActing._adv = Math.min(ALLY_ADV_MAX, (_allyActing._adv || 0) + Math.max(0, d - playerAttackRange()));
+      else if (!playerImmobile()) playerMoveBy(Math.max(0, d - playerAttackRange()), tgt.a || 0);
       logMsg(`🐎 ${sk.name.split(' ')[0]}！衝刺 ${d.toFixed(1)} 格`, 'skill');
       procCastSkill(sk, lv, tgt, { mult: [m] });
       break;
@@ -10928,6 +10937,8 @@ function findSkillAnywhere(skillId) {
      精神耗弱術 魔法命中 4%~12% 追加一段 MATK 100%~200% 無屬性魔法傷害——官方是把目標 SP 燒成傷害 */
 const MAGIC_HIT_TYPES = ['magic', 'magic_aoe', 'field_aoe_magic'];
 function afterSkillCast(skillId, tgt) {
+  // T52：閃電衝擊、獵鷹突擊放出去時，畫面上的獵鷹飛向目標
+  if (tgt && (skillId === 'ht_blitzbeat' || skillId === 'sn_falconassault')) state._falconStrike = { at: Date.now(), monId: tgt.id };
   const sk = SKILLS[skillId];
   if (!sk || !tgt || !MAGIC_HIT_TYPES.includes(sk.procType || sk.type)) return;
   const def = MONSTERS[tgt.defId];
@@ -16178,6 +16189,9 @@ function loadGame() {
     if (!Array.isArray(state.autoAspdPotion.items)) state.autoAspdPotion.items = [];
     if (typeof state.autoBuyAspdPotion !== 'boolean') state.autoBuyAspdPotion = false;
     if (typeof state.muted !== 'boolean') state.muted = false;
+    // 虛擬對手是臨時資料，不跨存檔：讀檔時對戰作廢、場上找不到定義的怪拿掉
+    state.vDuel = null;
+    if (Array.isArray(state.monsters)) state.monsters = state.monsters.filter(m => m && MONSTERS[m.defId]);
     // 舊存檔沒有 DPS 統計，補一份空的（從讀檔當下開始算）
     if (!state.dpsTracker || typeof state.dpsTracker.damage !== 'number') {
       state.dpsTracker = { since: Date.now(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };

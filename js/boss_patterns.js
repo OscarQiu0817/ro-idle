@@ -16,6 +16,11 @@ const BOSS_SKILL_LIB = {
   nova:    { name: '全場衝擊', shape: 'nova', wind: 2200, dmg: 0.18, kind: 'magic' },
   share:   { name: '分攤重擊', shape: 'share', wind: 2400, dmg: 0.50, kind: 'phys' },
   pounce:  { name: '急襲', shape: 'jump', wind: 750, dmg: 0.22, kind: 'phys' },
+  // 虛擬對手（第 5 期）用的形狀：不移動施術者
+  spot:    { name: '定點轟擊', shape: 'spot', wind: 1500, dmg: 0.30, kind: 'magic', r: 2.5 },   // 目標腳下的圓
+  burst:   { name: '爆發', shape: 'burst', wind: 1600, dmg: 0.35, kind: 'phys', r: 3 },        // 施術者身邊的圓
+  beam:    { name: '光束', shape: 'beam', wind: 1800, dmg: 0.45, kind: 'phys', w: 1.6, len: 10 }, // 施術者朝目標的直線（不衝過去）
+  ring:    { name: '外圈', shape: 'ring', wind: 1700, dmg: 0.35, kind: 'phys', r0: 2.5, r1: 6 }, // 施術者外圈（貼近才安全）
 };
 
 const BOSS_GENERIC_MINI = [{ use: 'charge' }, { use: 'jump' }, { use: 'bombard' }];
@@ -100,5 +105,5 @@ const BOSS_PATTERNS = {
 function bossPatternFor(defId) {
   const def = MONSTERS[defId] || {};
   const list = BOSS_PATTERNS[defId] || (def.isMvp ? BOSS_GENERIC_MVP : (BOSS_MINI_BY_RACE[def.race] || BOSS_GENERIC_MINI));
-  return list.map(e => Object.assign({}, BOSS_SKILL_LIB[e.use], e));
+  return list.map(e => Object.assign({}, BOSS_SKILL_LIB[e.use || e.shape], e));
 }

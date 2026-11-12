@@ -96,8 +96,12 @@ function bossCast(mon, skill, now) {
   const zones = [];
   if (id === 'nova') zones.push({ type: 'all', x: B.x, y: B.y });                     // 全場：閃不掉
   if (id === 'share') zones.push({ type: 'circle', x: T.x, y: T.y, r: 2.2 });         // 分攤：圈裡的人平分
-  if (id === 'charge') zones.push({ type: 'line', x: B.x, y: B.y, ang, w: 2.4, len: Math.min(12, Math.hypot(T.x - B.x, T.y - B.y) + 2) });
-  if (id === 'jump') zones.push({ type: 'circle', x: T.x, y: T.y, r: 2.5 });
+  if (id === 'charge') zones.push({ type: 'line', x: B.x, y: B.y, ang, w: sk.w || 2.4, len: Math.min(12, Math.hypot(T.x - B.x, T.y - B.y) + 2) });
+  if (id === 'jump') zones.push({ type: 'circle', x: T.x, y: T.y, r: sk.r || 2.5 });
+  if (id === 'spot') zones.push({ type: 'circle', x: T.x, y: T.y, r: sk.r || 2.5 });
+  if (id === 'burst') zones.push({ type: 'circle', x: B.x, y: B.y, r: sk.r || 3 });
+  if (id === 'beam') zones.push({ type: 'line', x: B.x, y: B.y, ang, w: sk.w || 1.6, len: sk.len || 10 });
+  if (id === 'ring') zones.push({ type: 'donut', x: B.x, y: B.y, r0: sk.r0 || 2.5, r1: sk.r1 || 6 });
   if (id === 'bombard') {
     const ms = bossMembers();
     const n = 3 + Math.floor(Math.random() * 4);
@@ -108,12 +112,12 @@ function bossCast(mon, skill, now) {
       zones.push({ type: 'circle', x: c.x + Math.cos(oa) * off, y: c.y + Math.sin(oa) * off, r: 1.6 });
     }
   }
-  if (id === 'sweep') zones.push({ type: 'cone', x: B.x, y: B.y, ang, half: 50 * Math.PI / 180, len: 7 });
+  if (id === 'sweep') zones.push({ type: 'cone', x: B.x, y: B.y, ang, half: sk.half || 50 * Math.PI / 180, len: sk.len || 7 });
   if (id === 'quake') zones.push(Math.random() < 0.5 ? { type: 'circle', x: B.x, y: B.y, r: 5 } : { type: 'donut', x: B.x, y: B.y, r0: 3, r1: 9 });
   // 只存編號不存物件：存檔時 state 會整包 JSON，互相參照會變成循環
   state.bossCastSeq = (state.bossCastSeq || 0) + 1;
   const c = { uid: state.bossCastSeq, id, name: sk.name, monId: mon.id, zones, t0: now, end: now + sk.wind, dmg: sk.dmg, ang,
-    kind: sk.kind || 'phys', share: id === 'share', nova: id === 'nova' };
+    kind: sk.kind || 'phys', share: id === 'share', nova: id === 'nova', heal: sk.heal || 0 };
   (state.bossCasts = state.bossCasts || []).push(c);
   mon._bossCast = c.uid;
   logMsg(`⚠️ ${def.name} 準備施放「${sk.name}」${id === 'nova' ? '（全場，閃不掉）' : id === 'share' ? '（分攤，站進圈裡）' : ''}！`);
@@ -140,6 +144,8 @@ function bossResolve(c) {
     else allyTakeDamage(m, dmg, def.name);
   });
   if (c.share && inside.length > 1) logMsg(`🤝 ${inside.length} 人分攤了「${c.name}」。`);
+  // 施術者回血（虛擬對手的祭司：十字驅魔、光耀之堂）
+  if (c.heal > 0 && mon.hp > 0) mon.hp = Math.min(mon.maxHp, mon.hp + Math.round(mon.maxHp * c.heal));
   // 王移動到落點
   const z = c.zones[0];
   if (c.id === 'charge') Object.assign(mon, xyPolar(z.x + Math.cos(z.ang) * z.len * 0.85, z.y + Math.sin(z.ang) * z.len * 0.85));
@@ -296,6 +302,7 @@ function tickBossFight(dt, now) {
   if (!state || _allyActing) return;
   tickBossChallenge(now);
   tickBossHunt(now);
+  if (typeof tickVirtualDuel === 'function') tickVirtualDuel(now);
   const active = bossFightActive() && !state.travel;
   if (!active) {
     if (state.bossCasts && state.bossCasts.length) state.bossCasts = [];
@@ -346,7 +353,6 @@ function bossChallengeBlockReason(defId) {
   if (isInTown()) return '城裡不能挑戰首領。';
   if (state.travel) return '趕路中不能挑戰，先停下來。';
   if (state.bossChallenge) return '正在挑戰其他首領。';
-  if (state.bossHunt) return '正在討伐首領，等討伐結束。';
   if (!(state.hp > 0)) return '倒下時不能挑戰。';
   return null;
 }
@@ -355,6 +361,13 @@ function startBossChallenge(defId) {
   if (why) { logMsg('⚠️ ' + why); return false; }
   const def = MONSTERS[defId];
   const now = Date.now();
+  /* 討伐中也能挑戰（使用者 2026-11-13：隨時刷新紀錄）：討伐先暫停、記住剩餘時間，挑戰結束回到原圖再接著跑 */
+  if (state.bossHunt) {
+    const h = state.bossHunt;
+    state.bossHuntPaused = Object.assign({}, h, { remainMs: Math.max(0, h.endAt - now) });
+    state.bossHunt = null;
+    logMsg(`⏸️ 討伐 ${MONSTERS[h.defId].name} 暫停，挑戰結束後繼續。`);
+  }
   state.monsters = [];
   state.bossCasts = [];
   state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
@@ -380,6 +393,24 @@ function endBossChallenge(win, why) {
   if (state.mapId === c.mapId) { state.monsters = []; state.monster = null; state.lastSpawnTime = Date.now(); }
   const def = MONSTERS[c.defId];
   if (!win) logMsg(`💢 挑戰 ${def.name} 失敗（${why}）。`);
+  // 暫停的討伐：還在同一張圖、人還站著就接著跑，否則作廢（跟討伐中換圖、倒下的規則一樣）
+  const ph = state.bossHuntPaused;
+  if (ph) {
+    state.bossHuntPaused = null;
+    const now = Date.now();
+    if (state.mapId === ph.mapId && state.hp > 0 && win && ph.defId === c.defId) {
+      // 挑戰打倒的正是在討伐的那隻：討伐直接完成，給那份本來就在等的獎勵（使用者 2026-11-13）
+      logMsg(`⚡ 挑戰打倒了正在討伐的 ${MONSTERS[ph.defId].name}，討伐直接完成！`);
+      state.bossHunt = Object.assign({}, ph, { startAt: now, endAt: now });
+      delete state.bossHunt.remainMs;
+      finishBossHunt();
+    } else if (state.mapId === ph.mapId && state.hp > 0) {
+      state.bossHunt = Object.assign({}, ph, { startAt: now, endAt: now + ph.remainMs });
+      delete state.bossHunt.remainMs;
+      state.monsters = []; state.monster = null;
+      logMsg(`▶️ 繼續討伐 ${MONSTERS[ph.defId].name}，剩 ${Math.ceil(ph.remainMs / 1000)} 秒。`);
+    } else logMsg(`💢 討伐 ${MONSTERS[ph.defId].name} 中斷（${state.mapId !== ph.mapId ? '離開了地圖' : '倒下了'}），沒有獎勵。`);
+  }
   saveGame();
 }
 /* killMonster 開頭呼叫：是挑戰中的王就結算挑戰。回傳 true＝這次不給獎勵（重複挑戰），killMonster 直接結束 */

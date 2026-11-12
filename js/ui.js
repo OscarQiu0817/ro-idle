@@ -2299,7 +2299,10 @@ function setAllySfxOff(v) { allyOwner().allySfxOff = !!v; saveGame(); }
 /* url 直接播。minGapMs 是同一個音效的最短間隔，用來擋 AoE 的連珠炮。*/
 function playSfx(url, minGapMs) {
   if (!url) return;
-  if (state && state.muted) return;
+  /* 靜音看玩家本人：隊友出手時 state 換成隊友快照（它存檔裡的 muted 是 false），
+     以前按了靜音隊友的打擊音效照響（使用者 2026-11-13 回報） */
+  const owner = typeof allyOwnerState === 'function' ? allyOwnerState() : state;
+  if (owner && owner.muted) return;
   if (typeof _allyActing !== 'undefined' && _allyActing && allySfxVolume() <= 0) return;
   const now = Date.now();
   if (minGapMs && now - (_sfxLastPlayed[url] || 0) < minGapMs) return;
@@ -2429,7 +2432,8 @@ function renderMonster() {
 
     html += `
       <div class="monster-slot ${isTarget ? 'target' : ''}" id="monster-slot-${mon.id}" style="transform:translate(-50%,-50%);">
-        <img src="${monsterImgSrc(mon.defId)}" data-def="${mon.defId}" alt="${def.name}" style="width:${box[0]}px;height:${box[1]}px;" onload="mobStaticSize(this)" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">
+        ${def.look ? `<canvas class="vfoe-paper" data-vdef="${mon.defId}"></canvas>`
+          : `<img src="${monsterImgSrc(mon.defId)}" data-def="${mon.defId}" alt="${def.name}" style="width:${box[0]}px;height:${box[1]}px;" onload="mobStaticSize(this)" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">`}
         <div class="monster-name" style="font-size:${isTarget ? '12' : '10'}px;">${def.name} Lv.${def.level}</div>
         <div class="monster-tags">${monsterTagsHtml(def)}</div>
         <div class="monster-hp-bar" style="width:${big ? 80 : (isTarget ? 60 : 48)}px;"><div id="monster-hp-bar-${mon.id}" class="monster-hp-fill" style="width:${pct(mon.hp, mon.maxHp)}%"></div></div>
@@ -3307,7 +3311,9 @@ function layoutBattlefield() {
   syncCastBar(ps);
   bfScrollBackground();   // 先算補間落差，場地物件要用
   syncGroundUnits();
+  syncBossHud();
   layoutAllySprites(faceRight);
+  syncFalcons(faceRight);
   syncPlayerBattleAnim(walking || (stepped.moved && !town));
   pinComboTotal();
   faceBattlePlayer(faceRight);
@@ -3341,6 +3347,13 @@ function layoutBattlefield() {
       slot.style.transition = 'none';
       slot.style.left = local.x + 'px';
       slot.style.top = local.y + 'px';
+    }
+    // 虛擬對手（T51 第 5 期）：紙娃娃動畫——走路、攻擊、待機，面向玩家
+    const vpaper = slot.querySelector('canvas.vfoe-paper');
+    if (vpaper) {
+      const arrived = Number.isFinite(mon.d) ? monInRange(mon) : false;
+      vfoeDollDraw(vpaper, mon, mv.moved, arrived);
+      return;
     }
     const img = slot.querySelector('img');
     if (!img) return;
@@ -5141,6 +5154,9 @@ function bossChallengeBox(map, mini, mvp) {
     head += `<div class="boss-ch-live hunt">🗡️ 討伐中：<b>${shopEsc(hd.name)}</b>　剩 <span id="boss-hunt-left">${fmtMs(Math.max(0, h.endAt - Date.now()))}</span>
       <span class="boss-ch-sub">（用最佳擊殺紀錄結算，時間到拿經驗與掉落；換圖、趕路會中斷）</span></div>`;
   }
+  const hp = state.bossHuntPaused;
+  if (hp) head += `<div class="boss-ch-live hunt">⏸️ 討伐暫停：<b>${shopEsc(MONSTERS[hp.defId].name)}</b>　剩 ${fmtMs(hp.remainMs)}
+      <span class="boss-ch-sub">（打贏同一隻就直接完成討伐；其他情況挑戰結束、還在這張圖就接著討伐）</span></div>`;
   if (c) {
     const def = MONSTERS[c.defId];
     const left = Math.max(0, c.limitMs - (Date.now() - c.startAt));
@@ -10392,9 +10408,123 @@ function bossStanceRowsHtml() {
   // 點戰鬥畫面的地面：換算成世界座標（一格＝橫 BF_CELL_X%、直 BF_CELL_Y%，玩家在 bfPlayer）
   document.addEventListener('click', e => {
     const scene = e.target && e.target.closest && e.target.closest('#battle-scene');
-    if (!scene || typeof bossManualActive !== 'function' || !bossManualActive()) return;
+    if (!scene || e.target.closest('#bf-boss-hud') || typeof bossManualActive !== 'function' || !bossManualActive()) return;
     const r = scene.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width * 100, py = (e.clientY - r.top) / r.height * 100;
     bossManualMoveTo({ x: (px - bfPlayer.x) / BF_CELL_X - bfWorldLag.x, y: (py - bfPlayer.y) / BF_CELL_Y - bfWorldLag.y });
   });
 })();
+
+
+/* 打王即時切換（戰鬥畫面左下角，使用者 2026-11-13）：只在打王時出現。
+   每位隊員一顆站姿鈕（🏃 閃避 ⇄ 🛡️ 硬扛），加一顆手動操控開關。內容沒變就不重畫 */
+function syncBossHud() {
+  const scene = document.getElementById('battle-scene');
+  if (!scene) return;
+  let hud = document.getElementById('bf-boss-hud');
+  const show = !!state && typeof bossFightActive === 'function' && bossFightActive() && !state.travel;
+  if (!show) { if (hud) hud.remove(); return; }
+  if (!hud) {
+    hud = document.createElement('div');
+    hud.id = 'bf-boss-hud';
+    hud.className = 'bf-boss-hud';
+    scene.appendChild(hud);
+  }
+  const btn = (who, name, m) => {
+    const tank = bossStance(m) === 'tank';
+    return `<button class="bf-hud-btn ${tank ? 'tank' : ''}" onclick="event.stopPropagation();setBossStance('${who}','${tank ? 'dodge' : 'tank'}');syncBossHud()" title="點一下切換閃避／硬扛">${tank ? '🛡️' : '🏃'} ${name}</button>`;
+  };
+  const allies = (state.allies || []).filter(a => a && !a._downed && allyOnThisMap(a));
+  const html = btn('p', state.name || '你', state) + allies.map(a => btn(a._slot, a._allyName || '隊友', a)).join('')
+    + `<button class="bf-hud-btn manual ${state.bossManual ? 'on' : ''}" onclick="event.stopPropagation();setBossManual(${!state.bossManual});syncBossHud()" title="打王時自己移動（方向鍵／WASD，或點地面）">🎮 手動${state.bossManual ? '中' : ''}</button>`;
+  if (hud._html !== html) { hud.innerHTML = html; hud._html = html; }
+}
+
+
+/* T52 獵鷹外觀（使用者 2026-11-13）：學了馴鷹術的人（玩家、隊友）身邊有一隻獵鷹在肩上拍翅；
+   閃電衝擊（含普攻觸發）與獵鷹突擊時飛到目標身上、播攻擊動作再飛回。
+   圖集 images/mob_anim/falcon.png（grf 的 몬스터/매.spr 方向 1＝朝左側面；待機 8 格＋俯衝 1 格），朝右時水平翻轉。 */
+const FALCON_STRIKE_MS = 700, FALCON_SCALE = 0.7, FALCON_HEAD_PX = 82;   // 角色腳底到頭頂約 82px
+function falconFrameStyle(act, t) {
+  const d = MOB_ANIM && MOB_ANIM.falcon;
+  if (!d) return null;
+  mobAnimEnsureRows(d);
+  const a = d.actions[act] || d.actions.idle;
+  const f = a.start + Math.floor(t / (a.delay || 100)) % a.frames;
+  const w = d.cell[0] * FALCON_SCALE, h = d.cell[1] * FALCON_SCALE;
+  return { w, h, ax: d.anchor[0] * FALCON_SCALE, ay: d.anchor[1] * FALCON_SCALE,
+    bg: `url(${MOB_ANIM_DIR}falcon.png?v=${d.v}) ${-(f % d.cols) * w}px ${-Math.floor(f / d.cols) * h}px / ${d.cols * w}px ${d._rows * h}px no-repeat` };
+}
+function syncFalcons(faceRight) {
+  const scene = document.getElementById('battle-scene');
+  if (!scene || !state) return;
+  const now = Date.now();
+  const W = scene.clientWidth, H = scene.clientHeight;   // 偏移用像素算，畫面高度不同（手機 280px）時位置才一致
+  const members = [{ k: 'p', m: state, pos: bfPlayer }];
+  (state.allies || []).forEach((a, i) => { if (a && !a._downed && allyOnThisMap(a) && bfAllyPos[i]) members.push({ k: 'a' + i, m: a, pos: bfAllyPos[i] }); });
+  const keep = new Set();
+  members.forEach(({ k, m, pos }) => {
+    if (!((m.learnedSkills || {}).ht_falcon > 0)) return;
+    keep.add(k);
+    let el = document.getElementById('bf-falcon-' + k);
+    if (!el) { el = document.createElement('div'); el.id = 'bf-falcon-' + k; el.className = 'bf-falcon'; scene.appendChild(el); }
+    const side = faceRight ? 1 : -1;
+    /* 角色身後的上方（朝左時在右上角），整隻在頭頂以上不跟頭重疊：獵鷹圖的底緣＝頭頂（腳底往上 FALCON_HEAD_PX） */
+    const fsI = falconFrameStyle('idle', now);
+    if (!fsI) return;
+    const home = { x: pos.x / 100 * W - side * (10 + fsI.w / 2), y: pos.y / 100 * H - FALCON_HEAD_PX - (fsI.h - fsI.ay) + Math.sin(now / 260) * 2 };
+    let at = home, act = 'idle', faceR = faceRight;
+    const st = m._falconStrike;
+    const mon = st && now - st.at < FALCON_STRIKE_MS && (state.monsters || []).find(x => x.id === st.monId);
+    if (mon && Number.isFinite(mon.bx)) {
+      const k2 = (now - st.at) / FALCON_STRIKE_MS;          // 0→0.4 飛去、0.4→0.6 攻擊、0.6→1 飛回
+      const tgt = { x: mon.bx / 100 * W, y: mon.by / 100 * H - 40 };
+      const f = k2 < 0.4 ? k2 / 0.4 : k2 < 0.6 ? 1 : 1 - (k2 - 0.6) / 0.4;
+      at = { x: home.x + (tgt.x - home.x) * f, y: home.y + (tgt.y - home.y) * f - Math.sin(f * Math.PI) * 24 };
+      act = k2 >= 0.35 && k2 < 0.65 ? 'attack' : 'idle';
+      faceR = k2 < 0.6 ? tgt.x >= home.x : tgt.x < home.x;   // 朝飛行方向
+    }
+    const fs = falconFrameStyle(act, now);
+    if (!fs) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.style.width = fs.w + 'px'; el.style.height = fs.h + 'px';
+    el.style.background = fs.bg;
+    // 圖集是朝左的側面（매.spr 方向 1），朝右就水平翻轉，錨點跟著鏡像
+    el.style.transform = faceR ? 'scaleX(-1)' : '';
+    el.style.left = (at.x - (faceR ? fs.w - fs.ax : fs.ax)) + 'px';
+    el.style.top = (at.y - fs.ay) + 'px';
+  });
+  scene.querySelectorAll('.bf-falcon').forEach(el => { if (!keep.has(el.id.replace('bf-falcon-', ''))) el.remove(); });
+}
+
+
+/* 虛擬對手的紙娃娃動畫（T51 第 5 期；使用者 2026-11-13：要有攻擊動畫）。每幀由 layoutBattlefield 呼叫：
+   在走＝走路（側面）；走到射程內或正在蓄力紅圈＝攻擊（一輪動作照對手的攻擊間隔）；其他＝備戰。一律面向玩家。 */
+function vfoeDollDraw(canvas, mon, moved, arrived) {
+  const d = MONSTERS[mon.defId];
+  if (!d || !d.look || typeof paperdollPartsFor !== 'function') return;
+  if (!canvas._parts) {
+    canvas._parts = paperdollPartsFor(d.look);
+    if (!canvas._parts) return;
+    layoutPaperdoll(canvas, canvas._parts, ALLY_CHAR_H, 16);
+  }
+  const parts = canvas._parts;
+  const pick = (...acts) => acts.find(a => paperdollFrameCount(parts[0], a)) || 'idle';
+  const atkAct = allyAttackAct(parts);
+  const attacking = !moved && (arrived || !!mon._bossCast);
+  const act = moved ? pick('walk_s', 'walk') : attacking ? atkAct : pick('ready_s', 'idle_s', 'idle');
+  const n = paperdollFrameCount(parts[0], act) || 1;
+  const delay = attacking ? Math.max(60, (d.atkInterval || 1.5) * 1000 / n)
+    : ((window.PAPERDOLL.delay && window.PAPERDOLL.delay[act]) || 100);
+  const frame = Math.floor(Date.now() / delay) % n;
+  const rel = mon.bx - bfPlayer.x;
+  if (Math.abs(rel) > 2 || canvas._faceRight == null) canvas._faceRight = rel < 0;   // 玩家在左邊就朝左
+  const faceRight = canvas._faceRight;
+  if (canvas._plFrame === frame && canvas._plAct === act && canvas._face === faceRight) return;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const res = drawPaperdollFrame(ctx, parts, act, frame, canvas._ox || 0, canvas._oy || 0);
+  if (res && res.ready) { canvas._plFrame = frame; canvas._plAct = act; canvas._face = faceRight; }
+  applyPaperTransform(canvas, facingFlip(act, faceRight));
+}
