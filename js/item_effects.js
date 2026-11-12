@@ -1194,7 +1194,7 @@ const ITEM_EFFECTS = {
   "g_knight_spear": {"condBonus":[{"when":{"refineMin":11},"bonus":{"raceDmg_undead":20,"raceDmg_angel":20}}]},
   "g_knight_sword": {"bonus":{"atkPct":5},"perRefine":{"atk":4},"condBonus":[{"when":{"refineMin":9},"bonus":{"critDmgPct":25,"critRate":5}},{"when":{"refineMin":11},"bonus":{"raceDmg_undead":20,"raceDmg_angel":20}}],"critRate":null},
   "g_staff_of_light": {"bonus":{"int":6,"sp":150,"matkPct":18,"atkEle_holy":1},"int":null},
-  "gaia_sword": {"killDrop":[{"items":["iron_ore","iron","yellow_live","coal","wind_of_verdure","refine_stone","phracon","crystal_blue","boody_red","steel","emveretarcon","elunium_stone","oridecon_stone","great_nature","rough_wind","mistic_frozen","flame_heart","ether_elunium","elunium","ether_oridecon","oridecon","gold","emperium"],"chance":0.5}]},
+  "gaia_sword": {"killDrop":[{"items":["iron_ore","iron","yellow_live","coal","wind_of_verdure","refine_stone","phracon","crystal_blue","boody_red","steel","emveretarcon","elunium_stone","oridecon_stone","great_nature","rough_wind","mistic_frozen","flame_heart","hd_carnium","elunium","hd_bradium","oridecon","gold","emperium"],"chance":0.5}]},
   "gajomart_card": {"bonus":{"raceDmgReduce_plant":-20,"expRace_plant":10}},
   "galapago_cap": {"killDrop":[{"items":["anodyne"],"chance":1}]},
   "galapago_card": {"bonus":{"itemHeal_apple_juice":50,"itemHeal_banana_juice":50,"itemHeal_carrot_juice":50},"killDrop":[{"race":"insect","items":["apple_juice"],"chance":3},{"race":"insect","items":["banana_juice"],"chance":3},{"race":"insect","items":["carrot_juice"],"chance":3}]},

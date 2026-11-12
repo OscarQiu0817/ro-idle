@@ -335,6 +335,7 @@ function createCharacter(name, statAlloc, gender) {
     autoBuyPotion: true,
     autoBuySpPotion: false,
     autoBuyArrow: true,
+    autoBuyMats: true,   // 魔力礦石／陷阱道具（使用者 2026-11-12）
     /* 隊友那三個自動購買（#93 補進來）。以前只寫在 loadGame() 的補欄位那段，
        新角色在第一次讀檔之前是 undefined——面板上三個勾勾都是空的，
        實際行為卻要等重載才會變成預設的「開」。 */
@@ -740,7 +741,7 @@ function usableSkillEntries() {
    被動與未實裝的不算。自由保護 T9 改未實裝，被動攻擊技不再開放。 */
 function plagiarismIsAttack(sk) {
   if (!sk || sk.type === 'passive' || sk.unimplemented) return false;
-  return isAttackSkill(sk) || DAMAGE_FIELD_TYPES.includes(sk.type) || sk.type === 'special_charge';
+  return isAttackSkill(sk) || sk.type === 'debuff_single' || DAMAGE_FIELD_TYPES.includes(sk.type) || sk.type === 'special_charge';
 }
 function plagiarismChoices() {
   if (!state.plagiarismLv) return [];
@@ -1113,6 +1114,8 @@ function recomputeDerived(fullHeal) {
   state.angelicAtkBonus = 0;
   state.divineDefBonus = 0;
   state.trapCdReductionSec = 0;
+  state.passiveDropPct = 0;
+  state.trapLootPct = 0;
   state.trapChanceBonusPct = 0;
   state.shopDiscountMult = 1;
   state.shopOverchargeMult = 1;
@@ -2092,7 +2095,9 @@ function recomputeDerived(fullHeal) {
         case 'animalDamageFlat': state.animalDamageFlat = val; break;
         case 'trapCdReduction': state.trapCdReductionSec = val; break;
         case 'trapChanceBonus': state.trapChanceBonusPct = val; break;
-        case 'huntingMastery': break; // 馴鷹術本身無效果，僅作為前置解鎖
+        case 'huntingMastery': break;
+        case 'falconLoot': state.passiveDropPct = (state.passiveDropPct || 0) + val; break;   // 馴鷹術：獵鷹撿拾
+        case 'trapLoot': state.trapLootPct = val; break;   // 陷阱探查：被動陷阱打死的怪掉寶率
         case 'discount': state.shopDiscountMult = val; break;
         case 'overcharge': state.shopOverchargeMult = val; break;
         case 'autoCartItem': {
@@ -2138,8 +2143,9 @@ function recomputeDerived(fullHeal) {
           break;
         }
         case 'zenyCostReduction': {
-          // 詭計的商術：目前僅套用於金錢攻擊(mammonite)，手推車終結技留待未來新職業加入後再接上
+          // 詭計的商術：金錢攻擊與手推車終結技（神工匠已實裝，2026-11-12 接上）
           state.zenyCostReductionPct['mc_mammonite'] = val;
+          state.zenyCostReductionPct['ws_carttermination'] = val;
           break;
         }
         case 'onHitStunProc': {
@@ -3743,6 +3749,14 @@ function playerAilBreakOnDamage() {
    打不死玩家——扣到剩 1 點就停，這種「站著不動被毒死」在放置遊戲裡體驗太差。 */
 function tickPlayerAilments() {
   const now = Date.now();
+  /* 天使之淚（autoDetox）：身上有異常就全部解除，內部冷卻 10 秒。
+     以前 passiveStat 寫了卻沒人讀，學了沒效果（2026-11-12 補上） */
+  if (skillLv('al_holywater') && now >= (state._detoxAt || 0) && playerAilList().length) {
+    const names = playerAilList().map(t => PLAYER_AILMENTS[t].name);
+    playerAilList().forEach(t => { delete state.playerAil[t]; });
+    state._detoxAt = now + 10000;
+    logMsg(`💧 天使之淚：解除了${names.join('、')}。`);
+  }
   if (!state.playerAil) return;
   // 過期的清掉
   Object.keys(state.playerAil).forEach(t => { if (state.playerAil[t] <= now) delete state.playerAil[t]; });
@@ -4134,7 +4148,9 @@ function tryTrapProcs(target, monDef) {
 }
 
 /* ---------------- 冰凍術/石化術：被攻擊時機率反制暈眩並造成魔法傷害（各自獨立冷卻）---------------- */
-const MAGIC_STUN_SKILL_IDS = ['mg_frostdiver', 'mg_stonecurse'];
+/* 冰凍術、石化術早已改回主動（T9），這兩個 id 卻留在這裡：沒有 procChance，機率判定恆過，
+   學了就每 10 秒受擊必觸發、石化術還會把怪的 HP 算成 NaN。2026-11-12 清空——冰凍術改走 procCast 的 hit 觸發。 */
+const MAGIC_STUN_SKILL_IDS = [];
 function tryMagicStunProcs(mon, monDef) {
   if (!state.learnedSkills) return;
   if (!state.magicStunReadyAt) state.magicStunReadyAt = {};
@@ -4595,6 +4611,18 @@ function tickSpirits() {
     state.spiritRefillAt = 0;
   }
 
+  /* 振氣注入：滿球時分 1 顆給氣球體沒滿的武僧系隊友（只由主角分；有爆氣時只在爆氣中分，免得搶掉引爆）。 */
+  const kt = state.kiTranslation;
+  if (kt && !_allyActing && (state.spirits || 0) >= state.spiritsMax && now >= (state._kiAt || 0)
+      && (!state.explosionSpirits || monkExplosionActive())) {
+    const mates = allyList().filter(a => a.spiritsMax && (a.spirits || 0) < a.spiritsMax);
+    if (mates.length) {
+      const a = mates[Math.floor(Math.random() * mates.length)];
+      a.spirits = (a.spirits || 0) + 1;
+      state.spirits -= 1;
+      state._kiAt = now + (kt.cdSec || 5) * 1000;
+    }
+  }
   /* 爆氣：滿球自動引爆。暴擊走 crit buff 的 flatBonus（playerAttack 本來就在讀），
      SP 回復 −50% 走 sprate（passiveRegen 本來就在讀）——兩個都是既有的消費點。 */
   const e = state.explosionSpirits;
@@ -5747,6 +5775,7 @@ function gameTick() {
     ensurePlayerAmmo();
     // 自動補箭：弓箭手掛機時箭快見底就自動補貨
     tryAutoBuyArrow();
+    tryAutoBuyMats();   // 魔力礦石／陷阱道具
     // 隊友的箭也由玩家出（#93）。**要排在 alliesTick 前面**，這一秒買的這一秒就射得到
     tryAutoBuyAllyArrow();
     // 隊友（#83）：借慢心跳跑，攻擊次數照各自的攻擊間隔補齊
@@ -5841,10 +5870,13 @@ function gameTick() {
     // 緩緩移動那批：攻速下降＝攻擊間隔拉長（不直接改 state.attackInterval，
     // 那是 recomputeDerived 算出來的角色數值，改了會被下一次重算蓋掉又難追）
     const atkInterval = state.attackInterval / Math.max(0.2, 1 + pDebuff('aspdPct') / 100);
+    if (!state.casting && !dodging && !playerImmobile()) tickPassiveProcs(now);
     /* 目標不在普攻距離內：走過去（只縮短目標的距離），這段時間不累積攻擊 */
     const tgt = state.monsters[0];
     const engage = partyEngageRange();
-    if (state.casting || dodging) state.attackAccumulator = 0;   // 詠唱中、閃避中不普攻、不走路
+    // 自由施法（官方 SA_FREECAST）：詠唱中照樣走向目標
+    const freeMove = !!state.casting && skillLv('sa_freecast') > 0;
+    if ((state.casting && !freeMove) || dodging) state.attackAccumulator = 0;   // 詠唱中、閃避中不普攻、不走路
     else if (state.autoAttack === false && tgt && Number.isFinite(tgt.d) && tgt.d <= engage + DIST_EPS) {
       state.attackAccumulator = 0;   // 自動普攻關：站定只放技能
     }
@@ -5855,6 +5887,7 @@ function gameTick() {
     } else if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
       state.attackAccumulator = 0;   // 站在技能射程上，普攻打不到
     }
+    if (state.casting) state.attackAccumulator = 0;   // 詠唱中不普攻（自由施法只放行走路）
     tickPendingSwing(now);   // T1：上一下揮擊到點了就結算
     while (state.attackAccumulator >= atkInterval) {
       state.attackAccumulator -= atkInterval;
@@ -6181,6 +6214,39 @@ function tryAutoBuyArrow() {
   buyItem(id, AUTO_BUY_ARROW_QTY);
 }
 function setAutoBuyArrow(v) { state.autoBuyArrow = !!v; saveGame(); }
+
+/* 自動補耗材（使用者 2026-11-12）：技能吃的魔力礦石與陷阱道具，剩 20 個以下自動買 100 個。
+   只補「現在真的會用到」的：學了的被動觸發技（陷阱、火柱、毒霧…）、咖般塔音、隨機技能，
+   以及放在攻擊欄或勾了自動輔助的主動技。背包＋倉庫一起算（扣的時候也會從倉庫拿）。
+   買不起就安靜跳過，跟自動補箭同一套規則。 */
+const AUTO_BUY_MAT_IDS = ['blue_gemstone', 'red_gemstone', 'yellow_gemstone', 'booby_trap'];
+const AUTO_BUY_MAT_QTY = 100;
+const AUTO_BUY_MAT_THRESHOLD = 20;
+function matsInUse() {
+  const need = new Set();
+  const slotIds = new Set(autoSkillSlots(state.autoSkillConfig).map(x => x && x.skillId).filter(Boolean));
+  const sup = state.autoSupportSkills || {};
+  usableSkillEntries().forEach(({ sk, lv }) => {
+    const passiveUse = sk.type === 'passive';
+    if (!passiveUse && !slotIds.has(sk.id) && !sup[sk.id]) return;
+    (skillItemCost(sk, lv) || []).forEach(id => need.add(id));
+    if (sk.passiveStat === 'ganbanteinProc') GANBANTEIN_STONES.forEach(id => need.add(id));
+    if (sk.passiveStat === 'abracadabra') need.add('yellow_gemstone');
+  });
+  return AUTO_BUY_MAT_IDS.filter(id => need.has(id));
+}
+function tryAutoBuyMats() {
+  if (!state.autoBuyMats) return;
+  for (const id of matsInUse()) {
+    if (getItemQty(id) + sageWarehouseQty(id) > AUTO_BUY_MAT_THRESHOLD) continue;
+    const def = ITEMS[id];
+    if (!def || !def.buyPrice) continue;
+    const unit = Math.max(1, Math.round(def.buyPrice * (state.shopDiscountMult || 1)));
+    if (state.gold < unit * AUTO_BUY_MAT_QTY) continue;
+    buyItem(id, AUTO_BUY_MAT_QTY);
+  }
+}
+function setAutoBuyMats(v) { state.autoBuyMats = !!v; saveGame(); }
 
 function buyItem(itemId, qty) {
   const def = ITEMS[itemId];
@@ -6801,6 +6867,8 @@ function triggerTrap(mon, t) {
   logMsg(`💥 「${t.name}」觸發！`);
   for (const m of victims.slice()) {
     const def = MONSTERS[m.defId];
+    const tsk = SKILLS[t.skillId];
+    if (tsk && tsk.passiveStat === 'procCast') m._trapKill = true;   // 陷阱探查：被動陷阱打死的才算
     if (t.effect === 'damage' || t.effect === 'damageAoe' || t.effect === 'freeze') groundDamage(m, t);
     if (m.hp <= 0) continue;
     if (t.effect === 'damage' && t.stunSec) applyStun(m, t.stunSec, true);
@@ -6992,13 +7060,10 @@ function spawnMonster() {
     state.monsters.push({ defId, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
     applyDontForgetMe(state.monsters[state.monsters.length - 1]);
     codexRecordSeen(defId);
-    /* 只有**正牌 MVP** 才帶小弟（#147）。以前是「在 MVP_MAP_DATA 裡就帶」，
-       所以迷你王也會把場子填滿，訊息還印成「（MVP）」。 */
-    if (def.isMvp) {
-      logMsg(`⚠️ ${def.icon} ${def.name}（MVP）降臨了！`);
-      summonBossSlaves(def);
-    } else if (def.isBoss) {
-      logMsg(`⚠️ ${def.icon} ${def.name}（迷你王）出現了！`);
+    // 首領照官方召喚技能帶護衛（迷你王、MVP 都一樣，見 summonBossSlaves）
+    if (def.isBoss) {
+      logMsg(`⚠️ ${def.icon} ${def.name}（${def.isMvp ? 'MVP' : '迷你王'}）${def.isMvp ? '降臨了' : '出現了'}！`);
+      summonBossSlaves(def, state.monsters[state.monsters.length - 1]);
     } else {
       logMsg(`一隻 ${def.icon} ${def.name} 出現了！`);
     }
@@ -7006,41 +7071,61 @@ function spawnMonster() {
   state.monster = state.monsters[0];
 }
 
-/* 召喚小弟（#36 的最後一條）。
-
-   官方 `NPC_SUMMONSLAVE` / `NPC_CALLSLAVE` / `NPC_SUMMONMONSTER` 共 127 條，
-   做法是「BOSS 一出場就把周圍的小弟叫齊」。本作沒有位置概念，所以直接把
-   **場上剩下的空位一次生滿**（上限仍是 `maxMonsters`，近戰模式 5 隻）——
-   一次到位而不是逐隻慢慢補，才有「BOSS 帶著一群手下登場」的感覺。
-
-   小弟從**該地圖的一般配怪表**抽，不從 MVP 表抽（不然會變成一次出兩隻 BOSS）。
-   填完把 `lastSpawnTime` 推到現在，所以之後回到正常的 3 秒一隻，
-   不會因為「剛才一次生了 4 隻」而讓節流計時錯亂。
-
-   只在近戰模式有意義：遠攻模式 `maxMonsters` 是 1，填不進任何小弟——
-   所以 BOSS 模式本身就擋在近戰模式（見 toggleMvpMode）。 */
-function summonBossSlaves(bossDef) {
-  const map = currentMap();
-  if (state.encounterMode === 'off') return;
-  if (!map || !(map.monsters || []).length) return;
-  const max = state.maxMonsters || MELEE_MAX_MONSTERS;
-  const slots = max - state.monsters.length;
-  if (slots <= 0) return;
+/* 首領護衛（召喚小弟）：照官方 NPC_SUMMONSLAVE（js/boss_slaves.js，rAthena mob_skill_db）。
+   迷你王與 MVP 都適用；沒有召喚技能的首領就不帶。
+   n 隻依序輪流取 mobs（rAthena mob_summonslave：隨機起點、輪流取）。
+   不受 maxMonsters／遭遇開關限制（挑戰首領時遠攻模式 maxMonsters 只有 1，以前因此叫不出來），
+   只設護衛上限 BOSS_SLAVE_CAP 免得場面爆量。 */
+const BOSS_SLAVE_CAP = 10;
+function bossSlaveCount(bossMon) {
+  return (state.monsters || []).filter(m => m.slaveOf === bossMon.id && m.hp > 0).length;
+}
+function summonBossSlaves(bossDef, bossMon, entry) {
+  const tbl = (typeof BOSS_SLAVES !== 'undefined') ? BOSS_SLAVES[bossMon.defId] : null;
+  const e = entry || (tbl && tbl.spawn);
+  if (!e || !e.mobs || !e.mobs.length) return 0;
+  const room = BOSS_SLAVE_CAP - bossSlaveCount(bossMon);
+  const n = Math.min(e.n, room);
+  const start = Math.floor(Math.random() * e.mobs.length);
   const names = [];
-  for (let i = 0; i < slots; i++) {
-    const sid = pickWeightedMonster(map.monsters);
+  for (let i = 0; i < n; i++) {
+    const raw = e.mobs[(start + i) % e.mobs.length];
+    const noLoot = raw[0] === '!';
+    const sid = noLoot ? raw.slice(1) : raw;
     const sdef = MONSTERS[sid];
     if (!sdef) continue;
     state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
     const spot = rollMonsterSpot();
-    state.monsters.push({ defId: sid, hp: sdef.hp, maxHp: sdef.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
-    applyDontForgetMe(state.monsters[state.monsters.length - 1]);
+    const hp = Math.round(sdef.hp * farmMult('hp'));
+    const m = { defId: sid, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a, slaveOf: bossMon.id };
+    if (noLoot) m.noLoot = true;
+    state.monsters.push(m);
+    applyDontForgetMe(m);
     codexRecordSeen(sid);
     names.push(sdef.icon + sdef.name);
   }
-  if (!names.length) return;
-  state.lastSpawnTime = Date.now();   // 填滿之後回到正常節流
-  logMsg(`👥 ${bossDef.name} 召喚了手下：${names.join('、')}！`);
+  if (!names.length) return 0;
+  const cnt = {};
+  names.forEach(x => { cnt[x] = (cnt[x] || 0) + 1; });
+  logMsg(`👥 ${bossDef.name} 召喚了護衛：${Object.entries(cnt).map(([k, v]) => v > 1 ? `${k}×${v}` : k).join('、')}！`);
+  return names.length;
+}
+/* 戰鬥中再召喚（官方 attack/chase 狀態的 slavele／myhpltmaxrate）。每秒判定一次，各條各自冷卻 */
+function tickBossSlaveRecall(bossMon, now) {
+  const tbl = (typeof BOSS_SLAVES !== 'undefined') ? BOSS_SLAVES[bossMon.defId] : null;
+  if (!tbl || !tbl.recall.length || !(bossMon.hp > 0)) return;
+  if (now - (bossMon._recallCheck || 0) < 1000) return;
+  bossMon._recallCheck = now;
+  if (!bossMon._recallAt) bossMon._recallAt = {};
+  const def = MONSTERS[bossMon.defId];
+  tbl.recall.forEach((e, i) => {
+    if (now - (bossMon._recallAt[i] || bossMon.spawnedAt || 0) < e.delay) return;
+    const ok = e.cond === 'slavele' ? bossSlaveCount(bossMon) <= e.val
+      : e.cond === 'hplt' ? bossMon.hp * 100 < bossMon.maxHp * e.val : false;
+    if (!ok || Math.random() * 10000 >= e.rate) return;
+    bossMon._recallAt[i] = now;
+    summonBossSlaves(def, bossMon, e);
+  });
 }
 
 // 衝鋒攻擊：額外生成一隻怪
@@ -7409,6 +7494,7 @@ function playerAttackInner() {
   withLogLane('skill', () => {
     tryCardAilments('attack', target);
     tryAutoSpells('attack', target);
+    tryPassiveProcs('attack', target);
     tryAttackBuffs('attack', target);
     tryAutoBonus('attack');
     tryComa(target, monDef);
@@ -8107,6 +8193,7 @@ function monsterAttackSingle(mon) {
   tryAutoBonus('hit');
   // 卡片自動念咒（受擊觸發）：放在最後，此時玩家確定還活著、傷害也結算完了
   tryAutoSpells('hit', mon);
+  tryPassiveProcs('hit', mon);
 }
 
 /* ---------------- 圖鑑（收集追蹤） ----------------
@@ -8330,7 +8417,7 @@ function getCodexProgress() {
   };
 }
 
-/* 以太礦石：只有 MVP（王）會掉，機率依王的等級分三段。
+/* 高密度鈽鐳礦石／高密度鈣礦石（原自創「以太」礦）：只有 MVP（王）會掉，機率依王的等級分三段。
    兩種各自獨立擲骰，所以同一隻王有機會兩種都掉。 */
 const ETHER_DROP_RATES = [
   { minLevel: 99, chance: 0.05 },
@@ -8364,7 +8451,7 @@ function pickWeightedDrop(drops) {
 function rollEtherDrop(monDef) {
   const chance = getEtherDropChance(monDef);
   if (chance <= 0) return;
-  ['ether_oridecon', 'ether_elunium'].forEach(id => {
+  ['hd_bradium', 'hd_carnium'].forEach(id => {
     if (Math.random() < chance) {
       addItem(id, 1);
       logMsg(`✨ MVP 掉落！獲得了 ${ITEMS[id].name}！`);
@@ -8600,6 +8687,8 @@ function killMonster(def, monObj) {
     noteTravelKill();
     if (typeof playMonsterDie === 'function') playMonsterDie(monObj.id);
   }
+  // 召喚專用版護衛（官方 G_ 怪）：不給經驗、鋅幣、掉落
+  if (monObj && monObj.noLoot) { removeKilledFromField(monObj); return; }
   // 查表一律用 MONSTERS 的 key，不要用 def.id：有 72 隻怪的 def.id 帶著去重時加上的底線
   // 後綴（例如 poring 的 def.id 是 'poring_'），拿 def.id 去查 MONSTER_CARD_DROPS 會落空，
   // 波利/綠棉蟲/小惡魔/耳語的卡片因此一直掉不出來。所有呼叫端都有傳 monObj，用它的 defId 最準。
@@ -8658,11 +8747,18 @@ function killMonster(def, monObj) {
   }
   /* 掉落率的打寶加成（#110）。夾在 1 以下：本來就 100% 的掉落乘上去沒有意義，
      而 >1 的機率會讓「稀有度」在偷竊那類加權計算裡失真。 */
-  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100) * candyMult('dropboost');   // 裝備掉寶率（快樂氣球+10%）+ 掉寶糖
+  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100) * candyMult('dropboost')   // 裝備掉寶率（快樂氣球+10%）+ 掉寶糖
+    * (1 + (owner.passiveDropPct || 0) / 100)                                              // 馴鷹術
+    * (monObj && monObj._trapKill ? 1 + (owner.trapLootPct || 0) / 100 : 1);              // 陷阱探查
   (def.drops || []).forEach(d => {
     if (Math.random() < Math.min(1, d.chance * dropMult)) addItem(d.item, 1);
   });
   rollEtherDrop(def);
+  // 脅持：擊殺 5%~25% 立刻生下一隻（跳過生怪等待）
+  const intim = skillLv('rg_intimidate');
+  if (intim && Math.random() * 100 < 5 * intim) owner.lastSpawnTime = 0;
+  // 製作箭：擊殺 10% 回收 1 支目前裝備的箭
+  if (skillLv('ac_makingarrow') && getEquippedAmmoId() && Math.random() < 0.1) addItem(getEquippedAmmoId(), 1);
   rollRelicDrop(def);                    // 遺物（#113）：只有打寶模式會掉
   // 偷竊被動：擊敗怪物時機率額外掉落一份道具（照掉落率加權，見 pickWeightedDrop）
   if (state.stealChance && def.drops && def.drops.length > 0 && Math.random() * 100 < state.stealChance) {
@@ -8698,14 +8794,19 @@ function killMonster(def, monObj) {
     const card = CARDS[cardDrop.card];
     logMsg(`🃏 掉落了稀有的 ${card.name}！`);
   }
-  // 從怪物列表中移除
-  /* 屍體要從**玩家**那份 monsters 移除。
-     `state.monsters = state.monsters.filter(...)` 是重新綁定屬性，換身期間綁到的是
-     隊友快照的 `monsters`，玩家那邊的陣列原封不動——實測結果是隊友打死一隻之後，
-     怪還掛在場上，隊友接著對屍體揮空（靠 `_killed` 旗標才沒發雙份獎勵）。 */
+  removeKilledFromField(monObj);
+}
+
+/* 從怪物列表中移除
+   屍體要從**玩家**那份 monsters 移除。
+   `state.monsters = state.monsters.filter(...)` 是重新綁定屬性，換身期間綁到的是
+   隊友快照的 `monsters`，玩家那邊的陣列原封不動——實測結果是隊友打死一隻之後，
+   怪還掛在場上，隊友接著對屍體揮空（靠 `_killed` 旗標才沒發雙份獎勵）。
+   首領倒下時護衛一起消失（官方 mob_deleteslave），不給獎勵。 */
+function removeKilledFromField(monObj) {
   const field = allyOwnerState();
   if (monObj && field.monsters) {
-    field.monsters = field.monsters.filter(m => m.id !== monObj.id);
+    field.monsters = field.monsters.filter(m => m.id !== monObj.id && m.slaveOf !== monObj.id);
   } else if (field.monsters && field.monsters.length > 0) {
     field.monsters.shift();
   }
@@ -10582,9 +10683,109 @@ function skillReady(skillId) {
      lv      施放等級（卡片寫幾級就幾級），會夾在該技能的 maxLv 內
      chance  觸發機率（%）
 
-   施放走 castSkill(id, { free:true, forceLv }) ——不吃 SP/HP/鋅幣、不看武器限制、
+   施放走 castSkill(id, { free:true, forceLv }) ——不吃 SP/HP/鋅幣（道具照扣，2026-11-12）、不看武器限制、
    也不寫入冷卻，因為那些都是玩家自己的資源，不該被卡片的被動觸發消耗掉。
 ------------------------------------------------- */
+/* ---------------- 放置模式轉被動的攻擊技（procCast，使用者 2026-11-12）----------------
+   原作靠走位／時機的攻擊技改成被動：學了就自動觸發，不佔 4 格、不耗 SP（道具／礦石照原作扣），
+   觸發時借回原本的傷害邏輯（procType）放一次。武器／盾牌限定照舊。
+     attack      普攻命中後依 proc.chance（%）觸發（傷害增壓、巧打、盾擊）
+     newTarget   換新目標且距離 ≥ minDist：衝過去打（衝鋒攻擊）
+     outOfRange  目標在普攻距離外、技能射程內：遠距離投擲（投擲長矛、迴旋盾擊）
+     adjacent    目標以外的怪貼身（≤1.5 格）：刺擊推開（長矛刺擊）；proc.includeTarget 連目標也算（衝鋒箭）
+     hit         被怪打到時依 proc.chance 反制攻擊者（冰凍術）
+     approach    有怪逼近到 proc.dist 格內：放地面技（火焰之壁、火柱、冰刃之牆、泥沼地）
+     surrounded  proc.dist 格內 ≥ proc.count 隻：自身範圍技（霜凍之術）
+   proc.icd 秒＝內部冷卻。 */
+function passiveProcEntries(on) {
+  return usableSkillEntries().filter(e => e.sk.passiveStat === 'procCast' && e.sk.proc && e.sk.proc.on === on);
+}
+function procReady(sk, now) {
+  const at = (state._procAt || {})[sk.id] || 0;
+  let icd = sk.proc.icd || 0;
+  // 陷阱移除：被動陷阱內部冷卻 −N 秒（最低 1 秒）
+  if (sk.procType === 'ground_trap' && state.trapCdReductionSec) icd = Math.max(1, icd - state.trapCdReductionSec);
+  return now - at >= icd * 1000;
+}
+function markProc(sk, now) { (state._procAt || (state._procAt = {}))[sk.id] = now; }
+// 技能一律打 monsters[0]：暫時把指定的怪排到第一個，放完把原本的目標排回去
+function withTargetFirst(mon, fn) {
+  const ms = state.monsters;
+  const i = ms ? ms.indexOf(mon) : -1;
+  if (i <= 0) return fn();
+  const orig = ms[0];
+  ms.splice(i, 1); ms.unshift(mon);
+  try { return fn(); } finally {
+    const j = state.monsters.indexOf(orig);
+    if (j > 0) { state.monsters.splice(j, 1); state.monsters.unshift(orig); }
+  }
+}
+function procCastSkill(sk, lv, mon, over) {
+  if (!weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) return false;
+  // 道具／礦石照原作消耗：castSkillInner 統一檢查與扣除（湊不出來就不觸發）。SP 仍免費
+  const run = () => castSkill(sk.id, { free: true, forceLv: lv, override: Object.assign({ type: sk.procType }, over || {}) });
+  return mon ? withTargetFirst(mon, run) : run();
+}
+function tryPassiveProcs(trigger, mon) {
+  if (!mon || !(mon.hp > 0)) return;
+  for (const { sk, lv } of passiveProcEntries(trigger)) {
+    const ch = Array.isArray(sk.proc.chance) ? sk.proc.chance[lv - 1] : (sk.proc.chance || 0);
+    if (!procReady(sk, Date.now()) || Math.random() * 100 >= ch) continue;
+    if (sk.proc.icd) markProc(sk, Date.now());
+    procCastSkill(sk, lv, mon);
+    if (!(mon.hp > 0)) break;
+  }
+}
+function tickPassiveProcs(now) {
+  const ms = state.monsters;
+  if (!ms || !ms.length) return;
+  const tgt = ms[0];
+  // 衝鋒攻擊：換新目標時判定一次。官方每 3 格 +100%，本作 300% 起跳、上限 700%
+  if (tgt && tgt.id !== state._procTargetId) {
+    state._procTargetId = tgt.id;
+    for (const { sk, lv } of passiveProcEntries('newTarget')) {
+      const d = tgt.d;
+      if (!Number.isFinite(d) || d < (sk.proc.minDist || 0) || d > skillRangeCells(sk, lv) + DIST_EPS) continue;
+      if (!weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) continue;
+      const cap = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
+      const m = Math.min(cap, 3 + Math.floor((d - 1) / 3));
+      if (!playerImmobile()) playerMoveBy(Math.max(0, d - playerAttackRange()), tgt.a || 0);
+      logMsg(`🐎 ${sk.name.split(' ')[0]}！衝刺 ${d.toFixed(1)} 格`, 'skill');
+      procCastSkill(sk, lv, tgt, { mult: [m] });
+      break;
+    }
+  }
+  if (tgt && tgt.hp > 0 && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
+    for (const { sk, lv } of passiveProcEntries('outOfRange')) {
+      if (!procReady(sk, now) || tgt.d > skillRangeCells(sk, lv) + DIST_EPS) continue;
+      if (!weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) continue;
+      markProc(sk, now);
+      procCastSkill(sk, lv, tgt);
+      break;
+    }
+  }
+  // 火焰之壁／火柱／冰刃之牆／泥沼地：有怪逼近到 dist 格內就放（場上數量到上限就等）
+  for (const { sk, lv } of passiveProcEntries('approach')) {
+    if (!procReady(sk, now) || groundUnitsFull(sk)) continue;
+    if (!ms.some(m => m.hp > 0 && Number.isFinite(m.d) && m.d <= sk.proc.dist + DIST_EPS)) continue;
+    if (procCastSkill(sk, lv, null)) markProc(sk, now);
+  }
+  // 霜凍之術：被包圍（dist 格內 ≥ count 隻）
+  for (const { sk, lv } of passiveProcEntries('surrounded')) {
+    if (!procReady(sk, now)) continue;
+    if (ms.filter(m => m.hp > 0 && Number.isFinite(m.d) && m.d <= sk.proc.dist + DIST_EPS).length < sk.proc.count) continue;
+    markProc(sk, now);
+    procCastSkill(sk, lv, null);
+  }
+  for (const { sk, lv } of passiveProcEntries('adjacent')) {
+    if (!procReady(sk, now)) continue;
+    const near = ms.find((m, i) => (sk.proc.includeTarget || i > 0) && m.hp > 0 && Number.isFinite(m.d) && m.d <= 1.5);
+    if (!near || !weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) continue;
+    markProc(sk, now);
+    procCastSkill(sk, lv, near);
+  }
+}
+
 function tryAutoSpells(trigger, mon) {
   const list = state.cardAutoSpells && state.cardAutoSpells[trigger];
   if (!list || !list.length) return;
@@ -10635,6 +10836,9 @@ function applyPassiveSkillOnce(sk, lv, trigger, mon) {
   const pick = (f, d) => (Array.isArray(sk[f]) ? sk[f][lv - 1] : sk[f]) ?? d;
 
   switch (sk.passiveStat) {
+    // 轉被動的攻擊技（狩獵之矛自動念咒巧打…）：照常放一次
+    case 'procCast':
+      return procCastSkill(sk, lv, target);
     // 冰凍術：凍結目標並造成 MATK 比例的魔法傷害（跟 tryMagicStunProcs 同一套處理）
     case 'onHitMagicStunProc': {
       if (!target || !monDef) return false;
@@ -10689,21 +10893,49 @@ function findSkillAnywhere(skillId) {
 
 /* opts.free   ：自動念咒用。跳過「學過沒」「冷卻好沒」「武器對不對」「SP/HP/鋅幣夠不夠」，
                  也不寫入冷卻——那是玩家自己那份資源，不該被卡片的觸發吃掉。
+                 **道具例外**（使用者 2026-11-12）：魔力礦石、陷阱道具、箭矢一律照扣，湊不出來就放不出來。
    opts.forceLv：指定施放等級（卡片寫幾級就幾級，跟玩家學到幾級無關），會夾在 1~maxLv。 */
 /* 技能施放：整段的訊息都算「技能」欄（見 withLogLane）。
    castSkill 有二十幾個 return 點，包在外層才不會漏掉任何一條路徑。 */
+/* 魔法放出後的被動（智者，2026-11-12 補實裝）：
+     心神互換   魔法打中首領 10% 回 5% 最大 SP（內部冷卻 5 秒）——官方是交換 SP，怪物沒有 SP
+     精神耗弱術 魔法命中 4%~12% 追加一段 MATK 100%~200% 無屬性魔法傷害——官方是把目標 SP 燒成傷害 */
+const MAGIC_HIT_TYPES = ['magic', 'magic_aoe', 'field_aoe_magic'];
+function afterSkillCast(skillId, tgt) {
+  const sk = SKILLS[skillId];
+  if (!sk || !tgt || !MAGIC_HIT_TYPES.includes(sk.procType || sk.type)) return;
+  const def = MONSTERS[tgt.defId];
+  if (!def) return;
+  const now = Date.now();
+  if (skillLv('pf_soulchange') && def.isBoss && now >= (state._soulChangeAt || 0) && Math.random() < 0.1) {
+    state._soulChangeAt = now + 5000;
+    const gain = Math.round(state.maxSp * 0.05);
+    state.sp = Math.min(state.maxSp, state.sp + gain);
+    logMsg(`🔁 心神互換：從 ${def.name} 身上奪回 ${gain} SP。`);
+  }
+  const sb = skillLv('pf_soulburn');
+  if (sb && tgt.hp > 0 && Math.random() * 100 < 2 + 2 * sb) {
+    const dmg = mitigateDamage(state.matk * (0.75 + 0.25 * sb), ...defOf(def, 1, true));
+    noteMonsterDamage(tgt, dmg);
+    tgt.hp -= dmg;
+    if (typeof showDamageFloatAt === 'function') showDamageFloatAt(tgt.id, '-' + dmg, 'normal', null);
+    logMsg(`🔥 精神耗弱術：${def.name} 追加受到 ${dmg} 點魔法傷害！`);
+    if (tgt.hp <= 0) killMonster(def, tgt);
+  }
+}
 function castSkill(skillId, opts) {
   return withLogLane('skill', () => {
     const free = !!(opts && opts.free);
     // 隊友也走詠唱（T8）：withAlly 期間 state 就是隊友，casting／acdUntil 存在隊友身上
-    if (free) return castSkillInner(skillId, opts);
+    const tgt0 = state.monsters && state.monsters[0];
+    if (free) { const okF = castSkillInner(skillId, opts); if (okF) afterSkillCast(skillId, tgt0); return okF; }
     if (state.casting || Date.now() < (state.acdUntil || 0)) return false;
     const sk = findSkillForUse(skillId);
     const lv = sk ? skillLv(skillId) : 0;
     const ct = lv ? skillCastTimeMs(sk, lv) : 0;
     if (ct > 0) return beginCast(sk, lv, ct, opts);
     const ok = castSkillInner(skillId, opts);
-    if (ok) applyAfterCastDelay(skillId, lv);
+    if (ok) { applyAfterCastDelay(skillId, lv); afterSkillCast(skillId, tgt0); }
     return ok;
   });
 }
@@ -10805,8 +11037,9 @@ function tickCasting(now) {
   if (playerImmobile()) { interruptCast('無法行動'); return; }
   if (now < c.endAt) return;
   state.casting = null;
+  const tgt0 = state.monsters && state.monsters[0];
   const ok = withLogLane('skill', () => castSkillInner(c.skillId, c.opts || undefined));
-  if (ok) applyAfterCastDelay(c.skillId, c.lv);
+  if (ok) { applyAfterCastDelay(c.skillId, c.lv); withLogLane('skill', () => afterSkillCast(c.skillId, tgt0)); }
 }
 function interruptCast(why) {
   const c = state.casting;
@@ -10823,8 +11056,11 @@ function castBreakOnDamage(dmg) {
 }
 function castSkillInner(skillId, opts) {
   const free = !!(opts && opts.free);
-  const sk = free ? findSkillAnywhere(skillId) : findSkillForUse(skillId);
-  if (!sk) return false;
+  const sk0 = free ? findSkillAnywhere(skillId) : findSkillForUse(skillId);
+  if (!sk0) return false;
+  // 轉被動的攻擊技（procCast）觸發時借回原本的類型與倍率（見 procCastSkill）
+  const sk = (free && opts.override) ? Object.assign({}, sk0, opts.override) : sk0;
+  if (sk.type === 'passive' && sk.passiveStat === 'procCast') return false;   // 轉被動的攻擊技只走 procCastSkill
   // 沉默：完全不能施放技能（連卡片的自動念咒也一起擋，官方沉默就是這樣）
   if (playerSilenced()) { if (!free) logMsg(`🤐 沉默中，無法施放「${sk.name}」！`); return false; }
   /* 黃金蟲卡片：官方「可避免被施任何魔法（包括治癒術在內）」——
@@ -10885,9 +11121,10 @@ function castSkillInner(skillId, opts) {
     }
   }
   // 樂器攻擊／纏箭投擲（#68）：消耗箭矢。跟弓的普攻共用同一套彈藥系統
-  if (sk.consumeAmmo && !free) {
+  // 道具一律照扣（使用者 2026-11-12：不管主動、被動觸發、卡片自動念咒都要消耗，施放前先檢查）
+  if (sk.consumeAmmo) {
     if (getAmmoCount() < sk.consumeAmmo) {
-      logMsg(`⚠️ 箭矢不足，無法施放「${sk.name}」！`);
+      if (!free) logMsg(`⚠️ 箭矢不足，無法施放「${sk.name}」！`);
       return false;
     }
   }
@@ -10895,10 +11132,10 @@ function castSkillInner(skillId, opts) {
      這裡只**檢查**湊不湊得出來（背包 → 倉庫），真正扣除在各自的 case 裡，
      跟上面鋅幣／HP／箭矢那幾道守門同一個寫法。
      元素領域從別的領域切換過來時官方不消耗礦石，所以那種情況直接放行。 */
-  if (skillItemCost(sk, lv) && !free
+  if (skillItemCost(sk, lv)
       && !(sk.type === 'buff_elementfield' && elementFieldActive())
       && !sageCanPay(sk.costItems, sk.costQty || 1, sk.goldFallback)) {
-    logMsg(`⚠️ 缺少${sk.costItems.map(id => getItemDisplayName(id)).join('或')}，無法施放「${sk.name}」！`);
+    if (!free) logMsg(`⚠️ 缺少${sk.costItems.map(id => getItemDisplayName(id)).join('或')}，無法施放「${sk.name}」！`);
     return false;
   }
 
@@ -10937,7 +11174,7 @@ function castSkillInner(skillId, opts) {
 
   state.sp -= spCost;
   if (hpCost > 0) state.hp -= hpCost;
-  if (sk.consumeAmmo && !free) for (let i = 0; i < sk.consumeAmmo; i++) consumeAmmo();
+  if (sk.consumeAmmo) for (let i = 0; i < sk.consumeAmmo; i++) consumeAmmo();
   if (zenyCost > 0) state.gold -= zenyCost;
   // 自動念咒不寫冷卻：那是玩家自己那份資源，不該被卡片的觸發吃掉
   if (!free) {
@@ -11282,7 +11519,7 @@ function castSkillInner(skillId, opts) {
       const chance = lvArr(sk.successChance, lv);
       const dur = lvArr(sk.duration, lv);
       const okRoll = chance == null || Math.random() * 100 < chance;
-      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, sk.goldFallback || 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, sk.goldFallback || 0) : null;
       if (!okRoll) { logMsg(`「${sk.name}」Lv${lv} 對 ${def.name} 失敗了。`); break; }
       if (sk.effect === 'strip') {
         (sk.strips || []).forEach(st => {
@@ -11400,7 +11637,7 @@ function castSkillInner(skillId, opts) {
       const ally = downedAllyToRevive();
       if (!ally) { logMsg(`「${sk.name}」：沒有倒地的隊友。`); break; }
       const pct = lvArr(sk.revivePct, lv);
-      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, 1, 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, 1, 0) : null;
       ally._downed = false;
       ally._reviveAt = 0;
       ally.hp = Math.max(1, Math.round(ally.maxHp * pct / 100));
@@ -11413,7 +11650,7 @@ function castSkillInner(skillId, opts) {
       const dest = state._warpDest;
       state._warpDest = null;
       if (!dest || !(state.warpMemos || []).includes(dest)) { logMsg(`「${sk.name}」：沒有選目的地。`); break; }
-      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, 1, 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, 1, 0) : null;
       cancelTravel(true);
       logMsg(`✨ 「${sk.name}」打開了通往「${(MAPS.find(m => m.id === dest) || {}).name || dest}」的傳送之陣${paid ? `（消耗${paid.label}）` : ''}。`);
       startWarpPortal(dest);
@@ -11548,7 +11785,8 @@ function castSkillInner(skillId, opts) {
        差別只在倍率、間隔、持續時間與有沒有附帶回血。 */
     case 'alchemy_summon': {
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
-      const mult = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
+      const mult = (Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult)
+        * (sk.id === 'am_callhomun' && skillLv('am_bioethics') ? 1.1 : 1);   // 生命倫理
       state.activeFieldEffects = (state.activeFieldEffects || []).filter(f => f.skillId !== sk.id);
       state.activeFieldEffects.push({
         kind: 'alchemy_strike', skillId: sk.id, skillLv: lv, name: sk.name, mult, aoe: false,
@@ -11751,7 +11989,7 @@ function castSkillInner(skillId, opts) {
       // blocks：'melee' 暗之障壁／'ranged' 光之障壁；shared：全隊同一面盾、共用次數
       state.shields.push({ id: sk.id, remainingHp: capacity, remainingCharges: charges, expiresAt: Date.now() + dur * 1000,
         blocks: sk.shieldBlocks || null, shared: !!sk.shieldShared });
-      const paid = !free && sk.costItems ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       const what = sk.shieldBlocks === 'ranged' ? '遠程攻擊' : sk.shieldBlocks === 'melee' ? '近戰攻擊' : '攻擊';
       logMsg(`🛡️ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！可擋${what} ${charges} 次${sk.shieldShared ? '（全隊共用）' : ''}`);
       break;
@@ -11775,7 +12013,7 @@ function castSkillInner(skillId, opts) {
       // party 的話每一跳也回給隊友（#131）。回復量記施術者的，跟官方的範圍治療一致
       state.activeFieldEffects.push({ kind: 'selfheal', name: sk.name, amount: healAmt, party: !!sk.party,
         undeadDmg: !!sk.undeadDmg, knockback: (skillCastRow(sk.id) && castLv(skillCastRow(sk.id).knockback, lv)) || 0, skillId: sk.id, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
-      const paid = !free && sk.costItems ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！`);
       break;
     }
@@ -11828,7 +12066,7 @@ function castSkillInner(skillId, opts) {
         stunSec: lvArr(sk.stunSec, lv) || 0, ailSec: lvArr(sk.ailSec, lv) || 0, rootSec: lvArr(sk.rootSec, lv) || 0,
         knockback: row ? castLv(row.knockback, lv) || 0 : 0,
         endsAt: Date.now() + (row ? castLv(row.duration, lv) || 60000 : 60000) });
-      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(`🪤 「${sk.name}」Lv${lv}：放在 ${d.toFixed(1)} 格處${paid ? `（消耗${paid.label}）` : ''}`);
       break;
     }
@@ -11841,7 +12079,7 @@ function castSkillInner(skillId, opts) {
       state.groundUnits.push({ kind: 'zone', skillId: sk.id, name: sk.name, d: tgt.d, a: tgt.a || 0,
         radius: sk.zoneRadius || 2, slow: (lvArr(sk.slowPct, lv) || 0) / 100, poisonMult, statCut: lvArr(sk.statCut, lv) || 0,
         endsAt: Date.now() + (row ? castLv(row.duration, lv) : 5000) });
-      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(poisonMult ? `☠️ 「${sk.name}」Lv${lv}：${(tgt.d).toFixed(1)} 格處散出毒霧${paid ? `（消耗${paid.label}）` : ''}`
         : `🟫 「${sk.name}」Lv${lv}：${(tgt.d).toFixed(1)} 格處的地面變成泥沼`);
       break;
@@ -11971,7 +12209,7 @@ function castSkillInner(skillId, opts) {
     case 'buff_edp': {
       const dur = lvArr(sk.duration, lv), m = lvArr(sk.weaponAtkMult, lv);
       state.buffs.push({ type: 'weaponatk', mult: m, msRemaining: dur * 1000, skillId: sk.id });
-      const paid = !free && skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
+      const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       recomputeDerived(false);
       logMsg(`☠️ 「${sk.name}」Lv${lv}${paid ? `（消耗${paid.label}）` : ''}：裝備 ATK ×${m}，持續 ${dur} 秒。`);
       break;
@@ -12537,15 +12775,18 @@ function wastesResourceInTown(sk, lv) {
 
    所以改成**只維護攻擊那份白名單**，其餘非被動一律算輔助——
    之後新增技能類型會自動出現在頁面上，不會再安靜地消失。 */
+/* 傷害場地技（隕石術、暴風雪、崩裂術、十字驅魔、火煙瓶投擲）以前漏在名單外，被歸進輔助清單、不佔格白放（2026-11-12 補上）。
+   單體減益照類型算攻擊技；個別技能可寫 autoSlot:'support' 改歸輔助清單（魔法師系全面盤查，使用者 2026-11-12）。 */
 const SKILL_ATTACK_TYPES = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi',
-  'damage_aoe', 'magic_aoe', 'poison_proc', 'bomb_random', 'ground_wall', 'ground_trap', 'ground_zone', 'ground_icewall', 'debuff_single'];
+  'damage_aoe', 'magic_aoe', 'poison_proc', 'bomb_random', 'ground_wall', 'ground_trap', 'ground_zone', 'ground_icewall', 'debuff_single',
+  'field_aoe_magic', 'field_phys_aoe'];
 /* 場上沒怪就放不出效果的類型。castSkill() 是**先扣 SP／鋅幣再進 switch**，
    氣泡蟲召喚那種「沒怪就 return false」的 case 會白白吃掉 5,000 鋅幣，
    所以擋在自動施放這一層。 */
 const SKILL_NEEDS_MONSTER_TYPES = SKILL_ATTACK_TYPES.concat(['debuff_def', 'debuff',
   'debuff_web', 'debuff_aspd_aoe', 'debuff_def_aoe', 'ailment_aoe', 'dispel_aoe',
   'field_phys_aoe', 'field_aoe_magic', 'multi_dot_stun', 'stun_field']);
-function isAttackSkill(sk) { return !!sk && SKILL_ATTACK_TYPES.includes(sk.type); }
+function isAttackSkill(sk) { return !!sk && sk.autoSlot !== 'support' && SKILL_ATTACK_TYPES.includes(sk.type); }
 function isAutoSupportSkill(sk) { return !!sk && sk.type !== 'passive' && sk.type !== 'warp_portal' && !isAttackSkill(sk); }
 function skillNeedsMonster(sk) { return !!sk && SKILL_NEEDS_MONSTER_TYPES.includes(sk.type); }
 
@@ -12640,6 +12881,22 @@ function monsterDebuffStillUp(sk) {
   const now = Date.now();
   if (sk.type === 'debuff_def') return !!ms[0] && (ms[0].debuffDefEnd || 0) > now;
   if (sk.type === 'debuff_def_aoe') return ms.length > 0 && ms.every(m => (m.debuffDefEnd || 0) > now);
+  // 改歸輔助清單的單體減益：效果還在、或放了也沒用就不放（不然每次冷卻好就白扣礦石）
+  if (sk.type === 'debuff_single' && ms[0]) {
+    const t = ms[0];
+    if (sk.effect === 'mindbreaker') return (t.debuffMdefEnd || 0) > now;
+    if (sk.effect === 'dispel') return monBuffList(t).length === 0;
+    if (sk.effect === 'ailment') return ailActive(t, sk.ailment);
+    if (sk.effect === 'elementChange') return autoSkillWasted(sk);
+    if (sk.effect === 'strip') return (sk.strips || []).every(st => { const x = t.strip && t.strip[st.key || sk.id]; return x && x.end > now; });
+    if (sk.effect === 'lexaeterna') return !!t.lexAeterna;
+    if (sk.effect === 'decagi') return (t.decAgiUntil || 0) > now;
+    if (sk.effect === 'confine') { const d = MONSTERS[t.defId]; return (t.rootUntil || 0) > now || !d || d.isBoss; }
+    if (sk.effect === 'charm') {
+      const d = MONSTERS[t.defId];
+      return (t.charmUntil || 0) > now || !d || d.isBoss || !['humanoid', 'angel', 'demon'].includes(d.race) || (d.level || 0) > (state.baseLevel || 0);
+    }
+  }
   return false;
 }
 function tryAutoCastSupportSkills() {
@@ -14280,6 +14537,10 @@ function refineItem(slotKey, materialType, useBless) {
     logMsg(`⚠️ ${mat.name} 不能用於 Lv${weaponLv} 武器精煉。`);
     return false;
   }
+  if (mat.minLevel && currentLevel < mat.minLevel) {
+    logMsg(`⚠️ ${mat.name} 只能用在 +${mat.minLevel} 以上。`);
+    return false;
+  }
 
   // 檢查材料庫存
   const invRow = state.inventory.find(r => r.item === mat.id && !r.instanceId);
@@ -14330,11 +14591,12 @@ function refineItem(slotKey, materialType, useBless) {
   } else {
     // 失敗
     const penalty = getRefinementFailPenalty(materialType);
-    if (penalty === 'none') {
-      // 以太礦石：無懲罰
-      logMsg(`💥 精煉失敗！${item.name} 維持 +${currentLevel}。${mat.name}保護了裝備！`);
-    } else if (blessNeed) {
+    if (blessNeed) {
       logMsg(`💥 精煉失敗！${item.name} 維持 +${currentLevel}。鐵匠的祝福保護了裝備！`);
+    } else if (penalty === 'minus1') {
+      // 高密度礦石：只 -1，不損壞
+      inst.refine = currentLevel - 1;
+      logMsg(`💥 精煉失敗！${item.name} 降至 +${currentLevel - 1}，${mat.name}保住了裝備。`);
     } else if (currentLevel >= safeLevel) {
       // 安全等級以上：降3級或損壞
       if (currentLevel > 3) {
@@ -14536,7 +14798,8 @@ function skillSpCost(sk, lv) {
     : (sk.spCost || 0);
   // 卡片的增減與魔力減免（#64，一律是負值）相加後一起套用
   const pct = ((state && state.cardSpCostPct) || 0) + ((state && state.skillSpCostPct) || 0)
-    + buffMult('spcost').flatBonus;   // 為您服務／臨機應變（#68）
+    + buffMult('spcost').flatBonus   // 為您服務／臨機應變（#68）
+    + (state && sk.id === state.plagiarismSkillId && skillLv('st_preserve') ? -20 : 0);   // 自由保護
   const flat = sk ? (getCardBonus('spCost_' + sk.id) || 0) : 0;
   if (!pct && !flat) return base;
   return Math.max(0, Math.round(base * (1 + pct / 100) + flat));
@@ -15857,6 +16120,7 @@ function loadGame() {
     }
     if (typeof state.autoBuyPotion !== 'boolean') state.autoBuyPotion = true;
     if (typeof state.autoBuyArrow !== 'boolean') state.autoBuyArrow = true;
+    if (typeof state.autoBuyMats !== 'boolean') state.autoBuyMats = true;
     // 隊友（#83）：舊存檔沒有這些欄位
     if (!Array.isArray(state.allies)) state.allies = [];
     state.allies.forEach(a => { if (a) { a.monsters = null; a.monster = null; a._lastAttackAt = 0; } });
@@ -16521,7 +16785,8 @@ function computeOfflineProgress(minMs, opts) {
 
      全部走同一張 dropAgg：那張表的單位是「每次擊殺的期望件數」，
      最後統一乘上 totalKills，所以只要把各自的期望值加進來就好。 */
-  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100) * candyMult('dropboost');   // 裝備掉寶率（快樂氣球+10%）+ 掉寶糖
+  const dropMult = farmMult('drop') * (1 + getCardBonus('dropPct') / 100) * candyMult('dropboost')   // 裝備掉寶率（快樂氣球+10%）+ 掉寶糖
+    * (1 + (state.passiveDropPct || 0) / 100);   // 馴鷹術
   const dropAgg = {};
   const addExp2 = (id, n) => { if (n > 0 && ITEMS[id]) dropAgg[id] = (dropAgg[id] || 0) + n; };
   /* 加權掉落表的期望分佈：偷竊與貪婪都是「照掉落率加權抽一件」（pickWeightedDrop），
@@ -16588,10 +16853,10 @@ function computeOfflineProgress(minMs, opts) {
     (bd.drops || []).forEach(d => addBoss(d.item, Math.min(1, d.chance * dropMult) * b.kills));
     const cd = (typeof MONSTER_CARD_DROPS !== 'undefined') ? MONSTER_CARD_DROPS[b.id] : null;
     if (cd && cd.card) addBoss(cd.card, cd.chance * b.kills);
-    /* 以太礦石（#145）：只有頭目會掉，一次擲兩顆各自判定。
-       離線以前完全沒有這一段——打了一整晚頭目卻一顆以太都沒有。 */
+    /* 高密度礦石（#145）：只有頭目會掉，一次擲兩顆各自判定。
+       離線以前完全沒有這一段——打了一整晚頭目卻一顆都沒有。 */
     const eth = getEtherDropChance(bd);
-    if (eth > 0) ['ether_oridecon', 'ether_elunium'].forEach(id => addBoss(id, eth * b.kills));
+    if (eth > 0) ['hd_bradium', 'hd_carnium'].forEach(id => addBoss(id, eth * b.kills));
     // 頭目也吃偷竊／貪婪／卡片附加掉落，跟雜魚同一條規則
     if (stealRate || greedRate) {
       const share = {};

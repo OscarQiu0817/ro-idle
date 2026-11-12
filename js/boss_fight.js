@@ -76,9 +76,27 @@ function bossPickTarget() {
   // 定點類打最前排（跟普攻同一個人），偶爾打別人，免得後排永遠安全
   return Math.random() < 0.7 ? frontMember() : ms[Math.floor(Math.random() * ms.length)];
 }
+/* 念咒拆除（官方 SA_SPELLBREAKER 打斷詠唱、吸 SP）：首領開始詠唱時 4%~20% 機率打斷，回 20~100 SP，每人內部冷卻 15 秒 */
+function bossSpellBreak(def, sk, now) {
+  for (const m of bossMembers()) {
+    const lv = (m.learnedSkills || {}).sa_spellbreaker || 0;
+    if (!lv || now < (m._spellBreakAt || 0) || Math.random() * 100 >= 4 * lv) continue;
+    m._spellBreakAt = now + 15000;
+    m.sp = Math.min(m.maxSp || 0, (m.sp || 0) + 20 * lv);
+    logMsg(`🚫 念咒拆除！${m === allyOwnerState() ? '你' : (m.name || '隊友')}打斷了 ${def.name} 的「${sk.name}」，回復 ${20 * lv} SP。`);
+    return true;
+  }
+  return false;
+}
+/* 地元素領域（官方 SA_LANDPROTECTOR 消除地面技能）：隊上最高等級者讓首領紅圈傷害 −10%~30% */
+function landProtectorMult() {
+  const lv = Math.max(0, ...bossMembers().map(m => (m.learnedSkills || {}).sa_landprotector || 0));
+  return lv ? 1 - (5 + 5 * lv) / 100 : 1;
+}
 function bossCast(mon, id, now) {
   const def = MONSTERS[mon.defId];
   const sk = BOSS_SKILLS[id];
+  if (bossSpellBreak(def, sk, now)) return null;
   const tgt = bossPickTarget();
   const T = bossMemberXY(tgt), B = polarXY(mon);
   const ang = Math.atan2(T.y - B.y, T.x - B.x);
@@ -112,9 +130,10 @@ function bossResolve(c) {
   if (!mon) return;
   const def = MONSTERS[mon.defId];
   const hit = [];
+  const lpMult = landProtectorMult();
   bossMembers().forEach(m => {
     if (!castHas(c, bossMemberXY(m), 0)) { if (m._sawCast === c.uid) bossNoteDodge(m, true); return; }
-    const dmg = Math.max(1, Math.round(m.maxHp * c.dmg * (0.9 + Math.random() * 0.2)));
+    const dmg = Math.max(1, Math.round(m.maxHp * c.dmg * lpMult * (0.9 + Math.random() * 0.2)));
     hit.push(m);
     bossNoteDodge(m, false);
     if (m === allyOwnerState()) bossHurtPlayer(dmg, def, c);
@@ -172,7 +191,10 @@ function bossDodgeTick(m, dt, now) {
   if (threat && !m._dodgeTo && now >= (m._reactAt || 0)) {
     m._dodgeTo = bossSafeSpot(p);
     if (m._dodgeTo) {
-      if (isOwner) { if (state.casting) interruptCast('閃避'); }
+      // 自由施法：閃避不中斷詠唱
+      const freeCast = ((m.learnedSkills || {}).sa_freecast || 0) > 0;
+      if (freeCast) { /* 邊閃邊唸 */ }
+      else if (isOwner) { if (state.casting) interruptCast('閃避'); }
       else if (m.casting) withAlly(m, () => interruptCast('閃避'));
     }
   }
@@ -232,7 +254,7 @@ function tickBossFight(dt, now) {
 
 /* ======================================================================
    第 2 期：在地圖上挑戰（使用者 2026-11-12）
-   地圖分頁列出這張圖的迷你王與 MVP，每隻一個「挑戰」按鈕。按下去當場清掉小怪、只剩王（MVP 帶小弟），
+   地圖分頁列出這張圖的迷你王與 MVP，每隻一個「挑戰」按鈕。按下去當場清掉小怪、只剩王與官方護衛，
    時限內打贏＝解鎖（之後這隻王才會出現在這張圖，第 3 期接上）並記錄擊殺時間（沿用 #137 的 bossKills）。
    首次打贏照常給經驗與掉落；之後再挑戰只刷新紀錄，不給獎勵（免得變成無限刷王）。
    ====================================================================== */
@@ -271,7 +293,7 @@ function startBossChallenge(defId) {
   state.monsters.push(mon);
   state.monster = mon;
   codexRecordSeen(defId);
-  if (def.isMvp) summonBossSlaves(def);
+  summonBossSlaves(def, mon);
   const kind = def.isMvp ? 'mvp' : 'mini';
   state.bossChallenge = { defId, monId: mon.id, startAt: now, limitMs: BOSS_CHALLENGE_LIMIT_MS[kind], first: !bossUnlocked(defId), mapId: state.mapId };
   logMsg(`⚔️ 挑戰 ${def.icon || ''}${def.name}（${def.isMvp ? 'MVP' : '迷你王'}）！限時 ${Math.round(state.bossChallenge.limitMs / 60000)} 分鐘。`);
@@ -317,6 +339,8 @@ function tickBossChallenge(now) {
   if (state.mapId !== c.mapId) return endBossChallenge(false, '離開了地圖');
   if (!(state.monsters || []).some(m => m.id === c.monId)) return endBossChallenge(false, '首領不見了');
   if (now - c.startAt > c.limitMs) return endBossChallenge(false, '時間到');
+  const boss = state.monsters.find(m => m.id === c.monId);
+  if (boss) tickBossSlaveRecall(boss, now);
 }
 function abandonBossChallenge() { endBossChallenge(false, '放棄'); }
 

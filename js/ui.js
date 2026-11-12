@@ -4926,6 +4926,15 @@ function renderAutoBattleTab() {
       <div class="ab-info-text">目前裝備：${state.equip.ammo && ITEMS[state.equip.ammo] ? `${ITEMS[state.equip.ammo].name} ×${getItemQty(state.equip.ammo)}` : '沒有（到裝備欄選擇箭矢）'}</div>
     </div>
 
+    <!-- 技能耗材自動購買（使用者 2026-11-12） -->
+    <div class="ab-section">
+      <h4 class="ab-section-title">💎 技能耗材</h4>
+      <div class="potion-toggles">
+        <label class="auto-toggle"><input type="checkbox" ${state.autoBuyMats ? 'checked' : ''} onchange="setAutoBuyMats(this.checked)"> 技能用的魔力礦石／陷阱道具剩 ${AUTO_BUY_MAT_THRESHOLD} 個以下自動買 ${AUTO_BUY_MAT_QTY} 個</label>
+      </div>
+      <div class="ab-info-text">${(() => { const ids = matsInUse(); return ids.length ? '目前會用到：' + ids.map(id => `${ITEMS[id].name} ×${getItemQty(id)}`).join('、') : '目前沒有會用到耗材的技能。'; })()}</div>
+    </div>
+
     <div class="ab-section">
       <h4 class="ab-section-title">💧 SP 藥水設定</h4>
       <div class="potion-toggles">
@@ -7079,7 +7088,9 @@ function showAmmoSelect() {
    直接點就換裝。個體裝備（精煉／插卡過的）跟普通那疊分開列，各自是一件。
 ------------------------------------------------- */
 let equipPickCat = 'weapon';   // 'weapon' | 'armor' | 'relic'
-function setEquipPickCat(c) { equipPickCat = c; renderEquipTab(); }
+let equipPickSub = 'all';       // 子分類：武器類型／防具部位（比照背包 tab，使用者 2026-11-12）
+function setEquipPickCat(c) { equipPickCat = c; equipPickSub = 'all'; renderEquipTab(); }
+function setEquipPickSub(s) { equipPickSub = s; renderEquipTab(); }
 /* 三顆分頁鈕。一般裝備與遺物兩條路都會用到，抽出來免得改一邊漏另一邊 */
 function equipPickTabsHtml() {
   const btn = (key, label) => `<button class="btn-small ${equipPickCat === key ? 'active' : 'ghost'}"
@@ -7387,10 +7398,24 @@ function renderEquipTab() {
   }
 
   try {
-    const rows = state.inventory.filter(r => {
+    const wearable = state.inventory.filter(r => {
       const d = ITEMS[r.item];
       return d && d.type === equipPickCat && canJobEquip(d);
-    }).sort((a, b) => {
+    });
+    // 子分類（頭飾／鎧甲／盾牌…、單手劍／弓…）：只列真的有的，排序照背包 tab
+    const subCount = {};
+    wearable.forEach(r => { const k = invSubOf(r.item); subCount[k] = (subCount[k] || 0) + 1; });
+    const armorOrder = Object.keys(ARMOR_TYPE_LABELS);
+    const subKeys = Object.keys(subCount).sort((a, b) => equipPickCat === 'armor'
+      ? (armorOrder.indexOf(a) + 1 || 99) - (armorOrder.indexOf(b) + 1 || 99) : subCount[b] - subCount[a]);
+    if (equipPickSub !== 'all' && !subCount[equipPickSub]) equipPickSub = 'all';
+    const subChips = subKeys.length > 1
+      ? `<div class="inv-subs">
+           <button class="btn-chip ${equipPickSub === 'all' ? 'active' : ''}" onclick="setEquipPickSub('all')">全部 ${wearable.length}</button>
+           ${subKeys.map(k => `<button class="btn-chip ${equipPickSub === k ? 'active' : ''}" onclick="setEquipPickSub('${k}')">${invSubLabel(equipPickCat, k)} ${subCount[k]}</button>`).join('')}
+         </div>`
+      : '';
+    const rows = wearable.filter(r => equipPickSub === 'all' || invSubOf(r.item) === equipPickSub).sort((a, b) => {
       // 個體（精煉/插卡）排前面，其次照名稱
       const ai = a.instanceId ? 0 : 1, bi = b.instanceId ? 0 : 1;
       if (ai !== bi) return ai - bi;
@@ -7436,8 +7461,9 @@ function renderEquipTab() {
         </div>
         <div class="equip-pick-head">
           ${equipPickTabsHtml()}
-          <span class="equip-pick-stats">${currentJob().name}可裝備 ${rows.length} 件</span>
+          <span class="equip-pick-stats">${currentJob().name}可裝備 ${wearable.length} 件</span>
         </div>
+        ${subChips}
       </div>
       ${listHtml}`;
     paintEquipDoll();
@@ -9042,7 +9068,7 @@ function refineContext(slotKey) {
   const level = getRefinementLevel(slotKey);
   // 這件裝備「用得上」的材料（不管身上有沒有），讓玩家知道該去湊什麼
   const mats = Object.entries(REFINEMENT_MATERIALS)
-    .filter(([, m]) => (isArmor ? m.usableArmor : m.usableWeaponLv.includes(weaponLv)))
+    .filter(([, m]) => (isArmor ? m.usableArmor : m.usableWeaponLv.includes(weaponLv)) && !(m.minLevel && level < m.minLevel))
     .map(([key, m]) => {
       const invRow = state.inventory.find(r => r.item === m.id && !r.instanceId);
       return { key, mat: m, qty: invRow ? invRow.qty : 0 };
