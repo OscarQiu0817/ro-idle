@@ -975,6 +975,8 @@ function renderAllyPanel() {
     }).join('');
     html += formationHtml();
   }
+  // 打王站姿（T51 第 4 期；使用者 2026-11-12 指定放在隊伍面板）
+  html += `<div class="ally-sec">👑 打王站姿</div><div class="ab-info-text">自動閃避：看到紅圈就躲（閃掉就不受傷）。硬扛：不躲、不停手。被打中時，傷害照各自的防禦／VIT（物理）、魔防／INT（魔法）、自動防禦與護盾計算，跟站姿無關。全場技閃不掉；分攤圈站越多人每人越少。</div>${bossStanceRowsHtml()}`;
 
   /* 「其他存檔的角色」在戰鬥地圖預設收起——那邊本來就雇不了，
      展開只是佔掉面板高度（使用者 2026-08-15 指定）。 */
@@ -4933,6 +4935,15 @@ function renderAutoBattleTab() {
         <label class="auto-toggle"><input type="checkbox" ${state.autoBuyMats ? 'checked' : ''} onchange="setAutoBuyMats(this.checked)"> 技能用的魔力礦石／陷阱道具（含隊友）剩 ${AUTO_BUY_MAT_THRESHOLD} 個以下自動買 ${AUTO_BUY_MAT_QTY} 個</label>
       </div>
       <div class="ab-info-text">${(() => { const ids = matsInUseParty(); return ids.length ? '目前會用到：' + ids.map(id => `${ITEMS[id].name} ×${getItemQty(id)}`).join('、') : '目前沒有會用到耗材的技能。'; })()}</div>
+    </div>
+
+    <!-- 打王站姿與手動操控（T51 第 4 期，使用者 2026-11-12） -->
+    <div class="ab-section">
+      <h4 class="ab-section-title">👑 打王</h4>
+      <div class="ab-info-text">各隊員要閃避還是硬扛，在「隊伍」面板設定。</div>
+      <div class="potion-toggles">
+        <label class="auto-toggle"><input type="checkbox" ${state.bossManual ? 'checked' : ''} onchange="setBossManual(this.checked);renderAutoBattleTab&&renderAutoBattleTab()"> 手動操控：打王時自己移動（方向鍵／WASD，或點戰鬥畫面的地面），不自動閃避</label>
+      </div>
     </div>
 
     <div class="ab-section">
@@ -10349,3 +10360,41 @@ Object.keys(NOTICE_ACTIONS).forEach(name => {
   if (typeof fn !== 'function') return;
   window[name] = function (...args) { return runWithNotice(NOTICE_ACTIONS[name], () => fn.apply(this, args)); };
 });
+
+
+/* ---------------- 打王：站姿列與手動操控輸入（T51 第 4 期） ---------------- */
+function bossStanceRowsHtml() {
+  const row = (who, name, m) => {
+    const st = bossStance(m);
+    const btn = (v, label) => `<button class="btn-chip ${st === v ? 'active' : ''}" onclick="setBossStance('${who}','${v}');renderAllyPanel()">${label}</button>`;
+    return `<div class="boss-stance-row"><span class="boss-stance-name">${name}</span>${btn('dodge', '🏃 自動閃避')}${btn('tank', '🛡️ 硬扛')}</div>`;
+  };
+  const allies = (state.allies || []).filter(Boolean);
+  return `<div class="boss-stance-list">${row('p', state.name || '你', state)}${allies.map(a => row(a._slot, a._allyName || '隊友', a)).join('')}</div>`;
+}
+(function bossManualInput() {
+  const KEYS = { ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0] };
+  const held = new Set();
+  const push = () => {
+    let x = 0, y = 0;
+    held.forEach(k => { x += KEYS[k][0]; y += KEYS[k][1]; });
+    const d = Math.hypot(x, y);
+    bossManualSetDir(d ? { x: x / d, y: y / d } : null);
+  };
+  const typing = e => { const t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); };
+  window.addEventListener('keydown', e => {
+    if (!KEYS[e.code] || typing(e) || typeof bossManualActive !== 'function' || !bossManualActive()) return;
+    e.preventDefault();   // 方向鍵不要捲動頁面
+    held.add(e.code); push();
+  });
+  window.addEventListener('keyup', e => { if (KEYS[e.code] && held.delete(e.code)) push(); });
+  window.addEventListener('blur', () => { held.clear(); push(); });
+  // 點戰鬥畫面的地面：換算成世界座標（一格＝橫 BF_CELL_X%、直 BF_CELL_Y%，玩家在 bfPlayer）
+  document.addEventListener('click', e => {
+    const scene = e.target && e.target.closest && e.target.closest('#battle-scene');
+    if (!scene || typeof bossManualActive !== 'function' || !bossManualActive()) return;
+    const r = scene.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width * 100, py = (e.clientY - r.top) / r.height * 100;
+    bossManualMoveTo({ x: (px - bfPlayer.x) / BF_CELL_X - bfWorldLag.x, y: (py - bfPlayer.y) / BF_CELL_Y - bfWorldLag.y });
+  });
+})();

@@ -9,16 +9,7 @@
    玩家閃避＝真的走（playerMoveBy）；隊友閃避＝在站位位置上加一個偏移（ally._dodgeOff）。
    這個檔案在 engine.js 之後載入，共用它的全域。 */
 
-/* ---- 通用紅圈技能 ----
-   wind：倒數 ms；dmg：最大 HP 的比例；迷你王用前三招，MVP 五招全有 */
-const BOSS_SKILLS = {
-  charge: { name: '衝撞', wind: 1100, dmg: 0.30 },        // 王到目標的直線，王衝過去
-  jump: { name: '彈跳', wind: 1500, dmg: 0.35 },          // 目標腳下的圓，王落在圓心
-  bombard: { name: '連環轟炸', wind: 1800, dmg: 0.25 },   // 隊伍周圍數個小圓一起炸
-  sweep: { name: '橫掃', wind: 1300, dmg: 0.40 },         // 王前方扇形
-  quake: { name: '震地', wind: 1900, dmg: 0.45 },         // 王身邊大圓，或甜甜圈（貼近王才安全）
-};
-const BOSS_SKILL_SET = { mini: ['charge', 'jump', 'bombard'], mvp: ['charge', 'jump', 'bombard', 'sweep', 'quake'] };
+/* ---- 紅圈技能表在 js/boss_patterns.js（第 4 期：每隻王各自的輪替、閃不掉的全場技、分攤圈、快速預警） ---- */
 const BOSS_CAST_GAP_MS = [4500, 6000];   // 放完一招到下一招的間隔（隨機）
 const BOSS_FIRST_CAST_MS = 2500;         // 王出現後第一招
 const DODGE_REACT_BASE_MS = 600, DODGE_REACT_MIN_MS = 250;
@@ -43,6 +34,7 @@ const xyPolar = (x, y) => ({ d: Math.hypot(x, y), a: Math.atan2(y, x) });
 function zoneHas(z, p, margin) {
   const m = margin || 0;
   const dx = p.x - z.x, dy = p.y - z.y, d = Math.hypot(dx, dy);
+  if (z.type === 'all') return true;
   if (z.type === 'circle') return d <= z.r + m;
   if (z.type === 'donut') return d >= z.r0 - m && d <= z.r1 + m;
   if (z.type === 'cone') {
@@ -70,7 +62,7 @@ function bossMembers() {
 }
 
 /* ---- 王放技能 ---- */
-function bossSkillSet(def) { return def.isMvp ? BOSS_SKILL_SET.mvp : BOSS_SKILL_SET.mini; }
+function bossSkillSet(mon) { return bossPatternFor(mon.defId); }
 function bossPickTarget() {
   const ms = bossMembers();
   // 定點類打最前排（跟普攻同一個人），偶爾打別人，免得後排永遠安全
@@ -93,14 +85,17 @@ function landProtectorMult() {
   const lv = Math.max(0, ...bossMembers().map(m => (m.learnedSkills || {}).sa_landprotector || 0));
   return lv ? 1 - (5 + 5 * lv) / 100 : 1;
 }
-function bossCast(mon, id, now) {
+function bossCast(mon, skill, now) {
   const def = MONSTERS[mon.defId];
-  const sk = BOSS_SKILLS[id];
+  const sk = typeof skill === 'string' ? Object.assign({}, BOSS_SKILL_LIB[skill]) : skill;   // 測試可直接傳範本名
+  const id = sk.shape;
   if (bossSpellBreak(def, sk, now)) return null;
   const tgt = bossPickTarget();
   const T = bossMemberXY(tgt), B = polarXY(mon);
   const ang = Math.atan2(T.y - B.y, T.x - B.x);
   const zones = [];
+  if (id === 'nova') zones.push({ type: 'all', x: B.x, y: B.y });                     // 全場：閃不掉
+  if (id === 'share') zones.push({ type: 'circle', x: T.x, y: T.y, r: 2.2 });         // 分攤：圈裡的人平分
   if (id === 'charge') zones.push({ type: 'line', x: B.x, y: B.y, ang, w: 2.4, len: Math.min(12, Math.hypot(T.x - B.x, T.y - B.y) + 2) });
   if (id === 'jump') zones.push({ type: 'circle', x: T.x, y: T.y, r: 2.5 });
   if (id === 'bombard') {
@@ -117,10 +112,11 @@ function bossCast(mon, id, now) {
   if (id === 'quake') zones.push(Math.random() < 0.5 ? { type: 'circle', x: B.x, y: B.y, r: 5 } : { type: 'donut', x: B.x, y: B.y, r0: 3, r1: 9 });
   // 只存編號不存物件：存檔時 state 會整包 JSON，互相參照會變成循環
   state.bossCastSeq = (state.bossCastSeq || 0) + 1;
-  const c = { uid: state.bossCastSeq, id, name: sk.name, monId: mon.id, zones, t0: now, end: now + sk.wind, dmg: sk.dmg, ang };
+  const c = { uid: state.bossCastSeq, id, name: sk.name, monId: mon.id, zones, t0: now, end: now + sk.wind, dmg: sk.dmg, ang,
+    kind: sk.kind || 'phys', share: id === 'share', nova: id === 'nova' };
   (state.bossCasts = state.bossCasts || []).push(c);
   mon._bossCast = c.uid;
-  logMsg(`⚠️ ${def.name} 準備施放「${sk.name}」！`);
+  logMsg(`⚠️ ${def.name} 準備施放「${sk.name}」${id === 'nova' ? '（全場，閃不掉）' : id === 'share' ? '（分攤，站進圈裡）' : ''}！`);
   return c;
 }
 /* 倒數結束：圈裡的人吃傷害；衝撞、彈跳讓王移到落點 */
@@ -129,22 +125,86 @@ function bossResolve(c) {
   const mon = castMon(c);
   if (!mon) return;
   const def = MONSTERS[mon.defId];
-  const hit = [];
   const lpMult = landProtectorMult();
-  bossMembers().forEach(m => {
-    if (!castHas(c, bossMemberXY(m), 0)) { if (m._sawCast === c.uid) bossNoteDodge(m, true); return; }
-    const dmg = Math.max(1, Math.round(m.maxHp * c.dmg * lpMult * (0.9 + Math.random() * 0.2)));
-    hit.push(m);
+  const ms = bossMembers();
+  const inside = ms.filter(m => castHas(c, bossMemberXY(m), 0));
+  ms.forEach(m => { if (!inside.includes(m) && m._sawCast === c.uid) bossNoteDodge(m, true); });
+  // 分攤：圈裡每多一人，每人少吃一份
+  const shareDiv = c.share ? Math.max(1, inside.length) : 1;
+  inside.forEach(m => {
+    const base = m.maxHp * c.dmg * lpMult * (0.9 + Math.random() * 0.2) / shareDiv;
+    const dmg = bossMitigate(m, base, c);
     bossNoteDodge(m, false);
+    if (dmg <= 0) return;
     if (m === allyOwnerState()) bossHurtPlayer(dmg, def, c);
     else allyTakeDamage(m, dmg, def.name);
   });
+  if (c.share && inside.length > 1) logMsg(`🤝 ${inside.length} 人分攤了「${c.name}」。`);
   // 王移動到落點
   const z = c.zones[0];
   if (c.id === 'charge') Object.assign(mon, xyPolar(z.x + Math.cos(z.ang) * z.len * 0.85, z.y + Math.sin(z.ang) * z.len * 0.85));
   if (c.id === 'jump') Object.assign(mon, xyPolar(z.x, z.y));
-  if (!hit.length) logMsg(`✨ 全員閃過了「${c.name}」！`);
+  if (!inside.length) logMsg(`✨ 全員閃過了「${c.name}」！`);
   if (mon._bossCast === c.uid) mon._bossCast = null;
+}
+/* 紅圈傷害減免（第 4 期）：以前是最大 HP 的固定比例，什麼都減不了，硬扛沒有意義。
+   只看被打中那個人自己的面板，跟站姿無關（使用者 2026-11-12：站姿只決定閃不閃）
+     物理：硬防比例減傷（官方 (4000+硬防)/(4000+10×硬防)）×（1 − VIT×0.3%，最多 −30%）；可被自動防禦擋下
+     魔法：硬魔防同一條 ×（1 − INT×0.3%，最多 −30%）
+     之後再過護盾（霸邪之陣、暗之障壁…）與能量外套 */
+function bossMitigate(m, dmg, c) {
+  const st = m.stats || {};
+  if (c.kind === 'magic') {
+    const md = m.mdefHard || 0;
+    dmg *= (1000 + md) / (1000 + 10 * md) * (1 - Math.min(0.3, (st.int || 0) * 0.003));
+  } else {
+    const hd = m.defHard || 0;
+    dmg *= (4000 + hd) / (4000 + 10 * hd) * (1 - Math.min(0.3, (st.vit || 0) * 0.003));
+    const blk = withHolder(m, () => buffMult('block').flatBonus || 0);
+    if (blk > 0 && Math.random() * 100 < blk) {
+      logMsg(`🛡️ ${m === allyOwnerState() ? '你' : (m._allyName || '隊友')}擋下了「${c.name}」！`);
+      return 0;
+    }
+  }
+  dmg = Math.max(1, Math.round(dmg));
+  dmg = absorbWithShields(m, dmg, m === allyOwnerState() ? '' : (m._allyName || '隊友'), m === allyOwnerState() ? 'main' : 'ally', false);
+  if (dmg > 0) dmg = energyCoatCut(m, dmg);
+  return dmg;
+}
+// 在這位隊員身上算（buffMult 讀的是 state）
+function withHolder(m, fn) { return m === allyOwnerState() ? fn() : withAlly(m, fn); }
+/* 站姿：'dodge' 自動閃避（預設）／'tank' 硬扛（不閃、不停手） */
+function bossStance(m) { return (m && m.bossStance) === 'tank' ? 'tank' : 'dodge'; }
+function setBossStance(who, stance) {
+  const m = who === 'p' ? allyOwnerState() : allyList().find(a => a && a._slot === String(who));
+  if (!m) return false;
+  m.bossStance = stance === 'tank' ? 'tank' : 'dodge';
+  if (m.bossStance === 'tank') m._dodgeTo = null;
+  saveGame();
+  return true;
+}
+/* 手動操控（第 4 期）：開啟後玩家自己移動（方向鍵／WASD 或點地面），不自動閃避；隊友照舊 */
+function setBossManual(on) { state.bossManual = !!on; state._manualTo = null; saveGame(); }
+function bossManualActive() { return !!(state && state.bossManual && bossFightActive() && !state.travel); }
+// 介面送來的移動：dir＝{x,y} 單位向量（按住方向鍵）；to＝{x,y} 世界座標（點地面）
+function bossManualSetDir(dir) { if (state) state._manualDir = dir && (dir.x || dir.y) ? dir : null; }
+function bossManualMoveTo(to) { if (state) state._manualTo = to || null; }
+function tickBossManual(dt) {
+  if (!bossManualActive()) { if (state) { state._manualTo = null; } return false; }
+  if (playerImmobile()) return false;
+  const step = dt / PLAYER_WALK_MS;
+  const dir = state._manualDir;
+  if (dir) { state._manualTo = null; playerMoveBy(step, Math.atan2(dir.y, dir.x)); return true; }
+  const to = state._manualTo;
+  if (to) {
+    const d = Math.hypot(to.x, to.y);
+    if (d < 0.05) { state._manualTo = null; return false; }
+    const s2 = Math.min(d, step), ang = Math.atan2(to.y, to.x);
+    playerMoveBy(s2, ang);
+    state._manualTo = { x: to.x - Math.cos(ang) * s2, y: to.y - Math.sin(ang) * s2 };   // 世界平移了，目標跟著換算
+    return true;
+  }
+  return false;
 }
 function bossHurtPlayer(dmg, def, c) {
   dmg = Math.max(1, Math.round(dmg * playerDmgTakenMult()));
@@ -173,7 +233,7 @@ function bossSafeSpot(p) {
     for (let i = 0; i < 16; i++) {
       const a = i * Math.PI / 8;
       const q = { x: p.x + Math.cos(a) * r, y: p.y + Math.sin(a) * r };
-      if (anyZoneHas(q, DODGE_SAFE_MARGIN)) continue;
+      if ((state.bossCasts || []).some(c => !c.share && !c.nova && castHas(c, q, DODGE_SAFE_MARGIN))) continue;
       // 同樣遠的點裡，挑離王比較近的（躲完好回來打）
       const boss = state.monsters.find(m => MONSTERS[m.defId] && MONSTERS[m.defId].isBoss);
       const bd2 = boss ? Math.hypot(q.x - polarXY(boss).x, q.y - polarXY(boss).y) : 0;
@@ -185,8 +245,17 @@ function bossSafeSpot(p) {
 }
 function bossDodgeTick(m, dt, now) {
   const isOwner = m === allyOwnerState();
+  if (bossStance(m) === 'tank' || (isOwner && state.bossManual)) { m._dodgeTo = null; return; }
   const p = bossMemberXY(m);
-  const threat = (state.bossCasts || []).find(c => castHas(c, p, DODGE_SEE_MARGIN));
+  // 分攤圈：自動閃避的人往圈裡站（全場技閃不掉，不用動）
+  const shareC = (state.bossCasts || []).find(c => c.share && !castHas(c, p, -0.3));
+  if (shareC && !(state.bossCasts || []).some(c => !c.share && !c.nova && castHas(c, p, DODGE_SEE_MARGIN))) {
+    const z = shareC.zones[0];
+    if (m._sawCast !== shareC.uid) { m._sawCast = shareC.uid; m._reactAt = now + dodgeReactMs(m); }
+    if (now >= (m._reactAt || 0)) m._dodgeTo = { x: z.x, y: z.y };
+  }
+  const threat = (state.bossCasts || []).find(c => !c.share && !c.nova && castHas(c, p, DODGE_SEE_MARGIN))
+    || (m._dodgeTo && (state.bossCasts || []).find(c => c.share));
   if (threat && m._sawCast !== threat.uid) { m._sawCast = threat.uid; m._reactAt = now + dodgeReactMs(m); }
   if (threat && !m._dodgeTo && now >= (m._reactAt || 0)) {
     m._dodgeTo = bossSafeSpot(p);
@@ -245,11 +314,13 @@ function tickBossFight(dt, now) {
     if (mon.stunnedUntil && now < mon.stunnedUntil) return;
     if (!mon._bossNextAt) { mon._bossNextAt = now + BOSS_FIRST_CAST_MS; mon._bossIdx = 0; return; }
     if (now < mon._bossNextAt) return;
-    const set = bossSkillSet(def);
-    bossCast(mon, set[(mon._bossIdx++) % set.length], now);
-    mon._bossNextAt = now + BOSS_SKILLS[set[(mon._bossIdx - 1) % set.length]].wind + BOSS_CAST_GAP_MS[0] + Math.random() * (BOSS_CAST_GAP_MS[1] - BOSS_CAST_GAP_MS[0]);
+    const set = bossSkillSet(mon);
+    const sk = set[(mon._bossIdx++) % set.length];
+    bossCast(mon, sk, now);
+    mon._bossNextAt = now + sk.wind + BOSS_CAST_GAP_MS[0] + Math.random() * (BOSS_CAST_GAP_MS[1] - BOSS_CAST_GAP_MS[0]);
   });
   bossMembers().forEach(m => bossDodgeTick(m, dt, now));
+  state._manualMoving = tickBossManual(dt);
 }
 
 /* ======================================================================

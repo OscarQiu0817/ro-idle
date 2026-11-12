@@ -5882,7 +5882,9 @@ function gameTick() {
     }
     else if (tgt && Number.isFinite(tgt.d) && tgt.d > engage + DIST_EPS) {
       // 走向目標：玩家真的移動（其他怪、場地物件一起平移），目標距離剛好縮短 step
-      if (!playerImmobile()) playerMoveBy(Math.min(tgt.d - engage, moveDt / PLAYER_WALK_MS), tgt.a || 0);
+      // 打王手動操控（T51 第 4 期）：玩家正在自己移動、或紅圈還在地上時，不自動走回去
+      const manualHold = state._manualMoving || (state.bossManual && (state.bossCasts || []).length > 0);
+      if (!playerImmobile() && !manualHold) playerMoveBy(Math.min(tgt.d - engage, moveDt / PLAYER_WALK_MS), tgt.a || 0);
       state.attackAccumulator = 0;
     } else if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
       state.attackAccumulator = 0;   // 站在技能射程上，普攻打不到
@@ -9425,6 +9427,7 @@ function keepAllyCombat(fresh, prev, keepSettings = true) {
   fresh._atkAccum = prev._atkAccum || 0;
   fresh._lastAttackAt = prev._lastAttackAt || 0;
   if (prev._fid) fresh._fid = prev._fid;   // 站位認人用
+  if (prev.bossStance) fresh.bossStance = prev.bossStance;   // 打王站姿是隊伍面板的設定，同步也保留
   if (keepSettings) {
     if (prev.autoSkill != null) fresh.autoSkill = prev.autoSkill;
     if (prev.autoAttack != null) fresh.autoAttack = prev.autoAttack;
