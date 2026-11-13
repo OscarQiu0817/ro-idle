@@ -21,6 +21,19 @@ const MAX_SLOTS = 15;
 
 function getSlotKey(slot) { return SAVE_KEY_PREFIX + slot; }
 const TICK_MS = 100;
+/* 統一時間與亂數（T55 前置，2026-11-13）：引擎與戰鬥檔一律走 gameNow()／rng()。
+   之後要重播、驗證一場戰鬥（同一份快照＋同一個種子），只要換掉這兩支。
+   setRngSeed(0) 回到 Math.random。 */
+function gameNow() { return Date.now(); }
+let _rngState = 0;
+function rng() {
+  if (!_rngState) return Math.random();
+  _rngState ^= _rngState << 13; _rngState >>>= 0;
+  _rngState ^= _rngState >>> 17;
+  _rngState ^= _rngState << 5; _rngState >>>= 0;
+  return _rngState / 4294967296;
+}
+function setRngSeed(seed) { _rngState = seed ? ((seed >>> 0) || 1) : 0; }
 
 /* ---------------- 跨角色倉庫（獨立於任何存檔欄位，全帳號共用）---------------- */
 const WAREHOUSE_KEY = 'ro_idle_warehouse';
@@ -53,7 +66,7 @@ function importWarehouse(obj) {
     if (!ITEMS[r.item]) return;   // 已不存在的道具，丟掉不帶入
     const row = { item: r.item, qty: Math.floor(r.qty) };
     if (r.instanceId) {
-      row.instanceId = 'wh_' + r.item + '_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      row.instanceId = 'wh_' + r.item + '_' + gameNow() + '_' + Math.floor(rng() * 10000);
       row.refine = r.refine || 0;
       row.cards = Array.isArray(r.cards) ? r.cards.slice() : [];
     }
@@ -77,7 +90,7 @@ function buildFullBackup() {
   }
   const whRaw = localStorage.getItem(WAREHOUSE_KEY);
   const out = {
-    app: 'ro-idle', type: 'backup', version: 1, exportedAt: Date.now(),
+    app: 'ro-idle', type: 'backup', version: 1, exportedAt: gameNow(),
     slots: slots,
     warehouse: whRaw ? JSON.parse(whRaw) : { items: [], gold: 0 }
   };
@@ -159,7 +172,7 @@ function depositInstanceToWarehouse(instanceId) {
   const wh = loadWarehouse();
   wh.items.push({
     item: inst.item, qty: 1,
-    instanceId: 'wh_' + inst.item + '_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+    instanceId: 'wh_' + inst.item + '_' + gameNow() + '_' + Math.floor(rng() * 10000),
     refine: inst.refine || 0,
     cards: (inst.cards || []).slice()
   });
@@ -176,7 +189,7 @@ function withdrawInstanceFromWarehouse(whInstanceId) {
   wh.items.splice(idx, 1);
   saveWarehouse(wh);
   if (!state.instances) state.instances = {};
-  const id = row.item + '#' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+  const id = row.item + '#' + gameNow() + '_' + Math.floor(rng() * 10000);
   state.instances[id] = { item: row.item, refine: row.refine || 0, cards: (row.cards || []).slice() };
   state.inventory.push({ item: row.item, qty: 1, instanceId: id });
   codexRecordItem(row.item, 1);
@@ -295,11 +308,6 @@ function createCharacter(name, statAlloc, gender) {
     rebirthPath: null,   // 轉生前走過的職業鏈，例 ['swordsman','knight']。轉生後只能照這條路重走
     learnedSkills: {},   // {skillId: level}
     equip: { head_top: null, head_mid: null, head_bottom: null, weapon: null, armor: null, shield: null, garment: null, footgear: null, accessory1: null, accessory2: null, ammo: null },
-    relics: emptyRelicSlots(),   // 遺物欄（#113）：8 格，跟一般裝備完全分開
-    relicReviveUsed: 0,          // 牧師遺物用掉幾次復活（換圖回滿）
-    relicReviveReadyAt: 0,
-    relicMonkReadyAt: 0,         // 武僧遺物的加特林冷卻
-    relicShieldReadyAt: 0,       // 鐵匠遺物的護盾冷卻
     refinement: {},   // 舊版精煉資料（按itemId），僅供遷移讀取，新邏輯一律用 instances
     equippedCards: {}, // 舊版插卡資料（按欄位），僅供遷移讀取，新邏輯一律用 instances
     instances: {},     // { instanceId: {item, refine, cards:[cardId,...]} } 精煉或插卡過的裝備會變成獨立個體，跟著那一件走
@@ -331,7 +339,7 @@ function createCharacter(name, statAlloc, gender) {
     autoSpPotion: { enabled: false, primary: '', fallback: 'blue_potion', spThreshold: 30 },
     autoAspdPotion: { enabled: false, items: [] },
     autoBuyAspdPotion: false,
-    dpsTracker: { since: Date.now(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 },
+    dpsTracker: { since: gameNow(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 },
     autoBuyPotion: true,
     autoBuySpPotion: false,
     autoBuyArrow: true,
@@ -351,12 +359,12 @@ function createCharacter(name, statAlloc, gender) {
     achievements: { done: {}, points: 0 },
     deaths: 0,
     muted: false,
-    lastAttackTime: Date.now(),
+    lastAttackTime: gameNow(),
     attackAccumulator: 0,
-    createdAt: Date.now(),
-    lastActiveAt: Date.now(),
-    lastExpAt: Date.now(),
-    lastLootAt: Date.now()
+    createdAt: gameNow(),
+    lastActiveAt: gameNow(),
+    lastExpAt: gameNow(),
+    lastLootAt: gameNow()
   };
   recomputeDerived(true);
   addItem('red_potion', 100);
@@ -528,7 +536,7 @@ function getOrCreateEquipInstance(slot) {
   const ref = state.equip[slot];
   if (!ref) return null;
   if (state.instances[ref]) return ref;
-  const id = ref + '#' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+  const id = ref + '#' + gameNow() + '_' + Math.floor(rng() * 10000);
   state.instances[id] = { item: ref, refine: 0, cards: [] };
   state.equip[slot] = id;
   return id;
@@ -1156,12 +1164,6 @@ function recomputeDerived(fullHeal) {
      修法一樣——加總前先歸零。 */
   state.hpRegenMult = 1;
   state.spRegenMult = 1;
-  /* 遺物的特殊效果旗標（#113）。跟上面兩行同一個理由放在歸零區：
-     卸下遺物就要跟著消失，不能靠「下次算的時候會蓋掉」。 */
-  state.relicProcs = {};
-  if (typeof activeRelicTiers === 'function') {
-    activeRelicTiers().forEach(({ tier }) => { if (tier.proc) state.relicProcs[tier.proc] = true; });
-  }
   state.hasAspdFlatPassive = false;
   state.hasAngelusProc = false;
   state.angelusCooldownSec = 10;
@@ -2316,7 +2318,7 @@ function recomputeDerived(fullHeal) {
      （#24 buff_flee、#58 buff_def、#61 的 VIT flat buff…），
      新開一個 buff 型別時就把消費端跟既有的加成合在一起，少一個分岔就少一次。
      tickBuffs() 每個 tick 都會呼叫 recomputeDerived()，所以到期會自動還原。 */
-  /* ATK +N%（#113 遺物）。跟 matkPct 對稱，乘在所有 ATK 來源加完之後。
+  /* ATK +N%。跟 matkPct 對稱，乘在所有 ATK 來源加完之後。
      **三個桶子要一起乘**：普攻的傷害鏈是分開讀 _atkWeapon / _atkStatus / _atkMastery 的
      （官方的體型與屬性修正只作用在武器 ATK 上），只乘 state.atk 的話普攻完全吃不到。 */
   const atkPctBonus = getCardBonus('atkPct') / 100;
@@ -2744,7 +2746,7 @@ function monDebuffDef(inst) {
   if (!inst) return 1;
   let m = stripMult(inst, 'def');
   if (inst.debuffDef) {
-    if (Date.now() < (inst.debuffDefEnd || 0)) m *= inst.debuffDef;
+    if (gameNow() < (inst.debuffDefEnd || 0)) m *= inst.debuffDef;
     else { delete inst.debuffDef; delete inst.debuffDefEnd; }
   }
   return m;
@@ -2753,7 +2755,7 @@ function monDebuffDef(inst) {
    那個只掛在物理分支上，魔法分支以前**完全沒有減益的入口**。 */
 function monDebuffMdef(inst) {
   if (!inst || !inst.debuffMdef) return 1;
-  if (Date.now() < (inst.debuffMdefEnd || 0)) return inst.debuffMdef;
+  if (gameNow() < (inst.debuffMdefEnd || 0)) return inst.debuffMdef;
   delete inst.debuffMdef; delete inst.debuffMdefEnd;
   return 1;
 }
@@ -2871,7 +2873,7 @@ function partyDamageShare() {
 function monsterBaseAtk(monDef, roll, mon) {
   // BS_MAXIMIZE：傷害固定取最大值；NPC_POWERUP：整體 ATK +N%
   const maxRoll = mon && monBuff(mon, 'maxRoll') > 0;
-  const v = roll === 'mid' ? 1 : (maxRoll ? 1.2 : 0.8 + Math.random() * 0.4);
+  const v = roll === 'mid' ? 1 : (maxRoll ? 1.2 : 0.8 + rng() * 0.4);
   const base = (monDef.atk || 0) * v + (monDef.mobStr || 0) + (monDef.level || 0);
   // 打寶模式（#110）：這裡是「怪物傷害的唯一入口」，乘一次普攻與怪物技能就一起吃到
   return base * farmMult('atk') * (1 + (mon ? monBuff(mon, 'atkPct') : 0) / 100) * monDebuffAtk(mon);
@@ -2881,9 +2883,9 @@ function monsterBaseAtk(monDef, roll, mon) {
    怪物的魔法技能用這個，不再拿物攻 ×1.2 代替。打寶模式的傷害倍率一樣吃。 */
 function monsterBaseMatk(monDef, mon) {
   const mv = (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[monDef.id]) || {};
-  const v = mon && monBuff(mon, 'maxRoll') > 0 ? 1.3 : 0.7 + Math.random() * 0.6;
+  const v = mon && monBuff(mon, 'maxRoll') > 0 ? 1.3 : 0.7 + rng() * 0.6;
   const base = (mv.int != null ? mv.int : (monDef.mobInt || 0)) + (monDef.level || 0) + (mv.matk || 0) * v;
-  const up = mon && mon.matkUp && Date.now() < (mon.matkUpEnd || 0) ? 1 + mon.matkUp / 100 : 1;   // 精神撼動
+  const up = mon && mon.matkUp && gameNow() < (mon.matkUpEnd || 0) ? 1 + mon.matkUp / 100 : 1;   // 精神撼動
   return base * farmMult('atk') * up;
 }
 /* 怪物身上的物攻減益（#60 野蠻凶砍）。
@@ -2894,7 +2896,7 @@ function monDebuffAtk(mon) {
   // 卸除武器／卸除頭盔（#69）跟野蠻凶砍相乘：不同技能各佔一格，同一個技能重觸發只是刷新
   const strip = stripMult(mon, 'atk');
   if (!mon || !mon.debuffAtk) return strip;
-  if (Date.now() >= (mon.debuffAtkEnd || 0)) {
+  if (gameNow() >= (mon.debuffAtkEnd || 0)) {
     delete mon.debuffAtk; delete mon.debuffAtkEnd;
     return strip;
   }
@@ -2915,7 +2917,7 @@ function monDebuffAtk(mon) {
    這樣「不同技能疊加、同一個技能重複觸發只是刷新」兩件事同時成立。 */
 function stripMult(mon, kind) {
   if (!mon || !mon.strip) return 1;
-  const now = Date.now();
+  const now = gameNow();
   let m = 1;
   Object.keys(mon.strip).forEach(k => {
     const e = mon.strip[k];
@@ -2927,13 +2929,13 @@ function stripMult(mon, kind) {
 function applyStrip(mon, key, kind, mult, sec) {
   if (!mon) return;
   mon.strip = mon.strip || {};
-  mon.strip[key] = { kind, mult, end: Date.now() + sec * 1000 };
+  mon.strip[key] = { kind, mult, end: gameNow() + sec * 1000 };
 }
 /* 潛擊：被打中的目標在一段時間內受到的傷害增加。
    跟卸除是同一種「掛在怪物實體上的暫時減益」，但因為是加傷不是減益，另外一格。 */
 function monDmgTakenBoost(mon) {
   if (!mon || !mon.dmgTakenBoost) return 1;
-  if (Date.now() >= (mon.dmgTakenBoostEnd || 0)) {
+  if (gameNow() >= (mon.dmgTakenBoostEnd || 0)) {
     delete mon.dmgTakenBoost; delete mon.dmgTakenBoostEnd;
     return 1;
   }
@@ -2948,12 +2950,12 @@ function applyDontForgetMe(mon) {
   const b = state.buffs.find(x => x.type === 'dontforgetme');
   if (!b) return;
   mon.debuffAspd = Math.max(0.1, 1 - (b.flatBonus || 0) / 100);
-  mon.debuffAspdEnd = Date.now() + Math.max(0, b.msRemaining || 0);
+  mon.debuffAspdEnd = gameNow() + Math.max(0, b.msRemaining || 0);
 }
 
 function monDebuffAspd(mon) {
   if (!mon || !mon.debuffAspd) return 1;
-  if (Date.now() >= (mon.debuffAspdEnd || 0)) {
+  if (gameNow() >= (mon.debuffAspdEnd || 0)) {
     delete mon.debuffAspd; delete mon.debuffAspdEnd;
     return 1;
   }
@@ -3090,7 +3092,7 @@ function offlineYieldPer10m() {
   return { full: false, sec: live ? live.sec : 0, killsPer10m: est.killsPer10m * m, expPer10m: est.expPer10m * m, jobExpPer10m: est.jobExpPer10m * m, goldPer10m: est.goldPer10m * m };
 }
 function resetDpsTracker() {
-  state.dpsTracker = { since: Date.now(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };
+  state.dpsTracker = { since: gameNow(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };
   saveGame();
 }
 
@@ -3098,7 +3100,7 @@ function resetDpsTracker() {
 function dpsStats() {
   const t = state.dpsTracker;
   if (!t) return null;
-  const sec = Math.max(1, (Date.now() - t.since) / 1000);
+  const sec = Math.max(1, (gameNow() - t.since) / 1000);
   return {
     sec,
     dps: t.damage / sec,
@@ -3231,7 +3233,7 @@ function hitChancePctVsMonsterBase(playerHit, monDef, inst) {
     // 怪物自己的迴避增益（NPC_AGIUP）：加的是點數，1 點就是 1% 命中率
     threshold += monBuff(inst, 'fleeFlat');
     // 緊密的約束（#69）：怪物的迴避下降，一樣是點數
-    if (inst.debuffFlee && Date.now() < (inst.debuffFleeEnd || 0)) threshold -= inst.debuffFlee;
+    if (inst.debuffFlee && gameNow() < (inst.debuffFleeEnd || 0)) threshold -= inst.debuffFlee;
     else if (inst.debuffFlee) { delete inst.debuffFlee; delete inst.debuffFleeEnd; }
     threshold -= quagmireCut(inst);   // 泥沼地：AGI −10×lv → 迴避等量下降
   }
@@ -3268,16 +3270,16 @@ function applyPoisonDot(mon, monDef, rawDmgPerTick) {
     logMsg(`🚫 ${monDef.name} 對毒免疫！`);
     return;
   }
-  const wasPoisoned = mon.poisonDotEnd && Date.now() < mon.poisonDotEnd;
+  const wasPoisoned = mon.poisonDotEnd && gameNow() < mon.poisonDotEnd;
   mon.poisonDotPerTick = Math.round(rawDmgPerTick * elemMult);
-  mon.poisonDotEnd = Date.now() + 3000;
+  mon.poisonDotEnd = gameNow() + 3000;
   mon._dotCredit = monsterDamageKey();
   // 只有從沒中毒變成中毒才出聲，續毒不重放
   if (!wasPoisoned && typeof playStatusSound === 'function') playStatusSound('poison');
 }
 function tickPoisonDot() {
   if (!state.monsters || state.monsters.length === 0) return;
-  const now = Date.now();
+  const now = gameNow();
   for (let i = state.monsters.length - 1; i >= 0; i--) {
     const mon = state.monsters[i];
     if (!mon.poisonDotEnd) continue;
@@ -3342,10 +3344,10 @@ function applyAilment(mon, monDef, type, opts) {
   if (!A || !mon || mon.hp <= 0) return false;
   if (ailImmune(monDef, type)) return false;
 
-  let sec = (opts && opts.sec) || (A.secMin != null ? A.secMin + Math.random() * (A.secMax - A.secMin) : A.sec);
+  let sec = (opts && opts.sec) || (A.secMin != null ? A.secMin + rng() * (A.secMax - A.secMin) : A.sec);
   if (monDef.isBoss) sec *= 0.5;
 
-  const now = Date.now();
+  const now = gameNow();
   mon.ail = mon.ail || {};
   const had = mon.ail[type] && now < mon.ail[type];
   mon.ail[type] = Math.max(mon.ail[type] || 0, now + sec * 1000);
@@ -3360,12 +3362,12 @@ function applyAilment(mon, monDef, type, opts) {
 }
 
 function ailActive(mon, type) {
-  return !!(mon && mon.ail && mon.ail[type] && Date.now() < mon.ail[type]);
+  return !!(mon && mon.ail && mon.ail[type] && gameNow() < mon.ail[type]);
 }
 // 目前掛著的狀態清單（顯示與除錯用）
 function ailList(mon) {
   if (!mon || !mon.ail) return [];
-  const now = Date.now();
+  const now = gameNow();
   return Object.keys(mon.ail).filter(t => mon.ail[t] > now && MON_AILMENTS[t]);
 }
 function ailFold(mon, key, init) {
@@ -3402,7 +3404,7 @@ function ailBreakOnDamage(mon, monDef) {
   ailList(mon).forEach(t => {
     if (!MON_AILMENTS[t].breakOnHit) return;
     delete mon.ail[t];
-    if (MON_AILMENTS[t].immobile) mon.stunnedUntil = Date.now();
+    if (MON_AILMENTS[t].immobile) mon.stunnedUntil = gameNow();
     if (monDef) logMsg(`${MON_AILMENTS[t].icon} ${monDef.name} 被打醒了！`);
   });
 }
@@ -3411,7 +3413,7 @@ function ailBreakOnDamage(mon, monDef) {
    跟中毒分開跑，因為中毒的每跳傷害是從技能傷害推導的，出血則是純比例。 */
 function tickBleed() {
   if (!state.monsters || state.monsters.length === 0) return;
-  const now = Date.now();
+  const now = gameNow();
   for (let i = state.monsters.length - 1; i >= 0; i--) {
     const mon = state.monsters[i];
     if (!ailActive(mon, 'bleed')) { delete mon.bleedNextTick; continue; }
@@ -3450,10 +3452,10 @@ function tryCardKillDrops(monDef) {
   state.cardKillDrops.forEach(e => {
     if (e.race && monDef.race !== e.race) return;
     if (e.mon && monDef.id !== e.mon) return;
-    if (Math.random() * 100 >= e.chance) return;
+    if (rng() * 100 >= e.chance) return;
     // 掉的是錢不是道具（藍鼠：擊殺時機率得到一筆金幣；zenyMax＝隨機 1～N，rAthena bGetZenyNum）
     if (e.zenyMax && !e.zeny) {
-      const z = 1 + Math.floor(Math.random() * e.zenyMax);
+      const z = 1 + Math.floor(rng() * e.zenyMax);
       state.gold += z;
       if (state.dpsTracker) state.dpsTracker.gold += z;
       return;
@@ -3466,7 +3468,7 @@ function tryCardKillDrops(monDef) {
     }
     const pool = e.pool ? itemPool(e.pool) : e.items;
     if (!pool || !pool.length) return;
-    const id = pool[Math.floor(Math.random() * pool.length)];
+    const id = pool[Math.floor(rng() * pool.length)];
     if (!ITEMS[id]) return;
     addItem(id, 1);
     logMsg(`🎁 卡片效果！額外獲得了 ${ITEMS[id].name}！`);
@@ -3503,6 +3505,10 @@ function boxEligible(k) {
      用 desc 比對會把幻影生存的魔杖那種正常武器一起誤殺。
      `(时装)` 是官方時裝的固定前綴；「系列: 时装」是結構化欄位，兩個都安全。 */
   if (/[(（]时装[)）]/.test(n)) return false;
+  /* 非台服的時裝（使用者 2026-11-13）：台服寫「服飾」，「時裝…」「[衣裝]…」是其他版本的，排除；
+     日式漢字名（剣、黒、気、覚、兎）也是非台服的，一起排除 */
+  if (/^\s*[\[［(（【]?\s*(時裝|衣裝)/.test(n)) return false;
+  if (/[剣黒気覚兎]/.test(n)) return false;
   if (/转蛋\s*$/.test(n) || /转蛋专用/.test(n)) return false;
   if (/系列:\s*时装/.test(it.desc || '')) return false;
   return true;
@@ -3644,9 +3650,9 @@ function boxPool(kind) {
 }
 function drawFromSub(p) {
   if (!p.ids.length) return null;
-  if (!p.cum) return p.ids[Math.floor(Math.random() * p.ids.length)];
+  if (!p.cum) return p.ids[Math.floor(rng() * p.ids.length)];
   // 加權抽：在累積權重上二分搜尋
-  const r = Math.random() * p.total;
+  const r = rng() * p.total;
   let lo = 0, hi = p.ids.length - 1;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
@@ -3658,7 +3664,7 @@ function drawFromBox(kind) {
   const p = boxPool(kind);
   if (!p || !p.ids.length) return null;
   if (p.split != null) {
-    const sub = Math.random() < p.split ? p.hit : p.miss;
+    const sub = rng() < p.split ? p.hit : p.miss;
     if (sub.ids.length) return drawFromSub(sub);
   }
   return drawFromSub(p);
@@ -3692,11 +3698,11 @@ const PLAYER_AILMENTS = {
 };
 
 function playerAilActive(type) {
-  return !!(state.playerAil && state.playerAil[type] && Date.now() < state.playerAil[type]);
+  return !!(state.playerAil && state.playerAil[type] && gameNow() < state.playerAil[type]);
 }
 function playerAilList() {
   if (!state.playerAil) return [];
-  const now = Date.now();
+  const now = gameNow();
   return Object.keys(state.playerAil).filter(t => state.playerAil[t] > now && PLAYER_AILMENTS[t]);
 }
 function playerAilFold(key, init) {
@@ -3723,10 +3729,10 @@ function applyPlayerAilment(type, opts) {
   if (!A || state.hp <= 0) return false;
   const resist = (state.ailResist && state.ailResist[type]) || 0;
   if (resist >= 100) return false;
-  if (resist > 0 && Math.random() * 100 < resist) return false;
+  if (resist > 0 && rng() * 100 < resist) return false;
 
-  let sec = (opts && opts.sec) || (A.secMin != null ? A.secMin + Math.random() * (A.secMax - A.secMin) : A.sec);
-  const now = Date.now();
+  let sec = (opts && opts.sec) || (A.secMin != null ? A.secMin + rng() * (A.secMax - A.secMin) : A.sec);
+  const now = gameNow();
   state.playerAil = state.playerAil || {};
   const had = state.playerAil[type] && now < state.playerAil[type];
   state.playerAil[type] = Math.max(state.playerAil[type] || 0, now + sec * 1000);
@@ -3748,7 +3754,7 @@ function playerAilBreakOnDamage() {
 /* 玩家身上的持續傷害（中毒／出血），每秒跳一次。
    打不死玩家——扣到剩 1 點就停，這種「站著不動被毒死」在放置遊戲裡體驗太差。 */
 function tickPlayerAilments() {
-  const now = Date.now();
+  const now = gameNow();
   /* 天使之淚（autoDetox）：身上有異常就全部解除，內部冷卻 10 秒。
      以前 passiveStat 寫了卻沒人讀，學了沒效果（2026-11-12 補上） */
   if (skillLv('al_holywater') && now >= (state._detoxAt || 0) && playerAilList().length) {
@@ -3802,7 +3808,7 @@ function pDebuffAdd(key, value, sec, once) {
   if (!PLAYER_DEBUFF_KEYS.includes(key) || !value) return;
   state.pdebuff = state.pdebuff || {};
   const cur = state.pdebuff[key];
-  const until = Date.now() + sec * 1000;
+  const until = gameNow() + sec * 1000;
   // 同一種不疊加，取「影響比較大的」那個並刷新時間（比絕對值，因為挑釁的 atkPct 是正的）
   if (!cur || Math.abs(value) >= Math.abs(cur.v)) state.pdebuff[key] = { v: value, until, once: !!once };
   else cur.until = Math.max(cur.until, until);
@@ -3810,7 +3816,7 @@ function pDebuffAdd(key, value, sec, once) {
 function pDebuff(key) {
   const b = state.pdebuff && state.pdebuff[key];
   if (!b) return 0;
-  if (Date.now() >= b.until) { delete state.pdebuff[key]; return 0; }
+  if (gameNow() >= b.until) { delete state.pdebuff[key]; return 0; }
   return b.v;
 }
 function pDebuffList() {
@@ -3845,7 +3851,7 @@ function debuffedDef(hardDef, softDef) {
 function rejectSwordAbsorb(dmg, mon, monDef) {
   const b = state.buffs.find(x => x.type === 'reject' && (x.charges || 0) > 0);
   if (!b || dmg <= 0) return dmg;
-  if (Math.random() * 100 >= (b.flatBonus || 0)) return dmg;
+  if (rng() * 100 >= (b.flatBonus || 0)) return dmg;
   b.charges -= 1;
   const kept = Math.floor(dmg / 2);
   const reflected = dmg - kept;
@@ -3884,9 +3890,9 @@ function playerDmgTakenMult() {
 function defenderNegates() {
   const pct = state.defenderProcPct || 0;
   if (!pct) return false;
-  if (Date.now() < (state.defenderReadyAt || 0)) return false;
-  if (Math.random() * 100 >= pct) return false;
-  state.defenderReadyAt = Date.now() + (state.defenderProcCdSec || 5) * 1000;
+  if (gameNow() < (state.defenderReadyAt || 0)) return false;
+  if (rng() * 100 >= pct) return false;
+  state.defenderReadyAt = gameNow() + (state.defenderProcCdSec || 5) * 1000;
   return true;
 }
 
@@ -3913,7 +3919,7 @@ function monBuffAdd(mon, key, value, sec) {
   if (!mon || !MON_BUFF_KEYS.includes(key)) return;
   mon.mbuff = mon.mbuff || {};
   const cur = mon.mbuff[key];
-  const until = Date.now() + sec * 1000;
+  const until = gameNow() + sec * 1000;
   // 同一種增益不疊加，取較強的那個並刷新時間（不然怪會把自己疊到無敵）
   if (!cur || value >= cur.v) mon.mbuff[key] = { v: value, until };
   else cur.until = Math.max(cur.until, until);
@@ -3921,7 +3927,7 @@ function monBuffAdd(mon, key, value, sec) {
 function monBuff(mon, key) {
   const b = mon && mon.mbuff && mon.mbuff[key];
   if (!b) return 0;
-  if (Date.now() >= b.until) { delete mon.mbuff[key]; return 0; }
+  if (gameNow() >= b.until) { delete mon.mbuff[key]; return 0; }
   return b.v;
 }
 function monBuffList(mon) {
@@ -3933,7 +3939,7 @@ function monBuffList(mon) {
 function monsterAbsorb(mon, dmg, isMelee) {
   if (!mon || !mon.mbuff) return { dmg, blocked: false, reflect: 0 };
   const blk = monBuff(mon, 'block');
-  if (blk > 0 && Math.random() * 100 < blk) return { dmg: 0, blocked: true, reflect: 0 };
+  if (blk > 0 && rng() * 100 < blk) return { dmg: 0, blocked: true, reflect: 0 };
   const cut = monBuff(mon, 'cutPct');
   const out = cut > 0 ? Math.max(1, Math.round(dmg * (1 - cut / 100))) : dmg;
   const refPct = isMelee ? monBuff(mon, 'reflect') : 0;
@@ -4015,7 +4021,7 @@ function monsterSkillFor(mon, monDef) {
   if (monDef && monDef.isBoss && typeof tickBossFight === 'function') return null;
   const list = (typeof MONSTER_SKILLS !== 'undefined') && MONSTER_SKILLS[mon.defId];
   if (!list || !list.length) return null;
-  const now = Date.now();
+  const now = gameNow();
   mon.skCd = mon.skCd || {};
   for (const e of list) {
     // 冷卻是「同一個技能」共用的，帶條件與不帶條件的同名技能不各自計時
@@ -4026,7 +4032,7 @@ function monsterSkillFor(mon, monDef) {
       const t = e.healFriend ? lowestHpAlly(mon) : mon;
       if (!t || t.hp >= t.maxHp) continue;
     }
-    if (Math.random() * 100 >= e.rate) continue;
+    if (rng() * 100 >= e.rate) continue;
     mon.skCd[e.s] = now + e.cd * 1000;
     return e;
   }
@@ -4037,7 +4043,7 @@ function monsterSkillFor(mon, monDef) {
    技能造成的暈眩走這條（不吃 BOSS 減半，維持既有平衡），卡片造成的走 applyAilment()。
    additive=true 時會疊加時長（滑動/睡魔/定位陷阱共用），否則直接覆蓋（衝鋒箭） */
 function applyStun(mon, sec, additive) {
-  const now = Date.now();
+  const now = gameNow();
   const wasStunned = mon.stunnedUntil && now < mon.stunnedUntil;
   if (additive) {
     mon.stunnedUntil = Math.max(now, mon.stunnedUntil || 0) + sec * 1000;
@@ -4054,7 +4060,7 @@ function applyStun(mon, sec, additive) {
 // 冰凍術/石化術：被反制暈眩的目標，之後只要受到我方魔法傷害就會提前甦醒
 function wakeIfFrozen(mon) {
   if (mon && mon.frozenByProc) {
-    mon.stunnedUntil = Date.now();
+    mon.stunnedUntil = gameNow();
     if (mon.ail) { delete mon.ail.stun; delete mon.ail.freeze; }
     mon.frozenByProc = false;
   }
@@ -4079,9 +4085,9 @@ function tryCardAilments(trigger, mon) {
   const melee = !isBowWeapon(getEquipBaseItemId('weapon'));
   list.forEach(e => {
     if (e.melee && !melee) return;
-    if (Math.random() * 100 >= e.chance) return;
+    if (rng() * 100 >= e.chance) return;
     const pool = String(e.type).split('+');
-    const type = pool[Math.floor(Math.random() * pool.length)];
+    const type = pool[Math.floor(rng() * pool.length)];
     const tgt = e.target || 'enemy';
     if (tgt !== 'self' && mon && monDef) applyAilment(mon, monDef, type);
     if (tgt !== 'enemy') applyPlayerAilment(type);
@@ -4098,7 +4104,7 @@ function tryTrapProcs(target, monDef) {
     const lv = state.learnedSkills[skillId];
     if (!lv) return;
     const readyAt = state.trapReadyAt[skillId] || 0;
-    if (Date.now() < readyAt) return;
+    if (gameNow() < readyAt) return;
 
     const sk = findSkillById(skillId);
     let proc = false;
@@ -4107,12 +4113,12 @@ function tryTrapProcs(target, monDef) {
     } else {
       const baseChance = Array.isArray(sk.procChance) ? sk.procChance[lv - 1] : sk.procChance;
       const chance = Math.min(100, baseChance + (state.trapChanceBonusPct || 0));
-      proc = Math.random() * 100 < chance;
+      proc = rng() * 100 < chance;
     }
     if (!proc) return;
 
     const cdSec = Math.max(1, (sk.internalCooldown || 10) - (state.trapCdReductionSec || 0));
-    state.trapReadyAt[skillId] = Date.now() + cdSec * 1000;
+    state.trapReadyAt[skillId] = gameNow() + cdSec * 1000;
 
     if (sk.trapEffect === 'stun') {
       applyStun(target, sk.stunSec || 1, true);
@@ -4121,7 +4127,7 @@ function tryTrapProcs(target, monDef) {
       const hitDebuff = Array.isArray(sk.hitDebuff) ? sk.hitDebuff[lv - 1] : sk.hitDebuff;
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       target.debuffHit = hitDebuff;
-      target.debuffHitEnd = Date.now() + dur * 1000;
+      target.debuffHitEnd = gameNow() + dur * 1000;
       logMsg(`💥 「${sk.name}」觸發！${monDef.name} 的命中下降了！`);
     } else if (sk.trapEffect === 'damage') {
       const mult = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
@@ -4158,14 +4164,14 @@ function tryMagicStunProcs(mon, monDef) {
     const lv = state.learnedSkills[skillId];
     if (!lv) return;
     const readyAt = state.magicStunReadyAt[skillId] || 0;
-    if (Date.now() < readyAt) return;
+    if (gameNow() < readyAt) return;
 
     const sk = findSkillById(skillId);
     const chance = Array.isArray(sk.procChance) ? sk.procChance[lv - 1] : sk.procChance;
-    if (Math.random() * 100 >= chance) return;
+    if (rng() * 100 >= chance) return;
 
     const cdSec = Array.isArray(sk.internalCooldown) ? sk.internalCooldown[lv - 1] : (sk.internalCooldown || 10);
-    state.magicStunReadyAt[skillId] = Date.now() + cdSec * 1000;
+    state.magicStunReadyAt[skillId] = gameNow() + cdSec * 1000;
 
     const stunSec = Array.isArray(sk.stunSec) ? sk.stunSec[lv - 1] : (sk.stunSec || 10);
     applyStun(mon, stunSec, true);
@@ -4191,11 +4197,11 @@ function tryOnAttackStrikes(target, monDef) {
   const list = state.onAttackStrikes;
   if (!list || !list.length || !target || target.hp <= 0) return;
   if (!state.onAttackStrikeReadyAt) state.onAttackStrikeReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   for (const e of list) {
     if (target.hp <= 0) break;
     if (now < (state.onAttackStrikeReadyAt[e.id] || 0)) continue;
-    if (Math.random() * 100 >= e.chance) continue;
+    if (rng() * 100 >= e.chance) continue;
     state.onAttackStrikeReadyAt[e.id] = now + e.cdSec * 1000;
 
     const elemMult = getElementMultiplierVsMonster('neutral', monDef, target);
@@ -4209,9 +4215,9 @@ function tryOnAttackStrikes(target, monDef) {
 
     if (e.inflict && target.hp > 0) {
       const ic = Array.isArray(e.inflict.chance) ? e.inflict.chance[e.lv - 1] : e.inflict.chance;
-      if (Math.random() * 100 < ic) {
+      if (rng() * 100 < ic) {
         const pool = String(e.inflict.type).split('+');
-        applyAilment(target, monDef, pool[Math.floor(Math.random() * pool.length)]);
+        applyAilment(target, monDef, pool[Math.floor(rng() * pool.length)]);
       }
     }
     if (target.hp <= 0) killMonster(monDef, target);
@@ -4223,9 +4229,9 @@ function tryOnAttackStrikes(target, monDef) {
    走 `applyAilment()`，BOSS 的持續時間自動減半、免疫種族自動擋下。 */
 function tryPriestProcs(target, monDef) {
   if (!state.hasAttackSilenceProc || !target || target.hp <= 0) return;
-  const now = Date.now();
+  const now = gameNow();
   if (now < (state.attackSilenceReadyAt || 0)) return;
-  if (Math.random() * 100 >= (state.attackSilenceChance || 0)) return;
+  if (rng() * 100 >= (state.attackSilenceChance || 0)) return;
   state.attackSilenceReadyAt = now + (state.attackSilenceCooldownSec || 10) * 1000;
   if (applyAilment(target, monDef, 'silence', { sec: state.attackSilenceSec || 8 })) {
     logMsg(`🤐 沉默之術發動！${monDef.name} 沉默了！`);
@@ -4247,14 +4253,14 @@ function tryMeltdown(target, monDef) {
   const b = state.buffs.find(x => x.type === 'meltdown') || fromCard;
   if (!b) return;
   const ms = (b.debuffSec || 10) * 1000;
-  if (Math.random() * 100 < (b.atkChance || 0)) {
+  if (rng() * 100 < (b.atkChance || 0)) {
     target.debuffAtk = b.debuffMult || 0.8;
-    target.debuffAtkEnd = Date.now() + ms;
+    target.debuffAtkEnd = gameNow() + ms;
     logMsg(`🔥 野蠻凶砍：${monDef.name} 的攻擊力下降了！`);
   }
-  if (Math.random() * 100 < (b.defChance || 0)) {
+  if (rng() * 100 < (b.defChance || 0)) {
     target.debuffDef = b.debuffMult || 0.8;
-    target.debuffDefEnd = Date.now() + ms;
+    target.debuffDefEnd = gameNow() + ms;
     logMsg(`🔥 野蠻凶砍：${monDef.name} 的防禦力下降了！`);
   }
 }
@@ -4264,7 +4270,7 @@ function tryMeltdown(target, monDef) {
    持續 60 秒、冷卻 10 秒，所以有大約 86% 的時間開著。 */
 function tickCartBoost() {
   if (!state.hasCartBoost) return;
-  const now = Date.now();
+  const now = gameNow();
   if (state.buffs.some(b => b.type === 'spawnspeed')) return;
   if (now < (state.cartBoostReadyAt || 0)) return;
   state.cartBoostReadyAt = now + (state.cartBoostDurSec + state.cartBoostCdSec) * 1000;
@@ -4297,16 +4303,16 @@ const EDP_BOTTLE_ITEM = 'poison_bottle';
 function monPoisoned(mon) {
   if (!mon) return false;
   if (ailActive(mon, 'poison')) return true;
-  return !!(mon.poisonDotEnd && Date.now() < mon.poisonDotEnd);
+  return !!(mon.poisonDotEnd && gameNow() < mon.poisonDotEnd);
 }
 
 function tryEdpProc(target) {
   if (!state.hasEdpProc || !target) return;
-  if (Date.now() < (state.edpReadyAt || 0)) return;
+  if (gameNow() < (state.edpReadyAt || 0)) return;
   if (!monPoisoned(target)) return;
   // 身上要有毒藥瓶（不消耗）
   if (typeof getItemQty === 'function' && getItemQty(EDP_BOTTLE_ITEM) <= 0) return;
-  state.edpReadyAt = Date.now() + state.edpCdSec * 1000;
+  state.edpReadyAt = gameNow() + state.edpCdSec * 1000;
   const ms = state.edpDurSec * 1000;
   state.buffs.push({ type: 'weaponatk', mult: state.edpWeaponMult, msRemaining: ms, skillId: 'asc_edp' });
   state.buffs.push({ type: 'eledmg_poison', mult: state.edpPoisonMult, msRemaining: ms, skillId: 'asc_edp' });
@@ -4323,10 +4329,10 @@ function tryPhysAoeStrikes(monDef) {
   const list = state.physAoeStrikes;
   if (!list || !list.length || !state.monsters || !state.monsters.length) return;
   if (!state.physAoeReadyAt) state.physAoeReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   for (const e of list) {
     if (now < (state.physAoeReadyAt[e.id] || 0)) continue;
-    if (Math.random() * 100 >= e.chance) continue;
+    if (rng() * 100 >= e.chance) continue;
     if (e.cdSec) state.physAoeReadyAt[e.id] = now + e.cdSec * 1000;
     logMsg(`🌑 「${e.name.split(' ')[0]}」發動！`);
     for (let i = state.monsters.length - 1; i >= 0; i--) {
@@ -4345,9 +4351,9 @@ function tryPhysAoeStrikes(monDef) {
       ailBreakOnDamage(mon, md);
       if (e.inflict && mon.hp > 0) {
         const ic = Array.isArray(e.inflict.chance) ? e.inflict.chance[e.lv - 1] : e.inflict.chance;
-        if (Math.random() * 100 < ic) {
+        if (rng() * 100 < ic) {
           const pool = String(e.inflict.type).split('+');
-          applyAilment(mon, md, pool[Math.floor(Math.random() * pool.length)]);
+          applyAilment(mon, md, pool[Math.floor(rng() * pool.length)]);
         }
       }
       if (mon.hp <= 0) killMonster(md, mon);
@@ -4381,13 +4387,13 @@ const ELE_RESIST_PHARMACY_LV = { fire: 5, water: 6, earth: 7, wind: 8 };
    所以重算不會把冷卻洗掉。 */
 function trySongProcs(target, monDef) {
   if (!state.songProcReadyAt) state.songProcReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   const ready = (p) => now >= (state.songProcReadyAt[p.id] || 0);
   const arm = (p) => { state.songProcReadyAt[p.id] = now + (p.cdSec || 0) * 1000; };
 
   (state.aoeAilmentProcs || []).forEach(p => {
     if (!state.monsters || !state.monsters.length) return;
-    if (!ready(p) || Math.random() * 100 >= p.chance) return;
+    if (!ready(p) || rng() * 100 >= p.chance) return;
     arm(p);
     let hit = 0;
     state.monsters.forEach(mon => {
@@ -4400,7 +4406,7 @@ function trySongProcs(target, monDef) {
 
   (state.aoeMagicProcs || []).forEach(p => {
     if (!state.monsters || !state.monsters.length) return;
-    if (!ready(p) || Math.random() * 100 >= p.chance) return;
+    if (!ready(p) || rng() * 100 >= p.chance) return;
     arm(p);
     logMsg(`🎵 「${p.name}」發動！`);
     for (let i = state.monsters.length - 1; i >= 0; i--) {
@@ -4420,11 +4426,11 @@ function trySongProcs(target, monDef) {
 
   (state.dualAilmentProcs || []).forEach(p => {
     if (!target || target.hp <= 0 || !monDef) return;
-    if (!ready(p) || Math.random() * 100 >= p.chance) return;
+    if (!ready(p) || rng() * 100 >= p.chance) return;
     arm(p);
     const got = [];
     p.ailments.forEach(a => {
-      if (Math.random() * 100 >= (a.chance || 0)) return;
+      if (rng() * 100 >= (a.chance || 0)) return;
       if (applyAilment(target, monDef, a.type)) got.push(MON_AILMENTS[a.type].name);
     });
     if (got.length) logMsg(`🎵 「${p.name}」發動！${monDef.name} 陷入${got.join('與')}。`);
@@ -4437,7 +4443,7 @@ function trySongProcs(target, monDef) {
    冷卻時間戳跟詩人那批共用 `state.songProcReadyAt`——那本來就是一張以技能 id 為 key 的表。 */
 function tryRogueProcs(target, monDef) {
   if (!state.songProcReadyAt) state.songProcReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   const ready = (id, cd) => {
     if (now < (state.songProcReadyAt[id] || 0)) return false;
     state.songProcReadyAt[id] = now + (cd || 0) * 1000;
@@ -4451,7 +4457,7 @@ function tryRogueProcs(target, monDef) {
     const dexB = (state.stats.dex / 99) * state.stealCoinDexMax;
     const lukB = (state.stats.luk / 99) * state.stealCoinLukMax;
     const chance = state.stealCoinChance + dexB + lukB;
-    if (Math.random() * 100 < chance && ready('rg_stealcoin', state.stealCoinCdSec)) {
+    if (rng() * 100 < chance && ready('rg_stealcoin', state.stealCoinCdSec)) {
       const full = Math.round((3 + (monDef.level || 1) * 1.4) * buffMult('gold').mult);
       const got = Math.max(1, Math.round(full * state.stealCoinPct / 100));
       state.gold += got;
@@ -4465,7 +4471,7 @@ function tryRogueProcs(target, monDef) {
      只換掉「各自擲骰」這件事——所以四個必須都已經學過。 */
   const fs = state.fullStrip;
   if (fs && target && target.hp > 0 && monDef && (state.stripProcs || []).length
-      && Math.random() * 100 < fs.chance && ready('st_fullstrip', fs.cdSec)) {
+      && rng() * 100 < fs.chance && ready('st_fullstrip', fs.cdSec)) {
     state.stripProcs.forEach(p => {
       let kind = p.kind, mult = p.mult;
       if (p.kind === 'matk' && !(monDef.matk > 0)) { kind = 'atk'; mult = p.fallbackMult; }
@@ -4477,7 +4483,7 @@ function tryRogueProcs(target, monDef) {
   // 卸除四連：各自擲骰、各自冷卻、各佔一格，所以會疊在一起
   (state.stripProcs || []).forEach(p => {
     if (!target || target.hp <= 0 || !monDef) return;
-    if (Math.random() * 100 >= p.chance) return;
+    if (rng() * 100 >= p.chance) return;
     if (!ready(p.id, p.cdSec)) return;
     /* 卸除頭盔官方削的是 INT。使用者指定改成 MATK −25%，怪沒有 MATK 就 ATK −10%。
        **本作目前沒有任何一隻怪帶 matk 欄位**（2,538 隻全部沒有），所以實務上一律走 ATK 那條，
@@ -4491,7 +4497,7 @@ function tryRogueProcs(target, monDef) {
   // 潛擊：範圍物理 + 異常 + 讓被打中的目標受到的傷害上升
   if (state.raidProc && state.monsters && state.monsters.length) {
     const p = state.raidProc;
-    if (Math.random() * 100 < p.chance && ready('rg_raid', p.cdSec)) {
+    if (rng() * 100 < p.chance && ready('rg_raid', p.cdSec)) {
       logMsg(`🌑 「${p.name}」發動！`);
       for (let i = state.monsters.length - 1; i >= 0; i--) {
         const mon = state.monsters[i];
@@ -4506,11 +4512,11 @@ function tryRogueProcs(target, monDef) {
         ailBreakOnDamage(mon, md);
         if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal');
         if (mon.hp > 0) {
-          if (Math.random() * 100 < p.ailChance) {
-            applyAilment(mon, md, Math.random() < 0.5 ? 'stun' : 'blind');
+          if (rng() * 100 < p.ailChance) {
+            applyAilment(mon, md, rng() < 0.5 ? 'stun' : 'blind');
           }
           mon.dmgTakenBoost = 1 + p.dmgTakenPct / 100;
-          mon.dmgTakenBoostEnd = Date.now() + p.boostSec * 1000;
+          mon.dmgTakenBoostEnd = gameNow() + p.boostSec * 1000;
         }
         if (mon.hp <= 0) killMonster(md, mon);
       }
@@ -4524,7 +4530,7 @@ function tryRogueProcs(target, monDef) {
       logMsg(`🚫 闇●盜賊卡片套裝封印了「脅持」。`);
     } else {
     const p = state.intimidateProc;
-    if (Math.random() * 100 < p.chance && ready('rg_intimidate', p.cdSec)) {
+    if (rng() * 100 < p.chance && ready('rg_intimidate', p.cdSec)) {
       const em = getElementMultiplierVsMonster('neutral', monDef, target);
       const dmg = mitigateDamage(
         weaponChainDamage(monDef, em, false) * p.mult * cardTargetDmgMult(monDef) * ailDmgTakenMult(target),
@@ -4540,9 +4546,9 @@ function tryRogueProcs(target, monDef) {
   // 緊密的約束：官方是雙方定身，本作改成互相拉開迴避差距
   if (state.closeConfineProc && target && target.hp > 0 && monDef) {
     const p = state.closeConfineProc;
-    if (Math.random() * 100 < p.chance && ready('rg_closeconfine', p.cdSec)) {
+    if (rng() * 100 < p.chance && ready('rg_closeconfine', p.cdSec)) {
       target.debuffFlee = p.enemyFleeCut;
-      target.debuffFleeEnd = Date.now() + p.durSec * 1000;
+      target.debuffFleeEnd = gameNow() + p.durSec * 1000;
       state.buffs = state.buffs.filter(b => b.skillId !== 'rg_closeconfine');
       state.buffs.push({ type: 'flee', mult: 1, flatBonus: p.selfFlee, msRemaining: p.durSec * 1000, skillId: 'rg_closeconfine' });
       logMsg(`🪢 「${p.name}」！${monDef.name} 的迴避 −${p.enemyFleeCut}，自身迴避 +${p.selfFlee}，持續 ${p.durSec} 秒。`);
@@ -4569,7 +4575,7 @@ function monkExplosionActive() {
 }
 // 這一擊有沒有落在真劍百破道開的視窗裡（浸透勁與彈指神通的發動條件）
 function monkBladeStopActive() {
-  return Date.now() < (state.bladeStopEnd || 0);
+  return gameNow() < (state.bladeStopEnd || 0);
 }
 /* 武僧各種追擊共用的一發傷害。
      ignoreDef  true＝完全不走減傷（浸透勁與阿修羅霸凰拳，官方就是無視防禦）
@@ -4599,7 +4605,7 @@ function tickSpirits() {
   // 蓄氣沒點（或被退點）時，手上的球一律歸零／夾回上限
   if (!state.spiritsMax) { state.spirits = 0; state.spiritRefillAt = 0; return; }
   if ((state.spirits || 0) > state.spiritsMax) state.spirits = state.spiritsMax;
-  const now = Date.now();
+  const now = gameNow();
 
   if ((state.spirits || 0) < state.spiritsMax) {
     if (!state.spiritRefillAt) state.spiritRefillAt = now + state.spiritRefillSec * 1000;
@@ -4617,7 +4623,7 @@ function tickSpirits() {
       && (!state.explosionSpirits || monkExplosionActive())) {
     const mates = allyList().filter(a => a.spiritsMax && (a.spirits || 0) < a.spiritsMax);
     if (mates.length) {
-      const a = mates[Math.floor(Math.random() * mates.length)];
+      const a = mates[Math.floor(rng() * mates.length)];
       a.spirits = (a.spirits || 0) + 1;
       state.spirits -= 1;
       state._kiAt = now + (kt.cdSec || 5) * 1000;
@@ -4657,7 +4663,7 @@ function tickSpirits() {
     if (mates.length) {
       state.spirits -= 1;
       state.kiTranslationReadyAt = now + k.cdSec * 1000;
-      const who = mates[Math.floor(Math.random() * mates.length)];
+      const who = mates[Math.floor(rng() * mates.length)];
       if (typeof who.giveSpirit === 'function') who.giveSpirit(1);
       logMsg(`🌀 「${k.name}」：分了 1 顆氣球體給隊友。`);
     }
@@ -4665,7 +4671,7 @@ function tickSpirits() {
 }
 function tryMonkProcs(target, monDef) {
   if (!state.songProcReadyAt) state.songProcReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   const ready = (id, cd) => {
     if (now < (state.songProcReadyAt[id] || 0)) return false;
     state.songProcReadyAt[id] = now + (cd || 0) * 1000;
@@ -4675,7 +4681,7 @@ function tryMonkProcs(target, monDef) {
   // 吸氣：官方吸的是目標身上的氣球體，只有對怪那半（機率回 SP）留得下來
   const ab = state.absorbSpirits;
   if (ab && state.sp < state.maxSp
-      && Math.random() * 100 < ab.chance && ready('mo_absorbspirits', ab.cdSec)) {
+      && rng() * 100 < ab.chance && ready('mo_absorbspirits', ab.cdSec)) {
     state.sp = Math.min(state.maxSp, state.sp + ab.spGain);
     logMsg(`🌀 「${ab.name}」回復了 ${ab.spGain} SP。`);
   }
@@ -4692,14 +4698,14 @@ function tryMonkProcs(target, monDef) {
   if (target && target.hp > 0 && monDef && monkBladeStopActive()) {
     // 浸透勁：無視防禦，而且傷害隨目標的防禦上升——專打高防怪的那一招
     const iv = state.investigate;
-    if (iv && Math.random() * 100 < iv.chance && ready('mo_investigate', iv.cdSec)) {
+    if (iv && rng() * 100 < iv.chance && ready('mo_investigate', iv.cdSec)) {
       monkStrike(target, monDef, iv.mult,
         { name: iv.name, icon: '🫳', ignoreDef: true, defScale: iv.defScale, bladeStopBonus: true, suffix: '（無視防禦）' });
     }
   }
   if (target && target.hp > 0 && monDef && monkBladeStopActive()) {
     const fo = state.fingerOffensive;
-    if (fo && Math.random() * 100 < fo.chance && ready('mo_fingeroffensive', fo.cdSec)) {
+    if (fo && rng() * 100 < fo.chance && ready('mo_fingeroffensive', fo.cdSec)) {
       monkStrike(target, monDef, fo.mult, { name: fo.name, icon: '☝️', bladeStopBonus: true });
     }
   }
@@ -4713,7 +4719,7 @@ function tryMonkProcs(target, monDef) {
   const bk = state.balkyoung;
   if (bk && target && target.hp > 0 && monDef
       && state.hp > state.maxHp * MONK_BALKYOUNG_HP_FLOOR
-      && Math.random() * 100 < bk.chance && ready('mo_balkyoung', bk.cdSec)) {
+      && rng() * 100 < bk.chance && ready('mo_balkyoung', bk.cdSec)) {
     const cost = Math.min(bk.hpCost, Math.max(0, state.hp - 1));
     state.hp -= cost;
     logMsg(`💥 「${bk.name}」！消耗 ${cost} HP。`);
@@ -4722,7 +4728,7 @@ function tryMonkProcs(target, monDef) {
     (state.monsters || []).forEach(mon => {
       const md = MONSTERS[mon.defId];
       if (!md || mon.hp <= 0) return;
-      if (Math.random() * 100 >= bk.stunChance) return;
+      if (rng() * 100 >= bk.stunChance) return;
       if (applyAilment(mon, md, 'stun', { sec: bk.stunSec })) stunned++;
     });
     if (stunned) logMsg(`💫 發勁的衝擊讓 ${stunned} 隻敵人暈眩了 ${bk.stunSec} 秒。`);
@@ -4739,11 +4745,11 @@ function tryMonkCombo(target, monDef) {
   if (!t || !target || target.hp <= 0 || !monDef) return;
   // 官方寫的是「近距離普通攻擊」，所以拿弓的時候整條鏈都不跑
   if (isBowWeapon(getEquipBaseItemId('weapon'))) return;
-  if (Math.random() * 100 >= t.chance) return;
+  if (rng() * 100 >= t.chance) return;
   if (!monkStrike(target, monDef, t.mult, { name: t.name, suffix: `（${t.hits} 連擊）` })) return;
 
   const c = state.chainCombo;
-  if (!c || Math.random() * 100 >= c.chance) return;
+  if (!c || rng() * 100 >= c.chance) return;
   // 拳套：官方是 4 連擊變 6 連擊、傷害加倍
   const knuckle = weaponReqMet('knuckle');
   const cMult = c.mult * (knuckle ? c.knuckleMult : 1);
@@ -4751,10 +4757,10 @@ function tryMonkCombo(target, monDef) {
   if (!monkStrike(target, monDef, cMult, { name: c.name, suffix: `（${cHits} 連擊${knuckle ? '・拳套' : ''}）` })) return;
 
   const f = state.comboFinish;
-  if (!f || Math.random() * 100 >= f.chance) return;
+  if (!f || rng() * 100 >= f.chance) return;
   const x = state.extremityFist;
   const asuraReady = !!x && monkExplosionActive()
-    && (state.spirits || 0) >= x.cost && Math.random() * 100 < x.chance;
+    && (state.spirits || 0) >= x.cost && rng() * 100 < x.chance;
   if (!asuraReady) {
     if ((state.spirits || 0) < f.cost) return;
     state.spirits -= f.cost;
@@ -4793,14 +4799,14 @@ function fireAsura(target, monDef) {
 function tryTigerFist(target, monDef) {
   const tf = state.tigerFist;
   if (!tf || !target || target.hp <= 0) return false;
-  if (Math.random() * 100 >= tf.chance) return false;
+  if (rng() * 100 >= tf.chance) return false;
   if ((state.spirits || 0) < tf.cost) return false;
   state.spirits -= tf.cost;
   if (!monkStrike(target, monDef, tf.mult, { name: tf.name, icon: '🐯' })) return true;
-  if (Math.random() * 100 < tf.stunChance) applyAilment(target, monDef, 'stun', { sec: tf.stunSec });
+  if (rng() * 100 < tf.stunChance) applyAilment(target, monDef, 'stun', { sec: tf.stunSec });
 
   const cc = state.chainCrush;
-  if (!cc || Math.random() * 100 >= tf.chainChance) return false;
+  if (!cc || rng() * 100 >= tf.chainChance) return false;
   if ((state.spirits || 0) < cc.cost) return false;
   state.spirits -= cc.cost;
   if (!monkStrike(target, monDef, cc.mult, { name: cc.name, icon: '💥' })) return true;
@@ -4809,7 +4815,7 @@ function tryTigerFist(target, monDef) {
      觸發機率與猛龍誇強那條相同（使用者 2026-08-15 指定），條件也一樣：爆氣中且球夠。 */
   const x = state.extremityFist;
   if (x && monkExplosionActive() && (state.spirits || 0) >= x.cost
-      && Math.random() * 100 < x.chance) {
+      && rng() * 100 < x.chance) {
     fireAsura(target, monDef);
     return target.hp <= 0;
   }
@@ -4819,7 +4825,7 @@ function tryTigerFist(target, monDef) {
 /* 猛虎硬派山：普攻觸發，只在爆氣狀態下。官方傷害隨 STR 與基本等級上升。 */
 function tryChampionProcs(target, monDef) {
   if (!state.songProcReadyAt) state.songProcReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   const ready = (id, cd) => {
     if (now < (state.songProcReadyAt[id] || 0)) return false;
     state.songProcReadyAt[id] = now + (cd || 0) * 1000;
@@ -4829,7 +4835,7 @@ function tryChampionProcs(target, monDef) {
   // 狂蓄氣：一口氣補滿 5 顆（不超過上限）
   const sc = state.soulCollect;
   if (sc && state.spiritsMax > 0 && (state.spirits || 0) < state.spiritsMax
-      && Math.random() * 100 < sc.chance && ready('ch_soulcollect', sc.cdSec)) {
+      && rng() * 100 < sc.chance && ready('ch_soulcollect', sc.cdSec)) {
     const before = state.spirits || 0;
     state.spirits = Math.min(state.spiritsMax, before + 5);
     logMsg(`🔵 「狂蓄氣」一口氣聚起 ${state.spirits - before} 顆氣球體！`);
@@ -4840,7 +4846,7 @@ function tryChampionProcs(target, monDef) {
      放在猛虎硬派山的檢查之前——沒學猛虎硬派山的修羅也照樣發動。 */
   const x = state.extremityFist;
   if (x && monkExplosionActive() && !isBowWeapon(getEquipBaseItemId('weapon'))
-      && (state.spirits || 0) >= x.cost && Math.random() * 100 < x.directChance) {
+      && (state.spirits || 0) >= x.cost && rng() * 100 < x.directChance) {
     fireAsura(target, monDef);
     return;
   }
@@ -4850,14 +4856,14 @@ function tryChampionProcs(target, monDef) {
   if (!monkExplosionActive()) return;                 // 官方限爆氣狀態
   if (isBowWeapon(getEquipBaseItemId('weapon'))) return;
 
-  if (Math.random() * 100 >= ps.chance) return;
+  if (rng() * 100 >= ps.chance) return;
   if (!ready('ch_palmstrike', ps.cdSec)) return;
 
   const mult = ps.mult * (1 + state.stats.str / ps.strScale) * (1 + state.baseLevel / 198);
   if (!monkStrike(target, monDef, mult, { name: ps.name, icon: '🖐️' })) return;
   applyAilment(target, monDef, 'stun', { sec: ps.stunSec });
 
-  if (Math.random() * 100 < ps.chainChance) tryTigerFist(target, monDef);
+  if (rng() * 100 < ps.chainChance) tryTigerFist(target, monDef);
 }
 
 /* ---------------- 賢者（#71）----------------
@@ -4896,7 +4902,7 @@ function sagePay(ids, qty, goldFallback) {
   qty = qty || 1;
   if (gemFreeByCard(ids)) return { id: null, label: '（卡片效果：不消耗魔力礦石）' };
   const gemFree = buffMult('gemfree').flatBonus;
-  if (gemFree > 0 && Math.random() * 100 < gemFree) return { id: null, label: '（觸媒之所免除）' };
+  if (gemFree > 0 && rng() * 100 < gemFree) return { id: null, label: '（觸媒之所免除）' };
   for (const id of ids || []) {
     if (getItemQty(id) >= qty) { removeItem(id, qty); return { id, label: `${getItemDisplayName(id)}×${qty}` }; }
   }
@@ -4957,9 +4963,9 @@ function setSageAutoSpell(skillId) {
 function tryMagicRod() {
   const p = state.magicRod;
   if (!p) return false;
-  const now = Date.now();
+  const now = gameNow();
   if (now < (state.magicRodReadyAt || 0)) return false;
-  if (Math.random() * 100 >= p.chance) return false;
+  if (rng() * 100 >= p.chance) return false;
   state.magicRodReadyAt = now + p.cdSec * 1000;
   state.sp = Math.min(state.maxSp, state.sp + p.spGain);
   logMsg(`🪄 「${p.name}」發動！完全擋下這次技能攻擊並吸收了 ${p.spGain} SP。`);
@@ -4989,7 +4995,7 @@ function tickConverter() {
 }
 function trySageProcs(target, monDef) {
   if (!state.songProcReadyAt) state.songProcReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   const ready = (id, cd) => {
     if (now < (state.songProcReadyAt[id] || 0)) return false;
     state.songProcReadyAt[id] = now + (cd || 0) * 1000;
@@ -5004,7 +5010,7 @@ function trySageProcs(target, monDef) {
     const chance = as.chance + (state.freeCastAutoSpellPct || 0);
     const lv = sageAutoSpellLv(state.sageAutoSpellId);
     const sk = lv ? findSkillAnywhere(state.sageAutoSpellId) : null;
-    if (sk && Math.random() * 100 < chance && ready('sa_autospell', as.cdSec)) {
+    if (sk && rng() * 100 < chance && ready('sa_autospell', as.cdSec)) {
       const cost = Math.round(skillSpCost(sk, lv) * as.spCostPct / 100);
       if (state.sp >= cost) {
         state.sp -= cost;
@@ -5020,7 +5026,7 @@ function trySageProcs(target, monDef) {
      **對首領階級不造成傷害**是官方就有的限制，暈眩照常判定。 */
   const sb = state.spellBreaker;
   if (sb && target && target.hp > 0 && monDef
-      && Math.random() * 100 < sb.chance && ready('sa_spellbreaker', sb.cdSec)) {
+      && rng() * 100 < sb.chance && ready('sa_spellbreaker', sb.cdSec)) {
     state.sp = Math.min(state.maxSp, state.sp + sb.spGain);
     applyAilment(target, monDef, 'stun', { sec: sb.stunSec });
     if (monDef.isBoss) {
@@ -5039,10 +5045,10 @@ function trySageProcs(target, monDef) {
      不然這一招會把黃色魔力礦石燒在空氣上。 */
   const dp = state.dispellProc;
   if (dp && target && target.hp > 0 && monDef && monBuffList(target).length
-      && Math.random() * 100 < dp.chance && ready('sa_dispell', dp.cdSec)) {
+      && rng() * 100 < dp.chance && ready('sa_dispell', dp.cdSec)) {
     if (sageCanPay(dp.costItems, dp.costQty)) {
       const paid = sagePay(dp.costItems, dp.costQty);
-      if (Math.random() * 100 < dp.successPct) {
+      if (rng() * 100 < dp.successPct) {
         target.mbuff = {};
         logMsg(`📗 「${dp.name}」成功！${monDef.name} 身上的強化效果全部消失（消耗${paid ? paid.label : '—'}）。`);
       } else {
@@ -5058,11 +5064,11 @@ function trySageProcs(target, monDef) {
   const ABRACADABRA_TYPES = ['damage', 'magic', 'damage_aoe', 'magic_aoe', 'damage_multi', 'damage_multihit',
     'dot', 'poison_proc', 'stun_field', 'multi_dot_stun', 'field_aoe_magic', 'special_charge'];
   if (ab && target && target.hp > 0
-      && Math.random() * 100 < ab.chance && ready('sa_abracadabra', ab.cdSec)) {
+      && rng() * 100 < ab.chance && ready('sa_abracadabra', ab.cdSec)) {
     const pool = Object.values(SKILLS).filter(sk => ABRACADABRA_TYPES.includes(sk.type));
     if (pool.length && sageCanPay(ab.costItems, ab.costQty)) {
       const paid = sagePay(ab.costItems, ab.costQty);
-      const sk = pool[Math.floor(Math.random() * pool.length)];
+      const sk = pool[Math.floor(rng() * pool.length)];
       const lv = Math.max(1, Math.min(sk.maxLv || 1, ab.castLv));
       if (castSkill(sk.id, { free: true, forceLv: lv })) {
         logMsg(`🎲 「${ab.name}」抽到了「${sk.name}」Lv${lv}！（消耗${paid ? paid.label : '—'}）`);
@@ -5115,7 +5121,7 @@ const GOSPEL_BLESSINGS = [
       return '全素質 +10';
     } },
   { name: '恩寵', icon: '💚', run: () => {
-      const amt = 1 + Math.floor(Math.random() * GOSPEL_RANDOM_MAX);
+      const amt = 1 + Math.floor(rng() * GOSPEL_RANDOM_MAX);
       const before = state.hp;
       state.hp = Math.min(state.maxHp, state.hp + amt);
       return `回復 ${state.hp - before} HP（擲出 ${amt}）`;
@@ -5139,7 +5145,7 @@ const GOSPEL_CURSES = [
   { name: '神罰', icon: '⚡', run: mons => {
       let total = 0;
       mons.forEach(m => {
-        const amt = 1 + Math.floor(Math.random() * GOSPEL_RANDOM_MAX);
+        const amt = 1 + Math.floor(rng() * GOSPEL_RANDOM_MAX);
         m.hp -= amt; total += amt;
         wakeIfFrozen(m);
         if (typeof showDamageFloatAt === 'function') showDamageFloatAt(m.id, '-' + amt, 'normal');
@@ -5160,7 +5166,7 @@ const GOSPEL_CURSES = [
       // 10 級挑釁＝DEF ×0.45（照 SKILLS.sm_provoke 的 mult 最後一格，改了那邊這裡跟著走）
       const pv = SKILLS.sm_provoke;
       const m10 = pv && Array.isArray(pv.mult) ? pv.mult[pv.mult.length - 1] : 0.45;
-      const until = Date.now() + GOSPEL_EFFECT_SEC * 1000;
+      const until = gameNow() + GOSPEL_EFFECT_SEC * 1000;
       mons.forEach(m => { m.debuffDef = m10; m.debuffDefEnd = until; });
       return `${mons.length} 隻敵人受到 10 級挑釁（DEF −${Math.round((1 - m10) * 100)}%）`;
     } },
@@ -5173,7 +5179,7 @@ const GOSPEL_CURSES = [
    `pf_doublecasting` 是主動 buff，判定在 tryDoubleCast()，不在這裡。 */
 function tryProfessorProcs(target, monDef) {
   if (!state.songProcReadyAt) state.songProcReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   const ready = (id, cd) => {
     if (now < (state.songProcReadyAt[id] || 0)) return false;
     state.songProcReadyAt[id] = now + (cd || 0) * 1000;
@@ -5186,7 +5192,7 @@ function tryProfessorProcs(target, monDef) {
     let n = 0;
     state.monsters.forEach(m => {
       if (m.hp <= 0) return;
-      if (Math.random() * 100 >= fw.chance) return;
+      if (rng() * 100 >= fw.chance) return;
       if (applyAilment(m, MONSTERS[m.defId], 'blind', { sec: fw.sec })) n++;
     });
     if (n) logMsg(`🌫️ 「薄霧牆」籠罩戰場，${n} 隻敵人陷入黑暗！`);
@@ -5196,7 +5202,7 @@ function tryProfessorProcs(target, monDef) {
 
   // 心神互換：官方是交換 SP，本作怪物沒有 SP 欄位 → 改成沉默
   const sc = state.soulChange;
-  if (sc && Math.random() * 100 < sc.chance && ready('pf_soulchange', sc.cdSec)) {
+  if (sc && rng() * 100 < sc.chance && ready('pf_soulchange', sc.cdSec)) {
     if (applyAilment(target, monDef, 'silence', { sec: sc.sec })) {
       logMsg(`🤐 「心神互換」擾亂了 ${monDef.name} 的心神！`);
     }
@@ -5204,7 +5210,7 @@ function tryProfessorProcs(target, monDef) {
 
   // 精神耗弱術：沉默 ＋ MATK 傷害。魔法傷害不判定命中（#76 的規則）
   const sb = state.soulBurn;
-  if (sb && Math.random() * 100 < sb.chance && ready('pf_soulburn', sb.cdSec)) {
+  if (sb && rng() * 100 < sb.chance && ready('pf_soulburn', sb.cdSec)) {
     applyAilment(target, monDef, 'silence', { sec: sb.sec });
     const em = getElementMultiplierVsMonster(sb.element, monDef, target);
     const dmg = mitigateDamage(state.matk * sb.dmgMult * em * ailDmgTakenMult(target),
@@ -5217,7 +5223,7 @@ function tryProfessorProcs(target, monDef) {
 
   // 精神撼動：降對方魔防。官方另一半（目標 MATK 上升）本作沒有對象，不做
   const mb = state.mindBreaker;
-  if (mb && mb.cut > 0 && Math.random() * 100 < mb.chance && ready('pf_mindbreaker', mb.cdSec)) {
+  if (mb && mb.cut > 0 && rng() * 100 < mb.chance && ready('pf_mindbreaker', mb.cdSec)) {
     target.debuffMdef = 1 - mb.cut / 100;
     target.debuffMdefEnd = now + mb.durSec * 1000;
     logMsg(`💠 「精神撼動」使 ${monDef.name} 的魔防 −${mb.cut}%（${mb.durSec} 秒）。`);
@@ -5242,7 +5248,7 @@ const TAROT_CARDS = [
   { name: '大審判', flat: 6666 },
   { name: '崩壞', flat: 4444 },
   { name: '力量流失', run: (m) => {
-      m.debuffAtk = 0.8; m.debuffAtkEnd = Date.now() + TAROT_EFFECT_SEC * 1000;
+      m.debuffAtk = 0.8; m.debuffAtkEnd = gameNow() + TAROT_EFFECT_SEC * 1000;
       return 'ATK −20%';
     } },
   { name: '淨化', run: (m) => {
@@ -5255,11 +5261,11 @@ const TAROT_CARDS = [
   { name: '雙重命運', double: true },
   { name: '沉眠', run: (m, md) => {
       const pool = ['sleep', 'freeze', 'stone'];
-      const pick = pool[Math.floor(Math.random() * pool.length)];
+      const pick = pool[Math.floor(rng() * pool.length)];
       return applyAilment(m, md, pick) ? MON_AILMENTS[pick].name : null;
     } },
   { name: '全面衰弱', run: (m) => {
-      const until = Date.now() + TAROT_EFFECT_SEC * 1000;
+      const until = gameNow() + TAROT_EFFECT_SEC * 1000;
       m.debuffAtk = 0.8; m.debuffAtkEnd = until;
       m.debuffDef = 0.8; m.debuffDefEnd = until;
       m.debuffFlee = Math.round((m.flee || 0) * 0.2); m.debuffFleeEnd = until;
@@ -5272,7 +5278,7 @@ const TAROT_CARDS = [
    再抽到 `double` 就跳過，不然會無限展開。 */
 function drawTarot(mon, monDef, allowDouble) {
   const pool = allowDouble ? TAROT_CARDS : TAROT_CARDS.filter(c => !c.double);
-  const c = pool[Math.floor(Math.random() * pool.length)];
+  const c = pool[Math.floor(rng() * pool.length)];
   if (c.double) {
     const bits = [drawTarot(mon, monDef, false), drawTarot(mon, monDef, false)].filter(Boolean);
     return bits.length ? `${c.name}（${bits.join('、')}）` : c.name;
@@ -5292,9 +5298,9 @@ function tryTarotCard(target, monDef) {
   const tc = state.tarotCard;
   if (!tc || !target || target.hp <= 0 || !monDef) return;
   if (!state.songProcReadyAt) state.songProcReadyAt = {};
-  const now = Date.now();
+  const now = gameNow();
   if (now < (state.songProcReadyAt.cg_tarotcard || 0)) return;
-  if (Math.random() * 100 >= tc.chance) return;
+  if (rng() * 100 >= tc.chance) return;
   state.songProcReadyAt.cg_tarotcard = now + tc.cdSec * 1000;
   const msg = drawTarot(target, monDef, true);
   logMsg(msg ? `🃏 「命運的塔羅牌」${msg}！` : '🃏 「命運的塔羅牌」抽了一張，但什麼都沒發生。');
@@ -5311,7 +5317,7 @@ function tryDoubleCast(sk, lv) {
   if (!b) return;
   if (state._inDoubleCast) return;              // 複製出來的那一發不再複製
   const chance = (b.flatBonus || 0) + (state.doubleCastBonusPct || 0);
-  if (Math.random() * 100 >= chance) return;
+  if (rng() * 100 >= chance) return;
   state._inDoubleCast = true;
   try {
     logMsg('🔁 「雙倍投擲」再放了一次！');
@@ -5327,8 +5333,8 @@ function gospelTick(f) {
   state.hp = Math.max(1, state.hp - (f.hpDrain || 0) * ticks);
   state.sp = Math.max(0, state.sp - (f.spDrain || 0) * ticks);
 
-  if (Math.random() * 100 < (f.chance || 0)) {
-    const e = GOSPEL_BLESSINGS[Math.floor(Math.random() * GOSPEL_BLESSINGS.length)];
+  if (rng() * 100 < (f.chance || 0)) {
+    const e = GOSPEL_BLESSINGS[Math.floor(rng() * GOSPEL_BLESSINGS.length)];
     const msg = e.run();
     if (msg) logMsg(`${e.icon} 「${f.name}」${e.name}：${msg}。`);
     /* 官方的聖音是隊伍範圍的祝福（#131）。祝福函式全都是對全域 state 動手，
@@ -5340,8 +5346,8 @@ function gospelTick(f) {
     }
   }
   const mons = (state.monsters || []).filter(m => m.hp > 0);
-  if (mons.length && Math.random() * 100 < (f.chance || 0)) {
-    const e = GOSPEL_CURSES[Math.floor(Math.random() * GOSPEL_CURSES.length)];
+  if (mons.length && rng() * 100 < (f.chance || 0)) {
+    const e = GOSPEL_CURSES[Math.floor(rng() * GOSPEL_CURSES.length)];
     const msg = e.run(mons);
     logMsg(msg ? `${e.icon} 「${f.name}」${e.name}：${msg}。` : `${e.icon} 「${f.name}」……無事發生。`);
     for (let i = state.monsters.length - 1; i >= 0; i--) {
@@ -5352,20 +5358,20 @@ function gospelTick(f) {
 
 function tryGanbantein() {
   if (!state.hasGanbantein || !state.monsters || !state.monsters.length) return;
-  if (Date.now() < (state.ganbanteinReadyAt || 0)) return;
+  if (gameNow() < (state.ganbanteinReadyAt || 0)) return;
   if (typeof getItemQty !== 'function') return;
   if (!gemFreeByCard(GANBANTEIN_STONES) && GANBANTEIN_STONES.some(id => getItemQty(id) <= 0)) return;
-  state.ganbanteinReadyAt = Date.now() + state.ganbanteinCdSec * 1000;
+  state.ganbanteinReadyAt = gameNow() + state.ganbanteinCdSec * 1000;
   /* 觸媒之所（#68）：官方是「使用魔法時魔力礦石消耗 −1」。本作單人合奏只有一半效果，
      所以做成「N% 機率不消耗」——礦石本來就只吃 1 個，減半沒有整數可減。 */
   const gemFree = buffMult('gemfree').flatBonus;
-  const freeThisTime = gemFreeByCard(GANBANTEIN_STONES) || (gemFree > 0 && Math.random() * 100 < gemFree);
+  const freeThisTime = gemFreeByCard(GANBANTEIN_STONES) || (gemFree > 0 && rng() * 100 < gemFree);
   if (!freeThisTime) GANBANTEIN_STONES.forEach(id => removeItem(id, 1));
   let hit = 0;
   state.monsters.forEach(mon => {
-    if (Math.random() * 100 >= state.ganbanteinChance) return;
+    if (rng() * 100 >= state.ganbanteinChance) return;
     const sec = state.ganbanteinStunMin
-      + Math.random() * (state.ganbanteinStunMax - state.ganbanteinStunMin);
+      + rng() * (state.ganbanteinStunMax - state.ganbanteinStunMin);
     applyStun(mon, sec, true);
     hit++;
   });
@@ -5381,9 +5387,9 @@ function tryGanbantein() {
    拆開的地方；因為只有這一支需要，所以做成專屬的 proc，不去動 skillBaseDamage 的旗標。 */
 function tryMagicCrasher(target, monDef) {
   if (!state.hasMagicCrasher || !target || target.hp <= 0) return;
-  if (Date.now() < (state.magicCrasherReadyAt || 0)) return;
-  if (Math.random() * 100 >= state.magicCrasherChance) return;
-  state.magicCrasherReadyAt = Date.now() + state.magicCrasherCdSec * 1000;
+  if (gameNow() < (state.magicCrasherReadyAt || 0)) return;
+  if (rng() * 100 >= state.magicCrasherChance) return;
+  state.magicCrasherReadyAt = gameNow() + state.magicCrasherCdSec * 1000;
   const elemMult = getElementMultiplierVsMonster('neutral', monDef, target);
   const dmg = mitigateDamage(
     state.matk * state.magicCrasherMult * elemMult * cardTargetDmgMult(monDef) * ailDmgTakenMult(target),
@@ -5404,9 +5410,9 @@ function tryMagicCrasher(target, monDef) {
    `state.hasBerserk` 是劍士的「狂暴狀態」（HP<25% DEF−55%），跟這個無關，別混用。 */
 function tryFrenzyProc() {
   if (!state.hasFrenzyProc || state.hp <= 0) return;
-  if (Date.now() < (state.frenzyReadyAt || 0)) return;
-  if (Math.random() * 100 >= state.frenzyChance) return;
-  state.frenzyReadyAt = Date.now() + state.frenzyCdSec * 1000;
+  if (gameNow() < (state.frenzyReadyAt || 0)) return;
+  if (rng() * 100 >= state.frenzyChance) return;
+  state.frenzyReadyAt = gameNow() + state.frenzyCdSec * 1000;
   const ms = state.frenzyDurSec * 1000;
   state.buffs.push({ type: 'atk', mult: state.frenzyAtkMult, msRemaining: ms, skillId: 'lk_berserk' });
   if (state.frenzyAspdFlat) {
@@ -5418,9 +5424,9 @@ function tryFrenzyProc() {
 
 function trySpearCounterProc(mon, monDef) {
   if (!state.hasSpearCounterProc || !hasSpearEquipped()) return;
-  if (Date.now() < (state.spearCounterReadyAt || 0)) return;
-  if (Math.random() * 100 >= state.spearCounterChance) return;
-  state.spearCounterReadyAt = Date.now() + (state.spearCounterCooldownSec || 10) * 1000;
+  if (gameNow() < (state.spearCounterReadyAt || 0)) return;
+  if (rng() * 100 >= state.spearCounterChance) return;
+  state.spearCounterReadyAt = gameNow() + (state.spearCounterCooldownSec || 10) * 1000;
   const dmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.spearCounterMult, ...defOf(monDef));
   noteMonsterDamage(mon, dmg);
   mon.hp -= dmg;
@@ -5433,9 +5439,9 @@ function trySpearCounterProc(mon, monDef) {
 function trySpearBoomerangProc() {
   if (!state.hasSpearBoomerangProc || !hasSpearEquipped()) return;
   if (!state.monsters || state.monsters.length < 2) return;
-  if (Date.now() < (state.spearBoomerangReadyAt || 0)) return;
-  state.spearBoomerangReadyAt = Date.now() + (state.spearBoomerangCooldownSec || 5) * 1000;
-  const mon = state.monsters[Math.floor(Math.random() * state.monsters.length)];
+  if (gameNow() < (state.spearBoomerangReadyAt || 0)) return;
+  state.spearBoomerangReadyAt = gameNow() + (state.spearBoomerangCooldownSec || 5) * 1000;
+  const mon = state.monsters[Math.floor(rng() * state.monsters.length)];
   const monDef = MONSTERS[mon.defId];
   const dmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.spearBoomerangMult, ...defOf(monDef));
   noteMonsterDamage(mon, dmg);
@@ -5448,9 +5454,9 @@ function trySpearBoomerangProc() {
 function tryChargeRandomProc() {
   if (!state.hasChargeRandomProc) return;
   if (!state.monsters || state.monsters.length < 2) return;
-  if (Date.now() < (state.chargeRandomReadyAt || 0)) return;
-  state.chargeRandomReadyAt = Date.now() + (state.chargeRandomCooldownSec || 5) * 1000;
-  const mon = state.monsters[Math.floor(Math.random() * state.monsters.length)];
+  if (gameNow() < (state.chargeRandomReadyAt || 0)) return;
+  state.chargeRandomReadyAt = gameNow() + (state.chargeRandomCooldownSec || 5) * 1000;
+  const mon = state.monsters[Math.floor(rng() * state.monsters.length)];
   const monDef = MONSTERS[mon.defId];
   const dmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.chargeRandomMult, ...defOf(monDef));
   noteMonsterDamage(mon, dmg);
@@ -5462,9 +5468,9 @@ function tryChargeRandomProc() {
 // 火之獵殺：被攻擊時觸發，對全體造成範圍魔法傷害
 function tryOnHitAoeProc() {
   if (!state.hasOnHitAoeProc || !state.monsters || state.monsters.length === 0) return;
-  if (Date.now() < (state.onHitAoeProcReadyAt || 0)) return;
-  if (Math.random() * 100 >= state.onHitAoeProcChance) return;
-  state.onHitAoeProcReadyAt = Date.now() + state.onHitAoeProcCooldownSec * 1000;
+  if (gameNow() < (state.onHitAoeProcReadyAt || 0)) return;
+  if (rng() * 100 >= state.onHitAoeProcChance) return;
+  state.onHitAoeProcReadyAt = gameNow() + state.onHitAoeProcCooldownSec * 1000;
   logMsg('🔥 火之獵殺發動！');
   for (let i = state.monsters.length - 1; i >= 0; i--) {
     const mon = state.monsters[i];
@@ -5484,9 +5490,9 @@ function tryOnHitAoeProc() {
 // 火柱攻擊：普攻時機率觸發，對全體造成固定值+百分比範圍魔法傷害
 function tryOnAttackAoeProc() {
   if (!state.hasOnAttackAoeProc || !state.monsters || state.monsters.length === 0) return;
-  if (Date.now() < (state.onAttackAoeProcReadyAt || 0)) return;
-  if (Math.random() * 100 >= state.onAttackAoeProcChance) return;
-  state.onAttackAoeProcReadyAt = Date.now() + state.onAttackAoeCooldownSec * 1000;
+  if (gameNow() < (state.onAttackAoeProcReadyAt || 0)) return;
+  if (rng() * 100 >= state.onAttackAoeProcChance) return;
+  state.onAttackAoeProcReadyAt = gameNow() + state.onAttackAoeCooldownSec * 1000;
   logMsg('🔥 火柱攻擊發動！');
   for (let i = state.monsters.length - 1; i >= 0; i--) {
     const mon = state.monsters[i];
@@ -5507,19 +5513,19 @@ function tryOnAttackAoeProc() {
 function tryAutoShield() {
   if (!state.hasAutoShield) return;
   if (state.shields && state.shields.some(sh => sh.id === 'wz_icewall')) return;
-  if (Date.now() < (state.autoShieldReadyAt || 0)) return;
-  state.autoShieldReadyAt = Date.now() + state.autoShieldCooldownSec * 1000;
+  if (gameNow() < (state.autoShieldReadyAt || 0)) return;
+  state.autoShieldReadyAt = gameNow() + state.autoShieldCooldownSec * 1000;
   if (!state.shields) state.shields = [];
-  state.shields.push({ id: 'wz_icewall', remainingHp: state.autoShieldCapacity, remainingCharges: state.autoShieldCharges, expiresAt: Date.now() + 999999 * 1000 });
+  state.shields.push({ id: 'wz_icewall', remainingHp: state.autoShieldCapacity, remainingCharges: state.autoShieldCharges, expiresAt: gameNow() + 999999 * 1000 });
   logMsg('🧊 冰刃之牆自動展開！');
 }
 
 // 霜凍之術：被攻擊時觸發，對全體造成範圍魔法傷害並各自有機率暈眩
 function tryOnHitAoeStunProc() {
   if (!state.hasOnHitAoeStunProc || !state.monsters || state.monsters.length === 0) return;
-  if (Date.now() < (state.onHitAoeStunReadyAt || 0)) return;
-  if (Math.random() * 100 >= state.onHitAoeStunChance) return;
-  state.onHitAoeStunReadyAt = Date.now() + state.onHitAoeStunCooldownSec * 1000;
+  if (gameNow() < (state.onHitAoeStunReadyAt || 0)) return;
+  if (rng() * 100 >= state.onHitAoeStunChance) return;
+  state.onHitAoeStunReadyAt = gameNow() + state.onHitAoeStunCooldownSec * 1000;
   logMsg('❄️ 霜凍之術發動！');
   for (let i = state.monsters.length - 1; i >= 0; i--) {
     const mon = state.monsters[i];
@@ -5529,7 +5535,7 @@ function tryOnHitAoeStunProc() {
     noteMonsterDamage(mon, dmg);
     mon.hp -= dmg;
     wakeIfFrozen(mon);
-    if (Math.random() * 100 < state.onHitAoeStunStunChance) applyStun(mon, state.onHitAoeStunStunSec, true);
+    if (rng() * 100 < state.onHitAoeStunStunChance) applyStun(mon, state.onHitAoeStunStunSec, true);
     pushCombatLog(`  → 對 ${monDef.name} 造成 ${dmg} 點傷害！`);
     if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', state.onHitAoeStunElement || null);
     if (mon.hp <= 0) killMonster(monDef, mon);
@@ -5540,9 +5546,9 @@ function tryOnHitAoeStunProc() {
 // 泥沼地：被攻擊時觸發反制暈眩攻擊者（獨立於緩速術的狀態，避免同時學習時互相覆蓋）
 function tryOnHitStunProc2(mon, monDef) {
   if (!state.hasOnHitStunProc2) return;
-  if (Date.now() < (state.onHitStunReadyAt2 || 0)) return;
-  if (Math.random() * 100 >= state.onHitStunChance2) return;
-  state.onHitStunReadyAt2 = Date.now() + state.onHitStunCooldownSec2 * 1000;
+  if (gameNow() < (state.onHitStunReadyAt2 || 0)) return;
+  if (rng() * 100 >= state.onHitStunChance2) return;
+  state.onHitStunReadyAt2 = gameNow() + state.onHitStunCooldownSec2 * 1000;
   applyStun(mon, state.onHitStunSec2, true);
   logMsg(`💫 泥沼地發動！${monDef.name} 暈眩了！`);
 }
@@ -5586,7 +5592,7 @@ function loopRunning() { return _loopOn; }
    一跳都不會發生。現在 alliesTick() 會換身進去各跑一次。 */
 function tickFieldEffects() {
   if (state.activeFieldEffects && state.activeFieldEffects.length > 0) {
-    const now = Date.now();
+    const now = gameNow();
     state.activeFieldEffects = state.activeFieldEffects.filter(f => now < f.endsAt);
     state.activeFieldEffects.forEach(f => {
       if (now < f.nextTickAt) return;
@@ -5640,7 +5646,7 @@ function tickFieldEffects() {
             noteMonsterDamage(mon, dmg);
             mon.hp -= dmg;
             wakeIfFrozen(mon);
-            if (f.stunChance && Math.random() * 100 < f.stunChance) applyStun(mon, f.stunSec || 1, true);
+            if (f.stunChance && rng() * 100 < f.stunChance) applyStun(mon, f.stunSec || 1, true);
             if (f.knockback && mon.hp > 0) pushBack(mon, f.knockback);
             pushCombatLog(`  → 「${f.name}」對 ${monDef.name} 造成 ${dmg} 點傷害！`);
             // 場地魔法（隕石術、十字驅魔…）每一跳也照屬性上色
@@ -5717,148 +5723,15 @@ function tickFieldEffects() {
   }
 }
 
-function gameTick() {
-  if (!state || tabSessionBlocked()) return;
-  liveRateTick(TICK_MS / 1000);
-  tickCooldowns();
-  tickBuffs();
-  /* 隊友身上的全體輔助 buff 也要倒數（#95）。**跟 tickBuffs 同一拍**——
-     擺到下面那個「借慢心跳」的區塊裡的話，每秒只會扣掉 100ms，
-     30 秒的幸運之頌歌會撐成 5 分鐘。 */
-  tickAllyBuffs();
-  tickAllyCooldowns();   // 隊友冷卻也要倒數（#116），不然輔助技能只放第一發
-
-  if (state.hp <= 0) return; // 等待復活流程
-
-  // 每秒執行一次的系統（回復、自動喝藥、自動技能）
-  if (!state._lastSlowTick) state._lastSlowTick = Date.now();
-  if (Date.now() - state._lastSlowTick >= 1000) {
-    state._lastSlowTick = Date.now();
-    passiveRegen();
-    tickAllyRegen();          // 隊友也有自然回復（#105）
-    townRestore();
-    autoUsePotion();
-    autoUseSpPotion();
-    autoUseAspdPotion();
-    // 成就一律在這裡集中判定，不在戰鬥流程裡埋觸發點（詳見 achievements.js 開頭說明）
-    checkAchievements();
-    tickHuntBoard();
-    tickAttendance();
-    tickPetFeed();
-    // 攻擊技能欄改到 gameTick 每拍檢查（見 tickCasting 之後），這裡只剩輔助技能
-    // 輔助技能獨立控制，不受自動施放技能開關影響
-    tryAutoCastSupportSkills();
-    // 中毒持續傷害：每秒跳一次
-    tickPoisonDot();
-    // 出血持續傷害：每秒扣最大HP的固定比例
-    tickBleed();
-    // 玩家身上的中毒／出血，順便清掉過期的異常狀態
-    tickPlayerAilments();
-    // 手推車使用被動：定時從等級解鎖的道具池隨機獲得1個
-    if (state.hasAutoCartItem) {
-      const readyAt = state.cartItemReadyAt || 0;
-      if (Date.now() >= readyAt) {
-        state.cartItemReadyAt = Date.now() + (state.cartItemIntervalSec || 15) * 1000;
-        const pool = (state.cartItemPool && state.cartItemPool.length) ? state.cartItemPool : ['carrot'];
-        const itemId = pool[Math.floor(Math.random() * pool.length)];
-        addItem(itemId, 1);
-        logMsg(`🛒 手推車翻出了一個 ${ITEMS[itemId].name}！`);
-      }
-    }
-    // 露天商店被動：定時自動以10倍價格販售已選擇的道具
-    tryAutoVending();
-    // 自動販賣：玩家勾選的道具，每30秒自動以原價賣出全部
-    tryAutoSell();
-    /* 沒選箭種就先挑一種（#129）。**不能只放在 tryAutoBuyArrow() 裡面**：
-       那支第一行問的是 `state.autoBuyArrow`，玩家把自動購買關掉之後，
-       連背包裡現成的箭都會用不到。 */
-    ensurePlayerAmmo();
-    // 自動補箭：弓箭手掛機時箭快見底就自動補貨
-    tryAutoBuyArrow();
-    tryAutoBuyMats();   // 魔力礦石／陷阱道具
-    // 隊友的箭也由玩家出（#93）。**要排在 alliesTick 前面**，這一秒買的這一秒就射得到
-    tryAutoBuyAllyArrow();
-    // 隊友（#83）：借慢心跳跑，攻擊次數照各自的攻擊間隔補齊
-    alliesTick();
-    tryAutoBuyReviveLeaf();
-    // 冰刃之牆被動：自動補上護盾
-    tryAutoShield();
-    // 手推車加速被動（#60）：60 秒到期後隔 10 秒自己續上
-    tickCartBoost();
-    // 武僧的氣球體（#70）：補球、滿球自動爆氣、爆氣中滿球自動金剛不壞
-    tickSpirits();
-    // 賢者的肯貝特武器附魔（#71）：面板選定屬性後自動維持
-    tickConverter();
-    // 投擲長矛：敵人數≥2時定時隨機攻擊
-    trySpearBoomerangProc();
-    // 衝鋒攻擊：敵人數≥2時定時隨機攻擊
-    tryChargeRandomProc();
-    // 屬性石製造被動：定時機率隨機獲得一顆屬性石
-    if (state.hasElementalStoneProc) {
-      const readyAt = state.elementalStoneReadyAt || 0;
-      if (Date.now() >= readyAt) {
-        state.elementalStoneReadyAt = Date.now() + (state.elementalStoneCooldownSec || 60) * 1000;
-        if (Math.random() * 100 < state.elementalStoneChance) {
-          const stones = ['gemstone_wind', 'gemstone_water', 'gemstone_fire', 'gemstone_earth'];
-          const stoneId = stones[Math.floor(Math.random() * stones.length)];
-          addItem(stoneId, 1);
-          logMsg(`💎 屬性石製造發動！獲得了 ${ITEMS[stoneId].name}！`);
-        }
-      }
-    }
-    tickFieldEffects();   // 場域持續效果（光耀之堂、十字驅魔攻擊、聖音…）
-  }
-
-  /* 合奏／歌曲類的維持費（#77 落花伴著月光下的水車小屋）：每 N 秒扣一次 SP。
-     SP 不夠就讓 buff 直接結束——官方也是唱不下去就停。 */
-  if (state.buffs && state.buffs.length) {
-    const now2 = Date.now();
-    state.buffs.slice().forEach(b => {
-      if (!b.spDrain || !b.drainNextAt || now2 < b.drainNextAt) return;
-      b.drainNextAt = now2 + (b.drainEverySec || 10) * 1000;
-      if (state.sp < b.spDrain) {
-        state.buffs = state.buffs.filter(x => x !== b);
-        logMsg('🎼 SP 不足，演奏中斷了。');
-        return;
-      }
-      state.sp -= b.spDrain;
-    });
-  }
-
-  // 每10秒：移動時恢復HP（戰鬥中也有效）
-  if (state.hpMoveRegen) {
-    if (!state._lastHpMoveTick) state._lastHpMoveTick = Date.now();
-    if (Date.now() - state._lastHpMoveTick >= 10000) {
-      state._lastHpMoveTick = Date.now();
-      const healAmt = Math.max(1, Math.ceil(state.maxHp * 0.05));
-      if (state.hp < state.maxHp) {
-        state.hp = Math.min(state.maxHp, state.hp + healAmt);
-        logMsg(`💚 移動恢復：回復 ${healAmt} HP。`);
-      }
-    }
-  }
-
-  if (!state.monsters) state.monsters = [];
-  tickRelicShield();          // 鐵匠遺物：每 5 秒補一面護盾（#113）
-  // 近戰模式持續生怪，遠攻模式等怪物死後再生
-  spawnMonster();
-  const moveNow = Date.now();
-  const moveDt = Math.min(1000, moveNow - (state._lastMoveTick || moveNow));
-  state._lastMoveTick = moveNow;
-  tickGroundUnits(moveNow);
-  tickMonsterMovement(moveDt, moveNow);
-  tickAllyFormation(moveDt);
-  if (typeof tickBossFight === 'function') tickBossFight(moveDt, moveNow);   // 打王：紅圈與自動閃避（js/boss_fight.js）
-  tickCasting(moveNow);
-  alliesCastTick(moveNow);
-  /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
-     施放卻要等下一秒，中間角色會站在技能射程上乾等、普攻也打不到。隊友仍在 alliesTick（每秒）。 */
+/* 玩家（state 指向的那個人）這一拍的戰鬥：找目標、攻擊技能欄、走位、普攻。
+   gameTick 與攻城戰的敵方世界（js/actor_battle.js）共用。回傳 dodging。 */
+function playerCombatStep(moveDt) {
   ensureNearestTarget();
   const dodging = typeof bossDodging === 'function' && bossDodging(state);   // 打王閃避中：不放技能、不普攻、不追怪
   if (state.autoSkill && !dodging) tryAutoCastSkill();
   if (hasFightTarget()) {
     // 使用攻擊間隔控制攻擊頻率（累積時間差模式）
-    const now = Date.now();
+    const now = gameNow();
     // 從無怪→有怪時重設，避免安全區累積爆發
     if (!state._prevHadMonsters) {
       state.attackAccumulator = 0;
@@ -5898,12 +5771,155 @@ function gameTick() {
       startPlayerSwing(now, atkInterval);
       if (state.monsters.length === 0) break;
     }
+  }
+  return dodging;
+}
+
+function gameTick() {
+  if (!state || tabSessionBlocked()) return;
+  liveRateTick(TICK_MS / 1000);
+  tickCooldowns();
+  tickBuffs();
+  /* 隊友身上的全體輔助 buff 也要倒數（#95）。**跟 tickBuffs 同一拍**——
+     擺到下面那個「借慢心跳」的區塊裡的話，每秒只會扣掉 100ms，
+     30 秒的幸運之頌歌會撐成 5 分鐘。 */
+  tickAllyBuffs();
+  tickAllyCooldowns();   // 隊友冷卻也要倒數（#116），不然輔助技能只放第一發
+
+  if (state.hp <= 0) return; // 等待復活流程
+
+  // 每秒執行一次的系統（回復、自動喝藥、自動技能）
+  if (!state._lastSlowTick) state._lastSlowTick = gameNow();
+  if (gameNow() - state._lastSlowTick >= 1000) {
+    state._lastSlowTick = gameNow();
+    passiveRegen();
+    tickAllyRegen();          // 隊友也有自然回復（#105）
+    townRestore();
+    autoUsePotion();
+    autoUseSpPotion();
+    autoUseAspdPotion();
+    // 成就一律在這裡集中判定，不在戰鬥流程裡埋觸發點（詳見 achievements.js 開頭說明）
+    checkAchievements();
+    tickHuntBoard();
+    tickAttendance();
+    tickPetFeed();
+    // 攻擊技能欄改到 gameTick 每拍檢查（見 tickCasting 之後），這裡只剩輔助技能
+    // 輔助技能獨立控制，不受自動施放技能開關影響
+    tryAutoCastSupportSkills();
+    // 中毒持續傷害：每秒跳一次
+    tickPoisonDot();
+    // 出血持續傷害：每秒扣最大HP的固定比例
+    tickBleed();
+    // 玩家身上的中毒／出血，順便清掉過期的異常狀態
+    tickPlayerAilments();
+    // 手推車使用被動：定時從等級解鎖的道具池隨機獲得1個
+    if (state.hasAutoCartItem) {
+      const readyAt = state.cartItemReadyAt || 0;
+      if (gameNow() >= readyAt) {
+        state.cartItemReadyAt = gameNow() + (state.cartItemIntervalSec || 15) * 1000;
+        const pool = (state.cartItemPool && state.cartItemPool.length) ? state.cartItemPool : ['carrot'];
+        const itemId = pool[Math.floor(rng() * pool.length)];
+        addItem(itemId, 1);
+        logMsg(`🛒 手推車翻出了一個 ${ITEMS[itemId].name}！`);
+      }
+    }
+    // 露天商店被動：定時自動以10倍價格販售已選擇的道具
+    tryAutoVending();
+    // 自動販賣：玩家勾選的道具，每30秒自動以原價賣出全部
+    tryAutoSell();
+    /* 沒選箭種就先挑一種（#129）。**不能只放在 tryAutoBuyArrow() 裡面**：
+       那支第一行問的是 `state.autoBuyArrow`，玩家把自動購買關掉之後，
+       連背包裡現成的箭都會用不到。 */
+    ensurePlayerAmmo();
+    // 自動補箭：弓箭手掛機時箭快見底就自動補貨
+    tryAutoBuyArrow();
+    tryAutoBuyMats();   // 魔力礦石／陷阱道具
+    // 隊友的箭也由玩家出（#93）。**要排在 alliesTick 前面**，這一秒買的這一秒就射得到
+    tryAutoBuyAllyArrow();
+    // 隊友（#83）：借慢心跳跑，攻擊次數照各自的攻擊間隔補齊
+    alliesTick();
+    tryAutoBuyReviveLeaf();
+    // 冰刃之牆被動：自動補上護盾
+    tryAutoShield();
+    // 手推車加速被動（#60）：60 秒到期後隔 10 秒自己續上
+    tickCartBoost();
+    // 武僧的氣球體（#70）：補球、滿球自動爆氣、爆氣中滿球自動金剛不壞
+    tickSpirits();
+    // 賢者的肯貝特武器附魔（#71）：面板選定屬性後自動維持
+    tickConverter();
+    // 投擲長矛：敵人數≥2時定時隨機攻擊
+    trySpearBoomerangProc();
+    // 衝鋒攻擊：敵人數≥2時定時隨機攻擊
+    tryChargeRandomProc();
+    // 屬性石製造被動：定時機率隨機獲得一顆屬性石
+    if (state.hasElementalStoneProc) {
+      const readyAt = state.elementalStoneReadyAt || 0;
+      if (gameNow() >= readyAt) {
+        state.elementalStoneReadyAt = gameNow() + (state.elementalStoneCooldownSec || 60) * 1000;
+        if (rng() * 100 < state.elementalStoneChance) {
+          const stones = ['gemstone_wind', 'gemstone_water', 'gemstone_fire', 'gemstone_earth'];
+          const stoneId = stones[Math.floor(rng() * stones.length)];
+          addItem(stoneId, 1);
+          logMsg(`💎 屬性石製造發動！獲得了 ${ITEMS[stoneId].name}！`);
+        }
+      }
+    }
+    tickFieldEffects();   // 場域持續效果（光耀之堂、十字驅魔攻擊、聖音…）
+  }
+
+  /* 合奏／歌曲類的維持費（#77 落花伴著月光下的水車小屋）：每 N 秒扣一次 SP。
+     SP 不夠就讓 buff 直接結束——官方也是唱不下去就停。 */
+  if (state.buffs && state.buffs.length) {
+    const now2 = gameNow();
+    state.buffs.slice().forEach(b => {
+      if (!b.spDrain || !b.drainNextAt || now2 < b.drainNextAt) return;
+      b.drainNextAt = now2 + (b.drainEverySec || 10) * 1000;
+      if (state.sp < b.spDrain) {
+        state.buffs = state.buffs.filter(x => x !== b);
+        logMsg('🎼 SP 不足，演奏中斷了。');
+        return;
+      }
+      state.sp -= b.spDrain;
+    });
+  }
+
+  // 每10秒：移動時恢復HP（戰鬥中也有效）
+  if (state.hpMoveRegen) {
+    if (!state._lastHpMoveTick) state._lastHpMoveTick = gameNow();
+    if (gameNow() - state._lastHpMoveTick >= 10000) {
+      state._lastHpMoveTick = gameNow();
+      const healAmt = Math.max(1, Math.ceil(state.maxHp * 0.05));
+      if (state.hp < state.maxHp) {
+        state.hp = Math.min(state.maxHp, state.hp + healAmt);
+        logMsg(`💚 移動恢復：回復 ${healAmt} HP。`);
+      }
+    }
+  }
+
+  if (!state.monsters) state.monsters = [];
+  // 近戰模式持續生怪，遠攻模式等怪物死後再生
+  spawnMonster();
+  const moveNow = gameNow();
+  const moveDt = Math.min(1000, moveNow - (state._lastMoveTick || moveNow));
+  state._lastMoveTick = moveNow;
+  tickGroundUnits(moveNow);
+  tickMonsterMovement(moveDt, moveNow);
+  tickAllyFormation(moveDt);
+  if (typeof tickBossFight === 'function') tickBossFight(moveDt, moveNow);   // 打王：紅圈與自動閃避（js/boss_fight.js）
+  tickCasting(moveNow);
+  alliesCastTick(moveNow);
+  /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
+     施放卻要等下一秒，中間角色會站在技能射程上乾等、普攻也打不到。隊友仍在 alliesTick（每秒）。 */
+  const dodging = playerCombatStep(moveDt);
+  if (hasFightTarget()) {
+    const now = gameNow();
 
     // 怪物攻擊（每隻怪物獨立攻擊間隔）
     if (state.monsters.length > 0) {
       state.monsters.forEach(mon => {
         if (!mon.lastAttackTime) mon.lastAttackTime = now;
         const monDef = MONSTERS[mon.defId];
+        if (monDef && (monDef.actorProxy || monDef.passive)) return;   // 攻城戰的敵方角色：出手在敵方世界（js/actor_battle.js）
         // 怪物自己的加速增益（NPC_AGIUP / BS_ADRENALINE / KN_TWOHANDQUICKEN）縮短間隔
         const interval = ((monDef && monDef.atkInterval) ? monDef.atkInterval * 1000 : 1000)
           / (1 + monBuff(mon, 'aspdPct') / 100)
@@ -5924,6 +5940,7 @@ function gameTick() {
     else if (state.townTarget && typeof tickTownWalk === 'function') tickTownWalk(moveDt);   // T27：城裡走向 NPC
     else tickRoam(moveDt, moveNow);         // 沒怪：漫遊找怪
   }
+  if (typeof tickActorBattle === 'function') tickActorBattle(gameNow());   // 攻城戰：敵方隊伍（js/actor_battle.js）
   saveGameThrottled();
   onTickUI();
 }
@@ -6045,7 +6062,7 @@ function passiveRegen() {
   const tickHp = getCardBonus('regenTickHp') + Math.floor((state.maxHp || 0) * getCardBonus('regenTickHpPct') / 100);
   const tickSp = getCardBonus('regenTickSp') + Math.floor((state.maxSp || 0) * getCardBonus('regenTickSpPct') / 100);
   if (tickHp || tickSp) {
-    const now = Date.now();
+    const now = gameNow();
     if (now >= (state.cardRegenTickAt || 0)) {
       state.cardRegenTickAt = now + 10000;
       if (tickHp && state.hp > 0) state.hp = Math.max(1, Math.min(state.maxHp, state.hp + tickHp));
@@ -6059,7 +6076,7 @@ function passiveRegen() {
      只作用在 HP，官方那個技能講的就是 HP；沒有冷卻，代價是機率。 */
   let hpThisTick = hpRegen;
   if (state.regenDoubleChance > 0 && hpThisTick > 0
-      && Math.random() * 100 < state.regenDoubleChance) {
+      && rng() * 100 < state.regenDoubleChance) {
     hpThisTick = Math.round(hpThisTick * (state.regenDoubleMult || 2));
   }
   if (state.hp < state.maxHp) state.hp = Math.min(state.maxHp, state.hp + hpThisTick);
@@ -6404,10 +6421,6 @@ function computeAspd() {
   // 官方上限：未滿100等 190，100等以上 193
   const cap = state.baseLevel >= 100 ? 193 : 190;
   state.aspd = Math.min(cap, Math.max(100, finalAspd));
-  /* 刺客遺物 5 件的「攻速恆定 193」（#113）：直接頂到上限。
-     寫成「頂到 cap」而不是寫死 193——99 級以下上限是 190，
-     寫死會讓那段時間的角色拿到官方拿不到的攻速。 */
-  if (state.buffs.some(b => b.type === 'aspdmax')) state.aspd = cap;
   state.attackInterval = getAttackInterval(state.aspd);
 }
 function buffMult(type) {
@@ -6450,7 +6463,7 @@ function skillHits(sk, lv, monDef, inst) {
   if (sk.hitBonusOnCast) {
     hit += Array.isArray(sk.hitBonusOnCast) ? sk.hitBonusOnCast[lv - 1] : sk.hitBonusOnCast;
   }
-  return Math.random() * 100 <= hitChancePctVsMonster(hit, monDef, inst);
+  return rng() * 100 <= hitChancePctVsMonster(hit, monDef, inst);
 }
 // 攻擊力的臨時修正：詛咒（×0.75）與挑釁（±N%）
 function playerAtkMult() {
@@ -6475,7 +6488,7 @@ function playerBlocked(scope) {
      沒寫 `blockCdSec` 的（自動防禦）照舊每次都擲，
      寫了的先看冷卻好了沒、而且**只在擲中時才重新計時**——
      擲失敗也扣冷卻的話，20% 的實際發生率會被壓到 2% 左右（跟 #66 光之盾同一個坑）。 */
-  const now = Date.now();
+  const now = gameNow();
   let pct = 0;
   const timed = [];
   state.buffs.forEach(b => {
@@ -6484,14 +6497,14 @@ function playerBlocked(scope) {
     if (!b.blockCdSec) { pct += b.flatBonus; return; }
     if (now >= (b.blockReadyAt || 0)) timed.push(b);
   });
-  if (pct > 0 && Math.random() * 100 < pct) return 'cr_autoguard';
+  if (pct > 0 && rng() * 100 < pct) return 'cr_autoguard';
   for (const b of timed) {
-    if (Math.random() * 100 >= b.flatBonus) continue;
+    if (rng() * 100 >= b.flatBonus) continue;
     b.blockReadyAt = now + b.blockCdSec * 1000;
     return 'cr_autoguard';
   }
   const parry = state.parryingChance || 0;
-  if (parry > 0 && Math.random() * 100 < parry) return 'parrying';
+  if (parry > 0 && rng() * 100 < parry) return 'parrying';
   return null;
 }
 
@@ -6501,7 +6514,7 @@ function playerBlocked(scope) {
 function tryShrinkStun(mon, monDef, blockedBy) {
   if (blockedBy !== 'cr_autoguard') return;
   if (!state.shrinkStunChance || !mon) return;
-  if (Math.random() * 100 >= state.shrinkStunChance) return;
+  if (rng() * 100 >= state.shrinkStunChance) return;
   applyStun(mon, state.shrinkStunSec || 1, true);
   logMsg(`💫 退縮！${monDef.name} 被盾牌震得站不穩。`);
 }
@@ -6580,8 +6593,8 @@ function spawnDelayMs(empty) {
 }
 
 function rollMonsterSpot() {
-  const bx = 36 + Math.random() * 54;
-  const by = 18 + Math.random() * 64;
+  const bx = 36 + rng() * 54;
+  const by = 18 + rng() * 64;
   const pos = rollMonsterPos();
   return { bx: bx, by: by, sx: bx, sy: by, d: pos.d, a: pos.a };
 }
@@ -6604,10 +6617,10 @@ const WEAPON_RANGE_BY_CAT = { bow: 5, whip: 2, spear1: 3, spear2: 3, pistol: 7, 
 
 function rollMonsterPos() {
   // 漫遊中：出在前方 ±90°（往前走會遇到怪）；其餘四面八方
-  const roaming = state && state.roamDir != null && Date.now() - (state._walkAt || 0) < 2000;
-  const a = roaming ? state.roamDir + (Math.random() - 0.5) * Math.PI : (Math.random() * 2 - 1) * Math.PI;
+  const roaming = state && state.roamDir != null && gameNow() - (state._walkAt || 0) < 2000;
+  const a = roaming ? state.roamDir + (rng() - 0.5) * Math.PI : (rng() * 2 - 1) * Math.PI;
   return {
-    d: SPAWN_DIST_MIN + Math.random() * (SPAWN_DIST_MAX - SPAWN_DIST_MIN),
+    d: SPAWN_DIST_MIN + rng() * (SPAWN_DIST_MAX - SPAWN_DIST_MIN),
     a: Math.atan2(Math.sin(a), Math.cos(a)),
   };
 }
@@ -6635,15 +6648,15 @@ function playerMoveBy(step, ang) {
   (state.bossCasts || []).forEach(c => c.zones.forEach(z => { z.x -= dx; z.y -= dy; }));
   state.worldX = (state.worldX || 0) + dx;
   state.worldY = (state.worldY || 0) + dy;
-  state._walkAt = Date.now();
+  state._walkAt = gameNow();
   state._walkDir = ang;
 }
 /* 沒怪可打時漫遊：照 roamDir 走，隔一段時間換方向。城鎮、無法行動、詠唱中不走 */
 function tickRoam(dt, now) {
   if (isInTown() || playerImmobile() || state.casting) return;
   if (state.roamDir == null || now >= (state.roamTurnAt || 0)) {
-    state.roamDir = Math.random() * Math.PI * 2 - Math.PI;
-    state.roamTurnAt = now + ROAM_TURN_MS[0] + Math.random() * (ROAM_TURN_MS[1] - ROAM_TURN_MS[0]);
+    state.roamDir = rng() * Math.PI * 2 - Math.PI;
+    state.roamTurnAt = now + ROAM_TURN_MS[0] + rng() * (ROAM_TURN_MS[1] - ROAM_TURN_MS[0]);
   }
   playerMoveBy(dt / PLAYER_WALK_MS, state.roamDir);
 }
@@ -6693,7 +6706,7 @@ function placeTravelPortal() {
   const next = travelNextMapId();
   if (!t || !next) { state.travel = null; return; }
   const a0 = worldMapPos(state.mapId), a1 = worldMapPos(next);
-  const ang = a0 && a1 && (a0[0] !== a1[0] || a0[1] !== a1[1]) ? Math.atan2(a1[1] - a0[1], a1[0] - a0[0]) : Math.random() * Math.PI * 2 - Math.PI;
+  const ang = a0 && a1 && (a0[0] !== a1[0] || a0[1] !== a1[1]) ? Math.atan2(a1[1] - a0[1], a1[0] - a0[0]) : rng() * Math.PI * 2 - Math.PI;
   const m = currentMap() || {};
   const dist = m.town ? TRAVEL_PORTAL_CELLS.town : m.bg === 'map-dungeon' ? TRAVEL_PORTAL_CELLS.dungeon : TRAVEL_PORTAL_CELLS.field;
   t.portal = { x: (state.worldX || 0) + dist * Math.cos(ang), y: (state.worldY || 0) + dist * Math.sin(ang), to: next };
@@ -6791,7 +6804,7 @@ function playerAttackRange() {
 const DAMAGE_FIELD_TYPES = ['field_phys_aoe', 'field_aoe_magic', 'multi_dot_stun', 'stun_field'];
 function skillDealsDamage(sk) { return !!sk && !['ground_zone', 'ground_icewall', 'debuff_single'].includes(sk.type) && (SKILL_ATTACK_TYPES.includes(sk.type) || DAMAGE_FIELD_TYPES.includes(sk.type)); }
 function autoSkillCastableNow(sk, lv) {
-  return !state.casting && Date.now() >= (state.acdUntil || 0) && skillReady(sk.id) && state.sp >= skillSpCost(sk, lv)
+  return !state.casting && gameNow() >= (state.acdUntil || 0) && skillReady(sk.id) && state.sp >= skillSpCost(sk, lv)
     && !groundUnitsFull(sk) && !(skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1, sk.goldFallback));
 }
 /* 要扣觸媒的技能：costMinLv 以上才扣（火柱攻擊 Lv6 起吃藍礦石） */
@@ -6882,7 +6895,7 @@ function triggerTrap(mon, t) {
     if (m.hp <= 0) continue;
     if (t.effect === 'damage' && t.stunSec) applyStun(m, t.stunSec, true);
     if (t.effect === 'knockback') pushBack(m, t.knockback || 5);
-    if (t.effect === 'root') m.rootUntil = Date.now() + t.rootSec * 1000 * (def && def.isBoss ? 0.5 : 1);
+    if (t.effect === 'root') m.rootUntil = gameNow() + t.rootSec * 1000 * (def && def.isBoss ? 0.5 : 1);
     if (t.effect === 'blind' || t.effect === 'sleep' || t.effect === 'freeze') applyAilment(m, def, t.effect, { sec: t.ailSec });
   }
 }
@@ -6964,7 +6977,7 @@ function quagmireCut(mon) {
 function zoneSlowMult(mon) {
   let mult = 1;
   // 緩速術（T9）：移動速度 −25%
-  if (mon.decAgiUntil && Date.now() < mon.decAgiUntil) mult = Math.max(mult, 1 / 0.75);
+  if (mon.decAgiUntil && gameNow() < mon.decAgiUntil) mult = Math.max(mult, 1 / 0.75);
   for (const z of state.groundUnits || []) {
     if (z.kind === 'zone' && z.slow > 0 && planarDist(mon, z) <= z.radius) mult = Math.max(mult, 1 / Math.max(0.05, 1 - z.slow));
   }
@@ -6999,7 +7012,7 @@ function tickMonsterMovement(dtMs, now) {
   }
 }
 function spawnMonster() {
-  if (state.bossChallenge || state.bossHunt || state.vDuel) return;   // 挑戰首領中（只有王與小弟）、討伐中（停下來結算）、虛擬對手對戰中不生怪
+  if (state.bossChallenge || state.bossHunt || state.vDuel || state.gvg) return;   // 攻城中（js/gvg.js）、挑戰首領中（只有王與小弟）、討伐中（停下來結算）、虛擬對手對戰中不生怪
   const map = currentMap();
   if (state.encounterMode === 'off') {
     state.monsters = [];
@@ -7012,13 +7025,13 @@ function spawnMonster() {
   }
   if (!state.monsters) state.monsters = [];
   if (!state.encounterMode) state.encounterMode = 'melee';
-  if (!state.lastSpawnTime) state.lastSpawnTime = Date.now();
+  if (!state.lastSpawnTime) state.lastSpawnTime = gameNow();
 
   const maxMonsters = state.maxMonsters || MELEE_MAX_MONSTERS;
   // 近戰模式：0隻時0.5秒補一批、1隻以上時3秒補一批，每批 1~3 隻，場上上限 MELEE_MAX_MONSTERS
   if (state.encounterMode === 'melee') {
     if (state.monsters.length >= maxMonsters) return;
-    const now = Date.now();
+    const now = gameNow();
     // 生怪間隔的四個加速來源都在 spawnDelayMs() 裡（角色分頁顯示的是同一支）
     const delay = spawnDelayMs(state.monsters.length === 0);
     if (now - state.lastSpawnTime < delay) return;
@@ -7034,7 +7047,7 @@ function spawnMonster() {
      批量會被**剩餘空位**夾住，所以場上永遠不超過 maxMonsters。 */
   const room = Math.max(0, maxMonsters - state.monsters.length);
   const batch = state.encounterMode === 'melee'
-    ? Math.min(room, 1 + Math.floor(Math.random() * MELEE_SPAWN_BATCH_MAX))
+    ? Math.min(room, 1 + Math.floor(rng() * MELEE_SPAWN_BATCH_MAX))
     : 1;
 
   for (let i = 0; i < batch; i++) {
@@ -7047,10 +7060,10 @@ function spawnMonster() {
     /* 場上已經有首領（MVP 或迷你王，任何一隻）就不再刷另一隻（使用者 2026-11-08）。
        以前只擋「同一份名單的還活著」，MVP 與迷你王可以同時在場。 */
     const bossAlive = state.monsters.some(m => m.hp > 0 && MONSTERS[m.defId] && MONSTERS[m.defId].isBoss);
-    const hit = bossAlive ? [] : bossLists.filter(l => Math.random() * 100 < MVP_SPAWN_CHANCE_PCT);
+    const hit = bossAlive ? [] : bossLists.filter(l => rng() * 100 < MVP_SPAWN_CHANCE_PCT);
     if (hit.length) {
-      const l = hit[Math.floor(Math.random() * hit.length)];
-      defId = l[Math.floor(Math.random() * l.length)];
+      const l = hit[Math.floor(rng() * hit.length)];
+      defId = l[Math.floor(rng() * l.length)];
       // T51 第 3 期：王不實際打，進入「討伐中」用最佳擊殺時間結算（跟離線同一條規則）
       if (typeof startBossHunt === 'function' && startBossHunt(defId)) return;
     } else {
@@ -7066,7 +7079,7 @@ function spawnMonster() {
        喝水停頓、隊友放輔助的空檔，全部算進去才是真實的產出速度，
        而離線結算要的正是那個速度。 */
     const spot = rollMonsterSpot();
-    state.monsters.push({ defId, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
+    state.monsters.push({ defId, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: gameNow(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
     applyDontForgetMe(state.monsters[state.monsters.length - 1]);
     codexRecordSeen(defId);
     // 首領照官方召喚技能帶護衛（迷你王、MVP 都一樣，見 summonBossSlaves）
@@ -7095,7 +7108,7 @@ function summonBossSlaves(bossDef, bossMon, entry) {
   if (!e || !e.mobs || !e.mobs.length) return 0;
   const room = BOSS_SLAVE_CAP - bossSlaveCount(bossMon);
   const n = Math.min(e.n, room);
-  const start = Math.floor(Math.random() * e.mobs.length);
+  const start = Math.floor(rng() * e.mobs.length);
   const names = [];
   for (let i = 0; i < n; i++) {
     const raw = e.mobs[(start + i) % e.mobs.length];
@@ -7106,7 +7119,7 @@ function summonBossSlaves(bossDef, bossMon, entry) {
     state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
     const spot = rollMonsterSpot();
     const hp = Math.round(sdef.hp * farmMult('hp'));
-    const m = { defId: sid, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: Date.now(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a, slaveOf: bossMon.id };
+    const m = { defId: sid, hp, maxHp: hp, id: state.monsterIdCounter, spawnedAt: gameNow(), farmMode: farmMode(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a, slaveOf: bossMon.id };
     if (noLoot) m.noLoot = true;
     state.monsters.push(m);
     applyDontForgetMe(m);
@@ -7131,7 +7144,7 @@ function tickBossSlaveRecall(bossMon, now) {
     if (now - (bossMon._recallAt[i] || bossMon.spawnedAt || 0) < e.delay) return;
     const ok = e.cond === 'slavele' ? bossSlaveCount(bossMon) <= e.val
       : e.cond === 'hplt' ? bossMon.hp * 100 < bossMon.maxHp * e.val : false;
-    if (!ok || Math.random() * 10000 >= e.rate) return;
+    if (!ok || rng() * 10000 >= e.rate) return;
     bossMon._recallAt[i] = now;
     summonBossSlaves(def, bossMon, e);
   });
@@ -7149,7 +7162,7 @@ function spawnExtraMonster() {
   if (!def) return;
   state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
   const spot = rollMonsterSpot();
-  state.monsters.push({ defId, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: Date.now(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
+  state.monsters.push({ defId, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: gameNow(), bx: spot.bx, by: spot.by, sx: spot.sx, sy: spot.sy, d: spot.d, a: spot.a });
   applyDontForgetMe(state.monsters[state.monsters.length - 1]);
   logMsg(`一隻 ${def.icon} ${def.name} 被衝鋒攻擊召喚了！`);
 }
@@ -7242,7 +7255,7 @@ function weaponChainDamage(monDef, elemMult, roll, sk, hand) {
   // roll：true=鎖最大值（武器值最大化 buff）、'mid'=取中間值（產出估算用，不要隨機）、其餘=正常浮動
   const variance = roll === true ? (mid + swing)
     : roll === 'mid' ? mid
-    : (mid - swing + Math.random() * swing * 2);
+    : (mid - swing + rng() * swing * 2);
 
   // 螺旋擊刺那類「無視體型修正」的技能（#58）：只拿掉懲罰，加成照留，跟卡片的 ignoreSizePenalty 同一條規則
   const sizeMult = (sk && sk.ignoreSize) ? Math.max(1, getSizeMultiplier(monDef)) : getSizeMultiplier(monDef);
@@ -7306,7 +7319,7 @@ const EXTRA_HIT_SFX_MIN_MS = 100, EXTRA_HIT_SFX_MAX_MS = 300;
 function playExtraHitSound(isCrit) {
   if (typeof playHitSound !== 'function') return;
   const acting = _allyActing;   // setTimeout 跑到時早就換回來了，音量要當下決定
-  const delay = EXTRA_HIT_SFX_MIN_MS + Math.random() * (EXTRA_HIT_SFX_MAX_MS - EXTRA_HIT_SFX_MIN_MS);
+  const delay = EXTRA_HIT_SFX_MIN_MS + rng() * (EXTRA_HIT_SFX_MAX_MS - EXTRA_HIT_SFX_MIN_MS);
   setTimeout(() => {
     const prev = _allyActing;
     _allyActing = acting;       // 借旗標讓 playSfx 走隊友的音量
@@ -7390,10 +7403,10 @@ function playerAttackInner() {
   // 茅膏菜卡片：遠程攻擊時 CRI+15，本作以裝弓為準
   if (state.cardRangedCritRate && isBowWeapon(getEquipBaseItemId('weapon'))) raceCrit += state.cardRangedCritRate;
   const effectiveCritRate = Math.min(100, state.critRate * critBuff.mult + critBuff.flatBonus + raceCrit);
-  const isCrit = Math.random() * 100 < effectiveCritRate;
+  const isCrit = rng() * 100 < effectiveCritRate;
   if (!isCrit) {
     const hitPct = hitChancePctVsMonster(effectiveHitWithBuff(), monDef, target, true);
-    if (Math.random() * 100 > hitPct) {
+    if (rng() * 100 > hitPct) {
       logMsg(`你的攻擊被 ${monDef.name} 閃避了！`);
       // 揮空音效
       if (typeof playAttackSound === 'function') playAttackSound();
@@ -7443,9 +7456,9 @@ function playerAttackInner() {
   raw *= rangeDmgMult(atkWeaponId);
 
   // 天使之怒被動：冷卻好時下一次攻擊必定雙倍傷害
-  if (state.hasAngelusProc && Date.now() >= (state.angelusReadyAt || 0)) {
+  if (state.hasAngelusProc && gameNow() >= (state.angelusReadyAt || 0)) {
     raw *= 2;
-    state.angelusReadyAt = Date.now() + (state.angelusCooldownSec || 10) * 1000;
+    state.angelusReadyAt = gameNow() + (state.angelusCooldownSec || 10) * 1000;
     logMsg('😠 天使之怒發動！本次傷害雙倍！', 'skill');   // 被動 → 技能欄（#100）
   }
 
@@ -7474,16 +7487,6 @@ function playerAttackInner() {
   // 官方暴擊無視 DEF（也無視閃避）。以前暴擊照常吃減傷，等於只剩 1.5 倍那半邊效果，
   // 對高 DEF 的怪打起來跟普通攻擊差不了多少
   let dmg = (isCrit ? Math.max(1, Math.round(raw)) : mitigateDamage(raw, monDefVal, monSoftVal)) + raceFlatBonus(monDef);
-  /* 刺客遺物 5 件（#113）：乘在**減傷之後**的最終傷害上。
-     乘在 raw 上的話 10 倍會先被怪物防禦吃掉一大半，跟「10 倍傷害」這句話對不起來。
-     放在 dpsTracker 前面，紀錄才是玩家實際打出去的數字。 */
-  const relicMult = rollRelicDamageMult();
-  if (relicMult > 1) {
-    dmg = Math.round(dmg * relicMult);
-    /* 2 倍那段有 10% 機率，等於每秒都會刷一行——技能欄還要放六合拳、阿修羅那些，
-       會被洗掉。只報稀有的那兩段（5 倍以上），2 倍安靜生效。 */
-    if (relicMult >= 5) logMsg(`🗡️ 遺物發動！本次傷害 ${relicMult} 倍！`, 'skill');
-  }
   if (isCrit) noteDealtDamage(dmg);
 
   /* 怪物身上的增益（#36）：自動防禦擋下整下、防禦型增益減傷、反射盾把傷害彈回來。
@@ -7533,14 +7536,7 @@ function playerAttackInner() {
     tryTarotCard(target, monDef);        // 搞笑藝人／冷豔舞姬（#77）：命運的塔羅牌
     tryChampionProcs(target, monDef);    // 武術宗師（#79）：狂蓄氣、猛虎硬派山 → 伏虎拳 → 氣絕崩擊
   });
-  /* 遺物的普攻效果（#113）。放在被動那一排之後、擊殺判定之前：
-     濺射要能打死其他怪，而主目標的擊殺結算仍然由下面那段負責。 */
-  tryRelicBlindProc();
   tryCardSplashProc(dmg, target);      // 巴風特卡片（#136）：普攻打全場
-  tryRelicSplashProc(dmg, target);
-  tryRelicAspdProc();
-  tryRelicMonkGatling(target, monDef);
-  tryRelicBlacksmithStrike(target);
   // 命中音效（暴擊改放 Critical.ogg）。隊友也會出聲，音量走 allySfxVolume()
   if (typeof playHitSound === 'function') playHitSound(isCrit);
 
@@ -7590,7 +7586,7 @@ function playerAttackInner() {
     // 只靠卡片觸發時玩家可能根本不是盜賊系，findSkillById() 查不到，要直接翻技能表
     const daSkill = findSkillById('tf_double') || JOB_TREE.thief.skills.find(s => s.id === 'tf_double');
     const daChance = daSkill && daSkill.doubleAttackChance ? daSkill.doubleAttackChance[daLv - 1] : 7;
-    if (Math.random() * 100 < daChance) {
+    if (rng() * 100 < daChance) {
       const daMult = daSkill && daSkill.mult ? daSkill.mult[daLv - 1] : 1.0;
       const daRaw = raw * daMult;
       /* 暴擊與二刀連擊同一擲。第一段已經把 ×1.5 乘進 raw，
@@ -7635,9 +7631,9 @@ function playerAttackInner() {
   }
 
   // 噴砂被動：攻擊時機率使敵人命中下降
-  if (state.hasSandmanProc && state.monsters.includes(target) && Math.random() * 100 < state.sandmanProcChance) {
+  if (state.hasSandmanProc && state.monsters.includes(target) && rng() * 100 < state.sandmanProcChance) {
     target.debuffHit = state.sandmanHitDebuff;
-    target.debuffHitEnd = Date.now() + state.sandmanDebuffDuration * 1000;
+    target.debuffHitEnd = gameNow() + state.sandmanDebuffDuration * 1000;
     logMsg(`💨 噴砂發動！${monDef.name} 的命中下降了！`);
   }
 
@@ -7646,11 +7642,11 @@ function playerAttackInner() {
     // 原本靠 weaponType==='mace' 或名字有「斧」來認，會漏掉分類正確但名字沒斧字的武器；
     // 現在統一走 weaponCat 的分類表
     if (weaponReqMet('axemace')) {
-      if (Math.random() * 100 < state.hammerfallSingleChance) {
+      if (rng() * 100 < state.hammerfallSingleChance) {
         applyStun(target, state.hammerfallStunSec, true);
         logMsg(`💥 大地之擊發動！${monDef.name} 暈眩了！`);
       }
-      if (Math.random() * 100 < state.hammerfallAoeChance) {
+      if (rng() * 100 < state.hammerfallAoeChance) {
         state.monsters.forEach(m => applyStun(m, state.hammerfallStunSec, true));
         logMsg(`💥 大地之擊（全體）發動！所有敵人都暈眩了！`);
       }
@@ -7665,7 +7661,7 @@ function playerAttackInner() {
   if (ewLv > 0 && state.monsters.includes(target) && state.buffs.some(b => b.skillId === 'as_enchantpoison')) {
     const ewSkill = findSkillById('as_enchantpoison');
     const ewChance = lvArr(ewSkill.procChance, ewLv) || 20;
-    if (Math.random() * 100 < ewChance) {
+    if (rng() * 100 < ewChance) {
       const ewDmgPct = ewSkill.mult[ewLv - 1];
       applyPoisonDot(target, monDef, rightHandPanelAtk() * ewDmgPct);
       logMsg(`☠️ 塗毒發動！${monDef.name} 中毒了！`);
@@ -7673,8 +7669,8 @@ function playerAttackInner() {
   }
 
   // 病毒散播被動：攻擊已中毒的敵人時，讓場上所有敵人一起中毒（10秒冷卻）
-  if (state.hasVenomdustProc && target.poisonDotEnd && Date.now() >= (state.venomdustReadyAt || 0)) {
-    state.venomdustReadyAt = Date.now() + state.venomdustCooldownSec * 1000;
+  if (state.hasVenomdustProc && target.poisonDotEnd && gameNow() >= (state.venomdustReadyAt || 0)) {
+    state.venomdustReadyAt = gameNow() + state.venomdustCooldownSec * 1000;
     logMsg(`🦠 病毒散播發動！全場敵人陷入中毒！`);
     state.monsters.forEach(mon => {
       const mDef = MONSTERS[mon.defId];
@@ -7683,8 +7679,8 @@ function playerAttackInner() {
   }
 
   // 毒性感染被動：攻擊已中毒的敵人時機率引爆全體（10秒冷卻）
-  if (state.hasVenominfusionProc && target.poisonDotEnd && Date.now() >= (state.venominfusionReadyAt || 0) && Math.random() * 100 < state.venominfusionProcChance) {
-    state.venominfusionReadyAt = Date.now() + state.venominfusionCooldownSec * 1000;
+  if (state.hasVenominfusionProc && target.poisonDotEnd && gameNow() >= (state.venominfusionReadyAt || 0) && rng() * 100 < state.venominfusionProcChance) {
+    state.venominfusionReadyAt = gameNow() + state.venominfusionCooldownSec * 1000;
     logMsg(`💥 毒性感染引爆！`);
     for (let i = state.monsters.length - 1; i >= 0; i--) {
       const mon = state.monsters[i];
@@ -7708,13 +7704,13 @@ function playerAttackInner() {
   if (bbLv > 0 && state.monsters.includes(target)) {
     const luk = state.stats.luk || 1;
     const bbChance = Math.min(30, 5 + (luk - 1) * 25 / 119);
-    if (Math.random() * 100 < bbChance) {
+    if (rng() * 100 < bbChance) {
       const bbSkill = findSkillById('ht_blitzbeat');
       const passiveMultVal = bbSkill.passiveMult[bbLv - 1];
       const bbElemMult = getElementMultiplierVsMonster(bbSkill.element || 'none', monDef, target);
       let bbDmg = mitigateDamage(skillBaseDamage(false, monDef, bbElemMult) * passiveMultVal, ...defOf(monDef));
       if (state.falconFlatBonus) bbDmg += state.falconFlatBonus;
-      state._falconStrike = { at: Date.now(), monId: target.id };   // T52：畫面上獵鷹飛出去
+      state._falconStrike = { at: gameNow(), monId: target.id };   // T52：畫面上獵鷹飛出去
       target.hp -= bbDmg;
       logMsg(`🦅 獵鷹突襲！對 ${monDef.name} 造成 ${bbDmg} 點傷害！`);
       if (target.hp <= 0) killMonster(monDef, target);
@@ -7730,7 +7726,7 @@ function playerAttackInner() {
 /* ally：站位系統（2026-11-09）最前排是隊友時，技能打他——換身成那位隊友跑同一支，
    命中、防禦、異常、吸 SP 全照玩家那套算在他身上。自我增益／回復跟目標無關，不換身。 */
 function monsterCastSkill(mon, monDef, sk, ally) {
-  if (mon.charmUntil && Date.now() < mon.charmUntil && !sk.buff) return;   // 眨眼之誘：迷惑中不對玩家放技能
+  if (mon.charmUntil && gameNow() < mon.charmUntil && !sk.buff) return;   // 眨眼之誘：迷惑中不對玩家放技能
   if (ally && !sk.buff && !sk.heal) {
     return withAlly(ally, () => withLogLane('ally', () => monsterCastSkillInner(mon, monDef, sk)));
   }
@@ -7804,7 +7800,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
 
   // 命中判定：魔法無視閃避，物理照常擲
   if (!sk.magic) {
-    if (Math.random() * 100 < state.perfectDodge) {
+    if (rng() * 100 < state.perfectDodge) {
       logMsg(`你完全迴避了 ${nameOf()}！`);
       if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
       return;
@@ -7831,7 +7827,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
     if (!playerAlwaysHit()) {
       let dodgePct = dodgeChancePctFromMonster(effectiveFleeWithBuff(), monDef, hitDebuff);
       dodgePct = Math.max(0, dodgePct + playerAilPct('fleePct'));   // 黑暗讓玩家更難閃
-      if (Math.random() * 100 < dodgePct) {
+      if (rng() * 100 < dodgePct) {
         logMsg(`你迴避了 ${nameOf()}！`);
         if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
         return;
@@ -7846,7 +7842,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
        擲在傷害計算之前——反射掉的法術根本沒打到玩家，不該扣血也不該打斷睡眠。
        只擋魔法，物理走下面的 applyPlayerReflect（那個是「照比例彈一部分」，兩回事）。 */
     if (sk.magic && state.cardMagicReflectChance > 0
-        && Math.random() * 100 < state.cardMagicReflectChance) {
+        && rng() * 100 < state.cardMagicReflectChance) {
       const back = Math.max(1, Math.round(monsterBaseMatk(monDef, mon) * sk.mult
         * getElementMultiplierVsMonster(el, monDef, mon)));
       noteMonsterDamage(mon, back);
@@ -7888,17 +7884,6 @@ function monsterCastSkillInner(mon, monDef, sk) {
     // 乘在防禦之前的話，軟防那一段是固定減值，會讓實際倍率大於寫出來的數字
     dmg = Math.max(1, Math.round(mitigatePlayerIncoming(raw, hardDef, softDef) * playerDmgTakenMult()));
     dmg = rejectSwordAbsorb(dmg, mon, monDef);  // 霸王魂（#79）
-    /* 遺物免傷（#113）也要擋技能。只擋普攻的話，會放技能的怪身上
-       「20% 免疫」等於不存在——而高等圖幾乎每隻怪都會放技能。 */
-    {
-      const by = relicNegatesHit();
-      if (by) {
-        logMsg(`${by}！完全免疫了 ${nameOf()}！`);
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('免傷', 'miss');
-        if (typeof showBuddhaShield === 'function' && by.indexOf('佛法') >= 0) showBuddhaShield();
-        return;
-      }
-    }
     state.hp -= dmg;
     logMsg(`✨ ${nameOf()} 造成了 ${dmg} 點傷害！`);
     if (sk.magic && state.hp > 0) tryAutoSpells('hitMagic', mon);   // 被魔法打到時（BF_MAGIC 的 autoSpellWhenHit）
@@ -8004,7 +7989,7 @@ function monsterAttackSingle(mon) {
      倒地的不列入分配，那份會自動退回玩家——不然隊友一死怪的攻擊就憑空少掉，
      變成「隊友死光反而比較安全」。
      技能也打最前排（站位系統 2026-11-09）：擲中技能就換身成隊友放。 */
-  if (!mon.stunnedUntil || Date.now() >= mon.stunnedUntil) {
+  if (!mon.stunnedUntil || gameNow() >= mon.stunnedUntil) {
     const target = pickMonsterTarget();
     if (target) {
       const sk = monsterSkillFor(mon, monDef);
@@ -8014,9 +7999,9 @@ function monsterAttackSingle(mon) {
     }
   }
 
-  if (mon.charmUntil && Date.now() < mon.charmUntil) return;   // 眨眼之誘：迷惑中不攻擊玩家
+  if (mon.charmUntil && gameNow() < mon.charmUntil) return;   // 眨眼之誘：迷惑中不攻擊玩家
   // 無法行動類的異常狀態（昏迷／冰凍／石化／睡眠／混亂）都寫在 stunnedUntil 上
-  if (mon.stunnedUntil && Date.now() < mon.stunnedUntil) {
+  if (mon.stunnedUntil && gameNow() < mon.stunnedUntil) {
     const by = ailList(mon).filter(t => MON_AILMENTS[t].immobile)[0];
     const A = by ? MON_AILMENTS[by] : MON_AILMENTS.stun;
     logMsg(`${A.icon} ${monDef.name} 還在${A.name}中，無法攻擊！`);
@@ -8027,7 +8012,7 @@ function monsterAttackSingle(mon) {
   const mSkill = monsterSkillFor(mon, monDef);
   if (mSkill) { monsterCastSkill(mon, monDef, mSkill); return; }
 
-  if (Math.random() * 100 < state.perfectDodge) {
+  if (rng() * 100 < state.perfectDodge) {
     logMsg(`你完全迴避了 ${monDef.name} 的攻擊！`);
     if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
     return;
@@ -8046,19 +8031,9 @@ function monsterAttackSingle(mon) {
     if (typeof showPlayerFloat === 'function') showPlayerFloat('免傷', 'miss');
     return;
   }
-  // 遺物免傷（#113）：騎士 20%／武僧 5%。跟光之盾同一類，所以放在一起
-  {
-    const by = relicNegatesHit();
-    if (by) {
-      logMsg(`${by}！完全免疫了 ${monDef.name} 的攻擊！`);
-      if (typeof showPlayerFloat === 'function') showPlayerFloat('免傷', 'miss');
-      if (typeof showBuddhaShield === 'function' && by.indexOf('佛法') >= 0) showBuddhaShield();
-      return;
-    }
-  }
   // 噴砂被動造成的命中下降：等同降低這隻怪的fleeReq門檻，玩家更容易迴避
   let hitDebuff = quagmireCut(mon);   // 泥沼地：DEX −10×lv → 命中等量下降
-  if (mon.debuffHit && mon.debuffHitEnd && Date.now() < mon.debuffHitEnd) {
+  if (mon.debuffHit && mon.debuffHitEnd && gameNow() < mon.debuffHitEnd) {
     hitDebuff += mon.debuffHit;
   } else {
     delete mon.debuffHit;
@@ -8069,27 +8044,27 @@ function monsterAttackSingle(mon) {
   // 同理：黑暗打折的是怪物的 HIT，fleeReq = 怪物HIT + 75，先剝掉偏移再折
   if (blindMult < 1) hitDebuff += Math.round(((monDef.fleeReq || monsterHitOf(monDef)) - REQ_FLEE_OFFSET) * (1 - blindMult));
   const dodgePct = dodgeChancePctFromMonster(effectiveFleeWithBuff(), monDef, hitDebuff);
-  if (Math.random() * 100 < dodgePct) {
+  if (rng() * 100 < dodgePct) {
     logMsg(`你迴避了 ${monDef.name} 的攻擊！`);
     if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
     return;
   }
 
   // 後退迴避被動：被攻擊時機率完全免傷
-  if (state.hasBackslideDodge && Math.random() * 100 < state.backslideDodgeChance) {
+  if (state.hasBackslideDodge && rng() * 100 < state.backslideDodgeChance) {
     logMsg(`💨 後退迴避發動！完全免疫了 ${monDef.name} 的攻擊！`);
     if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
     return;
   }
 
   // 毒性反彈被動：被毒屬性怪物攻擊時觸發反擊（10秒冷卻，目前遊戲無毒屬性怪物，暫無實際效果）
-  if (state.hasPoisonReact && monDef.element === 'poison' && Date.now() >= (state.poisonReactReadyAt || 0)) {
+  if (state.hasPoisonReact && monDef.element === 'poison' && gameNow() >= (state.poisonReactReadyAt || 0)) {
     logMsg(`🛡️ 毒性反彈發動！完全迴避了 ${monDef.name} 的攻擊！`);
     const counterDmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * state.poisonReactMult * elementDmgMult('poison'), ...defOf(monDef));
     noteMonsterDamage(mon, counterDmg);
     mon.hp -= counterDmg;
     logMsg(`⚔️ 反擊造成 ${counterDmg} 點傷害！`);
-    state.poisonReactReadyAt = Date.now() + state.poisonReactCooldownSec * 1000;
+    state.poisonReactReadyAt = gameNow() + state.poisonReactCooldownSec * 1000;
     if (mon.hp <= 0) {
       killMonster(monDef, mon);
     }
@@ -8099,7 +8074,7 @@ function monsterAttackSingle(mon) {
   // 反擊被動：被攻擊時機率免傷+反擊必暴
   if (state.hasCounterAttack) {
     const counterChance = state.counterAttackChance || 15;
-    if (Math.random() * 100 < counterChance) {
+    if (rng() * 100 < counterChance) {
       logMsg(`🛡️ 反擊發動！完全迴避了 ${monDef.name} 的攻擊！`);
       const counterDmg = mitigateDamage(skillBaseDamage(false, monDef, 1) * 1.5, ...defOf(monDef));
       noteMonsterDamage(mon, counterDmg);
@@ -8187,8 +8162,8 @@ function monsterAttackSingle(mon) {
   }
 
   // 緩速術被動：被攻擊時機率反制暈眩攻擊者
-  if (state.hasOnHitStunProc && Date.now() >= (state.onHitStunReadyAt || 0) && Math.random() * 100 < state.onHitStunChance) {
-    state.onHitStunReadyAt = Date.now() + state.onHitStunCooldownSec * 1000;
+  if (state.hasOnHitStunProc && gameNow() >= (state.onHitStunReadyAt || 0) && rng() * 100 < state.onHitStunChance) {
+    state.onHitStunReadyAt = gameNow() + state.onHitStunCooldownSec * 1000;
     applyStun(mon, state.onHitStunSec, true);
     logMsg(`💫 緩速術發動！${monDef.name} 暈眩了！`);
   }
@@ -8307,13 +8282,6 @@ function getCodexPool() {
   }
   Object.values(NPC_SHOPS).forEach(shop => (shop.items || []).forEach(id => { if (ITEMS[id]) itemSet.add(id); }));
   POTION_TIERS.forEach(id => { if (ITEMS[id]) itemSet.add(id); });
-  /* 遺物也是收藏品（#138）。它們不從掉落表來（頭目掉遺物券、券再去換），
-     所以上面那幾圈一個都掃不到——圖鑑的「遺物」分類會是空的。
-     取得方式在明細裡另外寫（見 ui.js 的 relicSourceHtml）。 */
-  if (typeof RELIC_ITEMS !== 'undefined') {
-    Object.keys(RELIC_ITEMS).forEach(id => { if (ITEMS[id]) itemSet.add(id); });
-  }
-  if (typeof RELIC_TICKET_ID !== 'undefined' && ITEMS[RELIC_TICKET_ID]) itemSet.add(RELIC_TICKET_ID);
   const cardSet = new Set([...itemSet].filter(id => CARDS[id]));
   _codexPoolCache = {
     monsters: [...monSet].sort((a, b) => (MONSTERS[a].level || 0) - (MONSTERS[b].level || 0)),
@@ -8448,7 +8416,7 @@ function getEtherDropChance(monDef) {
 }
 /* 從掉落表裡挑一樣，**照各自的掉落率加權**（#109）。
 
-   偷竊與貪婪本來是 `drops[Math.floor(Math.random() * drops.length)]`——**均分**，
+   偷竊與貪婪本來是 `drops[Math.floor(rng() * drops.length)]`——**均分**，
    完全無視掉落率。虎王的掉落表有 11 項，虎王卡片的正常掉落率是 0.05%，
    均分之下被挑中的機率是 9.1%，**182 倍**；火靈原石（賣 1500）0.23% → 9.1%，40 倍。
    偷竊 Lv10 有 62% 觸發率，等於卡片的實際到手率變成正常掉落的一百多倍——
@@ -8459,7 +8427,7 @@ function pickWeightedDrop(drops) {
   const list = (drops || []).filter(d => d && d.item && d.chance > 0);
   if (!list.length) return null;
   const total = list.reduce((a, d) => a + d.chance, 0);
-  let r = Math.random() * total;
+  let r = rng() * total;
   for (const d of list) { r -= d.chance; if (r <= 0) return d; }
   return list[list.length - 1];   // 浮點誤差的保險
 }
@@ -8468,7 +8436,7 @@ function rollEtherDrop(monDef) {
   const chance = getEtherDropChance(monDef);
   if (chance <= 0) return;
   ['hd_bradium', 'hd_carnium'].forEach(id => {
-    if (Math.random() < chance) {
+    if (rng() < chance) {
       addItem(id, 1);
       logMsg(`✨ MVP 掉落！獲得了 ${ITEMS[id].name}！`);
     }
@@ -8535,7 +8503,7 @@ function recordBossKillTime(owner, monKey, def, monObj) {
   if (!owner || !def || !def.isBoss) return;
   const at = monObj && monObj.spawnedAt;
   if (!at) return;                      // 舊存檔留在場上的怪沒有這一格，跳過
-  const ms = Date.now() - at;
+  const ms = gameNow() - at;
   /* 下限擋掉不合理的紀錄：GM 秒殺、測試造出來的假怪、以及同一拍連續結算。
      沒有下限的話一次 0ms 的紀錄會讓離線變成無限刷。 */
   if (!(ms >= BOSS_KILL_MIN_MS)) return;
@@ -8549,7 +8517,7 @@ function recordBossKillTime(owner, monKey, def, monObj) {
   cur.n++;
   cur.lastMs = ms;
   cur.bestMs = cur.bestMs > 0 ? Math.min(cur.bestMs, ms) : ms;
-  cur.at = Date.now();
+  cur.at = gameNow();
   per[mode] = cur;
 }
 const BOSS_KILL_MIN_MS = 1000;
@@ -8769,17 +8737,16 @@ function killMonster(def, monObj) {
     * (1 + (owner.passiveDropPct || 0) / 100)                                              // 馴鷹術
     * (monObj && monObj._trapKill ? 1 + (owner.trapLootPct || 0) / 100 : 1);              // 陷阱探查
   (def.drops || []).forEach(d => {
-    if (Math.random() < Math.min(1, d.chance * dropMult)) addItem(d.item, 1);
+    if (rng() < Math.min(1, d.chance * dropMult)) addItem(d.item, 1);
   });
   rollEtherDrop(def);
   // 脅持：擊殺 5%~25% 立刻生下一隻（跳過生怪等待）
   const intim = skillLv('rg_intimidate');
-  if (intim && Math.random() * 100 < 5 * intim) owner.lastSpawnTime = 0;
+  if (intim && rng() * 100 < 5 * intim) owner.lastSpawnTime = 0;
   // 製作箭：擊殺 10% 回收 1 支目前裝備的箭
-  if (skillLv('ac_makingarrow') && getEquippedAmmoId() && Math.random() < 0.1) addItem(getEquippedAmmoId(), 1);
-  rollRelicDrop(def);                    // 遺物（#113）：只有打寶模式會掉
+  if (skillLv('ac_makingarrow') && getEquippedAmmoId() && rng() < 0.1) addItem(getEquippedAmmoId(), 1);
   // 偷竊被動：擊敗怪物時機率額外掉落一份道具（照掉落率加權，見 pickWeightedDrop）
-  if (state.stealChance && def.drops && def.drops.length > 0 && Math.random() * 100 < state.stealChance) {
+  if (state.stealChance && def.drops && def.drops.length > 0 && rng() * 100 < state.stealChance) {
     const stolen = pickWeightedDrop(def.drops);
     if (stolen) {
       addItem(stolen.item, 1);
@@ -8788,14 +8755,14 @@ function killMonster(def, monObj) {
     }
   }
   // 尋找礦石被動：擊敗怪物時機率額外獲得隨機屬性礦石（供屬性石製造使用）
-  if (state.hasFindingOreProc && Math.random() * 100 < state.findingOreChance) {
+  if (state.hasFindingOreProc && rng() * 100 < state.findingOreChance) {
     const orePool = ['boody_red', 'crystal_blue', 'wind_of_verdure', 'yellow_live'];
-    const ore = orePool[Math.floor(Math.random() * orePool.length)];
+    const ore = orePool[Math.floor(rng() * orePool.length)];
     addItem(ore, 1);
     logMsg(`⛏️ 尋找礦石發動！額外獲得了 ${ITEMS[ore].name}！`);
   }
   // 貪婪被動：擊敗怪物時機率多獲得一份戰利品（跟偷竊同一套加權）
-  if (state.hasGreedProc && def.drops && def.drops.length > 0 && Math.random() * 100 < state.greedChance) {
+  if (state.hasGreedProc && def.drops && def.drops.length > 0 && rng() * 100 < state.greedChance) {
     const bonus = pickWeightedDrop(def.drops);
     if (bonus) {
       addItem(bonus.item, 1);
@@ -8807,7 +8774,7 @@ function killMonster(def, monObj) {
   tryCardKillDrops(def);
   // 卡片掉落
   const cardDrop = MONSTER_CARD_DROPS[monKey];
-  if (cardDrop && Math.random() < cardDrop.chance) {
+  if (cardDrop && rng() < cardDrop.chance) {
     addItem(cardDrop.card, 1);
     const card = CARDS[cardDrop.card];
     logMsg(`🃏 掉落了稀有的 ${card.name}！`);
@@ -8839,7 +8806,7 @@ function removeKilledFromField(monObj) {
    被抬回安全區那條路徑（onPlayerDown）本來就已經 HP/SP 全滿，
    官方那句話針對的正是「原地復活但只回一小截血」的復活術。 */
 function tryAutoRevive() {
-  const now = Date.now();
+  const now = gameNow();
   const full = () => { state.hp = state.maxHp; state.sp = state.maxSp; };
   if (state.hasAutoRevive2 && now >= (state.autoRevive2ReadyAt || 0)) {
     state.autoRevive2ReadyAt = now + state.autoRevive2CooldownSec * 1000;
@@ -8864,8 +8831,6 @@ function tryAutoRevive() {
     logMsg(`✨ 復活術發動（${a._allyName}）！扶起了你（HP ${state.cardReviveFull ? 100 : pct}%，消耗${paid ? paid.label : '—'}）。`);
     return true;
   }
-  // 牧師遺物是最後一道保險：自己的復活術與隊友的祭司都優先用掉（#113）
-  if (tryRelicPriestRevive()) return true;
   return false;
 }
 
@@ -8898,12 +8863,11 @@ function onPlayerDown() {
   movePartyWith(downMap);
   state.partyFollow = pf;
   reviveAlliesInTown();   // 被抬回城，隊友一起站起來（#83）
-  resetRelicRevive();     // 牧師遺物的復活次數也一起回滿（#113）
   ensureCodex().maps[safeMap] = 1; // 被抬回城也算造訪過，這條路徑沒有經過 changeMap()
   state.hp = state.maxHp;
   state.sp = state.maxSp;
   state.attackAccumulator = 0;
-  state.lastAttackTime = Date.now();
+  state.lastAttackTime = gameNow();
   recomputeDerived(false);
   logMsg('你恢復了意識，HP/SP 已全滿。');
   onTickUI();
@@ -9029,7 +8993,7 @@ let _allyOwnerState = null;
 const FORMATION_GAP = 2;        // 相鄰兩排差幾格
 const ALLY_WALK_MS = 150;       // 隊員走一格（跟玩家一樣）
 const ALLY_ADV_MAX = 20;
-function allyFid(a) { return a._fid || (a._fid = 'a' + Math.random().toString(36).slice(2, 9)); }
+function allyFid(a) { return a._fid || (a._fid = 'a' + rng().toString(36).slice(2, 9)); }
 function formationOrder() {
   const owner = allyOwnerState();
   const keys = ['p'].concat((owner.allies || []).filter(Boolean).map(allyFid));
@@ -9265,9 +9229,9 @@ function writeAllyProgress(ally) {
     if (ally[k] != null) raw[k] = ally[k];
   });
   if (ally.expPrepaid && ((ally.expPrepaid.base || 0) > 0 || (ally.expPrepaid.job || 0) > 0)) {
-    raw.expPrepaid = { base: ally.expPrepaid.base || 0, job: ally.expPrepaid.job || 0, at: ally.expPrepaid.at || Date.now() };
+    raw.expPrepaid = { base: ally.expPrepaid.base || 0, job: ally.expPrepaid.job || 0, at: ally.expPrepaid.at || gameNow() };
   }
-  if (allyOnThisMap(ally)) raw.lastExpAt = Date.now();
+  if (allyOnThisMap(ally)) raw.lastExpAt = gameNow();
   writeSaveSlot(ally._slot, raw);
 }
 function noteExpPrepaid(obj, base, job) {
@@ -9275,7 +9239,7 @@ function noteExpPrepaid(obj, base, job) {
   const n = obj.expPrepaid || { base: 0, job: 0 };
   n.base = (n.base || 0) + base;
   n.job = (n.job || 0) + job;
-  n.at = Date.now();
+  n.at = gameNow();
   obj.expPrepaid = n;
 }
 /* 上線說明用過就清掉，避免下次進遊戲又講一次。 */
@@ -9305,8 +9269,8 @@ function prepaidAllyFieldExp(ally) {
   if (!ally || ally._slot == null || String(ally._slot) === String(currentSlot)) return null;
   const raw = readSaveSlot(ally._slot);
   if (!raw || !raw.jobId) return null;
-  const clock = (typeof raw.lastExpAt === 'number' && raw.lastExpAt > 0) ? raw.lastExpAt : (raw.lastActiveAt || Date.now());
-  if (Date.now() - clock < OFFLINE_MIN_MS) return null;
+  const clock = (typeof raw.lastExpAt === 'number' && raw.lastExpAt > 0) ? raw.lastExpAt : (raw.lastActiveAt || gameNow());
+  if (gameNow() - clock < OFFLINE_MIN_MS) return null;
   const ownerSlot = currentSlot;
   const saved = state;
   const savedActing = _allyActing;
@@ -9319,8 +9283,8 @@ function prepaidAllyFieldExp(ally) {
     _allyOwnerState = null;
     currentSlot = ally._slot;
     state = JSON.parse(JSON.stringify(raw));
-    if (!state.lastExpAt) state.lastExpAt = state.lastActiveAt || Date.now();
-    if (!state.lastLootAt) state.lastLootAt = state.lastActiveAt || Date.now();
+    if (!state.lastExpAt) state.lastExpAt = state.lastActiveAt || gameNow();
+    if (!state.lastLootAt) state.lastLootAt = state.lastActiveAt || gameNow();
     recomputeDerived(false);
     syncPartyOnLoad();
     off = computeOfflineProgress(OFFLINE_MIN_MS, { expOnly: true, excludeSlots: [String(ownerSlot)] });
@@ -9567,7 +9531,14 @@ function alliesCastTick(now) {
     try {
       if (ally.casting) withAlly(ally, () => tickCasting(now));
       else {
-        if (engaged && ally.autoSkill) withAlly(ally, () => tryAutoCastSkill(true));
+        /* 輔助（治癒術等）也要搶得到空檔（使用者 2026-11-13 回報：打王時補師不補血）：
+           攻擊技每拍都在搶詠唱／後延遲，輔助只在 alliesTick 每秒檢查一次，永遠撞上施法中。
+           這裡每 0.3 秒讓輔助先檢查一次（tryAutoCastSkill(false) 會先跑輔助），其餘拍只跑攻擊 */
+        if (engaged && ally.autoSkill) {
+          const supDue = now - (ally._supAt || 0) >= 300;
+          if (supDue) ally._supAt = now;
+          withAlly(ally, () => tryAutoCastSkill(!supDue));
+        }
         // 轉被動的攻擊技（衝鋒、投擲、貼身、逼近、被包圍）隊友也吃得到（T50 後續，使用者 2026-11-13）
         if (engaged && !ally.casting) withAlly(ally, () => tickPassiveProcs(now));
       }
@@ -9598,14 +9569,14 @@ function allySwingTick(ally, now, engaged) {
     try { hit = withAlly(ally, () => playerAttack()); }
     catch (e) { console.error('隊友行動失敗', ally && ally._allyName, e); break; }
     // 真的打出去才給 UI 播動作（沒箭的弓箭手不該有攻擊動畫）
-    if (hit) ally._swingAt = Date.now();
+    if (hit) ally._swingAt = gameNow();
     if (ally._downed) break;
   }
 }
 function alliesTick() {
   const list = allyList();
   if (!list.length) return;
-  const now = Date.now();
+  const now = gameNow();
   // 沒怪（城內、清場等補怪）：只補輔助技能，跟玩家的慢心跳一樣
   if (!state.monsters || !state.monsters.length) {
     list.forEach(ally => {
@@ -9809,7 +9780,7 @@ function energyCoatCut(holder, dmg) {
 }
 function absorbWithShields(holder, dmg, who, lane, ranged) {
   if (!holder.shields || !holder.shields.length) return dmg;
-  const now = Date.now();
+  const now = gameNow();
   holder.shields = holder.shields.filter(sh => now < sh.expiresAt && sh.remainingCharges > 0 && sh.remainingHp > 0);
   // 只擋近戰／只擋遠程的盾要對得上這一下的距離
   const sh = holder.shields.find(x => !x.blocks || (x.blocks === 'ranged') === !!ranged);
@@ -9917,18 +9888,16 @@ function setAutoBuyAllyArrow(v) { state.autoBuyAllyArrow = !!v; saveGame(); }
    不然隊友一死怪的攻擊就憑空少掉，變成「死光反而安全」。
    十字軍犧牲：有該 buff 的隊友優先被攻擊（65%~80%）。 */
 /* 怪的普攻打誰（站位系統 2026-11-09）：最前排還站著的人。回傳 null＝打玩家。
-   牧師遺物：額外機率把怪引到玩家身上。最前排是玩家時，掛著犧牲的隊友照機率替他擋。 */
+   最前排是玩家時，掛著犧牲的隊友照機率替他擋。 */
 function pickMonsterTarget() {
   const alive = allyAliveList();
   if (!alive.length) return null;
-  const taunt = relicPlayerTargetPct() - ALLY_MONSTER_TARGET_PLAYER_PCT;
-  if (taunt > 0 && Math.random() * 100 < taunt) return null;
   const front = frontMember();
   if (front !== allyOwnerState()) return front;
   const devotionAlly = alive.find(a => (a.buffs || []).some(x => x.type === 'devotion' && (x.msRemaining || 0) > 0));
   if (devotionAlly) {
     const b = devotionAlly.buffs.find(x => x.type === 'devotion');
-    if (Math.random() * 100 < ((b && b.targetPlayerPct) || 75)) return devotionAlly;
+    if (rng() * 100 < ((b && b.targetPlayerPct) || 75)) return devotionAlly;
   }
   return null;
 }
@@ -9939,7 +9908,7 @@ function allyTakeDamage(ally, dmg, sourceName) {
   if (ally.casting && (ally.casting.cancel || ally.hp <= 0)) withAlly(ally, () => interruptCast(ally.hp <= 0 ? '倒地' : '受到攻擊'));
   if (ally.hp <= 0 && !ally._downed) {
     ally._downed = true;
-    ally._reviveAt = Date.now() + ALLY_DOWN_REVIVE_CD_SEC * 1000;
+    ally._reviveAt = gameNow() + ALLY_DOWN_REVIVE_CD_SEC * 1000;
     logMsg(`💀 ${ally._allyName} 被${sourceName || '敵人'}擊倒了！`);
   }
   return dmg;
@@ -10108,7 +10077,7 @@ function setAutoReviveAlly(v) { state.autoReviveAlly = !!v; saveGame(); }
    隊友自己的 FLEE 與 DEF，其餘等第五階段（輔助共享）再談。 */
 function monsterAttackAlly(mon, monDef, ally) {
   const dodge = dodgeChancePctFromMonster(ally.flee || 0, monDef, quagmireCut(mon));
-  if (Math.random() * 100 < dodge) {
+  if (rng() * 100 < dodge) {
     pushCombatLog(`  → ${ally._allyName} 迴避了 ${monDef.name} 的攻擊！`, 'ally');
     if (typeof renderLog === 'function') renderLog();
     return;
@@ -10182,17 +10151,6 @@ function gmAddGold(n) {
   saveGame();
   if (typeof renderAll === 'function') renderAll();
   return state.gold;
-}
-/* 測試用：一次拿 100 張遺物券。券換出來的是「指定套裝的隨機一件」，
-   所以這一顆就能把兩套遺物都湊齊，不必真的去刷 0.1%。 */
-const GM_RELIC_TICKETS = 100;
-function gmAddRelicTickets(n) {
-  const amount = n || GM_RELIC_TICKETS;
-  addItem(RELIC_TICKET_ID, amount);
-  logMsg(`🛠️ GM：遺物券 +${amount} → ${getItemQty(RELIC_TICKET_ID)} 張。`);
-  saveGame();
-  if (typeof renderAll === 'function') renderAll();
-  return getItemQty(RELIC_TICKET_ID);
 }
 /* 隱藏圖鑑（神秘箱挑戰）測試用：
    ① gmBoxCodexBatch(n) —— 把「還沒開出過」的池子道具**真的取得**進背包並記到隱藏圖鑑，
@@ -10650,7 +10608,7 @@ function tryAttackBuffs(trigger, mon) {
   const list = state.cardAttackBuffs && state.cardAttackBuffs[trigger];
   if (!list || !list.length) return;
   for (const e of list) {
-    if (Math.random() * 100 >= e.chance) continue;
+    if (rng() * 100 >= e.chance) continue;
     // 同名 buff 已在身上就不重複推
     if (state.buffs.some(b => b.buffName === e.buffName && b.msRemaining > 0)) continue;
     state.buffs.push({
@@ -10671,7 +10629,7 @@ function tryAutoBonus(trigger, skillId) {
   if (!list || !list.length) return;
   list.forEach((e, i) => {
     if (e.skill && e.skill !== skillId) return;   // autobonus3：只有施放指定技能時
-    if (Math.random() * 100 >= e.chance) return;
+    if (rng() * 100 >= e.chance) return;
     const id = 'autobonus_' + e.src + '_' + trigger + '_' + i;
     const cur = state.buffs.find(b => b.skillId === id);
     if (cur) return;
@@ -10685,7 +10643,7 @@ function tryCardSkillAilments(sk, mon) {
   if (!list || !list.length || !sk || !mon) return;
   const monDef = MONSTERS[mon.defId];
   list.forEach(e => {
-    if (e.skill !== sk.id || Math.random() * 100 >= e.chance) return;
+    if (e.skill !== sk.id || rng() * 100 >= e.chance) return;
     if (monDef) applyAilment(mon, monDef, e.type);
   });
 }
@@ -10693,7 +10651,7 @@ function tryCardSkillAilments(sk, mon) {
 function tryComa(mon, monDef) {
   if (!mon || !monDef || monDef.isBoss || mon.hp <= 1) return;
   const pct = getCardBonus('comaNormalPct') + (monDef.race ? getCardBonus('comaRace_' + monDef.race) : 0);
-  if (pct > 0 && Math.random() * 100 < pct) {
+  if (pct > 0 && rng() * 100 < pct) {
     mon.hp = 1;
     logMsg('💀 即死效果發動！' + monDef.name + ' 的 HP 剩下 1。');
   }
@@ -10761,8 +10719,8 @@ function tryPassiveProcs(trigger, mon) {
   if (!mon || !(mon.hp > 0)) return;
   for (const { sk, lv } of passiveProcEntries(trigger)) {
     const ch = Array.isArray(sk.proc.chance) ? sk.proc.chance[lv - 1] : (sk.proc.chance || 0);
-    if (!procReady(sk, Date.now()) || Math.random() * 100 >= ch) continue;
-    if (sk.proc.icd) markProc(sk, Date.now());
+    if (!procReady(sk, gameNow()) || rng() * 100 >= ch) continue;
+    if (sk.proc.icd) markProc(sk, gameNow());
     procCastSkill(sk, lv, mon);
     if (!(mon.hp > 0)) break;
   }
@@ -10828,7 +10786,7 @@ function tryAutoSpells(trigger, mon) {
   for (const e of list) {
     // 官方寫「受到近距離物理傷害時」的那幾張（邪惡噬人花），判斷同 tryCardAilments
     if (e.melee && !melee) continue;
-    if (Math.random() * 100 >= e.chance) continue;
+    if (rng() * 100 >= e.chance) continue;
     const sk = findSkillAnywhere(e.skill);
     if (!sk) continue;
     // 增益類已經在身上就別再放：自動念咒沒有冷卻與SP擋著，不擋的話護盾/buff 會無限疊。
@@ -10938,20 +10896,20 @@ function findSkillAnywhere(skillId) {
 const MAGIC_HIT_TYPES = ['magic', 'magic_aoe', 'field_aoe_magic'];
 function afterSkillCast(skillId, tgt) {
   // T52：閃電衝擊、獵鷹突擊放出去時，畫面上的獵鷹飛向目標
-  if (tgt && (skillId === 'ht_blitzbeat' || skillId === 'sn_falconassault')) state._falconStrike = { at: Date.now(), monId: tgt.id };
+  if (tgt && (skillId === 'ht_blitzbeat' || skillId === 'sn_falconassault')) state._falconStrike = { at: gameNow(), monId: tgt.id };
   const sk = SKILLS[skillId];
   if (!sk || !tgt || !MAGIC_HIT_TYPES.includes(sk.procType || sk.type)) return;
   const def = MONSTERS[tgt.defId];
   if (!def) return;
-  const now = Date.now();
-  if (skillLv('pf_soulchange') && def.isBoss && now >= (state._soulChangeAt || 0) && Math.random() < 0.1) {
+  const now = gameNow();
+  if (skillLv('pf_soulchange') && def.isBoss && now >= (state._soulChangeAt || 0) && rng() < 0.1) {
     state._soulChangeAt = now + 5000;
     const gain = Math.round(state.maxSp * 0.05);
     state.sp = Math.min(state.maxSp, state.sp + gain);
     logMsg(`🔁 心神互換：從 ${def.name} 身上奪回 ${gain} SP。`);
   }
   const sb = skillLv('pf_soulburn');
-  if (sb && tgt.hp > 0 && Math.random() * 100 < 2 + 2 * sb) {
+  if (sb && tgt.hp > 0 && rng() * 100 < 2 + 2 * sb) {
     const dmg = mitigateDamage(state.matk * (0.75 + 0.25 * sb), ...defOf(def, 1, true));
     noteMonsterDamage(tgt, dmg);
     tgt.hp -= dmg;
@@ -10966,7 +10924,7 @@ function castSkill(skillId, opts) {
     // 隊友也走詠唱（T8）：withAlly 期間 state 就是隊友，casting／acdUntil 存在隊友身上
     const tgt0 = state.monsters && state.monsters[0];
     if (free) { const okF = castSkillInner(skillId, opts); if (okF) afterSkillCast(skillId, tgt0); return okF; }
-    if (state.casting || Date.now() < (state.acdUntil || 0)) return false;
+    if (state.casting || gameNow() < (state.acdUntil || 0)) return false;
     const sk = findSkillForUse(skillId);
     const lv = sk ? skillLv(skillId) : 0;
     const ct = lv ? skillCastTimeMs(sk, lv) : 0;
@@ -11051,14 +11009,14 @@ function skillRangeCells(sk, lv) {
 function applyAfterCastDelay(skillId, lv) {
   const row = skillCastRow(skillId);
   const acd = (row ? castLv(row.afterCastDelay, lv) : 0) * Math.max(0, 1 + (getCardBonus('acdPct') - buffMult('acdcut').flatBonus) / 100);
-  state.acdFrom = Date.now();
+  state.acdFrom = gameNow();
   state.acdUntil = state.acdFrom + Math.max(acd, state.attackInterval || 0);
 }
 function beginCast(sk, lv, ct, opts) {
   if (!skillReady(sk.id) || state.sp < skillSpCost(sk, lv)) return false;
   if (playerSilenced() || playerImmobile()) return false;
   const row = skillCastRow(sk.id);
-  const now = Date.now();
+  const now = gameNow();
   // 速讀術：每次開始詠唱扣一次（變動詠唱已在 skillCastTimeMs 減半）
   const memo = state.buffs.find(b => b.type === 'memorize');
   if (memo && --memo.charges <= 0) state.buffs = state.buffs.filter(b => b !== memo);
@@ -11354,7 +11312,7 @@ function castSkillInner(skillId, opts) {
       if (sk.critRateMult) {
         const critB = buffMult('crit');
         const rate = Math.min(100, (state.critRate * critB.mult + critB.flatBonus) * sk.critRateMult);
-        skCrit = Math.random() * 100 < rate;
+        skCrit = rng() * 100 < rate;
       }
       let critFactor = 1;
       if (skCrit) {
@@ -11390,7 +11348,7 @@ function castSkillInner(skillId, opts) {
         logMsg(`💫 ${def.name} 被暈眩了！`);
       }
       // 攻擊弱點：狂擊命中時有機率使目標暈眩
-      if (sk.id === 'sm_bash' && state.hasBashStunProc && target.hp > 0 && Math.random() * 100 < state.bashStunProcChance) {
+      if (sk.id === 'sm_bash' && state.hasBashStunProc && target.hp > 0 && rng() * 100 < state.bashStunProcChance) {
         applyStun(target, state.bashStunProcSec || 1, true);
         logMsg(`💫 攻擊弱點發動！${def.name} 暈眩了！`);
       }
@@ -11399,15 +11357,15 @@ function castSkillInner(skillId, opts) {
          跟卡片的 `ailment` 是同一套寫法與同一支 applyAilment()。 */
       if (sk.inflict && target.hp > 0) {
         const ic = Array.isArray(sk.inflict.chance) ? sk.inflict.chance[lv - 1] : sk.inflict.chance;
-        if (Math.random() * 100 < ic) {
+        if (rng() * 100 < ic) {
           const pool = String(sk.inflict.type).split('+');
           const isec = lvArr(sk.inflict.sec, lv);   // 有寫秒數就照寫（冰凍術 3~30 秒）
-          applyAilment(target, def, pool[Math.floor(Math.random() * pool.length)], isec ? { sec: isec } : undefined);
+          applyAilment(target, def, pool[Math.floor(rng() * pool.length)], isec ? { sec: isec } : undefined);
         }
       }
       // 衝鋒箭：命中時使敵人暈眩1~3秒（代表擊退）
       if (sk.id === 'ac_chargearrow' && target.hp > 0) {
-        const stunSec = 1 + Math.random() * 2;
+        const stunSec = 1 + rng() * 2;
         applyStun(target, stunSec, false);
         logMsg(`💫 ${def.name} 被擊退撞暈了，${stunSec.toFixed(1)}秒內無法攻擊！`);
       }
@@ -11465,7 +11423,7 @@ function castSkillInner(skillId, opts) {
           const cb = buffMult('crit');
           const own = state.critRate * cb.mult + cb.flatBonus;
           const rate = Math.min(100, own * (sk.critRateMult || 1) + (sk.critRateFlat || 0));
-          aoeCrit = Math.random() * 100 < rate;
+          aoeCrit = rng() * 100 < rate;
         }
         if (aoeCrit) {
           const cdm = (typeof sk.critDmgMult === 'number') ? sk.critDmgMult : 1;
@@ -11485,7 +11443,7 @@ function castSkillInner(skillId, opts) {
         // 怒雷強擊：範圍技附加機率暈眩
         if (sk.stunChance) {
           const scLv = Array.isArray(sk.stunChance) ? sk.stunChance[lv - 1] : sk.stunChance;
-          if (Math.random() * 100 < scLv) {
+          if (rng() * 100 < scLv) {
             const ssLv = Array.isArray(sk.stunSec) ? sk.stunSec[lv - 1] : (sk.stunSec || 1);
             applyStun(mon, ssLv, true);
           }
@@ -11493,10 +11451,10 @@ function castSkillInner(skillId, opts) {
         // 技能附帶的異常狀態（#58 的 inflict，範圍分支以前沒接，#61 補上）
         if (sk.inflict && mon.hp > 0) {
           const ic = Array.isArray(sk.inflict.chance) ? sk.inflict.chance[lv - 1] : sk.inflict.chance;
-          if (Math.random() * 100 < ic) {
+          if (rng() * 100 < ic) {
             const pool = String(sk.inflict.type).split('+');
             const isec = lvArr(sk.inflict.sec, lv);
-            applyAilment(mon, monDef, pool[Math.floor(Math.random() * pool.length)], isec ? { sec: isec } : undefined);
+            applyAilment(mon, monDef, pool[Math.floor(rng() * pool.length)], isec ? { sec: isec } : undefined);
           }
         }
         pushCombatLog(`  → 對 ${monDef.name} 造成 ${dmg} 點傷害！${aoeCrit ? '（暴擊）' : ''}`);
@@ -11555,7 +11513,7 @@ function castSkillInner(skillId, opts) {
       const def = MONSTERS[target.defId];
       const chance = lvArr(sk.successChance, lv);
       const dur = lvArr(sk.duration, lv);
-      const okRoll = chance == null || Math.random() * 100 < chance;
+      const okRoll = chance == null || rng() * 100 < chance;
       const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, sk.goldFallback || 0) : null;
       if (!okRoll) { logMsg(`「${sk.name}」Lv${lv} 對 ${def.name} 失敗了。`); break; }
       if (sk.effect === 'strip') {
@@ -11567,19 +11525,19 @@ function castSkillInner(skillId, opts) {
       } else if (sk.effect === 'ailment') {
         if (applyAilment(target, def, sk.ailment, dur ? { sec: dur } : undefined)) logMsg(`✨ 「${sk.name}」：${def.name} 陷入${(MON_AILMENTS[sk.ailment] || {}).name || sk.ailment}！`);
       } else if (sk.effect === 'decagi') {
-        target.decAgiUntil = Date.now() + dur * 1000;
+        target.decAgiUntil = gameNow() + dur * 1000;
         target.debuffFlee = lvArr(sk.agiCut, lv); target.debuffFleeEnd = target.decAgiUntil;
         logMsg(`🐢 「${sk.name}」：${def.name} 移動速度 −25%、AGI −${target.debuffFlee}（${dur} 秒）。`);
       } else if (sk.effect === 'ailments') {
         // 陣痛之聲：混亂、出血各自擲骰
-        (sk.ailments || []).forEach(a => { if (Math.random() * 100 < a.chance) applyAilment(target, def, a.type, dur ? { sec: dur } : undefined); });
+        (sk.ailments || []).forEach(a => { if (rng() * 100 < a.chance) applyAilment(target, def, a.type, dur ? { sec: dur } : undefined); });
         logMsg(`📢 「${sk.name}」對 ${def.name} 發動！`);
       } else if (sk.effect === 'charm') {
         // 眨眼之誘：人型／天使／惡魔、等級不高於施術者、非首領；10 秒內不攻擊玩家，受傷就解除
         if (def.isBoss || !['humanoid', 'angel', 'demon'].includes(def.race) || (def.level || 0) > (state.baseLevel || 0)) {
           logMsg(`「${sk.name}」對 ${def.name} 無效。`); break;
         }
-        target.charmUntil = Date.now() + dur * 1000;
+        target.charmUntil = gameNow() + dur * 1000;
         logMsg(`💗 ${def.name} 被迷惑了，${dur} 秒內不會攻擊你（受到傷害會解除）。`);
       } else if (sk.effect === 'dispel') {
         const n = monBuffList(target).length;
@@ -11587,20 +11545,20 @@ function castSkillInner(skillId, opts) {
         logMsg(n ? `🌀 「${sk.name}」解除了 ${def.name} 的 ${n} 個增益。` : `🌀 「${sk.name}」：${def.name} 身上沒有增益。`);
       } else if (sk.effect === 'mindbreaker') {
         // 精神撼動：魔防 −12×lv%、魔攻 +20×lv%（怪物魔法技能變痛，見 monsterBaseMatk）
-        target.debuffMdef = 1 - lvArr(sk.mdefCutPct, lv) / 100; target.debuffMdefEnd = Date.now() + dur * 1000;
+        target.debuffMdef = 1 - lvArr(sk.mdefCutPct, lv) / 100; target.debuffMdefEnd = gameNow() + dur * 1000;
         target.matkUp = lvArr(sk.matkUpPct, lv); target.matkUpEnd = target.debuffMdefEnd;
         logMsg(`🧠 「${sk.name}」：${def.name} 魔防 −${lvArr(sk.mdefCutPct, lv)}%、魔攻 +${target.matkUp}%（${dur} 秒）。`);
       } else if (sk.effect === 'confine') {
         // 緊密的約束：目標定身、自己迴避 +50（首領無效）
         if (def.isBoss) { logMsg(`「${sk.name}」對首領無效。`); break; }
-        target.rootUntil = Date.now() + dur * 1000;
+        target.rootUntil = gameNow() + dur * 1000;
         state.buffs.push({ type: 'flee', mult: 1, flatBonus: sk.selfFlee || 50, msRemaining: dur * 1000, skillId: sk.id });
         logMsg(`🔗 「${sk.name}」：${def.name} 無法移動，你的迴避 +${sk.selfFlee || 50}（${dur} 秒）。`);
       } else if (sk.effect === 'elementChange') {
         // 元素更換（T9，SC_ELEMENTALCHANGE）：首領無效；覆寫寫在怪物實體上，getElementMultiplierVsMonster 會讀
         if (def.isBoss) { logMsg(`「${sk.name}」對首領無效。`); break; }
         target.eleOverride = sk.element;
-        target.eleOverrideEnd = Date.now() + dur * 1000;
+        target.eleOverrideEnd = gameNow() + dur * 1000;
         logMsg(`🌀 「${sk.name}」：${def.name} 變成${ELEMENT_NAMES[sk.element]}屬性。`);
       } else if (sk.effect === 'lexaeterna') {
         if (ailActive(target, 'freeze') || ailActive(target, 'stone')) { logMsg(`「${sk.name}」對冰凍／石化中的目標無效。`); break; }
@@ -11617,7 +11575,7 @@ function castSkillInner(skillId, opts) {
       const area = skillAoeArea(sk, lv);   // rAthena 有範圍的只打範圍內（大地之擊 5×5）
       state.monsters.forEach(m => {
         if (area && !inAoeArea(area, m)) return;
-        if (Math.random() * 100 >= chance) return;
+        if (rng() * 100 >= chance) return;
         // applyAilment 自己會處理免疫（冰凍對水屬性與不死族無效那類）
         if (applyAilment(m, MONSTERS[m.defId], sk.ailment)) hitCount++;
       });
@@ -11812,7 +11770,7 @@ function castSkillInner(skillId, opts) {
       state.activeFieldEffects.push({
         kind: 'alchemy_strike', skillId: sk.id, skillLv: lv, name: sk.name, mult, aoe: true,
         element: sk.element || 'fire', tickIntervalSec: sk.tickSec || 0.5,
-        nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000,
+        nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
       });
       logMsg(`🔥 「${sk.name}」Lv${lv} 布下火場：每 ${sk.tickSec || 0.5} 秒對全體造成 ATK ${Math.round(mult * 100)}% 傷害，持續 ${dur} 秒。`);
       break;
@@ -11829,7 +11787,7 @@ function castSkillInner(skillId, opts) {
         kind: 'alchemy_strike', skillId: sk.id, skillLv: lv, name: sk.name, mult, aoe: false,
         element: sk.element || 'neutral', healFlat: sk.healFlat || 0,
         tickIntervalSec: sk.tickSec || 3,
-        nextTickAt: Date.now() + (sk.tickSec || 3) * 1000, endsAt: Date.now() + dur * 1000,
+        nextTickAt: gameNow() + (sk.tickSec || 3) * 1000, endsAt: gameNow() + dur * 1000,
       });
       logMsg(`⚗️ 「${sk.name}」Lv${lv} 登場：每 ${sk.tickSec || 3} 秒造成 ATK ${Math.round(mult * 100)}% 傷害`
         + `${sk.healFlat ? `並回復 ${sk.healFlat} HP` : ''}，持續 ${Math.round(dur / 60)} 分鐘。`);
@@ -11841,11 +11799,11 @@ function castSkillInner(skillId, opts) {
       const flat = Math.round(Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult);
       const alive = (state.monsters || []).filter(m => m.hp > 0);
       if (!alive.length) return false;
-      const n = Math.min(alive.length, 1 + Math.floor(Math.random() * 3));
+      const n = Math.min(alive.length, 1 + Math.floor(rng() * 3));
       const pool = alive.slice();
       const picked = [];
       for (let i = 0; i < n && pool.length; i++) {
-        picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+        picked.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
       }
       logMsg(`💣 「${sk.name}」Lv${lv} 引爆！${picked.length} 隻敵人被波及。`);
       picked.forEach(mon => {
@@ -11913,8 +11871,8 @@ function castSkillInner(skillId, opts) {
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       const fl = Array.isArray(sk.fleeFlat) ? sk.fleeFlat[lv - 1] : sk.fleeFlat;
       target.debuffFlee = fl;
-      target.debuffFleeEnd = Date.now() + dur * 1000;
-      target.webUntil = Date.now() + dur * 1000;
+      target.debuffFleeEnd = gameNow() + dur * 1000;
+      target.webUntil = gameNow() + dur * 1000;
       logMsg(`🕸️ 「${sk.name}」纏住了 ${def.name}：迴避 −${fl}，${dur} 秒內受火屬性傷害加倍（消耗${paid ? paid.label : '—'}）。`);
       break;
     }
@@ -11938,7 +11896,7 @@ function castSkillInner(skillId, opts) {
         blockCdSec: sk.blockCdSec || 10, blockScope: sk.blockScope || null,
         exclusiveGroup: sk.exclusiveGroup,
         spDrain: drain, drainEverySec: sk.drainEverySec || 0,
-        drainNextAt: drain ? Date.now() + (sk.drainEverySec || 10) * 1000 : 0,
+        drainNextAt: drain ? gameNow() + (sk.drainEverySec || 10) * 1000 : 0,
         msRemaining: dur * 1000,
       });
       logMsg(`🎼 「${sk.name}」Lv${lv} 發動：${sk.blockScope === 'skill' ? '被技能打到' : '被普攻打到'}`
@@ -12010,7 +11968,7 @@ function castSkillInner(skillId, opts) {
         kind: 'gospel', skillId: sk.id, name: sk.name, party: !!sk.party,
         chance: at('chance', 55), hpDrain: at('hpDrain', 30), spDrain: at('spDrain', 20),
         // 第一跳就在施放的當下，不然玩家會覺得「放了什麼事都沒發生」
-        tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000,
+        tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
       });
       logMsg(`🎼 「${sk.name}」Lv${lv} 發動！福音持續 ${dur} 秒。`);
       break;
@@ -12024,7 +11982,7 @@ function castSkillInner(skillId, opts) {
       if (!state.shields) state.shields = [];
       state.shields = state.shields.filter(sh => sh.id !== sk.id);
       // blocks：'melee' 暗之障壁／'ranged' 光之障壁；shared：全隊同一面盾、共用次數
-      state.shields.push({ id: sk.id, remainingHp: capacity, remainingCharges: charges, expiresAt: Date.now() + dur * 1000,
+      state.shields.push({ id: sk.id, remainingHp: capacity, remainingCharges: charges, expiresAt: gameNow() + dur * 1000,
         blocks: sk.shieldBlocks || null, shared: !!sk.shieldShared });
       const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       const what = sk.shieldBlocks === 'ranged' ? '遠程攻擊' : sk.shieldBlocks === 'melee' ? '近戰攻擊' : '攻擊';
@@ -12049,7 +12007,7 @@ function castSkillInner(skillId, opts) {
       if (!state.activeFieldEffects) state.activeFieldEffects = [];
       // party 的話每一跳也回給隊友（#131）。回復量記施術者的，跟官方的範圍治療一致
       state.activeFieldEffects.push({ kind: 'selfheal', name: sk.name, amount: healAmt, party: !!sk.party,
-        undeadDmg: !!sk.undeadDmg, knockback: (skillCastRow(sk.id) && castLv(skillCastRow(sk.id).knockback, lv)) || 0, skillId: sk.id, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000 });
+        undeadDmg: !!sk.undeadDmg, knockback: (skillCastRow(sk.id) && castLv(skillCastRow(sk.id).knockback, lv)) || 0, skillId: sk.id, tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000 });
       const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！`);
       break;
@@ -12066,7 +12024,7 @@ function castSkillInner(skillId, opts) {
       const tgt = state.monsters[0];
       const center = sk.fieldRadius && tgt && Number.isFinite(tgt.d) ? { d: tgt.d, a: tgt.a || 0 } : null;
       const row = skillCastRow(sk.id);
-      state.activeFieldEffects.push({ kind: 'aoe_holydmg', name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, tickIntervalSec: tickSec, nextTickAt: Date.now(), endsAt: Date.now() + dur * 1000,
+      state.activeFieldEffects.push({ kind: 'aoe_holydmg', name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
         center, radius: sk.fieldRadius || 0, knockback: row ? castLv(row.knockback, lv) || 0 : 0 });
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動！`);
       break;
@@ -12079,7 +12037,7 @@ function castSkillInner(skillId, opts) {
       const row = skillCastRow(sk.id);
       const wall = { kind: 'wall', skillId: sk.id, name: sk.name, d: w, a: tgt.a || 0,
         cells: sk.wallCells || 3, half: Math.min(Math.PI, (sk.wallCells || 3) / 2 / w), hits: lvArr(sk.wallHits, lv) || (lv + 2),
-        mult, element: skElement, magic: true, endsAt: Date.now() + (row ? castLv(row.duration, lv) : 5000) };
+        mult, element: skElement, magic: true, endsAt: gameNow() + (row ? castLv(row.duration, lv) : 5000) };
       if (!state.groundUnits) state.groundUnits = [];
       state.groundUnits.push(wall);
       // 站在牆上的怪立刻吃一下、被擊退
@@ -12102,7 +12060,7 @@ function castSkillInner(skillId, opts) {
         mult, element: skElement, magic: !!sk.trapMagic, ignoreDef: !!sk.ignoreDef, hits: lvArr(sk.trapHits, lv) || 1,
         stunSec: lvArr(sk.stunSec, lv) || 0, ailSec: lvArr(sk.ailSec, lv) || 0, rootSec: lvArr(sk.rootSec, lv) || 0,
         knockback: row ? castLv(row.knockback, lv) || 0 : 0,
-        endsAt: Date.now() + (row ? castLv(row.duration, lv) || 60000 : 60000) });
+        endsAt: gameNow() + (row ? castLv(row.duration, lv) || 60000 : 60000) });
       const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(`🪤 「${sk.name}」Lv${lv}：放在 ${d.toFixed(1)} 格處${paid ? `（消耗${paid.label}）` : ''}`);
       break;
@@ -12115,7 +12073,7 @@ function castSkillInner(skillId, opts) {
       const poisonMult = lvArr(sk.poisonMult, lv) || 0;
       state.groundUnits.push({ kind: 'zone', skillId: sk.id, name: sk.name, d: tgt.d, a: tgt.a || 0,
         radius: sk.zoneRadius || 2, slow: (lvArr(sk.slowPct, lv) || 0) / 100, poisonMult, statCut: lvArr(sk.statCut, lv) || 0,
-        endsAt: Date.now() + (row ? castLv(row.duration, lv) : 5000) });
+        endsAt: gameNow() + (row ? castLv(row.duration, lv) : 5000) });
       const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       logMsg(poisonMult ? `☠️ 「${sk.name}」Lv${lv}：${(tgt.d).toFixed(1)} 格處散出毒霧${paid ? `（消耗${paid.label}）` : ''}`
         : `🟫 「${sk.name}」Lv${lv}：${(tgt.d).toFixed(1)} 格處的地面變成泥沼`);
@@ -12127,8 +12085,8 @@ function castSkillInner(skillId, opts) {
       const d = Math.max(1, Math.min(9, tgt.d - 1));
       if (!state.groundUnits) state.groundUnits = [];
       const hp = lvArr(sk.iceHp, lv) || 400;
-      state.groundUnits.push({ kind: 'ice', uid: Date.now() + Math.random(), skillId: sk.id, name: sk.name, d, a: tgt.a || 0,
-        cells: 5, half: Math.min(Math.PI, 5 / 2 / d), hp, maxHp: hp, meltAt: Date.now(), endsAt: Infinity });
+      state.groundUnits.push({ kind: 'ice', uid: gameNow() + rng(), skillId: sk.id, name: sk.name, d, a: tgt.a || 0,
+        cells: 5, half: Math.min(Math.PI, 5 / 2 / d), hp, maxHp: hp, meltAt: gameNow(), endsAt: Infinity });
       logMsg(`🧊 「${sk.name}」Lv${lv}：在 ${d.toFixed(1)} 格處立起冰牆（耐久 ${hp}）`);
       break;
     }
@@ -12148,7 +12106,7 @@ function castSkillInner(skillId, opts) {
       const targetIds = targets.map(m => m.id);
       targets.forEach(m => applyStun(m, stunSec, true));
       if (!state.activeFieldEffects) state.activeFieldEffects = [];
-      state.activeFieldEffects.push({ kind: 'multi_dot', name: sk.name, mult, element: skElement, targetIds, tickIntervalSec: tickSec, nextTickAt: Date.now() + tickSec * 1000, endsAt: Date.now() + dotDur * 1000 });
+      state.activeFieldEffects.push({ kind: 'multi_dot', name: sk.name, mult, element: skElement, targetIds, tickIntervalSec: tickSec, nextTickAt: gameNow() + tickSec * 1000, endsAt: gameNow() + dotDur * 1000 });
       logMsg(`🔥 「${sk.name}」Lv${lv} 發動！${targets.length}隻敵人暈眩了！`);
       break;
     }
@@ -12158,7 +12116,7 @@ function castSkillInner(skillId, opts) {
       const def = MONSTERS[target.defId];
       // 命中判定：中毒類技能屬於物理技能
       const dotHitPct = hitChancePctVsMonster(effectiveHitWithBuff(), def, target);
-      if (Math.random() * 100 > dotHitPct) {
+      if (rng() * 100 > dotHitPct) {
         logMsg(`「${sk.name}」被 ${def.name} 閃避了！`);
         if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
         break;
@@ -12187,7 +12145,7 @@ function castSkillInner(skillId, opts) {
       logMsg(`⚡ 「${sk.name}」Lv${lv} 造成 ${dmg} 點傷害！`);
       if (target.hp <= 0) { killMonster(def, target); break; }
       const procChance = Array.isArray(sk.procChance) ? sk.procChance[lv - 1] : sk.procChance;
-      if (Math.random() * 100 < procChance) {
+      if (rng() * 100 < procChance) {
         applyPoisonDot(target, def, skillBaseDamage(useMag, def, elemMult) * mult);
         logMsg(`☠️ ${def.name} 中毒了！`);
       }
@@ -12491,7 +12449,7 @@ function castSkillInner(skillId, opts) {
       state.buffs.push({ type: 'dontforgetme', mult: 1, flatBonus: cut, msRemaining: dur * 1000, skillId: sk.id, exclusiveGroup: grp });
       state.monsters.forEach(mon => {
         mon.debuffAspd = Math.max(0.1, 1 - cut / 100);
-        mon.debuffAspdEnd = Date.now() + dur * 1000;
+        mon.debuffAspdEnd = gameNow() + dur * 1000;
       });
       state.lastSongSkillId = sk.id;
       logMsg(`🎶 「${sk.name}」Lv${lv}：場上敵人的攻擊速度 −${cut}%，持續 ${dur} 秒。`);
@@ -12724,7 +12682,7 @@ function castSkillInner(skillId, opts) {
       const target = state.monsters[0];
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       target.debuffDef = mult;
-      target.debuffDefEnd = Date.now() + dur * 1000;
+      target.debuffDefEnd = gameNow() + dur * 1000;
       logMsg(`🔥 「${sk.name}」Lv${lv} 發動，敵人防禦下降！`);
       break;
     }
@@ -12732,7 +12690,7 @@ function castSkillInner(skillId, opts) {
     case 'debuff_def_aoe': {
       if (!state.monsters || state.monsters.length === 0) break;
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
-      const until = Date.now() + dur * 1000;
+      const until = gameNow() + dur * 1000;
       state.monsters.forEach(mon => { mon.debuffDef = mult; mon.debuffDefEnd = until; });
       state.lastSongSkillId = sk.id;
       logMsg(`🎶 「${sk.name}」Lv${lv} 發動！場上敵人的防禦力 −${Math.round((1 - mult) * 100)}%，持續 ${dur} 秒。`);
@@ -12775,7 +12733,7 @@ function tryChainSpells(afterSkillId, afterLv) {
   for (const e of list) {
     if (e.after !== afterSkillId) continue;
     if (e.melee && !melee) continue;
-    if (Math.random() * 100 >= e.chance) continue;
+    if (rng() * 100 >= e.chance) continue;
     const sk = findSkillAnywhere(e.skill);
     if (!sk) continue;
     const ok = sk.type === 'passive'
@@ -12862,11 +12820,11 @@ function tryAutoCastSkill(skipSupport) {
   const slots = autoSkillSlots(state.autoSkillConfig).filter(sl => sl && sl.skillId);
   /* 沒設定就什麼都不放（使用者 2026-08-15 指定：選「不使用技能」就真的不要放，不自動撈技能） */
   if (!slots.length) return;
-  if (state.casting || Date.now() < (state.acdUntil || 0)) return;
+  if (state.casting || gameNow() < (state.acdUntil || 0)) return;
   /* 輔助技能優先：攻擊欄每拍都在搶詠唱／後延遲的空檔，輔助（每秒檢查一次）會一直排不進去，
      祭司就只會放攻擊技、增益永遠補不上。這裡先補需要補的輔助，有放出去（開始詠唱或進後延遲）就讓出這一拍。 */
   if (!skipSupport) tryAutoCastSupportSkills();
-  if (state.casting || Date.now() < (state.acdUntil || 0)) return;
+  if (state.casting || gameNow() < (state.acdUntil || 0)) return;
   const spPct = (state.sp / state.maxSp) * 100;
   const monsterCount = state.monsters ? state.monsters.length : 0;
   for (const sl of slots) {
@@ -12899,7 +12857,7 @@ function autoSkillInRange(sk, lv) {
 }
 // 隊上（含自己、不含倒地）有沒有人身上帶著 types 其中一種異常
 function partyAilPending(types) {
-  const now = Date.now();
+  const now = gameNow();
   const owner = allyOwnerState();
   const holders = [owner, ...(owner.allies || []).filter(a => a && !a._downed)];
   return holders.some(h => h.playerAil && types.some(t => h.playerAil[t] > now));
@@ -12916,7 +12874,7 @@ function orderedSupportEntries() {
 // 掛在怪身上的減益還沒到期就不重放（天使之光、挑釁官方沒有冷卻，只看玩家身上會每次後延遲一過就放）
 function monsterDebuffStillUp(sk) {
   const ms = state.monsters || [];
-  const now = Date.now();
+  const now = gameNow();
   if (sk.type === 'debuff_def') return !!ms[0] && (ms[0].debuffDefEnd || 0) > now;
   if (sk.type === 'debuff_def_aoe') return ms.length > 0 && ms.every(m => (m.debuffDefEnd || 0) > now);
   // 改歸輔助清單的單體減益：效果還在、或放了也沒用就不放（不然每次冷卻好就白扣礦石）
@@ -13115,7 +13073,7 @@ function rebirthSkillPoints() {
 // 目前這張圖是不是安全區（沒有配怪的圖就是城鎮）。轉生祭壇只開在安全區
 function inSafeZone() {
   const m = currentMap();
-  return !!m && (m.monsters || []).length === 0;
+  return !!m && (m.monsters || []).length === 0 && !m.arena;
 }
 
 // 擋住轉生的理由（沒有就回 null）。UI 直接顯示這句話，不必自己拼條件
@@ -13621,7 +13579,7 @@ function tryTamePet(itemId) {
     return true;
   }
   removeItem(itemId, 1);
-  if (Math.random() * 10000 < def.cap) {
+  if (rng() * 10000 < def.cap) {
     ps.list.push({ id: petId, intim: PET_START_INTIM, feedAt: 0 });
     if (!ps.active) ps.active = petId;
     logMsg(`🎉🐾 捕捉成功！${def.name}成為你的寵物了！`);
@@ -13638,7 +13596,7 @@ function tickPetFeed() {
   const rec = ps.list.find(x => x.id === ps.active);
   const def = rec && PETS_BY_ID[rec.id];
   if (!def || rec.intim >= PET_INTIM_MAX) return;
-  const now = Date.now();
+  const now = gameNow();
   if (now - (rec.feedAt || 0) < PET_FEED_INTERVAL_MS) return;
   if (getItemQty(def.food) < 1) return;
   removeItem(def.food, 1);
@@ -13706,7 +13664,7 @@ function evolvePet(id) {
 /* 每天第一次上線自動發獎，20 天一輪。天數用 UTC+8。 */
 function tickAttendance() {
   if (!state || typeof ATTENDANCE_REWARDS === 'undefined' || !ATTENDANCE_REWARDS.length) return;
-  const day = Math.floor((Date.now() + 8 * 3600 * 1000) / 86400000);
+  const day = Math.floor((gameNow() + 8 * 3600 * 1000) / 86400000);
   if (!state.attendance) state.attendance = { day: 0, n: 0 };
   const at = state.attendance;
   if (at.day === day) return;
@@ -13743,12 +13701,12 @@ function huntEligiblePool(forPick) {
 function tickHuntBoard() {
   if (!state) return false;
   const hb = ensureHuntBoard();
-  if (hb.noAuto && Date.now() < hb.noAuto) return false;
+  if (hb.noAuto && gameNow() < hb.noAuto) return false;
   let filled = false;
   while (hb.q.length < HUNT_BOARD_SLOTS) {
     const pool = huntEligiblePool();
     if (!pool.length) break;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const pick = pool[Math.floor(rng() * pool.length)];
     const base = {};
     const mons = ensureCodex().mon;
     pick.t.forEach(([g]) => { base[g] = mons[g] || 0; });
@@ -13838,7 +13796,7 @@ function huntAbandon(idx) {
   if (!hb.q[idx]) return false;
   const q = huntQuestById(hb.q[idx].id);
   hb.q.splice(idx, 1);
-  hb.noAuto = Date.now() + 30000;
+  hb.noAuto = gameNow() + 30000;
   logMsg(`📜 放棄了討伐令${q ? `「${q.n}」` : ''}。30 秒內可以自選接取，逾時佈告欄自動補上。`);
   tickHuntBoard();
   saveGame();
@@ -13935,9 +13893,11 @@ function openNpcShop(shopId) {
 }
 
 /* ---------------- 城鎮恢復 ---------------- */
+/* 沒有野怪的地圖＝城鎮。競技場（map.arena，吉芬魔法大賽）例外：沒有野怪但不是城鎮——
+   不然會被當成城裡每秒回滿 HP／SP（使用者 2026-11-13 回報） */
 function isInTown() {
   const map = currentMap();
-  return map && map.monsters.length === 0;
+  return !!map && map.monsters.length === 0 && !map.arena;
 }
 
 /* ---- 回最近的城鎮（#120）----
@@ -14058,7 +14018,7 @@ function openAllBoxes(itemId) {
   let worth = 0;
   Object.entries(got).forEach(([id, q]) => {
     addItem(id, q);
-    if (def.boxOpen === 'any' || def.boxOpen === 'violet') codexRecordBox(id);
+    if (def.boxOpen === 'any' || def.boxOpen === 'violet' || String(def.boxOpen).indexOf('gear_') === 0) codexRecordBox(id);
     if (def.boxOpen === 'card' || def.boxOpen === 'cardFlat' || String(def.boxOpen).indexOf('card_') === 0) codexRecordBoxCardIfAlbumOnly(id);
     worth += (ITEMS[id].sell || 0) * q;
   });
@@ -14148,7 +14108,7 @@ function useItem(itemId) {
       if (!got) { logMsg(`⚠️ ${def.name} 打不開（道具池是空的）。`); return false; }
       removeItem(itemId, 1);
       addItem(got, 1);
-      if (def.boxOpen === 'any' || def.boxOpen === 'violet') codexRecordBox(got);
+      if (def.boxOpen === 'any' || def.boxOpen === 'violet' || String(def.boxOpen).indexOf('gear_') === 0) codexRecordBox(got);
       if (def.boxOpen === 'card' || def.boxOpen === 'cardFlat' || String(def.boxOpen).indexOf('card_') === 0) codexRecordBoxCardIfAlbumOnly(got);
       const g = ITEMS[got];
       // 卡片跟高價道具各自有自己的「中大獎」提示
@@ -14620,7 +14580,7 @@ function refineItem(slotKey, materialType, useBless) {
   const safeLevel = getRefinementSafeLevel(weaponLv, isArmor);
   const inst = state.instances[getOrCreateEquipInstance(slotKey)];
 
-  if (Math.random() * 100 < successRate) {
+  if (rng() * 100 < successRate) {
     // 成功
     inst.refine = currentLevel + 1;
     logMsg(`🔨 精煉成功！${item.name} 提升至 +${currentLevel + 1}！`);
@@ -14817,12 +14777,12 @@ function destroyInstanceForCards(instanceId) {
    兩張都寫「物理攻擊時」，所以只掛在普通攻擊命中之後，技能傷害不觸發。 */
 function applyCardLeech(dmg) {
   if (!dmg || dmg <= 0) return;
-  if (state.cardLifeStealChance && Math.random() * 100 < state.cardLifeStealChance) {
+  if (state.cardLifeStealChance && rng() * 100 < state.cardLifeStealChance) {
     const heal = Math.max(1, Math.round(dmg * state.cardLifeStealPct / 100));
     state.hp = Math.min(state.maxHp, state.hp + heal);
     logMsg(`🩸 吸血發動！回復了 ${heal} 點HP。`);
   }
-  if (state.cardSpStealChance && Math.random() * 100 < state.cardSpStealChance) {
+  if (state.cardSpStealChance && rng() * 100 < state.cardSpStealChance) {
     const gain = Math.max(1, Math.round(dmg * state.cardSpStealPct / 100));
     state.sp = Math.min(state.maxSp, state.sp + gain);
     logMsg(`💧 吸取魔力發動！回復了 ${gain} 點SP。`);
@@ -14936,6 +14896,7 @@ function condMet(when, host, lo) {
   /* 以下由 scripts/lib/item_script.js 從 rAthena 腳本轉出（2026-11-07）：
      基礎／職業等級門檻、學到的技能等級、武器等級、手上武器的分類（aspdCategoryOf）、三轉以上 */
   if (when.levelMin != null && !((state.baseLevel || 1) >= when.levelMin)) return false;
+  if (when.levelMax != null && !((state.baseLevel || 1) <= when.levelMax)) return false;
   if (when.jobLevelMin != null && !((state.jobLevel || 1) >= when.jobLevelMin)) return false;
   if (when.skillMin) {
     for (const [k, v] of Object.entries(when.skillMin)) {
@@ -14954,7 +14915,7 @@ function condMet(when, host, lo) {
   }
   if (when.tierMin != null && !(((JOB_TREE[state.jobId] || {}).tier || 0) >= when.tierMin)) return false;
   // 現實月份（金鋼猿頭飾：1、2 月加成），UTC+8
-  if (when.monthIn && !when.monthIn.includes(new Date(Date.now() + 8 * 3600 * 1000).getUTCMonth() + 1)) return false;
+  if (when.monthIn && !when.monthIn.includes(new Date(gameNow() + 8 * 3600 * 1000).getUTCMonth() + 1)) return false;
   if (when.withCards && !when.withCards.every(c => lo.cards.has(c))) return false;
   if (when.withItems && !when.withItems.every(i => lo.items.has(i))) return false;
   /* withAnyItem：陣列中**任一件**有裝就算成立（官方同一件裝備常有無孔/有孔兩個 id，
@@ -15026,23 +14987,19 @@ function effectiveGearBonuses() {
     + '#' + BASE_STAT_KEYS.map(k => (state.stats && state.stats[k]) || 0).join(',')
     /* 箭矢也要進簽章：when.ammo 的配對加成（大地之弓＋地靈箭矢）換箭要重算 */
     + '#' + (lo.ammo || '-')
-    /* 遺物也要進簽章，否則換遺物不會重算——條件式加成卡在舊值那個坑（見上面）
-       在這裡會變成「拔掉整套遺物，加成還在」。 */
-    + '#' + (typeof RELIC_SLOTS === 'undefined' ? '' :
-      RELIC_SLOTS.map(s => relicsOf()[s] || '-').join(','))
     + '#' + (state.pets && state.pets.active
       ? state.pets.active + ':' + (petTier((state.pets.list || []).find(x => x.id === state.pets.active)) || '-')
       : '-');
   const ls = state.learnedSkills || {};
   const key2 = key + '#' + (state.baseLevel || 1) + ',' + (state.jobLevel || 1)
     + '#' + Object.keys(ls).length + ':' + Object.values(ls).reduce((a, b) => a + (b || 0), 0)
-    + '#' + new Date(Date.now() + 8 * 3600 * 1000).getUTCMonth()
+    + '#' + new Date(gameNow() + 8 * 3600 * 1000).getUTCMonth()
     + '#' + (state.buffs || []).filter(b => b.type === 'gearbonus').map(b => b.skillId).join(',');
   if (_gearBonusCache && _gearBonusKey === key2) return _gearBonusCache;
 
   const total = {};
   const sets = [];
-  /* 裝備**本身**的特效（#127）。這張表以前只吃「卡片 + 套裝 + 遺物」，
+  /* 裝備**本身**的特效（#127）。這張表以前只吃「卡片 + 套裝」，
      裝備自己只有 str/atk/def 那幾格平鋪數值進得來——官方描述裡的
      「對人型系傷害+5%」「無視植物系防禦」「暴擊時傷害+15%」全部只印在說明上，
      沒有任何程式讀它（使用者 2026-08-21 回報的那 587 筆就是這件事）。
@@ -15170,13 +15127,6 @@ function effectiveGearBonuses() {
       sets.push({ id: setId, name: def.name, bonus: def.bonus });
     }
   }
-  /* 遺物（#113）：併進同一張總表，所有既有的消費端不必知道加成是哪來的。
-     沒有 bonus 只有 proc 的那一段（5 件）在這裡是空的，旗標另外在
-     recomputeDerived 裡設。 */
-  activeRelicTiers().forEach(({ set, tier }) => {
-    mergeBonus(total, tier.bonus);
-    sets.push({ id: 'relic_' + set.id + '_' + tier.need, name: `${set.name} ${tier.need} 件`, bonus: tier.bonus });
-  });
   const petBonus = activePetBonus();
   if (petBonus) mergeBonus(total, petBonus);
 
@@ -15219,181 +15169,9 @@ function equipSetProgress() {
   return out.sort((a, b) => (b.active - a.active) || (b.have / b.total - a.have / a.total) || a.name.localeCompare(b.name));
 }
 
-/* ---------------- 遺物（#113）----------------
-   資料在 js/relics.js。這裡只做四件事：欄位、計件、加成、掉落。
-
-   計件的定義是「身上有幾件**同一套**的遺物」。因為八個欄位一格一個部位，
-   同一套不可能重複，所以直接數就行，不必像席琳那樣去重。
-------------------------------------------------- */
-function emptyRelicSlots() {
-  const o = {};
-  if (typeof RELIC_SLOTS !== 'undefined') RELIC_SLOTS.forEach(s => { o[s] = null; });
-  return o;
-}
-/* 換身中（withAlly）一律看玩家的遺物：隊友沒有自己的遺物欄，
-   不導回去的話牠們會拿到空表，套裝效果在隊友身上憑空消失。 */
-function relicsOf() {
-  const st = allyOwnerState() || state;
-  return (st && st.relics) || {};
-}
-/* { setId: 件數 } */
-function relicSetCounts() {
-  const out = {};
-  if (typeof RELIC_SLOTS === 'undefined') return out;
-  const worn = relicsOf();
-  RELIC_SLOTS.forEach(slot => {
-    const d = RELIC_ITEMS[worn[slot]];
-    if (d && d.type === 'relic') out[d.relicSet] = (out[d.relicSet] || 0) + 1;
-  });
-  return out;
-}
-/* 目前生效的段數：[{ setId, set, tier, count }]。畫面與加成共用這一支 */
-function activeRelicTiers() {
-  const out = [];
-  if (typeof RELIC_SETS === 'undefined') return out;
-  Object.entries(relicSetCounts()).forEach(([setId, n]) => {
-    const set = RELIC_SETS[setId];
-    if (!set) return;
-    set.tiers.forEach(tier => { if (n >= tier.need) out.push({ setId, set, tier, count: n }); });
-  });
-  return out;
-}
-/* 裝備／卸下。遺物不進 resolveEquipSlotFor，所以不會跟一般裝備搶欄位 */
-function equipRelic(itemId) {
-  const d = RELIC_ITEMS[itemId];
-  if (!d || d.type !== 'relic') return false;
-  if (!state.relics) state.relics = emptyRelicSlots();
-  const row = state.inventory.find(r => r.item === itemId && !r.instanceId);
-  if (!row || row.qty < 1) return false;
-  const slot = d.relicSlot;
-  const cur = state.relics[slot];
-  if (cur === itemId) return false;
-  removeItem(itemId, 1);
-  if (cur) addItem(cur, 1);            // 原本那件退回背包，不沒收
-  state.relics[slot] = itemId;
-  recomputeDerived(true);
-  logMsg(`🏺 裝上了 ${d.name}。`);
-  saveGame();
-  return true;
-}
-function unequipRelic(slot) {
-  if (!state.relics || !state.relics[slot]) return false;
-  const itemId = state.relics[slot];
-  state.relics[slot] = null;
-  addItem(itemId, 1);
-  recomputeDerived(true);
-  logMsg(`🏺 卸下了 ${RELIC_ITEMS[itemId].name}。`);
-  saveGame();
-  return true;
-}
-
-/* ---- 掉落 ----
-   只有打寶模式會掉，**瘋狂不加成**（使用者指定）。遺物與遺物券各自獨立擲一次，
-   所以同一隻怪有可能兩樣都給。 */
-function rollRelicDrop(def) {
-  if (typeof RELIC_PIECE_IDS === 'undefined' || !RELIC_PIECE_IDS.length) return;
-  if (!farmMode()) return;
-  // 頭目照等級分段（#127），一般怪一律 RELIC_DROP_PCT_NORMAL
-  const pct = (def && def.isBoss) ? relicBossDropPct(def.level) : RELIC_DROP_PCT_NORMAL;
-  if (Math.random() * 100 < pct) {
-    const id = RELIC_PIECE_IDS[Math.floor(Math.random() * RELIC_PIECE_IDS.length)];
-    addItem(id, 1);
-    logMsg(`🏺 掉落了 ${RELIC_ITEMS[id].name}！`);
-  }
-  if (Math.random() * 100 < pct) {
-    addItem(RELIC_TICKET_ID, 1);
-    logMsg('🎫 掉落了 遺物券！');
-  }
-}
-
-/* ---- 遺物券 ----
-   背包裡的遺物 10 件換 1 張。**從數量最多的那一種開始扣**——
-   這樣「只有一份」的珍稀部位自然被留到最後，玩家不必先手動鎖定。 */
-function relicSpareTotal() {
-  if (!state || !Array.isArray(state.inventory)) return 0;
-  return state.inventory.reduce((n, r) => {
-    const d = RELIC_ITEMS[r.item];
-    return d && d.type === 'relic' && !r.instanceId ? n + r.qty : n;
-  }, 0);
-}
-function exchangeRelicTicket() {
-  if (relicSpareTotal() < RELIC_TICKET_COST) {
-    logMsg(`🎫 背包裡的遺物不足 ${RELIC_TICKET_COST} 件，換不了券。`);
-    return false;
-  }
-  let left = RELIC_TICKET_COST;
-  while (left > 0) {
-    const rows = state.inventory.filter(r => {
-      const d = RELIC_ITEMS[r.item];
-      return d && d.type === 'relic' && !r.instanceId && r.qty > 0;
-    }).sort((a, b) => b.qty - a.qty);
-    if (!rows.length) return false;      // relicSpareTotal 已經擋過，理論上到不了
-    const take = Math.min(left, rows[0].qty);
-    removeItem(rows[0].item, take);
-    left -= take;
-  }
-  addItem(RELIC_TICKET_ID, 1);
-  logMsg(`🎫 用 ${RELIC_TICKET_COST} 件遺物換到了 1 張遺物券。`);
-  saveGame();
-  return true;
-}
-/* ---- 5 件的特殊效果 ----
-   三支都由 playerAttackInner() 在**命中之後**呼叫，全部只作用於普通攻擊。
-   技能不吃這些效果，這是兩套遺物共同的設計前提（見 relics.js 的說明）。 */
-
-/* 刺客：互斥的倍率階梯。由高倍率往低比對，中了就停，所以 10/5/2 三段不會疊。
-   期望值 ×1.39（0.01×10 + 0.05×5 + 0.10×2 + 0.84×1）。 */
-function rollRelicDamageMult() {
-  const p = state.relicProcs || {};
-  if (p.assassin) {
-    const r = Math.random() * 100;
-    let acc = 0;
-    for (const step of RELIC_PROC_ASSASSIN.ladder) {
-      acc += step.chance;
-      if (r < acc) return step.mult;
-    }
-  }
-  /* 法師 5 件的第三條（#148）：10% 機率兩倍傷害。
-     跟刺客那條梯子共用同一個出口是安全的——兩套的 5 件不可能同時成立
-     （八個遺物欄位放不下兩個五件套），所以永遠不會互相疊乘。 */
-  if (p.mage && Math.random() * 100 < RELIC_PROC_MAGE.doubleChance) return RELIC_PROC_MAGE.doubleMult;
-  return 1;
-}
-/* 刺客：攻速恆定。走 buff 陣列，recomputeDerived 的 ASPD 上限那行讀它。
-   重複觸發是**刷新**不是疊加——疊加會讓高攻速角色把持續時間堆到永久。 */
-function tryRelicAspdProc() {
-  if (!state.relicProcs || !state.relicProcs.assassin) return;
-  if (Math.random() * 100 >= RELIC_PROC_ASSASSIN.aspdChance) return;
-  const ms = RELIC_PROC_ASSASSIN.aspdSec * 1000;
-  const cur = state.buffs.find(b => b.type === 'aspdmax');
-  if (cur) { cur.msRemaining = Math.max(cur.msRemaining || 0, ms); return; }
-  state.buffs.push({ type: 'aspdmax', name: '完美的潛行', icon: '🗡️', msRemaining: ms });
-  recomputeDerived(true);
-  logMsg(`🗡️ 完美的潛行！攻速恆定 ${RELIC_PROC_ASSASSIN.aspdValue}，持續 ${RELIC_PROC_ASSASSIN.aspdSec} 秒。`, 'skill');
-}
-/* 法師：全場黑暗。外層一次判定，中了之後**每隻怪各自再擲一次**——
-   使用者指定的「全場敵人 50% 判定黑暗」是後面這一層。 */
-function tryRelicBlindProc() {
-  if (!state.relicProcs || !state.relicProcs.mage) return;
-  if (!state.monsters || !state.monsters.length) return;
-  if (Math.random() * 100 >= RELIC_PROC_MAGE.blindChance) return;
-  let n = 0;
-  state.monsters.forEach(mon => {
-    if (mon.hp <= 0) return;
-    if (Math.random() * 100 >= RELIC_PROC_MAGE.blindPerMonster) return;
-    const md = MONSTERS[mon.defId];
-    if (md && applyAilment(mon, md, 'blind')) n++;
-  });
-  if (n > 0) logMsg(`🔮 閃光術！${n} 隻敵人陷入黑暗。`, 'skill');
-}
-/* 法師：普攻改打全體。把**已經算好的最終傷害**複製到其他怪身上。
-
-   三條規則是刻意的，少一條就會爆炸：
-     1. 不重擲命中與暴擊——否則五隻怪等於五次暴擊骰
-     2. 濺射不再觸發濺射，也不觸發任何 on-attack 被動與卡片 proc
-        （tryCardAilments 那一整排只在主目標身上跑）
-     3. 走 monsters 的**快照**迭代：killMonster 是用 filter 重新綁定陣列的，
-        邊殺邊讀活陣列會漏怪 */
+/* 普攻濺射：把**已經算好的最終傷害**複製到其他怪身上。
+   1. 不重擲命中與暴擊  2. 濺射不觸發 on-attack 被動與卡片 proc
+   3. 走 monsters 的快照迭代（killMonster 會重新綁定陣列） */
 function applySplashDamage(dmg, mainTarget) {
   const list = state.monsters.slice();
   let n = 0;
@@ -15410,22 +15188,13 @@ function applySplashDamage(dmg, mainTarget) {
   });
   return n;
 }
-function tryRelicSplashProc(dmg, mainTarget) {
-  if (!state.relicProcs || !state.relicProcs.mage) return;
-  if (!state.monsters || state.monsters.length < 2) return;
-  if (Math.random() * 100 >= RELIC_PROC_MAGE.splashChance) return;
-  const n = applySplashDamage(dmg, mainTarget);
-  if (n > 0) logMsg(`🔮 閃光術擴散！額外打中 ${n} 隻敵人，各 ${dmg} 點傷害。`, 'skill');
-}
 /* 巴風特卡片（#136）：普通攻擊變成濺射。
 
    官方寫的是「除技能外的普通物理攻擊的範圍是 9 格」，代價是 HIT−10。
    本作沒有格子，就照字面取「普攻打到場上每一隻」——這是那張卡**唯一**的好處，
    之前只實作了 HIT−10 那半邊，等於一張純扣屬性的卡（使用者回報「沒有效果」）。
 
-   跟遺物的濺射共用同一支，所以那三條規則（不重擲命中暴擊、濺射不再觸發濺射、
-   走快照迭代）自動沿用。差別只有：遺物是 30% 機率，這張卡是**每一擊都會**——
-   官方的 9 格範圍不是機率性的。 */
+   每一擊都會濺射（官方的 9 格範圍不是機率性的）。 */
 function tryCardSplashProc(dmg, mainTarget) {
   if (!state.cardSplashAttack) return;
   if (!state.monsters || state.monsters.length < 2) return;
@@ -15433,146 +15202,11 @@ function tryCardSplashProc(dmg, mainTarget) {
   if (n > 0) logMsg(`💥 攻擊範圍擴散！額外打中 ${n} 隻敵人，各 ${dmg} 點傷害。`);
 }
 
-/* ---- 騎士／武僧：被打時完全免傷 ----
-   跟光之盾（defenderNegates）同一類，所以掛在同一個插入點；
-   怪物技能那條路徑也要擋，不然「20% 免疫」在會放技能的怪身上等於不存在。 */
-function relicNegatesHit() {
-  const p = state.relicProcs || {};
-  if (p.knight && Math.random() * 100 < RELIC_PROC_KNIGHT.immuneChance) return '🛡️ 騎士遺物';
-  /* 武僧的免疫從 5% 提到 10%，但加上 1 秒冷卻（#148）。
-     沒有冷卻的機率免疫在挨連打時是純粹的機率疊加——一波五隻怪各打一下
-     就有四成機率至少免掉一發；加了冷卻之後同一秒內最多免一下。 */
-  if (p.monk && Date.now() >= (state.relicMonkImmuneReadyAt || 0)
-      && Math.random() * 100 < RELIC_PROC_MONK.immuneChance) {
-    state.relicMonkImmuneReadyAt = Date.now() + RELIC_PROC_MONK.immuneCooldownSec * 1000;
-    return '📿 佛法無邊';
-  }
-  return null;
-}
-
-/* ---- 武僧：加特林 ----
-   固定傷害＝**不吃怪物防禦**，所以 CD 是唯一的節流閥（見 relics.js 的說明）。
-   飄字跳一排「-1」是純特效，傷害仍然一次結算——真的打 3600 次會把迴圈跑爆。 */
-function tryRelicMonkGatling(target, monDef) {
-  if (!state.relicProcs || !state.relicProcs.monk) return;
-  const now = Date.now();
-  if (now < (state.relicMonkReadyAt || 0)) return;
-  if (Math.random() * 100 >= RELIC_PROC_MONK.procChance) return;
-  state.relicMonkReadyAt = now + RELIC_PROC_MONK.cooldownSec * 1000;
-  /* 3600 是固定值，等級一高就形同虛設，所以在它之上再追加
-     ATK 100% + MATK 100%（#148），讓這一發跟著角色成長。
-     整包一樣**不吃怪物防禦**——這條的節流閥從頭到尾都是那 1 秒冷卻。 */
-  const dmg = RELIC_PROC_MONK.fixedDamage
-    + Math.round((state.atk || 0) * RELIC_PROC_MONK.atkPct / 100)
-    + Math.round((state.matk || 0) * RELIC_PROC_MONK.matkPct / 100);
-  target.hp -= dmg;
-  ailBreakOnDamage(target, monDef);
-  if (typeof showGatlingFloats === 'function') showGatlingFloats(target.id, RELIC_PROC_MONK.gatlingHits);
-  logMsg(`👊 南無加特林菩薩！造成 ${dmg} 點固定傷害。`, 'skill');
-  if (target.hp <= 0) killMonster(monDef, target);
-}
-
-/* ---- 鐵匠：定時護盾 ----
-   走既有的 state.shields（霸邪之陣那套），消耗規則完全共用——
-   另開一套「遺物專用護盾」等於要把 absorbWithShields 的四條規則再寫一遍。
-   remainingCharges 給很大是因為這面盾是**耐久制**不是次數制：
-   5000 點打完就破，不管挨了幾下。 */
-function tickRelicShield() {
-  if (!state.relicProcs || !state.relicProcs.blacksmith) return;
-  const now = Date.now();
-  if (now < (state.relicShieldReadyAt || 0)) return;
-  if (!state.shields) state.shields = [];
-  if (state.shields.some(sh => sh.id === 'relic_bs')) return;   // 上一面還沒破就不補
-  state.relicShieldReadyAt = now + RELIC_PROC_BLACKSMITH.shieldCooldownSec * 1000;
-  state.shields.push({
-    id: 'relic_bs', remainingHp: RELIC_PROC_BLACKSMITH.shieldHp,
-    remainingCharges: 9999, expiresAt: now + 999999 * 1000,
-  });
-}
-
-/* ---- 鐵匠：普攻追打 ----
-   ATK100%+MATK100% 是刻意的雙傷害（使用者確認）：遺物不限職業，
-   純物理、純魔法、混合三種 build 都吃得到其中一半以上。
-   走一般的物理減傷（mitigateDamage），不是固定傷害。 */
-function tryRelicBlacksmithStrike(mainTarget) {
-  if (!state.relicProcs || !state.relicProcs.blacksmith) return;
-  if (!state.monsters || !state.monsters.length) return;
-  if (Math.random() * 100 >= RELIC_PROC_BLACKSMITH.procChance) return;
-  const pool = state.monsters.filter(m => m.hp > 0);
-  if (!pool.length) return;
-  const base = (state.atk || 0) * RELIC_PROC_BLACKSMITH.atkPct / 100
-    + (state.matk || 0) * RELIC_PROC_BLACKSMITH.matkPct / 100;
-  // 隨機挑 N 隻（不重複）。場上不足 N 隻就打幾隻算幾隻，不重複打同一隻
-  const picks = pool.slice();
-  for (let i = picks.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const t = picks[i]; picks[i] = picks[j]; picks[j] = t;
-  }
-  const targets = picks.slice(0, RELIC_PROC_BLACKSMITH.targets);
-  let hit = 0;
-  targets.forEach(mon => {
-    const md = MONSTERS[mon.defId];
-    if (!md || mon.hp <= 0) return;
-    const dmg = mitigateDamage(base, ...defOf(md));
-    noteMonsterDamage(mon, dmg);
-    mon.hp -= dmg;
-    ailBreakOnDamage(mon, md);
-    hit++;
-    if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, dmg, false);
-    if (mon.hp <= 0) killMonster(md, mon);
-  });
-  if (hit > 0) logMsg(`⚙️ 鐵匠遺物！射穿了 ${hit} 名敵人。`, 'skill');
-}
-
-/* ---- 牧師：自動復活 ----
-   3 次用完要**換圖**才回滿（見 changeMap）。只靠 CD 的話，
-   3 分鐘一到就等於無限次，「3 次」這個數字就沒有意義了。
-   接在 tryAutoRevive() 的最後：自己的復活術與隊友的祭司都優先，
-   遺物是最後一道保險。 */
-function tryRelicPriestRevive() {
-  if (!state.relicProcs || !state.relicProcs.priest) return false;
-  const now = Date.now();
-  if (state.relicReviveUsed == null) state.relicReviveUsed = 0;
-  if (state.relicReviveUsed >= RELIC_PROC_PRIEST.charges) return false;
-  if (now < (state.relicReviveReadyAt || 0)) return false;
-  state.relicReviveUsed++;
-  state.relicReviveReadyAt = now + RELIC_PROC_PRIEST.cooldownSec * 1000;
-  state.hp = Math.max(1, Math.round(state.maxHp * RELIC_PROC_PRIEST.reviveHpPct / 100));
-  const left = RELIC_PROC_PRIEST.charges - state.relicReviveUsed;
-  logMsg(`✝️ 牧師遺物！原地復活（HP ${RELIC_PROC_PRIEST.reviveHpPct}%），還剩 ${left} 次。`);
-  return true;
-}
-/* 換圖回滿次數。死亡被抬回安全區也會經過這裡 */
-function resetRelicRevive() {
-  state.relicReviveUsed = 0;
-  state.relicReviveReadyAt = 0;
-}
 function getDevotionTargetPct() {
   const b = state.buffs.find(x => x.type === 'devotion' && (x.msRemaining || 0) > 0);
   return b ? b.targetPlayerPct : 0;
 }
-/* 回傳「怪打玩家」的基礎機率：60% + 牧師遺物（隊友的犧牲在 pickMonsterTarget 處理） */
-function relicPlayerTargetPct() {
-  const extraRelic = (state.relicProcs && state.relicProcs.priest_taunt) ? RELIC_PROC_PRIEST.takeDamagePct : 0;
-  return Math.min(100, ALLY_MONSTER_TARGET_PLAYER_PCT + extraRelic);
-}
 
-/* 遺物商人：1 張券換「指定套裝」的隨機一件。指定套裝是這張券唯一的價值——
-   直接掉落是全套裝隨機，湊特定一套全靠這裡 */
-function redeemRelicTicket(setId) {
-  const pool = relicPieceIdsOfSet(setId);
-  if (!pool.length) return false;
-  if (getItemQty(RELIC_TICKET_ID) < 1) {
-    logMsg('🎫 你沒有遺物券。');
-    return false;
-  }
-  removeItem(RELIC_TICKET_ID, 1);
-  const id = pool[Math.floor(Math.random() * pool.length)];
-  addItem(id, 1);
-  logMsg(`🏺 遺物商人給了你 ${RELIC_ITEMS[id].name}。`);
-  saveGame();
-  return true;
-}
 
 const BASE_STAT_KEYS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
 function getCardBonus(stat) {
@@ -15677,13 +15311,6 @@ function sellItem(itemId, qty) {
   const def = ITEMS[itemId];
   const row = state.inventory.find(r => r.item === itemId && !r.instanceId);
   if (!def || !row || row.qty < qty) return false;
-  /* 遺物賣價是 0，賣掉等於**免費銷毀**（#115）。
-     多的遺物有兩個正當出路：換遺物券、或存倉庫躲開換券的扣除，
-     賣出不在其中——擋掉，免得手滑把湊了幾十小時的部位變成 0 鋅幣。 */
-  if (def.type === 'relic') {
-    logMsg(`🏺 ${def.name} 賣不掉。多的遺物請拿去換遺物券，要留的存倉庫。`);
-    return false;
-  }
   if (isItemLocked(itemId)) {
     logMsg(`🔒 ${def.name} 已鎖定，無法賣出。請先解除鎖定。`);
     return false;
@@ -15740,7 +15367,7 @@ function toggleAutoSellItem(itemId) {
 function setAutoSellEnabled(v) {
   if (!state.autoSellConfig) state.autoSellConfig = { enabled: false, items: [] };
   state.autoSellConfig.enabled = !!v;
-  state.autoSellReadyAt = Date.now() + AUTO_SELL_INTERVAL_MS;
+  state.autoSellReadyAt = gameNow() + AUTO_SELL_INTERVAL_MS;
   saveGame();
 }
 /* ---- 從別的存檔抄一份自動販賣清單（#140） ----
@@ -15751,7 +15378,7 @@ function setAutoSellEnabled(v) {
 
    抄之前要過濾三種東西，不然抄完的清單看起來有效、實際上是壞的：
      · 本作已經沒有的 id（舊存檔留下的）——永遠賣不掉，只是佔位
-     · 賣不掉的（sell <= 0、遺物）——同上
+     · 賣不掉的（sell <= 0）——同上
      · **這個角色鎖定的道具**——鎖定是角色自己的設定，
        不能因為別人的清單裡有就被拖進去賣（賣出那一步雖然也會擋，
        但清單上看得到卻永遠不賣，比直接不收更難懂） */
@@ -15781,7 +15408,7 @@ function readAutoSellList(slot) {
   const items = []; let locked = 0, dropped = 0;
   raw.forEach(id => {
     const def = ITEMS[id];
-    if (!def || def.type === 'relic' || !(def.sell > 0)) { dropped++; return; }
+    if (!def || !(def.sell > 0)) { dropped++; return; }
     if (isItemLocked(id)) { locked++; return; }
     if (items.indexOf(id) < 0) items.push(id);
   });
@@ -15810,7 +15437,7 @@ function syncAutoSellFrom(slot, mode) {
 // 立即執行一次自動販賣（不受30秒週期限制，並重新計時）
 function runAutoSellNow() {
   const sold = autoSellSelectedItems();
-  state.autoSellReadyAt = Date.now() + AUTO_SELL_INTERVAL_MS;
+  state.autoSellReadyAt = gameNow() + AUTO_SELL_INTERVAL_MS;
   saveGame();
   return sold;
 }
@@ -15822,7 +15449,6 @@ function autoSellSelectedItems() {
     const def = ITEMS[itemId];
     const row = state.inventory.find(r => r.item === itemId && !r.instanceId);
     if (!def || !row || row.qty < 1) return;
-    if (def.type === 'relic') return;   // 遺物賣不掉（見 sellItem）
     if (isItemLocked(itemId)) return;   // 鎖定的道具自動販賣一律跳過
     const qty = row.qty;
     removeItem(itemId, qty);
@@ -15838,8 +15464,8 @@ function tryAutoSell() {
   if (!state.autoSellConfig) state.autoSellConfig = { enabled: false, items: [] };
   if (!state.autoSellConfig.enabled) return;
   const readyAt = state.autoSellReadyAt || 0;
-  if (Date.now() < readyAt) return;
-  state.autoSellReadyAt = Date.now() + AUTO_SELL_INTERVAL_MS;
+  if (gameNow() < readyAt) return;
+  state.autoSellReadyAt = gameNow() + AUTO_SELL_INTERVAL_MS;
   if (autoSellSelectedItems()) saveGame();
 }
 
@@ -15857,19 +15483,18 @@ function tryAutoVending() {
   if (!state.learnedSkills || !state.learnedSkills['mc_vending']) return;
   if (!state.vendingConfig || !state.vendingConfig.items || state.vendingConfig.items.length === 0) return;
   const readyAt = state.vendingReadyAt || 0;
-  if (Date.now() < readyAt) return;
+  if (gameNow() < readyAt) return;
 
   const sk = findSkillById('mc_vending');
   const cdSec = sk.internalCooldown || 60;
   const sellMult = sk.sellMultiplier || 10;
-  state.vendingReadyAt = Date.now() + cdSec * 1000;
+  state.vendingReadyAt = gameNow() + cdSec * 1000;
 
   let soldAny = false;
   state.vendingConfig.items.forEach(itemId => {
     const def = ITEMS[itemId];
     const row = state.inventory.find(r => r.item === itemId && !r.instanceId);
     if (!def || !row || row.qty < 1) return;
-    if (def.type === 'relic') return;   // 遺物賣不掉（見 sellItem）
     if (isItemLocked(itemId)) return;   // 鎖定的道具露天商店也不賣
     removeItem(itemId, 1);
     const price = Math.round(def.sell * sellMult);
@@ -15950,7 +15575,7 @@ function craftMaterial(kind) {
   recipe.consume.forEach(c => removeItem(c.item, c.qty));
   state.gold -= cost;
 
-  const success = Math.random() * 100 < materialCraftChance(recipe);
+  const success = rng() * 100 < materialCraftChance(recipe);
   if (success) {
     addItem(recipe.result, 1);
     logMsg(`🔨 鍛造成功！獲得了 ${ITEMS[recipe.result].name}！`);
@@ -15972,7 +15597,6 @@ function changeMap(mapId, opt) {
   // 回安全區全隊免費滿血復活（#83）——不然倒地的隊友只能靠天地樹葉子
   if ((map.monsters || []).length === 0) reviveAlliesInTown();
   ensureCodex().maps[mapId] = 1; // 探索成就用
-  resetRelicRevive();            // 牧師遺物的復活次數換圖回滿（#113）
   state.monsters = [];
   state.monster = null;
   logMsg(`前往「${map.name}」。`);
@@ -16102,7 +15726,7 @@ function toggleMvpMode(enabled) {
 /* ---------------- 存讀檔 ---------------- */
 let lastSaveTs = 0;
 function saveGameThrottled() {
-  if (Date.now() - lastSaveTs > 5000) saveGame();
+  if (gameNow() - lastSaveTs > 5000) saveGame();
 }
 let _tabSessionBlocked = false;
 function tabSessionBlocked() { return _tabSessionBlocked; }
@@ -16110,14 +15734,14 @@ function setTabSessionBlocked(v) { _tabSessionBlocked = !!v; }
 /* 正在玩的這個人：經驗和道具都是現場拿到的，兩條時鐘一起推。 */
 function stampPlayedClocks() {
   if (!state) return;
-  const now = Date.now();
+  const now = gameNow();
   state.lastActiveAt = now;
   state.lastExpAt = now;
   state.lastLootAt = now;
 }
 function activityClock(key) {
   const v = state && state[key];
-  return (typeof v === 'number' && v > 0) ? v : ((state && state.lastActiveAt) || Date.now());
+  return (typeof v === 'number' && v > 0) ? v : ((state && state.lastActiveAt) || gameNow());
 }
 function saveGame() {
   if (!state || _tabSessionBlocked || _suppressSave) return;
@@ -16138,7 +15762,7 @@ function saveGame() {
        直接序列化會把整場怪重複存兩份，而且讀檔後會變成三份互不相干的場。 */
     (state.allies || []).forEach(a => { if (a) { a.monsters = null; a.monster = null; } });
     localStorage.setItem(getSlotKey(currentSlot), JSON.stringify(state));
-    lastSaveTs = Date.now();
+    lastSaveTs = gameNow();
   } catch (e) { /* 儲存失敗時靜默略過，不中斷遊戲 */ }
 }
 function loadGame() {
@@ -16148,7 +15772,7 @@ function loadGame() {
     state = JSON.parse(raw);
     // 已刪除的道具（js/item_prune.js）從背包拿掉，不然畫面查不到定義
     if (Array.isArray(state.inventory)) state.inventory = state.inventory.filter(r => r && ITEMS[r.item]);
-    if (!state.lastActiveAt) state.lastActiveAt = Date.now();
+    if (!state.lastActiveAt) state.lastActiveAt = gameNow();
     if (!state.lastExpAt) state.lastExpAt = state.lastActiveAt;
     if (!state.lastLootAt) state.lastLootAt = state.lastActiveAt;
     if (!state.autoPotion) state.autoPotion = { enabled: true, primary: '', fallback: 'red_potion', hpThreshold: 50 };
@@ -16195,9 +15819,10 @@ function loadGame() {
     state.vDuel = null;
     if (Array.isArray(state.monsters)) state.monsters = state.monsters.filter(m => m && MONSTERS[m.defId]);
     if (typeof gmtOnLoad === 'function') gmtOnLoad();   // 吉芬魔法大賽中斷：照打贏的輪數結算
+    if (typeof gvgOnLoad === 'function') gvgOnLoad();   // 攻城中斷：放回普隆德拉
     // 舊存檔沒有 DPS 統計，補一份空的（從讀檔當下開始算）
     if (!state.dpsTracker || typeof state.dpsTracker.damage !== 'number') {
-      state.dpsTracker = { since: Date.now(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };
+      state.dpsTracker = { since: gameNow(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };
     }
     // 圖鑑遷移：舊存檔沒有紀錄，至少把背包/裝備裡現有的東西補登為「已取得」，
     // 免得老角色開圖鑑看到一片空白
@@ -16238,8 +15863,8 @@ function loadGame() {
     }
     // 同步全域技能點
     state.skillPoints = Object.values(state.jobSkillPoints).reduce((a, b) => a + b, 0);
-    if (!state.lastAttackTime) state.lastAttackTime = Date.now();
-    state.lastAttackTime = Date.now(); // 防止離線時間差造成爆量攻擊
+    if (!state.lastAttackTime) state.lastAttackTime = gameNow();
+    state.lastAttackTime = gameNow(); // 防止離線時間差造成爆量攻擊
     if (!state.attackAccumulator) state.attackAccumulator = 0;
     state.attackAccumulator = 0;
 
@@ -16255,10 +15880,6 @@ function loadGame() {
     if (!state.equip.accessory2) state.equip.accessory2 = null;
     if (!state.equip.ammo) state.equip.ammo = null;
     delete state.equipSkin;
-    /* 遺物欄（#113）。舊存檔沒有這個欄位，補成八格空的；
-       已經有的話只補缺少的格子，不要整個覆蓋掉玩家穿好的遺物。 */
-    if (!state.relics) state.relics = emptyRelicSlots();
-    RELIC_SLOTS.forEach(s => { if (state.relics[s] === undefined) state.relics[s] = null; });
     if (!state.refinement) state.refinement = {};
     if (!state.equippedCards) state.equippedCards = {};
     if (!state.instances) state.instances = {};
@@ -16327,7 +15948,7 @@ function loadGame() {
         const legacyRefine = state.refinement[cur] || 0;
         const legacyCards = state.equippedCards[slot] || [];
         if (legacyRefine > 0 || legacyCards.length) {
-          const id = cur + '#mig' + Date.now() + '_' + (n++);
+          const id = cur + '#mig' + gameNow() + '_' + (n++);
           state.instances[id] = { item: cur, refine: legacyRefine, cards: legacyCards.slice() };
           state.equip[slot] = id;
           delete state.equippedCards[slot];
@@ -16485,7 +16106,7 @@ function computeOfflineProgress(minMs, opts) {
   const gate = minMs == null ? OFFLINE_MIN_MS : minMs;
   /* 經驗時鐘：同圖組隊時已經領過的那段不再發。
      道具時鐘：掉落、鋅幣、圖鑑。A 掛機只推了 B 的經驗時鐘，B 上線仍領這段道具。 */
-  const nowMs = Date.now();
+  const nowMs = gameNow();
   const expElapsed = Math.min(Math.max(0, nowMs - activityClock('lastExpAt')), OFFLINE_CAP_MS);
   const lootElapsed = Math.min(Math.max(0, nowMs - activityClock('lastLootAt')), OFFLINE_CAP_MS);
   const elapsedMs = Math.max(expElapsed, lootElapsed);
@@ -16756,10 +16377,10 @@ function computeOfflineProgress(minMs, opts) {
       });
       const rolls = Math.floor(elapsedSec / BOSS_ROLL_SEC);
       for (let i = 0; i < rolls; i++) {
-        if (Math.random() * 100 >= MVP_SPAWN_CHANCE_PCT) continue;
+        if (rng() * 100 >= MVP_SPAWN_CHANCE_PCT) continue;
         // 等機率抽：先從殺得動的抽；全都殺不動時，這一輪照樣損失
         const pickFrom = killable.length ? killable : bossPool;
-        const id = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+        const id = pickFrom[Math.floor(rng() * pickFrom.length)];
         if (!killable.includes(id)) continue;   // 抽到殺不動的 → 白耗一輪
         const rec = bossKillRecord(id, farmMode());
         const killSec = (rec.bestMs || rec.lastMs) / 1000;
@@ -16916,21 +16537,6 @@ function computeOfflineProgress(minMs, opts) {
       list.forEach(id => addBoss(id, rate * b.kills / list.length));
     });
   });
-  /* 遺物（#145）：只有打寶模式會掉，一般怪固定機率、頭目照等級分段，
-     而且碎片與遺物券是**各擲一次**。離線以前一件都不會掉，
-     等於開著打寶掛機一整晚，遺物進度完全沒有推進。 */
-  if (farmMode() && typeof RELIC_PIECE_IDS !== 'undefined' && RELIC_PIECE_IDS.length) {
-    const normPct = RELIC_DROP_PCT_NORMAL / 100;      // 每次擊殺的機率
-    RELIC_PIECE_IDS.forEach(id => addExp2(id, normPct / RELIC_PIECE_IDS.length));
-    addExp2(RELIC_TICKET_ID, normPct);
-    lootBossList.forEach(b => {
-      const bd = MONSTERS[b.id];
-      const pct = relicBossDropPct(bd.level) / 100;
-      if (!(pct > 0)) return;
-      RELIC_PIECE_IDS.forEach(id => addBoss(id, pct * b.kills / RELIC_PIECE_IDS.length));
-      addBoss(RELIC_TICKET_ID, pct * b.kills);
-    });
-  }
   // 藍鼠那種「擊殺掉錢」的卡片：期望值一次補進鋅幣
   goldGained += Math.round(killDropZenyPerKill * totalKills + bossZeny);
 
@@ -16940,7 +16546,7 @@ function computeOfflineProgress(minMs, opts) {
   const gainedIdx = {};
   const rollQty = expected => {
     let qty = Math.floor(expected);
-    if (Math.random() < (expected - qty)) qty++;
+    if (rng() < (expected - qty)) qty++;
     return qty;
   };
   const grant = (itemId, qty) => {
@@ -17002,20 +16608,20 @@ function computeOfflineProgress(minMs, opts) {
   if (expOnly) {
     if (expGained > 0 || jobExpGained > 0) {
       noteExpPrepaid(state, expGained, jobExpGained);
-      state.lastExpAt = Date.now();
+      state.lastExpAt = gameNow();
     }
   } else {
   stampPlayedClocks();
   /* 時間錨點全部推回現在，否則主迴圈一恢復就會把離線那段「再打一次」（#135）：
      玩家的累積器會爆發一串攻擊，場上每隻怪也各賺一次免費攻擊
      （`now - mon.lastAttackTime` 是整段離線時間），慢心跳同理。 */
-  state.lastAttackTime = Date.now();
+  state.lastAttackTime = gameNow();
   state.attackAccumulator = 0;
-  state.lastMonsterAttackTime = Date.now();
-  state._lastSlowTick = Date.now();
-  state.lastSpawnTime = Date.now();
-  (state.monsters || []).forEach(m => { m.lastAttackTime = Date.now(); });
-  (state.allies || []).forEach(a => { if (a) { a._atkAccum = 0; a._lastAttackAt = Date.now(); } });
+  state.lastMonsterAttackTime = gameNow();
+  state._lastSlowTick = gameNow();
+  state.lastSpawnTime = gameNow();
+  (state.monsters || []).forEach(m => { m.lastAttackTime = gameNow(); });
+  (state.allies || []).forEach(a => { if (a) { a._atkAccum = 0; a._lastAttackAt = gameNow(); } });
   saveGame();
   }
 
@@ -17086,7 +16692,7 @@ function pushOfflineLog(off) {
      截斷前先照價值排序，卡片與裝備才不會被一堆藥草擠掉。 */
   const spoils = sortSpoilsByValue(off.itemsGained);
   state.offlineLog.unshift({
-    at: Date.now(),
+    at: gameNow(),
     elapsedMs: off.elapsedMs,
     safeTown: !!off.safeTown,
     mapName: off.mapName || '',

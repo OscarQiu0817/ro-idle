@@ -141,7 +141,7 @@ function gmtBlockReason() {
 function gmtEnter() {
   const why = gmtBlockReason();
   if (why) { logMsg('⚠️ ' + why); return false; }
-  const now = Date.now();
+  const now = gameNow();
   state.gmtDay = gmtToday();
   state.gmt = { round: 0, cleared: 0, startAt: now, endAt: now + GMT_TOTAL_MS, size: 1, seed: gmtDaySeed(), level: state.baseLevel, nextAt: now + 1500 };
   changeMap(GMT_ARENA);   // 只有自己進去，隊友留在吉芬
@@ -153,7 +153,7 @@ function gmtNextRound() {
   const g = state.gmt;
   if (!g) return;
   const r = g.round + 1;
-  const left = g.endAt - Date.now();
+  const left = g.endAt - gameNow();
   if (left <= 0) return gmtFinish(false, '時間到');
   g.round = r;
   const ok = startVirtualDuel(gmtRoundFoes(r, g.seed, g.level), { label: `第 ${r} 輪${r === GMT_ROUNDS ? '（決賽）' : r === 12 ? '（準決賽）' : ''}`, limitMs: Math.min(left, gmtRoundLimitMs(r)) });
@@ -170,7 +170,7 @@ onVirtualDuelEnd((win, info) => {
   g.cleared = g.round;
   if (g.round >= GMT_ROUNDS) return gmtFinish(true);
   if (GMT_HEAL_AFTER.includes(g.round)) gmtHealParty();
-  g.nextAt = Date.now() + GMT_NEXT_DELAY_MS;
+  g.nextAt = gameNow() + GMT_NEXT_DELAY_MS;
 });
 // 每拍（由 boss_fight 的 tickBossFight 呼叫）：倒數下一輪、離開競技場就結束
 function tickGmt(now) {
@@ -192,12 +192,12 @@ function gmtFinish(clear, why) {
   if (coins > 0) addItem(GMT_COIN, coins);
   let firstClear = false;
   if (clear && !state.gmtFirstClear) {
-    state.gmtFirstClear = Date.now();
+    state.gmtFirstClear = gameNow();
     firstClear = true;
     if (typeof addCashPoints === 'function') addCashPoints(GMT_FIRST_CLEAR_POINTS);
   }
   state.gmtBest = Math.max(state.gmtBest || 0, g.cleared);
-  state.gmtLast = { cleared: g.cleared, coins, clear: !!clear, why: why || '', at: Date.now() };
+  state.gmtLast = { cleared: g.cleared, coins, clear: !!clear, why: why || '', at: gameNow() };
   logMsg(clear
     ? `🏆 吉芬魔法大賽全破！獲得 ${coins} 枚${ITEMS[GMT_COIN].name}${firstClear ? `，首次全破再送 ${GMT_FIRST_CLEAR_POINTS} 商城點數` : ''}！`
     : `🏟️ 吉芬魔法大賽結束（${why || '中斷'}）：打到第 ${g.cleared} 輪，獲得 ${coins} 枚${ITEMS[GMT_COIN].name}。`);
@@ -214,7 +214,7 @@ function gmtOnLoad() {
     for (let r = 1; r <= (g.cleared || 0); r++) coins += gmtCoinsFor(r);
     coins = Math.round(coins * gmtPartyMult(g.size || 1));
     if (coins > 0) addItem(GMT_COIN, coins);
-    state.gmtLast = { cleared: g.cleared || 0, coins, clear: false, why: '中斷', at: Date.now() };
+    state.gmtLast = { cleared: g.cleared || 0, coins, clear: false, why: '中斷', at: gameNow() };
   }
   if (state.mapId === GMT_ARENA) state.mapId = 'geffen';
 }

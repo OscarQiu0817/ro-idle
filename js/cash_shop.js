@@ -72,3 +72,39 @@ function grantAttendance(idx) {
   (r.items || []).forEach(([id, n]) => { if (ITEMS[id]) { addItem(id, n); got.push(`${ITEMS[id].name} ×${n}`); } });
   return got;
 }
+
+/* 各部位裝備轉蛋（使用者 2026-11-13）：很多頭飾等裝備原本只有神秘箱子開得到。
+   每顆轉蛋只開「該部位、沒有怪物掉落也沒有 NPC 販賣」的裝備，均勻抽。
+   池子用 boxEligible 同一套過濾（中文名、非時裝），跟神秘箱子的池是子集合。 */
+const GEAR_GACHA = [
+  // [道具 id, 名稱, 圖, 商城點數, 篩選]
+  ['gacha_head_top', '頭上裝備轉蛋', 14800, 20, d => d.armorType === 'headgear' && /頭上/.test(d.desc || '')],
+  ['gacha_head_mid', '頭中裝備轉蛋', 12947, 20, d => d.armorType === 'headgear' && !/頭上/.test(d.desc || '') && /頭中/.test(d.desc || '')],
+  ['gacha_head_low', '頭下裝備轉蛋', 16228, 20, d => d.armorType === 'headgear' && !/頭上|頭中/.test(d.desc || '') && /頭下/.test(d.desc || '')],
+  ['gacha_armor', '鎧甲轉蛋', 23766, 20, d => d.armorType === 'leather'],
+  ['gacha_shield', '盾牌轉蛋', 23538, 20, d => d.armorType === 'shield'],
+  ['gacha_garment', '披肩轉蛋', 617, 20, d => d.armorType === 'garment'],
+  ['gacha_shoes', '鞋子轉蛋', 17347, 20, d => d.armorType === 'footgear'],
+  ['gacha_acc', '飾品轉蛋', 644, 20, d => d.armorType === 'accessory'],
+  ['gacha_weapon', '武器轉蛋', 12623, 20, d => d.type === 'weapon'],
+];
+let _gearSourced = null;
+// 有其他取得管道的裝備（怪物掉落、NPC 商店）不進轉蛋
+function gearHasOtherSource(id) {
+  if (!_gearSourced) {
+    _gearSourced = new Set();
+    Object.values(MONSTERS).forEach(m => (m.drops || []).forEach(d => _gearSourced.add(d.item)));
+    Object.values(NPC_SHOPS).forEach(s => (s.items || []).forEach(i => _gearSourced.add(i)));
+  }
+  return _gearSourced.has(id);
+}
+GEAR_GACHA.forEach(([id, name, img, , pick]) => {
+  ITEMS[id] = {
+    id, imgId: img, name, type: 'consumable', icon: '🎁', weight: 1, sell: 0, boxOpen: 'gear_' + id,
+    desc: `打開後隨機獲得一件${name.replace('轉蛋', '')}（只開沒有怪物掉落、商店也不賣的裝備）。`,
+  };
+  BOX_POOLS['gear_' + id] = {
+    build: () => Object.keys(ITEMS).filter(k => boxEligible(k) && pick(ITEMS[k]) && !gearHasOtherSource(k)),
+  };
+});
+CASH_SHOP.find(c => c.cat === '轉蛋').items.push(...GEAR_GACHA.map(([id, , , p]) => [id, p]));

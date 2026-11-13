@@ -197,7 +197,6 @@
           <button class="gm-btn" onclick="gmAddLevels()" title="基礎等級 +50（按兩下到 99）">⬆️ 等級 +50</button>
           <button class="gm-btn" onclick="gmMaxJobLevel()" title="目前職業的職業等級直接拉滿，技能點照發">🎓 職業等級滿</button>
           <button class="gm-btn" onclick="gmAddGold()" title="鋅幣 +1,000,000">💰 鋅幣 +100萬</button>
-          <button class="gm-btn" onclick="gmAddRelicTickets()" title="遺物券 +100（拿去裝備分頁的「遺物」那一頁找遺物商人換）">🎫 遺物券 +100</button>
           <button class="gm-btn" onclick="gmUnlockHiddenCodex()" title="三大收集記錄灌滿（不發道具），解鎖圖鑑的「隱藏」分頁">🔓 隱藏圖鑑解鎖</button>
           <button class="gm-btn" onclick="gmBoxCodexBatch()" title="取得 100 件還沒開出過的神秘箱道具並記入隱藏圖鑑；連點續批，直到剩餘歸零（上限 500/次）">🎁 神秘箱批次 +100</button>
         </div>
@@ -394,8 +393,6 @@
 <script src="js/skill_cast_data.js"></script>
 <script src="js/mob_move.js"></script>
 <script src="js/skill_icon_data.js"></script>
-<!-- 遺物要在 data.js 之後：它會把自己的道具 Object.assign 進 ITEMS -->
-<script src="js/relics.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/boss_slaves.js"></script>
@@ -403,6 +400,8 @@
 <script src="js/boss_fight.js"></script>
 <script src="js/virtual_foe.js"></script>
 <script src="js/gmt.js"></script>
+<script src="js/actor_battle.js"></script>
+<script src="js/gvg.js"></script>
 <script src="js/towns.js"></script>
 <script src="js/cash_shop.js"></script>
 <script src="js/main_quest.js"></script>

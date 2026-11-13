@@ -617,7 +617,7 @@ function onTickUI() {
 
 /* GM 測試面板（v1.0 起預設關閉）。
 
-   那幾顆鈕直接給等級、鋅幣與遺物券——正式版留著等於把遊戲的進度整段跳過。
+   那幾顆鈕直接給等級、鋅幣——正式版留著等於把遊戲的進度整段跳過。
    **不刪掉是因為測試還要用**：加上 `?gm=1` 就會開回來
    （例如 index.html?gm=1），一般玩家不會碰到。
 
@@ -1290,7 +1290,7 @@ const BATTLE_BUFF_NAMES = {
   allstat: '全素質', gearbonus: '裝備觸發', elearmor: '屬性鎧甲', maxhpflat: 'HP', ailimmune: '免疫', eledmg_: '屬傷', doublecast: '雙重施法',
   devotion: '犧牲', ignoresize: '無視體型', fogwall: '濃霧', gate: '傳送門', defender: '防禦姿態', castcut: '詠唱', memorize: '記憶',
   energycoat: '能量外套', matk: 'MATK', mdefflat: 'MDEF', eledmg_holy: '聖傷', targetele: '屬性', healrecv: '治癒量', aspddelay: '攻速',
-  aspdmax: '攻速', expboost: '經驗加倍', dropboost: '掉寶加倍', jobexpboost: '職業經驗加倍'
+  expboost: '經驗加倍', dropboost: '掉寶加倍', jobexpboost: '職業經驗加倍'
 };
 /* 加成欄浮層的效果文字（T5）：照 buff 的實際欄位寫出加了什麼，不再只印「名稱 +數字」 */
 const pctOf = m => Math.round((m - 1) * 100);
@@ -1349,7 +1349,6 @@ const BUFF_EFFECT_TEXT = {
   reflect: b => `反射近戰傷害 ${b.flatBonus}%`,
   gold: b => `金錢 ${sgn(pctOf(b.mult), '%')}`,
   eleresist: b => `受${ELE_ZH(b.element)}屬性傷害 −${b.reducePct}%`,
-  aspdmax: () => '攻速最大',
   gearbonus: b => Object.keys(b.bonus || {}).map(k => formatCardBonus(k, b.bonus[k], b.bonus)).filter(Boolean).join('、') || '裝備加成',
   sacrifice: b => `捨命攻擊剩 ${b.charges} 次（每次扣 HP ${b.hpCostPct}%）`,
   fogwall: () => '遠程普攻傷害 −75%',
@@ -2523,55 +2522,6 @@ function showDamageFloatAt(monsterInstanceId, dmg, type, element) {
   finally { pendingFloatTargetId = prev; }
 }
 
-/* ---- 武僧遺物：加特林飄字（#113）----
-   「南無加特林菩薩」要看得到一排「-1」連射。傷害是一次結算的（3600 點），
-   這裡純粹是特效——真的打 3600 次會把戰鬥迴圈跑爆。
-   錯開時間送出，讓它們像連射而不是一次噴一坨。 */
-function showGatlingFloats(monsterInstanceId, n) {
-  const count = n || 12;
-  const targetEl = document.getElementById('monster-slot-' + monsterInstanceId);
-  if (!targetEl) return;
-  if (_liveFloats >= MAX_LIVE_FLOATS) return;
-  /* 一次讀座標、一次進 DOM（#117）。
-
-     原本是 12 個 setTimeout 各自呼叫 showDamageFloatAt，等於
-     **12 次強制 layout ＋ 12 次 appendChild ＋ 12 個計時器**，而加特林每秒都會放。
-     改成讀一次 rect、用 CSS 的 animation-delay 錯開連射感，
-     整批塞進一個 DocumentFragment 一次 append，最後只留一個清除用的計時器。 */
-  const rect = targetEl.getBoundingClientRect();
-  const frag = document.createDocumentFragment();
-  const made = [];
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('div');
-    el.className = 'damage-float gatling';
-    el.textContent = '-1';
-    el.style.position = 'fixed';
-    el.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * 46) + 'px';
-    el.style.top = (rect.top - 10 - Math.random() * 18) + 'px';
-    el.style.animationDelay = (i * 45) + 'ms';
-    frag.appendChild(el);
-    made.push(el);
-  }
-  document.body.appendChild(frag);
-  _liveFloats += count;
-  setTimeout(() => { made.forEach(e => e.remove()); _liveFloats -= count; }, 1500 + count * 45);
-}
-
-/* ---- 武僧遺物：佛法無邊（#113）----
-   免傷觸發時全身散發黃光一秒，頭上跳一行字。
-   class 加在 player-sprite 上，一秒後自己拔掉——不用 animationend，
-   連續觸發時那顆事件會被後一次的重設吃掉。 */
-function showBuddhaShield() {
-  const el = document.getElementById('player-sprite');
-  if (el) {
-    el.classList.remove('buddha-glow');
-    void el.offsetWidth;                 // 強制 reflow，連續觸發才會重播動畫
-    el.classList.add('buddha-glow');
-    setTimeout(() => el.classList.remove('buddha-glow'), 1000);
-  }
-  if (typeof showPlayerFloat === 'function') showPlayerFloat('佛法無邊', 'buddha');
-}
-
 // 在玩家頭上顯示飄字
 function showPlayerFloat(dmg, type) {
   const el = document.createElement('div');
@@ -2581,7 +2531,6 @@ function showPlayerFloat(dmg, type) {
   else if (type === 'miss') el.classList.add('miss');
   else if (type === 'element-good') el.classList.add('element-good');
   else if (type === 'element-bad') el.classList.add('element-bad');
-  else if (type === 'buddha') el.classList.add('buddha-text');
   el.textContent = dmg;
 
   // 換身中（隊友被打、隊友自己的 MISS）飄在那位隊友頭上
@@ -2635,8 +2584,8 @@ function showElementFloat(monsterInstanceId, element, mult) {
 /* 同時存在的飄字上限（#117）。
 
    每顆飄字都要 `getBoundingClientRect()`（強制 layout）再 appendChild，
-   成本隨畫面上已有的節點數增加。平常一秒十幾顆沒問題，但遺物的濺射
-   （最多 4 顆）＋加特林（12 顆）＋追打（2 顆）疊在一起時會瞬間爆量，
+   成本隨畫面上已有的節點數增加。平常一秒十幾顆沒問題，但濺射、多段技
+   疊在一起時會瞬間爆量，
    而飄字要 1.5 秒才消失——多出來的那些人眼也分不出來，直接不生成。 */
 const MAX_LIVE_FLOATS = 48;
 let _liveFloats = 0;
@@ -3313,6 +3262,7 @@ function layoutBattlefield() {
   syncGroundUnits();
   syncBossHud();
   syncGmtHud();
+  syncGvgHud();
   layoutAllySprites(faceRight);
   syncFalcons(faceRight);
   syncPlayerBattleAnim(walking || (stepped.moved && !town));
@@ -3781,8 +3731,8 @@ const LOG_PANES = { main: 'log-main', skill: 'log-skill', ally: 'log-ally' };
    以前 `logMsg()` 每寫一行就整個重畫三格日誌：3 格 × 30 列的 innerHTML
    再加一次 `scrollHeight`（強制 layout）＝**每則訊息 1.87ms**。
 
-   一次普攻本來就會寫好幾行（傷害、屬性、被動追擊…），穿上遺物之後
-   還會多出濺射、黑暗、加特林、追打——攻速 193 時每秒二三十則，
+   一次普攻本來就會寫好幾行（傷害、屬性、被動追擊…），加上卡片觸發
+   還會多出濺射與自動念咒——攻速 193 時每秒二三十則，
    光是重畫日誌就吃掉十幾毫秒，畫面就是這樣頓的。
 
    改成**合併重畫**：logMsg 只標記「髒了」，真正的 DOM 更新一個影格做一次。
@@ -4561,6 +4511,7 @@ function openTownNpc(id) {
   const back = '<button class="btn-small" onclick="renderMapTab()">← 返回地圖</button>';
   if (n.role === 'job') { el.innerHTML = guildNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'gmt' || n.role === 'gmtshop') { el.innerHTML = gmtNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
+  if (n.role === 'gvg') { el.innerHTML = gvgNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'kafra') {
     el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💁 ${shopEsc(n.name)}</h3></div>
       <div class="town-npc-say">歡迎光臨卡普拉服務，今天需要什麼服務呢？</div>
@@ -4605,7 +4556,7 @@ function townNpcPanelHtml() {
   }
   const here = townDistrictHere();
   const icon = n => n.role === 'shop' ? ((NPC_SHOPS[n.shop] || {}).icon || '🏪')
-    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : '🧑';
+    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : '🧑';
   return `<div class="town-npcs">
     <h4 class="town-npc-title">🏙️ 城內　<span class="town-here">目前在：${here ? shopEsc(here.name) : '—'}</span></h4>
     ${L.districts.map(d => {
@@ -5625,7 +5576,7 @@ const RACE_LABELS = {
 const SIZE_LABELS = { small: '小型', medium: '中型', large: '大型' };
 const ITEM_TYPE_LABELS = {
   weapon: '武器', armor: '防具', consumable: '消耗品', ammo: '箭矢',
-  material: '素材', etc: '雜物', card: '卡片', relic: '遺物'
+  material: '素材', etc: '雜物', card: '卡片'
 };
 let codexView = 'mon';      // mon | card | item
 let codexFilter = 'all';    // all | found | missing
@@ -5700,10 +5651,8 @@ const CODEX_CATS = {
     { k: 'accessory', label: '飾品', test: id => ITEMS[id].type === 'armor' && ITEMS[id].armorType === 'accessory' },
     // 箭矢歸消耗品：它會被打完，玩家找它的心情跟找藥水一樣
     { k: 'consumable', label: '消耗品', test: id => ITEMS[id].type === 'consumable' || ITEMS[id].type === 'ammo' },
-    { k: 'relic', label: '遺物', test: id => ITEMS[id].type === 'relic' || id === (typeof RELIC_TICKET_ID !== 'undefined' ? RELIC_TICKET_ID : '') },
     // 其餘一律算素材（含少數 type 沒歸類乾淨的）
-    { k: 'material', label: '素材', test: id => !['weapon', 'armor', 'consumable', 'ammo', 'relic'].includes(ITEMS[id].type)
-      && id !== (typeof RELIC_TICKET_ID !== 'undefined' ? RELIC_TICKET_ID : '') },
+    { k: 'material', label: '素材', test: id => !['weapon', 'armor', 'consumable', 'ammo'].includes(ITEMS[id].type) },
   ],
   /* 隱藏圖鑑（神秘箱挑戰）：池子已排除卡片與箱子本身，照道具類型分類。
      另收「卡冊限定卡」——來源怪沒實裝、只能靠卡冊開出來的 7 張。 */
@@ -6103,29 +6052,6 @@ function bossTimeHtml(id, def) {
     <span class="codex-bt-modes">${tabs}</span>⏱️ ${body}</div>`;
 }
 
-/* 遺物與遺物券的取得方式。兩者的來源不同，分開寫：
-     遺物券 → 打頭目掉（等級越高機率越高，一般怪也有極小機率）
-     遺物   → 拿券去安全區的遺物商人換指定套裝的隨機一件 */
-function relicSourceHtml(id, def) {
-  const isTicket = typeof RELIC_TICKET_ID !== 'undefined' && id === RELIC_TICKET_ID;
-  const isRelic = def && def.type === 'relic';
-  if (!isTicket && !isRelic) return '';
-  if (isTicket) {
-    const tiers = (typeof RELIC_DROP_BOSS_TIERS !== 'undefined' ? RELIC_DROP_BOSS_TIERS : [])
-      .slice().sort((a, b) => a.minLevel - b.minLevel)
-      .map(t => `Lv${t.minLevel}+ ${t.pct}%`).join('　');
-    const normal = typeof RELIC_DROP_PCT_NORMAL !== 'undefined' ? RELIC_DROP_PCT_NORMAL : 0;
-    return `<div class="codex-spot shop"><span class="codex-spot-mon">👑 擊敗頭目</span>
-        <span class="codex-spot-name">${tiers || '頭目掉落'}</span></div>
-      <div class="codex-spot shop"><span class="codex-spot-mon">👾 一般魔物</span>
-        <span class="codex-spot-name">${normal}%</span></div>`;
-  }
-  const cost = typeof RELIC_TICKET_COST !== 'undefined' ? RELIC_TICKET_COST : 10;
-  const setName = (typeof RELIC_SETS !== 'undefined' && def.relicSet && RELIC_SETS[def.relicSet])
-    ? RELIC_SETS[def.relicSet].name : '';
-  return `<div class="codex-spot shop"><span class="codex-spot-mon">🎫 遺物商人</span>
-    <span class="codex-spot-name">遺物券 ×${cost} 換${setName ? `「${setName}」` : ''}隨機一件（安全區）</span></div>`;
-}
 
 function codexMapRow(m, extra) {
   /* MVP 那幾筆要標出來（#108）：牠們只在 BOSS 模式開著的時候才會出現，
@@ -6226,10 +6152,6 @@ function renderCodexDetail(id) {
     .filter(sh => (sh.items || []).includes(id))
     .map(sh => `<div class="codex-spot shop"><span class="codex-spot-mon">🏪 ${sh.name || '商店'}</span>
       <span class="codex-spot-name">${d.buyPrice ? d.buyPrice.toLocaleString() + ' 鋅幣' : '商店販售'}</span></div>`).join('');
-  /* 遺物的取得方式（#138）。它們不從掉落表來，所以 getItemFarmSpots() 是空的——
-     不補這一段，圖鑑會對 49 件遺物說「沒有怪物會掉」，那是錯的。
-     實際規則：頭目掉遺物券（等級越高機率越高），券再拿去跟遺物商人換。 */
-  const relicRows = relicSourceHtml(id, d);
   // 商城、每日簽到、卡冊（2026-11-08）：不在掉落表與商店裡的取得管道
   const otherRows = codexOtherSourcesHtml(id);
   const statBits = [];
@@ -6277,7 +6199,7 @@ function renderCodexDetail(id) {
     ${(card && card.desc) || d.desc ? `<div class="codex-detail-desc">${(card && card.desc) || d.desc}</div>` : ''}
     ${unimpl}
     <div class="codex-detail-sec">去哪裡打<span class="codex-sec-hint">照出現率排序，點「前往」直接過去</span></div>
-    <div class="codex-spots">${relicRows}${shopRows}${otherRows}${srcRows || (relicRows || shopRows || otherRows ? '' : (
+    <div class="codex-spots">${shopRows}${otherRows}${srcRows || (shopRows || otherRows ? '' : (
       (typeof boxEligible === 'function' && boxEligible(id))
         ? '<div class="dim">沒有怪物會掉、商店也沒賣。神秘箱子與神秘紫箱有機會開到。</div>'
         : '<div class="dim">沒有怪物會掉，也不在商店販售</div>'
@@ -6302,6 +6224,10 @@ function codexOtherSourcesHtml(id) {
     const kinds = ['card', 'cardFlat', 'sealed', ...Object.values(ALBUM_SLOT || {}).map(sl => 'card_' + sl)];
     const boxes = Object.values(ITEMS).filter(x => x.boxOpen && kinds.includes(x.boxOpen) && (boxPool(x.boxOpen).ids || []).includes(id));
     if (boxes.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">📕 卡冊</span><span class="codex-spot-name">${boxes.map(x => shopEsc(getItemDisplayName(x.id))).join('、')}</span></div>`);
+  }
+  if (typeof GEAR_GACHA !== 'undefined' && ITEMS[id] && (ITEMS[id].type === 'armor' || ITEMS[id].type === 'weapon')) {
+    const eggs = GEAR_GACHA.filter(([gid]) => (boxPool('gear_' + gid).ids || []).includes(id));
+    if (eggs.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">🎁 轉蛋</span><span class="codex-spot-name">${eggs.map(([gid]) => shopEsc(ITEMS[gid].name)).join('、')}</span></div>`);
   }
   return rows.join('');
 }
@@ -6342,6 +6268,8 @@ function describeCondition(when) {
   const bits = [];
   if (when.refineMin != null) bits.push(`+${when.refineMin} 以上`);
   if (when.refineMax != null) bits.push(`+${when.refineMax} 以下`);
+  if (when.levelMin != null) bits.push(`Base Lv ${when.levelMin} 以上`);
+  if (when.levelMax != null) bits.push(`Base Lv ${when.levelMax} 以下`);
   if (when.jobLine) bits.push(`${(JOB_TREE[when.jobLine] || {}).name || when.jobLine}系列`);
   if (when.weaponReq) bits.push(`裝備${(typeof weaponReqName === 'function' && weaponReqName(when.weaponReq)) || when.weaponReq}`);
   if (when.withCards) bits.push(when.withCards.map(c => (CARDS[c] || {}).name || c).join('、') + ' 同時裝備');
@@ -6389,7 +6317,7 @@ function describeCardBonus(card) {
     const a = list[0];
     if (list.length === 1) {
       const cond = a.when ? describeCondition(a.when) + '，' : '';
-      out.push(`${cond}${meleeTag(a)}${asWhen(a)} ${a.chance}% 自動念咒：${skName(a.skill)} Lv${a.lv}`);
+      out.push(`${cond}${meleeTag(a)}${asWhen(a)} ${a.chance}% 自動念咒：${skName(a.skill)} Lv${a.lv}${a.useLearnedLv ? '（已學會則用習得等級）' : ''}`);
       return;
     }
     const from = Math.min(...list.map(x => x.when.refineMin || 0));
@@ -6419,14 +6347,34 @@ function describeCardBonus(card) {
     const sk = (typeof findSkillAnywhere === 'function') ? findSkillAnywhere(g.id) : null;
     out.push(`🃏 可使用技能：${sk ? sk.name.split(' ')[0] : g.id} Lv${g.lv}`);
   });
+  /* 只看精煉或只看等級的分段加成（一段一筆、會累加）合成一行，不再列出幾十行 */
+  const fmtBonus = b => Object.entries(b).map(([k, v]) => formatCardBonus(k, v, b)).filter(Boolean).join('、');
+  const stepKey = cb => {
+    const ks = Object.keys(cb.when || {});
+    if (ks.length === 1 && (ks[0] === 'refineMin' || ks[0] === 'levelMin')) return ks[0];
+    return ks.length === 2 && ks.includes('levelMin') && ks.includes('levelMax') ? 'levelMin' : null;   // 狐尾草戒指那種有上限的
+  };
+  const steps = { refineMin: [], levelMin: [] };
   (card.condBonus || []).forEach(cb => {
-    const inner = [];
-    for (const [k, v] of Object.entries(cb.bonus || {})) {
-      const s = formatCardBonus(k, v, cb.bonus);
-      if (s) inner.push(s);
-    }
-    if (inner.length) out.push(`${describeCondition(cb.when)}：${inner.join('、')}`);
+    const sk = stepKey(cb);
+    if (sk) { steps[sk].push(cb); return; }
+    const inner = fmtBonus(cb.bonus || {});
+    if (inner) out.push(`${describeCondition(cb.when)}：${inner}`);
   });
+  for (const [sk, list] of Object.entries(steps)) {
+    if (!list.length) continue;
+    if (list.length === 1) { const inner = fmtBonus(list[0].bonus || {}); if (inner) out.push(`${describeCondition(list[0].when)}：${inner}`); continue; }
+    const at = cb => cb.when[sk];
+    const lo = Math.min(...list.map(at)), hi = Math.max(...list.map(at));
+    const lab = n => (sk === 'refineMin' ? `+${n}` : `${n}`);
+    const head = sk === 'refineMin' ? '精煉' : 'Base Lv';
+    const same = list.every(cb => JSON.stringify(cb.bonus) === JSON.stringify(list[0].bonus));
+    const cap = list[0].when.levelMax != null ? `（Base Lv ${list[0].when.levelMax} 以下才有效）` : '';
+    if (same) { out.push(`${head} ${lab(lo)}～${lab(hi)} 共 ${list.length} 段，每段：${fmtBonus(list[0].bonus || {})}${cap}`); continue; }
+    const total = n => { const t = {}; list.filter(cb => at(cb) <= n).forEach(cb => { for (const [k, v] of Object.entries(cb.bonus || {})) if (typeof v === 'number') t[k] = (t[k] || 0) + v; }); return t; };
+    const marks = (sk === 'refineMin' ? [10, 15, hi] : [99, hi]).filter((n, i, xs) => n >= lo && n <= hi && xs.indexOf(n) === i);
+    out.push(`${head} ${lab(lo)} 起逐段累加：${marks.map(n => `${sk === 'levelMin' ? 'Lv ' : ''}${lab(n)} 合計 ${fmtBonus(total(n))}`).join('；')}${cap}`);
+  }
   return out;
 }
 
@@ -6442,6 +6390,12 @@ function socketedCardsHtml(cardIds) {
 }
 function formatCardBonus(k, v, all) {
   if (CARD_BONUS_LABELS[k]) return `${CARD_BONUS_LABELS[k]} ${signed(v, CARD_PCT_KEYS.includes(k))}`;
+  // perLv_<N>_<目標>／perJobLv_<N>_<目標>：等級每 N 級 +v（engine 同名鍵）
+  const perLv = /^per(Job)?Lv_(\d+)_(.+)$/.exec(k);
+  if (perLv) {
+    const inner = formatCardBonus(perLv[3], v, {});
+    return inner ? `${perLv[1] ? 'Job' : 'Base'} Lv 每 ${perLv[2]} 級：${inner}` : '';
+  }
   if (k === 'ignoreSizePenalty') return '無視體型修正（一律100%傷害）';
   if (k === 'noGemStone') return '技能不消耗魔力礦石';
   if (k === 'splashAttack') return '普通攻擊改為打擊場上全部敵人（不含技能）';
@@ -6732,9 +6686,6 @@ const INV_CATEGORIES = [
   { key: 'weapon', name: '武器', icon: '⚔️' },
   { key: 'armor',  name: '防具', icon: '🛡️' },
   { key: 'card',   name: '卡片', icon: '🃏' },
-  /* 遺物自成一類（#115）：48 件混在「道具」裡跟藥水、素材擠在一起找不到，
-     而倉庫是玩家保護遺物不被換券吃掉的唯一手段，得先找得到才行 */
-  { key: 'relic',  name: '遺物', icon: '🏺' },
   { key: 'item',   name: '道具', icon: '🎒' }
 ];
 const WEAPON_TYPE_LABELS = {
@@ -6799,7 +6750,6 @@ function invCategoryOf(itemId) {
   if (!d) return 'item';
   if (d.type === 'weapon') return 'weapon';
   if (d.type === 'armor') return 'armor';
-  if (d.type === 'relic') return 'relic';
   return 'item';
 }
 // 子分類的值與顯示名稱
@@ -6809,14 +6759,12 @@ function invSubOf(itemId) {
   if (cat === 'weapon') return d.weaponType || 'other';
   if (cat === 'armor') return d.armorType || 'other';
   if (cat === 'card') return (CARDS[itemId].slot || 'any');
-  if (cat === 'relic') return d.relicSet || 'other';   // 遺物照套裝分（#115）
   return itemUseOf(itemId);
 }
 function invSubLabel(cat, sub) {
   if (cat === 'weapon') return WEAPON_TYPE_LABELS[sub] || '其他';
   if (cat === 'armor') return ARMOR_TYPE_LABELS[sub] || '其他';
   if (cat === 'card') return CARD_SLOT_LABELS[sub] || sub;
-  if (cat === 'relic') return (RELIC_SETS[sub] && RELIC_SETS[sub].name) || sub;
   return ITEM_USE_LABELS[sub] || ITEM_SUBTYPE_LABELS[sub] || sub;
 }
 
@@ -7116,224 +7064,16 @@ function showAmmoSelect() {
    上半是裝備欄（sticky 釘住不動），下半列出背包裡「本職業穿得上」的武器／防具，
    直接點就換裝。個體裝備（精煉／插卡過的）跟普通那疊分開列，各自是一件。
 ------------------------------------------------- */
-let equipPickCat = 'weapon';   // 'weapon' | 'armor' | 'relic'
+let equipPickCat = 'weapon';   // 'weapon' | 'armor'
 let equipPickSub = 'all';       // 子分類：武器類型／防具部位（比照背包 tab，使用者 2026-11-12）
 function setEquipPickCat(c) { equipPickCat = c; equipPickSub = 'all'; renderEquipTab(); }
 function setEquipPickSub(s) { equipPickSub = s; renderEquipTab(); }
-/* 三顆分頁鈕。一般裝備與遺物兩條路都會用到，抽出來免得改一邊漏另一邊 */
+/* 武器／防具分頁鈕 */
 function equipPickTabsHtml() {
   const btn = (key, label) => `<button class="btn-small ${equipPickCat === key ? 'active' : 'ghost'}"
     onclick="setEquipPickCat('${key}')">${label}</button>`;
-  return btn('weapon', '⚔️ 武器') + btn('armor', '🛡️ 防具') + btn('relic', '🏺 遺物');
+  return btn('weapon', '⚔️ 武器') + btn('armor', '🛡️ 防具');
 }
-
-/* ---------------- 遺物頁（#113／#115 改版）----------------
-   版面：上面八格遺物欄**釘住不捲**，下面是背包清單（依套裝分組）。
-
-   套裝效果不再列成一大塊——那四百字佔掉整個畫面，而且穿好之後就不必再看。
-   改成滑過欄位才浮出來（沿用一般裝備的 #ro-equip-tooltip），
-   同時把「這套穿了幾件、哪幾段生效了」一起顯示。
-------------------------------------------------- */
-
-/* 生效段數 → 發光顏色。2 件綠、3 件黃、5 件紅（使用者指定）。
-   只看**件數**不看有沒有 proc：玩家要的是「一眼看出這套湊到哪」。 */
-function relicGlowClass(count) {
-  if (count >= 5) return 'glow5';
-  if (count >= 3) return 'glow3';
-  if (count >= 2) return 'glow2';
-  return '';
-}
-
-function relicSlotCellHtml(slot, counts) {
-  const worn = (state.relics || {})[slot];
-  const d = worn ? RELIC_ITEMS[worn] : null;
-  const label = RELIC_SLOT_NAMES[slot];
-  if (!d) {
-    return `<div class="relic-cell empty" title="${label}">
-      <div class="relic-cell-icon">${RELIC_SLOT_ICONS[slot]}</div>
-      <div class="relic-cell-name">${label}</div></div>`;
-  }
-  const set = RELIC_SETS[d.relicSet];
-  const glow = relicGlowClass(counts[d.relicSet] || 0);
-  return `<div class="relic-cell filled ${glow}"
-      onmouseenter="showRelicTooltip(event,'${slot}')" onmouseleave="hideEquipTooltip()"
-      onclick="doUnequipRelic('${slot}')">
-    <div class="relic-cell-icon">${set.icon}</div>
-    <div class="relic-cell-name">${set.pieceNames[slot]}</div>
-    <div class="relic-cell-set">${set.name.replace('的遺物', '')}</div></div>`;
-}
-
-/* 遺物的浮動說明。共用一般裝備那顆 #ro-equip-tooltip，
-   免得同時有兩個浮動視窗要各自處理定位與關閉。
-
-   **背包裡的遺物也吃同一支**（#118）：要先穿上去才知道加什麼，
-   等於逼玩家把身上的拆掉試——尤其八格全滿時還得先卸一件。 */
-function relicTooltipHtml(itemId, hint) {
-  const d = RELIC_ITEMS[itemId];
-  if (!d) return '';
-  const set = RELIC_SETS[d.relicSet];
-  const n = relicSetCounts()[set.id] || 0;
-  let html = `<div class="tt-name">${set.icon} ${d.name}</div>`;
-  html += `<div class="tt-type">${RELIC_SLOT_NAMES[d.relicSlot]}　<b class="tt-relic-count ${relicGlowClass(n)}">身上 ${n} / ${RELIC_SLOTS.length} 件</b></div>`;
-  html += `<div class="tt-desc">${set.desc}</div>`;
-  set.tiers.forEach(tier => {
-    const on = n >= tier.need;
-    html += `<div class="tt-relic-tier ${on ? 'on' : 'off'}">
-      <span class="tt-relic-need">${on ? '✔' : '　'} ${tier.need} 件</span>
-      <span>${tier.text}</span></div>`;
-  });
-  if (hint) html += `<div class="tt-hint">${hint}</div>`;
-  return html;
-}
-/* 定位。anchor 是被指到的那一格／那一列 */
-function placeRelicTooltip(tt, anchor) {
-  tt.classList.add('show');
-  const rect = anchor.getBoundingClientRect();
-  const h = tt.offsetHeight || 260;
-  let left = rect.right + 8;
-  let top = rect.top;
-  if (left + 300 > window.innerWidth) left = rect.left - 308;
-  if (left < 4) left = 4;
-  // 遺物的說明比一般裝備長（三段效果），所以底部保留多一點
-  if (top + h + 10 > window.innerHeight) top = Math.max(4, window.innerHeight - h - 10);
-  if (top < 4) top = 4;
-  tt.style.left = left + 'px';
-  tt.style.top = top + 'px';
-}
-function showRelicTooltip(event, slot) {
-  const worn = (state.relics || {})[slot];
-  const tt = document.getElementById('ro-equip-tooltip');
-  if (!worn || !tt) return;
-  tt.innerHTML = relicTooltipHtml(worn, '點一下卸下');
-  placeRelicTooltip(tt, event.currentTarget);
-}
-/* 背包那一列：多告訴玩家「穿上去會換掉誰」，那是這裡才有的資訊 */
-function showRelicItemTooltip(event, itemId) {
-  const tt = document.getElementById('ro-equip-tooltip');
-  if (!tt || !RELIC_ITEMS[itemId]) return;
-  const worn = (state.relics || {})[RELIC_ITEMS[itemId].relicSlot];
-  const hint = !worn ? '這一格空著，可直接穿'
-    : (worn === itemId ? '這一件已經穿在身上'
-      : `穿上去會換下 ${RELIC_ITEMS[worn].name}`);
-  tt.innerHTML = relicTooltipHtml(itemId, hint);
-  placeRelicTooltip(tt, event.currentTarget);
-}
-
-/* 背包清單改成**分頁**（#116）。六套 48 種列成一長串要捲很久，
-   而玩家一次只在湊一套——切到那一套就好。
-
-   分頁選擇記在模組變數，不進存檔：這是「現在在看哪一頁」，
-   不是玩家的設定，重開遊戲回到預設反而正確。 */
-let relicBagSet = null;
-
-function setRelicBagSet(id) { relicBagSet = id; renderEquipTab(); }
-
-/* 這一格現在被誰佔著。用來回答「這件我能不能直接穿」——
-   空著＝直接穿、同款＝已經穿了、別套＝穿上去會把那件換下來。
-   沒有這行的話，畫面上只寫「帽子」，玩家得自己記八格分別是誰。 */
-function relicSlotOccupantHtml(itemId) {
-  const d = RELIC_ITEMS[itemId];
-  const worn = (state.relics || {})[d.relicSlot];
-  if (!worn) return '<span class="relic-occ free">空著，可直接穿</span>';
-  if (worn === itemId) return '<span class="relic-occ same">已裝備</span>';
-  const od = RELIC_ITEMS[worn];
-  const oset = RELIC_SETS[od.relicSet];
-  return `<span class="relic-occ swap">換下 ${oset.icon} ${oset.name.replace('的遺物', '')}・${oset.pieceNames[od.relicSlot]}</span>`;
-}
-
-function relicBagHtml() {
-  const rows = state.inventory.filter(r => {
-    const d = RELIC_ITEMS[r.item];
-    return d && d.type === 'relic' && !r.instanceId && r.qty > 0;
-  });
-  if (!rows.length) {
-    return '<div class="equip-pick-empty">背包裡沒有遺物。遺物只在打寶模式掉落。</div>';
-  }
-  const counts = relicSetCounts();
-  const bySet = {};
-  rows.forEach(r => { (bySet[RELIC_ITEMS[r.item].relicSet] = bySet[RELIC_ITEMS[r.item].relicSet] || []).push(r); });
-
-  /* 分頁順序照 RELIC_SETS，不是照背包順序——每次撿到東西都重排會找不到東西。
-     只列**背包裡有的**那幾套：空分頁點進去是空的，等於一顆廢按鈕。 */
-  const avail = Object.values(RELIC_SETS).filter(set => bySet[set.id]);
-  // 記著的那一套已經被換券換光時，退回第一套，不然會停在空白頁
-  const cur = avail.find(s => s.id === relicBagSet) || avail[0];
-
-  const tabs = avail.map(set => {
-    const n = counts[set.id] || 0;
-    const bag = bySet[set.id].reduce((a, r) => a + r.qty, 0);
-    return `<button class="btn-small relic-tab ${set.id === cur.id ? 'active' : 'ghost'} ${relicGlowClass(n)}"
-      onclick="setRelicBagSet('${set.id}')" title="${set.name}：身上 ${n} 件、背包 ${bag} 件">
-      ${set.icon} ${set.name.replace('的遺物', '')} <span class="relic-tab-n">${n}/${RELIC_SLOTS.length}</span></button>`;
-  }).join('');
-
-  const list = bySet[cur.id]
-    .sort((a, b) => RELIC_SLOTS.indexOf(RELIC_ITEMS[a.item].relicSlot) - RELIC_SLOTS.indexOf(RELIC_ITEMS[b.item].relicSlot))
-    .map(r => {
-      const d = RELIC_ITEMS[r.item];
-      return `<div class="equip-pick-row"
-          onmouseenter="showRelicItemTooltip(event,'${r.item}')" onmouseleave="hideEquipTooltip()">
-        <div class="relic-row-icon">${cur.icon}</div>
-        <div class="equip-pick-info">
-          <div class="equip-pick-name">${cur.pieceNames[d.relicSlot]}${r.qty > 1 ? ` <span class="inv-slots">×${r.qty}</span>` : ''}</div>
-          <div class="equip-pick-stats">${RELIC_SLOT_NAMES[d.relicSlot]}　${relicSlotOccupantHtml(r.item)}</div>
-        </div>
-        <button class="btn-small" onclick="doEquipRelic('${r.item}')">裝備</button>
-      </div>`;
-    }).join('');
-
-  const n = counts[cur.id] || 0;
-  // 缺哪幾個部位：湊套裝時最常問的問題，列出來省得自己對照上面八格
-  const missing = RELIC_SLOTS.filter(s => {
-    const worn = (state.relics || {})[s];
-    return !worn || RELIC_ITEMS[worn].relicSet !== cur.id;
-  }).map(s => RELIC_SLOT_NAMES[s]);
-
-  return `<div class="relic-bag-tabs">${tabs}</div>
-    <div class="relic-bag-head ${relicGlowClass(n)}">${cur.icon} ${cur.name}
-      <span class="relic-bag-count">身上 ${n} / ${RELIC_SLOTS.length}</span></div>
-    ${n >= 5 ? '' : `<div class="relic-bag-missing">還沒穿上：${missing.join('、')}</div>`}
-    ${list}`;
-}
-
-function relicMerchantHtml() {
-  const tickets = getItemQty(RELIC_TICKET_ID);
-  const spare = relicSpareTotal();
-  const canExchange = spare >= RELIC_TICKET_COST;
-  const inTown = isInTown();
-  const buttons = Object.values(RELIC_SETS).map(set =>
-    `<button class="btn-small ${tickets > 0 && inTown ? '' : 'ghost'}" ${tickets > 0 && inTown ? '' : 'disabled'}
-      onclick="doRedeemRelicTicket('${set.id}')">${set.icon} 換 ${set.name}</button>`).join('');
-  return `<div class="relic-merchant">
-    <div class="relic-merchant-head">🎫 遺物商人　<span class="relic-merchant-sub">遺物券 ${tickets} 張・背包遺物 ${spare} 件</span></div>
-    <div class="relic-merchant-row">
-      <button class="btn-small ${canExchange ? '' : 'ghost'}" ${canExchange ? '' : 'disabled'}
-        onclick="doExchangeRelicTicket()">遺物 ${RELIC_TICKET_COST} 件 → 遺物券 1 張</button>
-      <span class="relic-merchant-note">只吃背包，倉庫裡的不算。要留的先存倉庫。</span>
-    </div>
-    <div class="relic-merchant-row">${buttons}</div>
-    ${inTown ? '' : '<div class="relic-merchant-note">遺物商人只在安全區做生意。</div>'}
-  </div>`;
-}
-
-/* 釘在頂端的那一塊：分頁鈕 + 八格遺物欄。捲動時不會跑掉 */
-function relicStickyHtml() {
-  const counts = relicSetCounts();
-  return `<div class="equip-sticky">
-    <div class="equip-pick-head">${equipPickTabsHtml()}</div>
-    <div class="relic-grid">${RELIC_SLOTS.map(s => relicSlotCellHtml(s, counts)).join('')}</div>
-  </div>`;
-}
-
-function renderRelicPageHtml() {
-  return relicStickyHtml()
-    + relicMerchantHtml()
-    + relicBagHtml();
-}
-function doEquipRelic(itemId) { equipRelic(itemId); renderEquipTab(); renderTopBar(); }
-function doUnequipRelic(slot) { unequipRelic(slot); renderEquipTab(); renderTopBar(); }
-function doExchangeRelicTicket() { exchangeRelicTicket(); renderEquipTab(); }
-function doRedeemRelicTicket(setId) { redeemRelicTicket(setId); renderEquipTab(); }
 
 /* 裝備欄現在住在「裝備」分頁，但背包分頁也會顯示個體裝備列，
    兩邊都可能因為換裝／精煉／插卡而需要重畫——重畫目前看得到的那個就好 */
@@ -7384,7 +7124,7 @@ let equipStatTimer = null;
 function syncEquipStatFloat() {
   let box = document.getElementById('equip-stat-float');
   const panel = document.querySelector('.side-panel');
-  const show = !!state && activeTab === 'equip' && equipPickCat !== 'relic' && panel && panel.offsetParent;
+  const show = !!state && activeTab === 'equip' && panel && panel.offsetParent;
   if (!show) {
     if (box) box.remove();
     clearInterval(equipStatTimer); equipStatTimer = null;
@@ -7413,18 +7153,6 @@ function renderEquipTab() {
   if (!el) return;
   hideEquipTooltip();
   setTimeout(syncEquipStatFloat, 0);   // innerHTML 換完再放（窄螢幕要插在裝備頁最上面）
-
-  /* 遺物頁走完全獨立的一條路：它沒有精煉、沒有卡片、沒有職業限制，
-     跟下面那段（比較徽章、孔數、個體裝備）沒有一行是共用的。 */
-  if (equipPickCat === 'relic') {
-    try {
-      el.innerHTML = renderRelicPageHtml();
-    } catch (e) {
-      el.innerHTML = `<div class="empty-hint">遺物頁載入錯誤：${e.message}</div>`;
-      console.error('renderEquipTab(relic) error:', e);
-    }
-    return;
-  }
 
   try {
     const wearable = state.inventory.filter(r => {
@@ -7643,8 +7371,8 @@ function renderInventoryTab() {
           })()}
           ${canUse ? `<button class="btn-small" onclick="useItem('${row.item}');renderInventoryTab();">${(def.type === 'weapon' || def.type === 'armor') ? '裝備' : '使用'}</button>` : ''}
           ${def.boxOpen && row.qty > 1 ? `<button class="btn-small" onclick="openAllBoxesAsync('${row.item}', function(){renderInventoryTab();renderTopBar();});" title="手上這 ${row.qty} 個一次開完（每 100 個一批，不卡畫面）">全部開啟(${row.qty})</button>` : ''}
-          ${locked || def.type === 'relic' ? '' : `<button class="btn-small ghost" onclick="sellItem('${row.item}',1);renderInventoryTab();renderTopBar();">賣出(${def.sell})</button>`}
-          ${!locked && def.type !== 'relic' && row.qty > 1 ? `<button class="btn-small ghost" onclick="sellItemAll('${row.item}');renderInventoryTab();renderTopBar();">全部賣出</button>` : ''}
+          ${locked ? '' : `<button class="btn-small ghost" onclick="sellItem('${row.item}',1);renderInventoryTab();renderTopBar();">賣出(${def.sell})</button>`}
+          ${!locked && row.qty > 1 ? `<button class="btn-small ghost" onclick="sellItemAll('${row.item}');renderInventoryTab();renderTopBar();">全部賣出</button>` : ''}
           <button class="btn-small ghost" onclick="depositToWarehouse('${row.item}',1);renderInventoryTab();renderTopBar();">存倉庫</button>
           ${row.qty > 1 ? `<button class="btn-small ghost" onclick="depositToWarehouseAll('${row.item}');renderInventoryTab();renderTopBar();">全部存倉</button>` : ''}
         </div>
@@ -10370,7 +10098,7 @@ function showCardSelect(slotKey) {
 const NOTICE_ACTIONS = {
   confirmJobChange: '🎊 轉職', confirmRebirth: '🔄 轉生', confirmStatReset: '🔁 重置素質',
   huntClaim: '📜 討伐', huntClaimRepeat: '📜 討伐', doDestroyInstance: '🔨 拆卸卡片', insertCard: '🃏 插卡',
-  memoWarpPoint: '📌 記錄點', doEvolvePet: '🐾 寵物進化', doRedeemRelicTicket: '🎟️ 遺物', doExchangeRelicTicket: '🎟️ 遺物',
+  memoWarpPoint: '📌 記錄點', doEvolvePet: '🐾 寵物進化',
   synthesizeOreAll: '⚒️ 合成', runAutoSellNow: '💰 自動販賣', doSetPlagiarism: '📖 抄襲',
 };
 Object.keys(NOTICE_ACTIONS).forEach(name => {
@@ -10562,6 +10290,39 @@ function gmtNpcPanelHtml(n, back) {
     <div class="gmt-stat">最佳紀錄：第 ${state.gmtBest || 0} 輪　硬幣：${coin} 枚${last ? `　上次：第 ${last.cleared} 輪、${last.coins} 枚` : ''}</div>
     <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gmtEnter();renderMapTab()">報名參加</button>
     ${why ? `<div class="ab-info-text">${shopEsc(why)}</div>` : ''}</div>`;
+}
+/* 攻城戰管理員（T55）：城主、開放時間、進城 */
+function gvgNpcPanelHtml(n, back) {
+  const owner = gvgOwner();
+  const why = gvgBlockReason();
+  const since = owner ? new Date(owner.since) : null;
+  const team = owner && owner.snap ? owner.snap.members.map(m => `${shopEsc(m.name || '')}（${shopEsc((JOB_TREE[m.jobId] || {}).name || m.jobId)} Lv${m.baseLevel}）`).join('、') : '';
+  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🏰 ${shopEsc(n.name)}</h3></div>
+    <div class="town-npc-say">${GVG_CASTLE_NAME}的攻城戰每晚 ${GVG_OPEN_HOUR}:00～${GVG_CLOSE_HOUR}:00 開放。</div>
+    <ul class="gmt-rules">
+      <li>沒有城主時：打倒弓箭手監護人與劍士監護人守著的華麗金屬</li>
+      <li>有城主時：先打城主的三人組（裝備、技能照城主的設定），打贏後華麗金屬出現</li>
+      <li>華麗金屬 HP 100，每下只扣 1；打破就成為城主，你的隊伍會留下來守城</li>
+      <li>角色互打的傷害 ×${GVG_DMG_RATE}；倒下或時間到就失敗</li>
+      <li>城主每天領 ${GVG_DAILY_POINTS} 商城點數</li>
+    </ul>
+    <div class="gmt-stat">${owner ? `城主：<b>${shopEsc(owner.name)}</b>（${since.getMonth() + 1}/${since.getDate()} 起）<br>守城隊伍：${team}` : '目前沒有城主。'}</div>
+    <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gvgEnter();renderMapTab()">進城</button>
+    ${why ? `<div class="ab-info-text">${shopEsc(why)}</div>` : ''}</div>`;
+}
+function syncGvgHud() {
+  const scene = document.getElementById('battle-scene');
+  if (!scene) return;
+  let el = document.getElementById('bf-gvg-hud');
+  const g = state && state.gvg;
+  if (!g) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'bf-gvg-hud'; el.className = 'bf-gmt-hud'; scene.appendChild(el); }
+  const v = state.vDuel;
+  const phase = g.phase === 'defenders' ? `打倒城主隊伍${v ? '　剩 ' + fmtMs(Math.max(0, v.startAt + v.limitMs - Date.now())) : ''}`
+    : g.phase === 'guardians' ? '打倒監護人與華麗金屬' : g.phase === 'emperium' ? '打破華麗金屬' : '';
+  const html = `🏰 ${GVG_CASTLE_NAME}　${phase}
+    <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定離開城堡？'))gvgLeave()">離開</button>`;
+  if (el._html !== html) { el.innerHTML = html; el._html = html; }
 }
 // 戰鬥畫面上方：輪次、總剩餘時間、放棄
 function syncGmtHud() {

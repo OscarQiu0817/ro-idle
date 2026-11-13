@@ -86,7 +86,7 @@ function makeVirtualFoe(opts) {
   const base = vfoeJobInfo(o.job) || vfoeJobInfo(o.lookJob) || VFOE_JOBS.knight;
   const info = Object.assign({}, base, o.weapon ? { weapon: o.weapon } : {}, o.range ? { range: o.range } : {}, o.skillList ? { skills: o.skillList } : {});
   const level = Math.max(1, Math.round(o.level || 50));
-  const rnd = vfoeRand(o.seed != null ? o.seed : Date.now());
+  const rnd = vfoeRand(o.seed != null ? o.seed : gameNow());
   const tpl = vfoeTemplate(level);
   if (!tpl) return null;
   const id = 'vfoe_' + (++_vfoeSeq) + '_' + o.job;
@@ -135,7 +135,7 @@ const VDUEL_LIMIT_MS = 3 * 60 * 1000;
 const _vduelHooks = [];
 function onVirtualDuelEnd(fn) { _vduelHooks.push(fn); }
 function virtualDuelBlockReason() {
-  if (isInTown() && !state.gmt) return '城裡不能開打。';   // 吉芬魔法大賽的競技場沒有野怪，算城鎮，但可以打
+  if (isInTown()) return '城裡不能開打。';   // 吉芬魔法大賽的競技場（map.arena）不算城鎮
   if (state.travel) return '趕路中不能開打，先停下來。';
   if (state.bossChallenge) return '正在挑戰首領。';
   if (state.bossHunt) return '正在討伐首領，等討伐結束。';
@@ -149,7 +149,7 @@ function startVirtualDuel(foes, opts) {
   if (why) { logMsg('⚠️ ' + why); return false; }
   const list = (Array.isArray(foes) ? foes : [foes]).map(makeVirtualFoe).filter(Boolean);
   if (!list.length) return false;
-  const now = Date.now();
+  const now = gameNow();
   state.monsters = [];
   state.bossCasts = [];
   const ids = [];
@@ -170,10 +170,10 @@ function endVirtualDuel(win, why) {
   if (!v) return;
   state.vDuel = null;
   state.bossCasts = [];
-  const ms = Date.now() - v.startAt;
+  const ms = gameNow() - v.startAt;
   state.monsters = (state.monsters || []).filter(m => !(MONSTERS[m.defId] && MONSTERS[m.defId].isVirtual));
   state.monster = state.monsters[0] || null;
-  state.lastSpawnTime = Date.now();
+  state.lastSpawnTime = gameNow();
   (v.defs || []).forEach(removeVirtualFoe);
   logMsg(win ? `🏆 ${v.label}獲勝！用時 ${(ms / 1000).toFixed(1)} 秒。` : `💢 ${v.label}失敗（${why}）。`);
   _vduelHooks.forEach(fn => { try { fn(!!win, { ms, why, label: v.label }); } catch (e) { console.error(e); } });
