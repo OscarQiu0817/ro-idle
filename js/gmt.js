@@ -26,6 +26,8 @@ const GMT_SHOP = [
   { item: 'geffen_refine_cube', price: 200 },
 ];
 
+// 硬幣說明：原本的「本服沒有兌換系統」警語已過時（吉芬有大賽兌換員）
+if (typeof ITEMS !== 'undefined' && ITEMS[GMT_COIN]) ITEMS[GMT_COIN].desc = '參加吉芬魔法大賽獲得的硬幣。到吉芬副本區的大賽兌換員換吉芬魔法袍、吉芬魔法披肩或 12 精煉方塊。';
 // 競技場：沒有野怪、不在世界地圖上的獨立地圖
 if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === GMT_ARENA)) {
   MAPS.push({ id: GMT_ARENA, imgId: 0, name: '吉芬魔法大賽競技場', monsters: [], bg: 'map-city', lv: '', arena: true });

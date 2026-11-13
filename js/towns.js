@@ -229,6 +229,7 @@ function buildTownLayout(mapId) {
       : Object.assign({}, n, { soon: '吉芬魔法大賽在吉芬舉行，其他副本還沒開放。' });
   });
   // 攻城戰（T55）：普隆德拉副本區
+  if (mapId === 'prontera') L.npcs.push({ id: 'dojo', name: '道館館主', role: 'dojo', district: 'dungeon', x: -11, y: -1, spr: '2_m_swordmaster' });
   if (mapId === 'prontera') L.npcs.push({ id: 'gvg', name: '攻城戰管理員', role: 'gvg', district: 'dungeon', x: -13, y: -1, spr: '1_m_knightmaster' });
   if (mapId === 'geffen') L.npcs.push({ id: 'gmt_shop', name: '大賽兌換員', role: 'gmtshop', district: 'dungeon', x: -13, y: -1, spr: '4_m_sage_a' });
   // 有公會的城多一區「職業公會」，在城門口正下方；NPC 排一列、間隔 2 格

@@ -5786,7 +5786,10 @@ function gameTick() {
   tickAllyBuffs();
   tickAllyCooldowns();   // 隊友冷卻也要倒數（#116），不然輔助技能只放第一發
 
-  if (state.hp <= 0) return; // 等待復活流程
+  if (state.hp <= 0) {   // 等待復活流程；攻城中玩家倒下、隊友繼續打（js/gvg.js）
+    if (state.gvg && typeof gvgDownedTick === 'function') gvgDownedTick();
+    return;
+  }
 
   // 每秒執行一次的系統（回復、自動喝藥、自動技能）
   if (!state._lastSlowTick) state._lastSlowTick = gameNow();
@@ -7012,7 +7015,7 @@ function tickMonsterMovement(dtMs, now) {
   }
 }
 function spawnMonster() {
-  if (state.bossChallenge || state.bossHunt || state.vDuel || state.gvg) return;   // 攻城中（js/gvg.js）、挑戰首領中（只有王與小弟）、討伐中（停下來結算）、虛擬對手對戰中不生怪
+  if (state.bossChallenge || state.bossHunt || state.vDuel || state.gvg || state.dojo) return;   // 攻城中（js/gvg.js）、道館中（js/dojo.js）、挑戰首領中（只有王與小弟）、討伐中（停下來結算）、虛擬對手對戰中不生怪
   const map = currentMap();
   if (state.encounterMode === 'off') {
     state.monsters = [];
@@ -8805,7 +8808,10 @@ function removeKilledFromField(monObj) {
    俄塞里斯卡片（#17）「復活時 HP 與 SP 全部恢復」只影響**這裡**。
    被抬回安全區那條路徑（onPlayerDown）本來就已經 HP/SP 全滿，
    官方那句話針對的正是「原地復活但只回一小截血」的復活術。 */
+/* 攻城戰（js/gvg.js）與敵方隊伍（noRevive）：倒下就出局，沒有任何復活（使用者 2026-11-13，比照原版倒下就離開地圖） */
+function reviveBlocked() { const o = allyOwnerState(); return !!(o && (o.gvg || o.noRevive)); }
 function tryAutoRevive() {
+  if (reviveBlocked()) return false;
   const now = gameNow();
   const full = () => { state.hp = state.maxHp; state.sp = state.maxSp; };
   if (state.hasAutoRevive2 && now >= (state.autoRevive2ReadyAt || 0)) {
@@ -8848,6 +8854,7 @@ function offlineDownToTown() {
   state.hp = state.maxHp; state.sp = state.maxSp;
 }
 function onPlayerDown() {
+  if (state.gvg && typeof gvgOnPlayerDown === 'function' && gvgOnPlayerDown()) return;   // 攻城中：留在城裡，隊友繼續
   state.deaths = (state.deaths || 0) + 1;
   logMsg(`⚠️ 你被擊倒了！正在返回安全地帶療傷……`);
   state.monster = null;
@@ -9848,6 +9855,7 @@ function casterName(c) { return c === state ? '你' : (c._allyName || '隊友');
 /* 復活術（T9）的對象：還倒在這張地圖上的隊友（不含施術者自己） */
 function downedAllyToRevive() {
   const owner = allyOwnerState();
+  if (reviveBlocked()) return null;
   return (owner.allies || []).find(a => a && a._downed && a !== state && allyOnThisMap(a)) || null;
 }
 
@@ -9892,6 +9900,7 @@ function setAutoBuyAllyArrow(v) { state.autoBuyAllyArrow = !!v; saveGame(); }
 function pickMonsterTarget() {
   const alive = allyAliveList();
   if (!alive.length) return null;
+  if (!(allyOwnerState().hp > 0)) return alive[0];   // 玩家已倒下（攻城中）：打還站著的隊友
   const front = frontMember();
   if (front !== allyOwnerState()) return front;
   const devotionAlly = alive.find(a => (a.buffs || []).some(x => x.type === 'devotion' && (x.msRemaining || 0) > 0));
@@ -9916,7 +9925,7 @@ function allyTakeDamage(ally, dmg, sourceName) {
 
 // 用天地樹葉子把倒地的隊友扶起來（自動購買由 tryAutoBuyReviveLeaf 負責補貨）
 function reviveAlly(ally, silent) {
-  if (!ally || !ally._downed) return false;
+  if (!ally || !ally._downed || reviveBlocked()) return false;
   if (getItemQty(ALLY_REVIVE_ITEM) < 1) {
     if (!silent) logMsg(`⚠️ 沒有${ITEMS[ALLY_REVIVE_ITEM].name}，無法扶起 ${ally._allyName}。`);
     return false;
@@ -15820,6 +15829,7 @@ function loadGame() {
     if (Array.isArray(state.monsters)) state.monsters = state.monsters.filter(m => m && MONSTERS[m.defId]);
     if (typeof gmtOnLoad === 'function') gmtOnLoad();   // 吉芬魔法大賽中斷：照打贏的輪數結算
     if (typeof gvgOnLoad === 'function') gvgOnLoad();   // 攻城中斷：放回普隆德拉
+    if (typeof dojoOnLoad === 'function') dojoOnLoad();   // 道館中斷：照打完的關數給代幣
     // 舊存檔沒有 DPS 統計，補一份空的（從讀檔當下開始算）
     if (!state.dpsTracker || typeof state.dpsTracker.damage !== 'number') {
       state.dpsTracker = { since: gameNow(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };

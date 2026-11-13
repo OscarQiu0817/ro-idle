@@ -3263,6 +3263,7 @@ function layoutBattlefield() {
   syncBossHud();
   syncGmtHud();
   syncGvgHud();
+  syncDojoHud();
   layoutAllySprites(faceRight);
   syncFalcons(faceRight);
   syncPlayerBattleAnim(walking || (stepped.moved && !town));
@@ -4512,6 +4513,7 @@ function openTownNpc(id) {
   if (n.role === 'job') { el.innerHTML = guildNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'gmt' || n.role === 'gmtshop') { el.innerHTML = gmtNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'gvg') { el.innerHTML = gvgNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
+  if (n.role === 'dojo') { el.innerHTML = dojoNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'kafra') {
     el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💁 ${shopEsc(n.name)}</h3></div>
       <div class="town-npc-say">歡迎光臨卡普拉服務，今天需要什麼服務呢？</div>
@@ -4556,7 +4558,7 @@ function townNpcPanelHtml() {
   }
   const here = townDistrictHere();
   const icon = n => n.role === 'shop' ? ((NPC_SHOPS[n.shop] || {}).icon || '🏪')
-    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : '🧑';
+    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : n.role === 'dojo' ? '🥋' : '🧑';
   return `<div class="town-npcs">
     <h4 class="town-npc-title">🏙️ 城內　<span class="town-here">目前在：${here ? shopEsc(here.name) : '—'}</span></h4>
     ${L.districts.map(d => {
@@ -10293,22 +10295,60 @@ function gmtNpcPanelHtml(n, back) {
 }
 /* 攻城戰管理員（T55）：城主、開放時間、進城 */
 function gvgNpcPanelHtml(n, back) {
+  // 城主資料在雲端：太舊就重抓，抓完重畫這個面板
+  if (gvgToken() && !_gvgFetching && (!_gvgCastle || gameNow() - _gvgCastle.at > 60000)) gvgRefresh().then(() => { if (document.querySelector('.gvg-panel')) openTownNpc('gvg'); });
   const owner = gvgOwner();
   const why = gvgBlockReason();
   const since = owner ? new Date(owner.since) : null;
   const team = owner && owner.snap ? owner.snap.members.map(m => `${shopEsc(m.name || '')}（${shopEsc((JOB_TREE[m.jobId] || {}).name || m.jobId)} Lv${m.baseLevel}）`).join('、') : '';
-  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🏰 ${shopEsc(n.name)}</h3></div>
-    <div class="town-npc-say">${GVG_CASTLE_NAME}的攻城戰每晚 ${GVG_OPEN_HOUR}:00～${GVG_CLOSE_HOUR}:00 開放。</div>
+  return `<div class="npc-shop gvg-panel"><div class="npc-shop-header">${back}<h3 class="panel-title">🏰 ${shopEsc(n.name)}</h3></div>
+    <div class="town-npc-say">${GVG_CASTLE_NAME}的攻城戰每晚 ${GVG_OPEN_HOUR}:00～${GVG_CLOSE_HOUR}:00 開放（台灣時間）。要先登入雲端帳號，城主的隊伍存在雲端。</div>
     <ul class="gmt-rules">
       <li>沒有城主時：打倒弓箭手監護人與劍士監護人守著的華麗金屬</li>
       <li>有城主時：先打城主的三人組（裝備、技能照城主的設定），打贏後華麗金屬出現</li>
       <li>華麗金屬 HP 100，每下只扣 1；打破就成為城主，你的隊伍會留下來守城</li>
-      <li>角色互打的傷害 ×${GVG_DMG_RATE}；倒下或時間到就失敗</li>
+      <li>角色互打的傷害 ×${GVG_DMG_RATE}；倒下就出局、沒有復活，三人全倒或時間到才算失敗</li>
       <li>城主每天領 ${GVG_DAILY_POINTS} 商城點數</li>
     </ul>
-    <div class="gmt-stat">${owner ? `城主：<b>${shopEsc(owner.name)}</b>（${since.getMonth() + 1}/${since.getDate()} 起）<br>守城隊伍：${team}` : '目前沒有城主。'}</div>
-    <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gvgEnter();renderMapTab()">進城</button>
+    <div class="gmt-stat">${!gvgToken() ? '登入雲端帳號後才看得到城主。' : !_gvgCastle ? '讀取城主資料中…' : owner ? `城主：<b>${shopEsc(owner.name)}</b>（${since.getMonth() + 1}/${since.getDate()} 起）${gvgIsOwner() ? '　（就是你）' : ''}<br>守城隊伍：${team}` : '目前沒有城主。'}</div>
+    <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gvgEnter().then(renderMapTab)">進城</button>
     ${why ? `<div class="ab-info-text">${shopEsc(why)}</div>` : ''}</div>`;
+}
+/* 道館館主（T53）：難度、報名、代幣兌換 */
+function dojoNpcPanelHtml(n, back) {
+  const tok = getItemQty(DOJO_TOKEN);
+  const tiers = DOJO_TIERS.map(t => {
+    const why = dojoBlockReason(t.id);
+    const best = (state.dojoBest || {})[t.id] ? '　✔ 全破過' : '';
+    return `<div class="town-npc-card"><div class="town-npc-name">${t.name}${best}</div>
+      <div class="gmt-price">Lv${t.minLv}↑・${dojoPool(t).length} 隻 MVP 抽 5 隻・${Math.round(t.limitMs / 60000)} 分鐘</div>
+      <div class="gmt-price" title="${shopEsc(dojoPool(t).map(m => m.name).join('、'))}">今天：${shopEsc(dojoLineup(t, dojoSeed(t)).map(id => MONSTERS[id].name).join(' → '))}</div>
+      <div class="gmt-price">每關抽 1 次・全破加抽 ${t.bonusDraws} 次</div>
+      <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="dojoEnter('${t.id}');renderMapTab()">挑戰</button></div>`;
+  }).join('');
+  const shop = DOJO_SHOP.map((e, i) => `<div class="town-npc-card">
+      <div class="town-npc-name">${e.points ? e.points + ' ' + CASH_POINT_NAME : shopEsc(ITEMS[e.item].name)}</div><div class="gmt-price">🪙 ${e.price}</div>
+      <button class="btn-small" ${tok < e.price ? 'disabled' : ''} onclick="dojoBuy(${i});openTownNpc('dojo')">兌換</button></div>`).join('');
+  const tw = DOJO_REWARD_POOL.reduce((a, e) => a + e.w, 0);
+  const pool = DOJO_REWARD_POOL.map(e => `${ITEMS[e.item] ? ITEMS[e.item].name : e.item}${e.qty > 1 ? ' ×' + e.qty : ''}（${Math.round(e.w / tw * 100)}%）`).join('、');
+  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🥋 ${shopEsc(n.name)}</h3></div>
+    <div class="town-npc-say">道館每個難度 ${DOJO_FLOORS} 關、每關一隻 MVP，可以帶隊友；難度越高，王的版本越新越強。每過一關抽 1 次，全破加抽；每個難度每天 1 次，倒下、離開或時間到就結束，照過的關數抽。獎品池：${pool}。道館代幣可以換商城點數。</div>
+    <div class="town-npc-list">${tiers}</div>
+    <div class="gmt-stat">道館代幣：${tok} 枚</div>
+    <div class="town-npc-list">${shop}</div></div>`;
+}
+function syncDojoHud() {
+  const scene = document.getElementById('battle-scene');
+  if (!scene) return;
+  let el = document.getElementById('bf-dojo-hud');
+  const d = state && state.dojo;
+  if (!d) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'bf-dojo-hud'; el.className = 'bf-gmt-hud'; scene.appendChild(el); }
+  const t = dojoTier(d.tier);
+  const wait = d.nextAt ? `　下一關 ${Math.max(0, Math.ceil((d.nextAt - Date.now()) / 1000))} 秒` : '';
+  const html = `🥋 道館（${t.name}）　第 ${Math.max(1, d.floor)}／${DOJO_FLOORS} 關　剩 ${fmtMs(Math.max(0, d.endAt - Date.now()))}${wait}
+    <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定放棄？會照過的關數抽獎。'))dojoAbandon()">放棄</button>`;
+  if (el._html !== html) { el.innerHTML = html; el._html = html; }
 }
 function syncGvgHud() {
   const scene = document.getElementById('battle-scene');

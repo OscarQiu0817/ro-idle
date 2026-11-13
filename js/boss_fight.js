@@ -306,6 +306,7 @@ function tickBossFight(dt, now) {
   if (typeof tickVirtualDuel === 'function') tickVirtualDuel(now);
   if (typeof tickGmt === 'function') tickGmt(now);
   if (typeof tickGvg === 'function') tickGvg(now);
+  if (typeof tickDojo === 'function') tickDojo(now);
   const active = bossFightActive() && !state.travel;
   if (!active) {
     if (state.bossCasts && state.bossCasts.length) state.bossCasts = [];

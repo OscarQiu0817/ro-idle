@@ -123,6 +123,7 @@ function startActorBattle(snap, opts) {
   if (why) { logMsg('⚠️ ' + why); return false; }
   const W = restoreSnapshotParty(snap, state.mapId);
   if (!W) { logMsg('⚠️ 讀不到對手的隊伍資料。'); return false; }
+  if (o.noRevive) W.noRevive = true;
   const now = gameNow();
   state.monsters = [];
   state.bossCasts = [];
@@ -145,7 +146,7 @@ function startActorBattle(snap, opts) {
   state.monster = state.monsters[0];
   state.vDuel = {
     foes: foes.map(f => f.monId), defs: foes.map(f => f.defId).concat(mine.map(p => p.def.id)),
-    startAt: now, limitMs: o.limitMs || ACTOR_BATTLE_LIMIT_MS, mapId: state.mapId, label: o.label || '隊伍對戰', actor: true,
+    startAt: now, limitMs: o.limitMs || ACTOR_BATTLE_LIMIT_MS, mapId: state.mapId, label: o.label || '隊伍對戰', actor: true, team: !!o.team,
   };
   _actorBattle = { world: W, foes, mine, pend: null, onEnd: o.onEnd || null };
   logMsg(`⚔️ ${state.vDuel.label}開始：${foes.map(f => MONSTERS[f.defId].name).join('、')}！`);

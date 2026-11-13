@@ -182,7 +182,7 @@ function endVirtualDuel(win, why) {
 function onVirtualFoeKilled(def, mon) {
   const v = state.vDuel || (typeof _allyActing !== 'undefined' && _allyActing && allyOwnerState().vDuel);
   logMsg(`💥 打倒了 ${def.name}！`);
-  if (!v) { removeVirtualFoe(mon.defId); return; }
+  if (!v) { if (!def.dojo) removeVirtualFoe(mon.defId); return; }   // 道館的怪同一種會出好幾隻，定義留著
   const left = (allyOwnerState().monsters || []).filter(m => m.id !== mon.id && v.foes.includes(m.id) && m.hp > 0);
   if (!left.length) withOwner(() => endVirtualDuel(true));
 }
@@ -191,7 +191,7 @@ function tickVirtualDuel(now) {
   const v = state.vDuel;
   if (!v) return;
   if (state.mapId !== v.mapId) return endVirtualDuel(false, '離開了地圖');
-  if (!(state.hp > 0)) return endVirtualDuel(false, '倒下了');
+  if (!(state.hp > 0) && !(v.team && allyAliveList().length)) return endVirtualDuel(false, v.team ? '全隊倒下' : '倒下了');
   if (!(state.monsters || []).some(m => v.foes.includes(m.id))) return endVirtualDuel(false, '對手不見了');
   if (now - v.startAt > v.limitMs) return endVirtualDuel(false, '時間到');
 }
