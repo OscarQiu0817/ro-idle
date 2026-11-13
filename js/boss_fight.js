@@ -66,13 +66,13 @@ function bossSkillSet(mon) { return bossPatternFor(mon.defId); }
 function bossPickTarget() {
   const ms = bossMembers();
   // 定點類打最前排（跟普攻同一個人），偶爾打別人，免得後排永遠安全
-  return Math.random() < 0.7 ? frontMember() : ms[Math.floor(Math.random() * ms.length)];
+  return rng() < 0.7 ? frontMember() : ms[Math.floor(rng() * ms.length)];
 }
 /* 念咒拆除（官方 SA_SPELLBREAKER 打斷詠唱、吸 SP）：首領開始詠唱時 4%~20% 機率打斷，回 20~100 SP，每人內部冷卻 15 秒 */
 function bossSpellBreak(def, sk, now) {
   for (const m of bossMembers()) {
     const lv = (m.learnedSkills || {}).sa_spellbreaker || 0;
-    if (!lv || now < (m._spellBreakAt || 0) || Math.random() * 100 >= 4 * lv) continue;
+    if (!lv || now < (m._spellBreakAt || 0) || rng() * 100 >= 4 * lv) continue;
     m._spellBreakAt = now + 15000;
     m.sp = Math.min(m.maxSp || 0, (m.sp || 0) + 20 * lv);
     logMsg(`🚫 念咒拆除！${m === allyOwnerState() ? '你' : (m.name || '隊友')}打斷了 ${def.name} 的「${sk.name}」，回復 ${20 * lv} SP。`);
@@ -104,16 +104,16 @@ function bossCast(mon, skill, now) {
   if (id === 'ring') zones.push({ type: 'donut', x: B.x, y: B.y, r0: sk.r0 || 2.5, r1: sk.r1 || 6 });
   if (id === 'bombard') {
     const ms = bossMembers();
-    const n = 3 + Math.floor(Math.random() * 4);
+    const n = 3 + Math.floor(rng() * 4);
     for (let i = 0; i < n; i++) {
       // 第一顆一定落在某個隊員身上，其餘散在隊伍附近
       const c = bossMemberXY(ms[i % ms.length]);
-      const off = i < ms.length ? 0 : 1 + Math.random() * 3, oa = Math.random() * Math.PI * 2;
+      const off = i < ms.length ? 0 : 1 + rng() * 3, oa = rng() * Math.PI * 2;
       zones.push({ type: 'circle', x: c.x + Math.cos(oa) * off, y: c.y + Math.sin(oa) * off, r: 1.6 });
     }
   }
   if (id === 'sweep') zones.push({ type: 'cone', x: B.x, y: B.y, ang, half: sk.half || 50 * Math.PI / 180, len: sk.len || 7 });
-  if (id === 'quake') zones.push(Math.random() < 0.5 ? { type: 'circle', x: B.x, y: B.y, r: 5 } : { type: 'donut', x: B.x, y: B.y, r0: 3, r1: 9 });
+  if (id === 'quake') zones.push(rng() < 0.5 ? { type: 'circle', x: B.x, y: B.y, r: 5 } : { type: 'donut', x: B.x, y: B.y, r0: 3, r1: 9 });
   // 只存編號不存物件：存檔時 state 會整包 JSON，互相參照會變成循環
   state.bossCastSeq = (state.bossCastSeq || 0) + 1;
   const c = { uid: state.bossCastSeq, id, name: sk.name, monId: mon.id, zones, t0: now, end: now + sk.wind, dmg: sk.dmg, ang,
@@ -137,7 +137,7 @@ function bossResolve(c) {
   const shareDiv = c.share ? Math.max(1, inside.length) : 1;
   if (!(c.dmg > 0)) inside.length = 0;   // 純回復的招（虛擬對手的治癒術）：只回施術者的血
   inside.forEach(m => {
-    const base = m.maxHp * c.dmg * lpMult * (0.9 + Math.random() * 0.2) / shareDiv;
+    const base = m.maxHp * c.dmg * lpMult * (0.9 + rng() * 0.2) / shareDiv;
     const dmg = bossMitigate(m, base, c);
     bossNoteDodge(m, false);
     if (dmg <= 0) return;
@@ -168,7 +168,7 @@ function bossMitigate(m, dmg, c) {
     const hd = m.defHard || 0;
     dmg *= (4000 + hd) / (4000 + 10 * hd) * (1 - Math.min(0.3, (st.vit || 0) * 0.003));
     const blk = withHolder(m, () => buffMult('block').flatBonus || 0);
-    if (blk > 0 && Math.random() * 100 < blk) {
+    if (blk > 0 && rng() * 100 < blk) {
       logMsg(`🛡️ ${m === allyOwnerState() ? '你' : (m._allyName || '隊友')}擋下了「${c.name}」！`);
       return 0;
     }
@@ -305,6 +305,8 @@ function tickBossFight(dt, now) {
   tickBossHunt(now);
   if (typeof tickVirtualDuel === 'function') tickVirtualDuel(now);
   if (typeof tickGmt === 'function') tickGmt(now);
+  if (typeof tickGvg === 'function') tickGvg(now);
+  if (typeof tickDojo === 'function') tickDojo(now);
   const active = bossFightActive() && !state.travel;
   if (!active) {
     if (state.bossCasts && state.bossCasts.length) state.bossCasts = [];
@@ -326,7 +328,7 @@ function tickBossFight(dt, now) {
     const set = bossSkillSet(mon);
     const sk = set[(mon._bossIdx++) % set.length];
     bossCast(mon, sk, now);
-    mon._bossNextAt = now + sk.wind + BOSS_CAST_GAP_MS[0] + Math.random() * (BOSS_CAST_GAP_MS[1] - BOSS_CAST_GAP_MS[0]);
+    mon._bossNextAt = now + sk.wind + BOSS_CAST_GAP_MS[0] + rng() * (BOSS_CAST_GAP_MS[1] - BOSS_CAST_GAP_MS[0]);
   });
   bossMembers().forEach(m => bossDodgeTick(m, dt, now));
   state._manualMoving = tickBossManual(dt);
@@ -362,7 +364,7 @@ function startBossChallenge(defId) {
   const why = bossChallengeBlockReason(defId);
   if (why) { logMsg('⚠️ ' + why); return false; }
   const def = MONSTERS[defId];
-  const now = Date.now();
+  const now = gameNow();
   /* 討伐中也能挑戰（使用者 2026-11-13：隨時刷新紀錄）：討伐先暫停、記住剩餘時間，挑戰結束回到原圖再接著跑 */
   if (state.bossHunt) {
     const h = state.bossHunt;
@@ -392,14 +394,14 @@ function endBossChallenge(win, why) {
   if (!c) return;
   state.bossChallenge = null;
   state.bossCasts = [];
-  if (state.mapId === c.mapId) { state.monsters = []; state.monster = null; state.lastSpawnTime = Date.now(); }
+  if (state.mapId === c.mapId) { state.monsters = []; state.monster = null; state.lastSpawnTime = gameNow(); }
   const def = MONSTERS[c.defId];
   if (!win) logMsg(`💢 挑戰 ${def.name} 失敗（${why}）。`);
   // 暫停的討伐：還在同一張圖、人還站著就接著跑，否則作廢（跟討伐中換圖、倒下的規則一樣）
   const ph = state.bossHuntPaused;
   if (ph) {
     state.bossHuntPaused = null;
-    const now = Date.now();
+    const now = gameNow();
     if (state.mapId === ph.mapId && state.hp > 0 && win && ph.defId === c.defId) {
       // 挑戰打倒的正是在討伐的那隻：討伐直接完成，給那份本來就在等的獎勵（使用者 2026-11-13）
       logMsg(`⚡ 挑戰打倒了正在討伐的 ${MONSTERS[ph.defId].name}，討伐直接完成！`);
@@ -420,10 +422,10 @@ function bossChallengeKill(def, monObj) {
   const c = state.bossChallenge || (_allyActing && allyOwnerState().bossChallenge);
   if (!c || !monObj || monObj.id !== c.monId) return false;
   const owner = allyOwnerState();
-  const ms = Date.now() - c.startAt;
+  const ms = gameNow() - c.startAt;
   const before = bossBestMs(c.defId);
   if (!owner.bossUnlocked) owner.bossUnlocked = {};
-  owner.bossUnlocked[c.defId] = owner.bossUnlocked[c.defId] || Date.now();
+  owner.bossUnlocked[c.defId] = owner.bossUnlocked[c.defId] || gameNow();
   const sec = (ms / 1000).toFixed(1);
   const best = before > 0 && ms < before ? '（新紀錄！）' : '';
   if (c.first) logMsg(`🏆 打倒 ${def.name}！用時 ${sec} 秒。已解鎖：之後在這張圖打怪時牠會出現。`);
@@ -479,7 +481,7 @@ function startBossHunt(defId) {
   const ms = bossHuntMs(defId);
   if (!ms) return false;
   const def = MONSTERS[defId];
-  const now = Date.now();
+  const now = gameNow();
   state.monsters = [];
   state.monster = null;
   state.bossCasts = [];
@@ -492,7 +494,7 @@ function cancelBossHunt(why) {
   const h = state.bossHunt;
   if (!h) return;
   state.bossHunt = null;
-  state.lastSpawnTime = Date.now();
+  state.lastSpawnTime = gameNow();
   logMsg(`💢 討伐 ${MONSTERS[h.defId].name} 中斷（${why}），沒有獎勵。`);
 }
 /* 時間到：照常走 killMonster 結算（經驗、鋅幣、掉落、卡片、圖鑑）。不帶 spawnedAt，所以不會把這次結算記成擊殺紀錄 */
@@ -505,7 +507,7 @@ function finishBossHunt() {
   const mon = { defId: h.defId, hp: 0, maxHp: hp, id: state.monsterIdCounter, farmMode: h.farmMode, huntSettled: true };
   logMsg(`🏆 討伐完成：${def.name}！`);
   killMonster(def, mon);
-  state.lastSpawnTime = Date.now();
+  state.lastSpawnTime = gameNow();
 }
 function tickBossHunt(now) {
   const h = state.bossHunt;

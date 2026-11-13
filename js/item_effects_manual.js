@@ -31,11 +31,39 @@ const ITEM_EFFECTS_MANUAL = {
   eddga_card: { bonus: { hpPct: -25 }, grantSkill: [{ id: 'sm_endure', lv: 10 }] },
   /* 黃金蟲卡片：官方是魔法傷害無效＋SP 消耗 +100%。原作者手寫的「怪物技能免疫」（monSkillImmune）連物理技能也擋，拿掉 */
   golden_bug_card: { bonus: { magicImmunePct: 100, spCostPct: 100 } },
+  /* 狐尾草戒指：官方「BaseLv 51 以上所有屬性無效」，經驗 +5% 也一起失效（levelMax 50） */
+  foxtail_ring: { bonus: {}, condBonus: [
+    { when: { levelMax: 50 }, bonus: Object.fromEntries(['formless', 'undead', 'brute', 'plant', 'insect', 'fish', 'demon', 'humanoid', 'angel', 'dragon'].map(r => ['expRace_' + r, 5])) },
+    ...[5, 10, 15, 20, 25, 30, 35, 40, 45, 50].map(n => ({ when: { levelMin: n, levelMax: 50 }, bonus: { atk: 2, matk: 2, hp: 10, sp: 5 } }))] },
 };
+/* 緋紅色系列：自動轉換寫成「ATK／MATK −30＋Lv11～61 每 10 級 +5」，Lv70 起才跟官方一樣，
+   敘述也顯示成 ATK −30。改成官方寫法：Lv80 起每 10 級 +5（跟長矛、騎士長矛同一種）。 */
+(function fixScarletLevelBonus() {
+  Object.keys(ITEMS).filter(k => /^scarlet_/.test(k) && ITEMS[k].condBonus).forEach(k => {
+    const d = ITEMS[k];
+    const early = (d.condBonus || []).filter(c => c.when && Object.keys(c.when).length === 1 && c.when.levelMin != null && c.when.levelMin < 70);
+    if (!early.length) return;
+    const sum = {};
+    early.forEach(c => { for (const [b, v] of Object.entries(c.bonus)) sum[b] = (sum[b] || 0) + v; });
+    d.condBonus = d.condBonus.filter(c => !early.includes(c));
+    if (d.bonus) {
+      for (const [b, v] of Object.entries(sum)) { d.bonus[b] = (d.bonus[b] || 0) + v; if (!d.bonus[b]) delete d.bonus[b]; }
+      if (!Object.keys(d.bonus).length) delete d.bonus;
+    }
+  });
+})();
 (function applyItemEffectsManual() {
   for (const [id, p] of Object.entries(ITEM_EFFECTS_MANUAL)) {
     const d = (typeof CARDS !== 'undefined' && CARDS[id]) || ITEMS[id];
     if (!d) continue;
     Object.assign(d, p);
   }
+})();
+/* 舊警語「一個數值欄位都沒有接上」：後來轉換補上效果的道具（51 件）還掛著，有效果就拿掉 */
+(function dropStaleNoEffectNote() {
+  const re = /\s*（⚠本服未實作：這件裝備的敘述寫了數值，但本服的資料裡\*\*一個數值欄位都沒有接上\*\*[^）]*）/;
+  const has = d => d.bonus || d.condBonus || d.autoSpell || d.perRefine || d.ailment;
+  [ITEMS, typeof CARDS !== 'undefined' ? CARDS : {}].forEach(T => Object.values(T).forEach(d => {
+    if (d && d.desc && has(d) && re.test(d.desc)) d.desc = d.desc.replace(re, '');
+  }));
 })();
