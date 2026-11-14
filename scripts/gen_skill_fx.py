@@ -13,6 +13,7 @@
         落點開一圈 ring_yellow／ring_blue；這裡預畫「一支箭」的序列，網頁依技能等級每 10 tick 放一支。
 純 Pillow，不需要 numpy。
 """
+import json
 import math
 import os
 import struct
@@ -285,6 +286,78 @@ def render_str(name, meta, size=400, scale=1.0, out_name=None, max_frames=60, fr
          quality=82 if out_name is None else BATCH_QUALITY)
 
 
+# ---------- .str 即時畫（使用者 2026-11-14：.str 全改 WebGL 即時畫，js/str_player.js 播） ----------
+STR_OUT = os.path.join(ROOT, 'images', 'effects', 'str')
+TEX_OUT = os.path.join(ROOT, 'images', 'effects', 'tex')
+_tex_written = {}
+
+
+def str_additive(key):
+    """混色 dst 2（ONE）、7（DESTALPHA，不透明畫面上＝1）、0 都是加亮"""
+    return key['dst'] in (2, 7, 0)
+
+
+def tex_png(t):
+    """貼圖輸出成共用 WebP；韓文或含 # 等符號的檔名換成 ASCII（k_ + utf-8 十六進位前 12 碼）"""
+    import hashlib
+    base = os.path.splitext(t.replace('\\', '/').split('/')[-1])[0].lower()
+    if base in _tex_written:
+        return _tex_written[base]
+    png = (base if all(c.isascii() and (c.isalnum() or c in '_-') for c in base) else 'k_' + hashlib.md5(base.encode('utf-8')).hexdigest()[:12]) + '.webp'
+    im = load_tex(t)
+    if im is None:
+        _tex_written[base] = None
+        return None
+    os.makedirs(TEX_OUT, exist_ok=True)
+    im.save(os.path.join(TEX_OUT, png), 'WEBP', quality=90, alpha_quality=90, method=6)   # 有損 q90：大小約 PNG 的 1/5，縮小加亮後看不出差別
+    _tex_written[base] = png
+    return png
+
+
+def _num(v, nd):
+    v = round(v, nd)
+    return int(v) if v == int(v) else v
+
+
+def export_str(file):
+    """關鍵格 → images/effects/str/<file>.js；回傳 (k0, k1, fps)：看得到的第一格與最後一格之後"""
+    fps, max_key, layers = read_str(os.path.join(TEX, file + '.str'))
+    out_layers, kept = [], []
+    for L in layers:
+        if not L['keys'] or not L['texs']:
+            continue
+        names = [tex_png(t) for t in L['texs']]
+        if not any(names):
+            continue
+        names = [n or next(x for x in names if x) for n in names]
+        keys = [[k['frame'], k['type'], _num(k['pos'][0], 2), _num(k['pos'][1], 2)] + [_num(v, 2) for v in k['xy']]
+                + [_num(k['aniframe'], 3), k['anitype'], _num(k['delay'], 3), _num(k['angle'], 2)]
+                + [_num(c, 4) for c in k['color']] + [1 if str_additive(k) else 0] for k in L['keys']]
+        out_layers.append({'tex': names, 'keys': keys})
+        kept.append(L)
+    k0, k1 = None, 0
+    for k in range(max_key):
+        for L in kept:
+            key = str_key_at(L, k)
+            if key and key['color'][3] > 0.004:
+                k0 = k if k0 is None else k0
+                k1 = k + 1
+                break
+    k0 = k0 or 0
+    k1 = k1 or max_key
+    os.makedirs(STR_OUT, exist_ok=True)
+    with open(os.path.join(STR_OUT, file + '.js'), 'w', encoding='utf-8') as f:
+        f.write('(window.STR_DATA=window.STR_DATA||{})["%s"]=' % file
+                + json.dumps({'fps': fps, 'maxKey': max_key, 'k0': k0, 'k1': k1, 'layers': out_layers}, separators=(',', ':')) + ';\n')
+    return k0, k1, fps
+
+
+def str_meta(file, scale):
+    """SKILL_FX_ANIM 的即時畫項目：str 檔名、sc 縮放；n＝1、ms＝整段毫秒（重播次數照這個算）"""
+    k0, k1, fps = export_str(file)
+    return {'str': file, 'sc': scale, 'n': 1, 'ms': max(1, round((k1 - k0) * 1000 / fps))}
+
+
 # ---------- 精靈圖（.spr／.act 動作 0） ----------
 def render_spr(name, meta, action=0, out_name=None):
     spr = read_spr(os.path.join(SPR, name + '.spr'))
@@ -353,13 +426,24 @@ def main():
     import json
     import re
     meta = {}
-    if '--js-only' in sys.argv:
-        # 只依新的計畫重寫 js/skill_fx_data.js，動畫格沿用現有的（不重畫）
-        m = re.search(r'const SKILL_FX_ANIM = (.*?);\n', open(OUT_JS, encoding='utf-8').read())
+    HAND_STR = ['firehit1', 'firehit2', 'firehit3', 'windhit1', 'windhit2', 'windhit3', 'lightning']
+    if '--js-only' in sys.argv or '--str' in sys.argv:
+        # --js-only：只依新的計畫重寫 js/skill_fx_data.js，動畫格沿用現有的（不重畫）
+        # --str：合圖沿用，.str 類重新輸出關鍵格（舊的 .str 合圖刪掉）
+        m = re.search(r'const SKILL_FX_ANIM = (.*?);\r?\n', open(OUT_JS, encoding='utf-8').read())
         meta = json.loads(m.group(1))
+        if '--str' in sys.argv:
+            for n in list(meta):
+                if n in HAND_STR or n.startswith('str_'):
+                    old = os.path.join(OUT, n + '.webp')
+                    if os.path.exists(old):
+                        os.remove(old)
+                    del meta[n]
+            for n in HAND_STR:
+                meta[n] = str_meta(n, scale_of(n))
     if not meta:
-        for n in ['firehit1', 'firehit2', 'firehit3', 'windhit1', 'windhit2', 'windhit3', 'lightning']:
-            render_str(n, meta)
+        for n in HAND_STR:
+            meta[n] = str_meta(n, scale_of(n))
         render_spr('fireball', meta)
         render_bolt('fire', meta)
         render_bolt('cold', meta)
@@ -373,7 +457,7 @@ def main():
                 continue
             try:
                 if sh['kind'] == 'str':
-                    render_str(sh['file'], meta, out_name=n, max_frames=BATCH_MAX_FRAMES, frame_ms=BATCH_FRAME_MS)
+                    meta[n] = str_meta(sh['file'], BATCH_SCALE)
                 elif sh['kind'] == 'spr':
                     render_spr(sh['file'], meta, out_name=n)
                 else:
@@ -384,7 +468,8 @@ def main():
         plan = {sk: lst for sk, lst in plan.items() if lst}
     with open(OUT_JS, 'w', encoding='utf-8') as f:
         f.write('/* 由 scripts/gen_skill_fx.py 產生，勿手改。一招一張合圖 images/effects/skill/<名稱>.webp（格狀排列）。\n'
-                '   n 格數、ms 每格毫秒、w/h 每格大小（已是顯示大小）、cols 欄數、ax/ay 錨點（貼在目標的那一點）。 */\n'
+                '   n 格數、ms 每格毫秒、w/h 每格大小（已是顯示大小）、cols 欄數、ax/ay 錨點（貼在目標的那一點）。\n'
+                '   有 str 的是官方 .str 即時畫（js/str_player.js）：str 關鍵格檔名、sc 縮放、ms 整段毫秒。 */\n'
                 'const SKILL_FX_ANIM = ' + json.dumps(meta, ensure_ascii=False) + ';\n'
                 '/* 各技能的特效圖層（roBrowser 官方定義轉來）：at 播在 caster／target／ground；play anim 整段播、particle 光點 */\n'
                 'const SKILL_FX_PLAN = ' + json.dumps(plan, ensure_ascii=False) + ';\n')

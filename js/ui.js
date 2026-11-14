@@ -2158,14 +2158,22 @@ const _fxPreloaded = {};
 function fxSheetSrc(name) { return `images/effects/skill/${name}.webp`; }
 function preloadFx(name) {
   if (_fxPreloaded[name] || typeof SKILL_FX_ANIM === 'undefined' || !SKILL_FX_ANIM[name]) return;
+  const m = SKILL_FX_ANIM[name];
+  if (m.str) { if (typeof StrPlayer !== 'undefined') StrPlayer.preload(m.str); _fxPreloaded[name] = true; return; }
   const im = new Image(); im.src = fxSheetSrc(name); _fxPreloaded[name] = im;
 }
-/* 在畫面座標 (x, y) 播一組動畫：(x, y) 對齊這組的錨點。opt.move＝{x, y, ms} 會從起點飛到終點（火球用）；opt.rot 旋轉角度 */
+/* 在畫面座標 (x, y) 播一組動畫：(x, y) 對齊這組的錨點。opt.move＝{x, y, ms} 會從起點飛到終點（火球用）；opt.rot 旋轉角度
+   有 m.str 的是官方 .str，交給 StrPlayer 用 WebGL 即時畫（使用者 2026-11-14），(x, y)＝STR 原點 */
 function playFxAnim(name, x, y, delayMs, opt) {
   const m = typeof SKILL_FX_ANIM !== 'undefined' && SKILL_FX_ANIM[name];
   if (!m || _liveSkillFx >= MAX_LIVE_SKILL_FX) return;
   preloadFx(name);
   opt = opt || {};
+  if (m.str) {
+    if (typeof StrPlayer === 'undefined') return;
+    setTimeout(() => StrPlayer.play(m.str, x, y, { scale: m.sc, onDone: opt.done }), delayMs || 0);
+    return;
+  }
   setTimeout(() => {
     if (_liveSkillFx >= MAX_LIVE_SKILL_FX) return;
     const el = document.createElement('div');
