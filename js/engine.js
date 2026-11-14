@@ -6776,6 +6776,7 @@ function tickTravel(dt) {
     if (mv.race) m.race = mv.race;
     if (mv.size) m.size = mv.size;
     if (mv.eleRes) m.elementResistance = mv.eleRes;
+    if (mv.noAttack) m.passive = true;   // 官方 AI 06（蟲蛹、卵、草、菇）不會攻擊：不普攻也不放技能
     // 原本掉落表是空的或只剩佔位的怪，用 rAthena 掉落補上（換成 rAthena 刷怪後才打得到的那批）
     if (mv.drops) m.drops = mv.drops.map(([item, chance]) => ({ item, chance }));
   }
@@ -14418,7 +14419,7 @@ function prepareEquipSlot(slot, itemId) {
    itemId 給普通堆疊裝備，instanceId 給精煉／插卡過的個體裝備（兩者擇一）。
    回傳 null 代表這件穿不上（職業／等級擋住，或根本不是裝備）。 */
 const EQUIP_PREVIEW_FIELDS = [
-  ['atk', 'ATK'], ['matk', 'MATK'], ['def', 'DEF'],
+  ['atk', 'ATK'], ['matk', 'MATK'], ['def', 'DEF'], ['mdef', 'MDEF'],
   ['maxHp', '最大HP'], ['maxSp', '最大SP'],
   ['hit', '命中'], ['flee', '迴避'], ['critRate', '暴擊率'], ['aspd', '攻速'],
 ];

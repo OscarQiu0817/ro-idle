@@ -42,6 +42,8 @@ function pickSkill(s) {
    24 是 MVP 召喚的小弟（被動、不亂走），以前誤列成主動；08／10／11／12／19／27 以前漏掉（螳螂是 19） */
 const AGGRESSIVE_AI = new Set(['04', '05', '08', '09', '10', '11', '12', '13', '19', '20', '21', '26', '27']);
 const IMMOBILE_AI = new Set(['06', '10', '11', '27']);
+/* 06 是唯一沒有 CanAttack 位元（0x80）的 AI：蟲蛹、卵、草、菇這類不會攻擊（使用者 2026-11-14 照官方） */
+const NO_ATTACK_AI = new Set(['06']);
 
 /* 怪物移動與攻擊節奏（mob_db_re.yml） */
 /* T17：屬性／種族／體型照 rAthena，抗性表照 attr_fix（屬性等級 × 攻擊屬性 × 防守屬性） */
@@ -64,6 +66,7 @@ function pickMobMove(m, attr) {
     damageMotion: m.DamageMotion || 480,
     aggressive: AGGRESSIVE_AI.has(ai),
     immobile: IMMOBILE_AI.has(ai),
+    ...(NO_ATTACK_AI.has(ai) && !(m.Modes && m.Modes.CanAttack) ? { noAttack: true } : {}),
     eleLv: m.ElementLevel || 1,   // 屬性等級（怪物資訊顯示用；抗性已在 MONSTERS.elementResistance）
     baseExp: m.BaseExp || 0,       // 官方經驗（T4），engine 載入時覆寫 MONSTERS.exp／jobExp
     jobExp: m.JobExp || 0,

@@ -2643,9 +2643,9 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
 .skill-hit-fx.fx-particle { mix-blend-mode: screen; }
 
 /* 打到怪物身上的字一律白字黑邊（使用者 2026-11-14）：傷害數字（含屬性克制／被克、魔法屬性色、合計）、
-   MISS、屬性標籤都覆蓋成白色；暴擊數字維持黃色（使用者 2026-11-14 改回）；角色被打（.taken 紅字）與補血（.heal 綠字）、補 SP（.sp 藍字）維持原色 */
-.damage-float:not(.taken):not(.heal):not(.sp),
-.element-float {
+   MISS 覆蓋成白色；暴擊數字維持黃色（使用者 2026-11-14 改回）；角色被打（.taken 紅字）與補血（.heal 綠字）、補 SP（.sp 藍字）維持原色。
+   屬性克制飄字（.element-float，「火 ×150%」）恢復照屬性上色；多段合計（.combo-total：技能、二刀連擊）恢復黃字（使用者 2026-11-14） */
+.damage-float:not(.taken):not(.heal):not(.sp):not(.combo-total) {
   color: #fff !important;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.8) !important;
 }
