@@ -360,8 +360,8 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .bf-fire { font-size: 18px; filter: drop-shadow(0 0 4px #ff7a1a); }
 .bf-hits { font-size: 11px; color: #ffd9a0; text-shadow: 0 0 3px #000; }
 .bf-trap { font-size: 18px; color: #ffcf5a; text-shadow: 0 0 4px #000, 0 0 2px #000; }
-.bf-zone { border-radius: 50%; background: rgba(110, 80, 40, 0.45); border: 1px solid rgba(160, 120, 60, 0.7); }
-.bf-zone.bf-poison { background: rgba(120, 60, 160, 0.45); border-color: rgba(170, 100, 220, 0.75); }
+.bf-zone { border-radius: 50%; background: rgba(110, 80, 40, 0.14); border: 1px solid rgba(160, 120, 60, 0.3); }
+.bf-zone.bf-poison { background: rgba(120, 60, 160, 0.12); border-color: rgba(170, 100, 220, 0.3); }
 .bf-ice { font-size: 18px; filter: drop-shadow(0 0 4px #7fd4ff); }
 /* 3c：詠唱條（玩家立繪上方） */
 .player-castbar { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); width: 80px;
@@ -1328,7 +1328,8 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
   z-index: 10001;
 }
 .damage-float.heal {
-  color: #5dade2;
+  /* 補 HP（治癒術、吸血…）綠字，比照官方（使用者 2026-11-14） */
+  color: #3ddc5a;
   font-size: 20px;
 }
 .damage-float.miss {
@@ -1347,6 +1348,16 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .damage-float.element-immune {
   color: #999;
   font-size: 20px;
+}
+/* 補 SP：藍字 */
+.damage-float.sp {
+  color: #4aa8ff;
+  font-size: 20px;
+}
+/* 角色（玩家、隊友）被打的數字與 MISS：紅字，比照官方 */
+.damage-float.taken {
+  color: #ff3030;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.9), 0 0 6px rgba(255,48,48,0.45);
 }
 
 /* 魔法傷害的數字照施法屬性上色。顏色與下面的 .element-float 同一套，
@@ -2287,12 +2298,6 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 
 /* 首次確認視窗與法律聲明（#121）。捲動交給 .modal-box 那組規則（#123）*/
 .modal-box-tall { width: 620px; }
-.consent-row {
-  display: flex; align-items: center; gap: 8px; justify-content: center;
-  margin: 14px 0 4px; font-size: 13px; cursor: pointer;
-}
-.consent-row input { width: 16px; height: 16px; cursor: pointer; }
-#consent-enter[disabled] { opacity: .45; cursor: not-allowed; }
 .legal-list { margin: 6px 0 0; padding-left: 20px; }
 .legal-list > li { margin-bottom: 8px; }
 .legal-list > li > b { color: var(--ink); }
@@ -2546,11 +2551,11 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .skill-lv-table tr.cur td { background: rgba(232,195,75,0.15); }
 .skill-lv-table { overflow-x: auto; }
 /* T24：場地魔法範圍圈、怪物石化／冰凍 */
-.bf-zone.bf-field { background: rgba(120, 170, 255, 0.14); border: 1px dashed rgba(150, 200, 255, 0.8); }
-.bf-zone.bf-field.elem-ring-fire { background: rgba(255, 120, 60, 0.14); border-color: rgba(255, 150, 90, 0.85); }
-.bf-zone.bf-field.elem-ring-water { background: rgba(110, 190, 255, 0.16); border-color: rgba(150, 215, 255, 0.85); }
-.bf-zone.bf-field.elem-ring-holy { background: rgba(255, 240, 160, 0.14); border-color: rgba(255, 235, 150, 0.85); }
-.bf-zone.bf-field.elem-ring-wind { background: rgba(200, 255, 140, 0.12); border-color: rgba(210, 255, 150, 0.8); }
+.bf-zone.bf-field { background: rgba(120, 170, 255, 0.07); border: 1px dashed rgba(150, 200, 255, 0.35); }
+.bf-zone.bf-field.elem-ring-fire { background: rgba(255, 120, 60, 0.07); border-color: rgba(255, 150, 90, 0.38); }
+.bf-zone.bf-field.elem-ring-water { background: rgba(110, 190, 255, 0.08); border-color: rgba(150, 215, 255, 0.38); }
+.bf-zone.bf-field.elem-ring-holy { background: rgba(255, 240, 160, 0.07); border-color: rgba(255, 235, 150, 0.38); }
+.bf-zone.bf-field.elem-ring-wind { background: rgba(200, 255, 140, 0.06); border-color: rgba(210, 255, 150, 0.35); }
 .monster-slot.ail-stone img { filter: grayscale(1) contrast(0.85) brightness(0.95) drop-shadow(0 4px 10px rgba(0,0,0,0.4)) !important; }
 .monster-slot.ail-freeze img { filter: saturate(0.4) brightness(1.15) sepia(0.2) hue-rotate(170deg) drop-shadow(0 0 3px #9fe0ff) drop-shadow(0 4px 10px rgba(0,0,0,0.4)) !important; }
 
@@ -2621,9 +2626,26 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
 .bf-falcon { position: absolute; z-index: 12; pointer-events: none; image-rendering: pixelated; }
 
 /* 吉芬魔法大賽（T51 第 6 期） */
+.bf-dojo-npc { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 31; display: flex; align-items: flex-end; gap: 8px; max-width: 92%; }
+.bf-dojo-npc img { height: 90px; image-rendering: pixelated; flex: 0 0 auto; }
+.bf-dojo-say { background: rgba(10,12,20,.88); border: 1px solid var(--gold, #e8c34b); border-radius: 8px; padding: 8px 12px; color: #f3ecd6; font-size: 13px; line-height: 1.5; }
+.bf-dojo-btns { margin-top: 6px; display: flex; gap: 6px; }
 .bf-gmt-hud { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); z-index: 30; padding: 4px 10px; border-radius: 8px; background: rgba(0,0,0,.65); color: #ffe7a0; font-size: 12px; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
 .gmt-rules { margin: 6px 0 6px 18px; padding: 0; font-size: 13px; line-height: 1.6; }
 .gmt-stat { margin: 6px 0; font-size: 13px; color: var(--ink-dim); }
 .gmt-price { font-weight: 700; color: #f0c040; }
 /* 虛擬對手：紙娃娃的對齊（applyPaperTransform 的 translateX(-錨點)）假設畫布左緣在角色中心 */
 .monster-slot canvas.vfoe-paper { display: block; position: relative; left: 50%; }
+
+/* 技能命中特效（T24）：動畫格本身是透明底，直接疊在畫面上；不擋點擊 */
+.skill-hit-fx { position: fixed; pointer-events: none; z-index: 60; background-repeat: no-repeat; }
+/* 光點層用濾色疊（接近官方的加亮混色），疊再多也不會變成一塊不透明的白 */
+.skill-hit-fx.fx-particle { mix-blend-mode: screen; }
+
+/* 打到怪物身上的字一律白字黑邊（使用者 2026-11-14）：傷害數字（含屬性克制／被克、魔法屬性色、合計）、
+   MISS、屬性標籤都覆蓋成白色；暴擊數字維持黃色（使用者 2026-11-14 改回）；角色被打（.taken 紅字）與補血（.heal 綠字）、補 SP（.sp 藍字）維持原色 */
+.damage-float:not(.taken):not(.heal):not(.sp),
+.element-float {
+  color: #fff !important;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.8) !important;
+}

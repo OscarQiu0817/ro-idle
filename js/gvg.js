@@ -33,6 +33,7 @@ if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === GVG_MAP)) {
    _gvgCastle：最後一次 /castle/get 的結果 { castle, at }；castle＝null 是沒有城主。 */
 let _gvgCastle = null;
 let _gvgFetching = false;
+let _gvgFailAt = 0;   // 雲端讀取失敗時間；30 秒內不重抓
 function gvgToken() { const c = typeof cloudConf === 'function' ? cloudConf() : null; return c && c.token ? c.token : null; }
 function gvgCastle() { return _gvgCastle ? _gvgCastle.castle : null; }
 function gvgOwner() { const c = gvgCastle(); return c ? { name: c.name, slot: c.slot, since: c.since, snap: c.snap } : null; }
@@ -46,12 +47,14 @@ async function gvgRefresh() {
   _gvgFetching = true;
   try {
     const r = await cloudPost('/castle/get', { token, castleId: GVG_CASTLE_ID });
-    if (r.status !== 200) return null;
+    if (r.status !== 200) { _gvgFailAt = gameNow(); return null; }
+    _gvgFailAt = 0;
     const c = r.data.castle;
     if (c) { try { c.snap = JSON.parse(c.snapshot); } catch (e) { c.snap = null; } }
     _gvgCastle = { castle: c || null, at: gameNow() };
     return _gvgCastle;
   } catch (e) {
+    _gvgFailAt = gameNow();
     return null;
   } finally { _gvgFetching = false; }
 }

@@ -21737,7 +21737,7 @@ thief_bug_female: {id:'thief_bug_female',imgId:1053,name:'雌盜蟲',icon:'🐛'
   necromancer: {id:'necromancer',imgId:1870,name:'行妖術者',icon:'💀',level:133,hp:91304,atk:1359,def:84,defSoft:82,mdef:73,mdefSoft:154,element:'none',elementResistance:{none:100,water:150,earth:50,fire:200,wind:100,poison:-100,holy:200,shadow:-100,ghost:175,undead:0},race:'undead',size:'medium',isBoss:true,exp:5580,jobExp:4185,hit:445,flee:287,atkInterval:1.816,drops:[{item:'skel_bone',chance:0.4501},{item:'clattering_skull',chance:0.3001},{item:'rent_spell_book',chance:0.1501},{item:'blue_gemstone',chance:0.0101},{item:'amulet',chance:0.0101},{item:'lich_bone_wand',chance:0.0021},{item:'necromancer_card',chance:0.0005}],hitReq:342,fleeReq:324,mobStr:108,mobInt:116},
   fallingbishop: {id:'fallingbishop',imgId:1871,name:'墮落大神官 悉潘',icon:'👿',level:138,hp:5655000,atk:4290,def:274,defSoft:87,mdef:182,mdefSoft:273,element:'shadow',elementResistance:{none:100,water:75,earth:75,fire:75,wind:75,poison:25,holy:150,shadow:-25,ghost:50,undead:0},race:'demon',size:'medium',isBoss:true,isMvp:true,exp:2700000,jobExp:1890000,hit:586,flee:403,atkInterval:0.432,drops:[{item:'holy_water',chance:1},{item:'hd_carnium',chance:0.5432},{item:'blessed_wand',chance:0.2001},{item:'hunting_spear',chance:0.0501},{item:'spiritual_ring',chance:0.0501},{item:'long_horn',chance:0.0501},{item:'yggdrasilberry',chance:0.0055},{item:'seed_of_yggdrasil',chance:0.0016},{item:'carnium',chance:0.0011},{item:'fallen_bishop_card',chance:0.0005}],hitReq:445,fleeReq:407,mobStr:186,mobInt:226},
   beelzebub_fly: {id:'beelzebub_fly',imgId:1872,name:'魔鬼蒼蠅',icon:'👻',level:127,hp:502000,atk:900,def:25,defSoft:33,mdef:15,mdefSoft:1,element:'wind',elementResistance:{none:100,water:60,earth:200,fire:100,wind:-50,poison:75,holy:75,shadow:75,ghost:25,undead:25},race:'insect',size:'small',isBoss:true,exp:1,jobExp:1,hit:427,flee:317,atkInterval:0.432,drops:[{item:'apple',chance:0.001}],hitReq:267,fleeReq:212,mobStr:99,mobInt:55},
-  beelzebub: {id:'beelzebub',imgId:1873,name:'貝雷傑',icon:'👿',level:147,hp:6805000,atk:5250,def:40,defSoft:149,mdef:35,mdefSoft:350,element:'ghost',elementResistance:{none:0,water:100,earth:100,fire:100,wind:100,poison:25,holy:100,shadow:100,ghost:200,undead:100},race:'demon',size:'small',isBoss:true,exp:1,jobExp:1,hit:628,flee:482,atkInterval:0.14,drops:[{item:'apple',chance:0.001}],hitReq:408,fleeReq:363,mobStr:155,mobInt:225},
+  beelzebub: {id:'beelzebub',imgId:1873,name:'貝雷傑',icon:'👿',level:147,hp:6805000,atk:5250,def:40,defSoft:149,mdef:35,mdefSoft:350,element:'ghost',elementResistance:{none:0,water:100,earth:100,fire:100,wind:100,poison:25,holy:100,shadow:100,ghost:200,undead:100},race:'demon',size:'small',isBoss:true,exp:1,jobExp:1,hit:628,flee:482,atkInterval:0.14,drops:[],hitReq:408,fleeReq:363,mobStr:155,mobInt:225},
   beelzebub_: {id:'beelzebub_',imgId:1874,name:'詛咒蠅王',icon:'👿',level:147,hp:4805000,atk:6666,def:418,defSoft:149,mdef:265,mdefSoft:350,element:'ghost',elementResistance:{none:0,water:100,earth:100,fire:100,wind:100,poison:25,holy:100,shadow:100,ghost:200,undead:100},race:'demon',size:'large',isBoss:true,isMvp:true,exp:7050000,jobExp:7050000,hit:649,flee:483,atkInterval:0.212,drops:[{item:'chonchon_doll',chance:0.55},{item:'elunium',chance:0.5432},{item:'old_violet_box',chance:0.0055000000000000005},{item:'yggdrasilberry',chance:0.0015},{item:'box_of_grudge',chance:0.001}],hitReq:534,fleeReq:461,mobStr:178,mobInt:250},
   tristan_3rd: {id:'tristan_3rd',imgId:1875,name:'王的屍體',icon:'💀',level:80,hp:43000,atk:1503,def:0,defSoft:40,mdef:0,mdefSoft:1,element:'none',elementResistance:{none:100,water:150,earth:50,fire:200,wind:100,poison:-100,holy:200,shadow:-100,ghost:175,undead:0},race:'undead',size:'medium',isBoss:true,exp:1,jobExp:1,hit:339,flee:190,atkInterval:1.816,drops:[{item:'sticky_mucus',chance:0.9},{item:'apple',chance:0.001}],hitReq:281,fleeReq:226,mobStr:5,mobInt:69},
   e_lord_of_death: {id:'e_lord_of_death',imgId:1876,name:'死靈騎士',icon:'👿',level:99,hp:99000000,atk:4459,def:75,element:'none',exp:70925,jobExp:19505,drops:[],hit:454,flee:319,atkInterval:1.446,mobStr:120,mobInt:169},
@@ -24017,18 +24017,18 @@ const CARDS = {
   "md_airboat_card6": {"id":"md_airboat_card6","name":"不明生物體卡片","icon":"🃏","slot":"accessory","bonus":{"eleDmg_poison":30,"eleDmg_shadow":30,"eleReduce_holy":-10},"desc":"毒屬性與暗屬性魔法傷害+30%，對聖屬性攻擊的抗性−10%。"},
   "bakonawa_card": {"id":"bakonawa_card","monsterId":"bakonawa_1","name":"Bakonawa卡片","icon":"🛡️","slot":"armor","bonus":{"str":4},"desc":"STR +4(原版另有 1 項條件效果尚未實作)"},
   "lichterng_card": {"id":"lichterng_card","monsterId":"lichtern_g","name":"元素鬼火(褐)卡片","icon":"👑","slot":"head","bonus":{"matk":10},"desc":"MATK +10(原版另有 1 項條件效果尚未實作)"},
-  "faithfulmanager_card": {"id":"faithfulmanager_card","monsterId":"faithful_manager","name":"頑靈惡童卡片","icon":"🛡️","slot":"armor","bonus":{"atk":5,"matk":5},"desc":"ATK +5、MATK +5(原版另有 11 項條件效果尚未實作)"},
+  "faithfulmanager_card": {"id":"faithfulmanager_card","monsterId":"faithful_manager","name":"頑靈惡童卡片","icon":"🛡️","slot":"weapon","bonus":{"atk":5,"matk":5},"desc":"ATK +5、MATK +5(原版另有 11 項條件效果尚未實作)"},
   "corruptionroot_card": {"id":"corruptionroot_card","monsterId":"mg_corruption_root","name":"Corrupted Soul卡片","icon":"🛡️","slot":"armor","bonus":{"atk":20},"desc":"ATK +20(原版另有 3 項條件效果尚未實作)"},
   "amdarais_card": {"id":"amdarais_card","monsterId":"mg_amdarais","name":"Amdarais卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":15},"desc":"魔法傷害 +15%(原版另有 5 項條件效果尚未實作)"},
   "faceworm_q_card": {"id":"faceworm_q_card","monsterId":"faceworm_queen","name":"Faceworm Queen卡片","icon":"👢","slot":"footgear","bonus":{"hpPct":-10,"critRate":15},"desc":"MaxHP -10%、CRI +15(原版另有 2 項條件效果尚未實作)"},
   "dy_card": {"id":"dy_card","monsterId":"geffen_mage_12","name":"Dwigh卡片","icon":"💍","slot":"accessory","bonus":{"magicEleDmg_shadow":20,"magicEleDmg_none":20},"desc":"暗屬性魔法傷害 +20%、無屬性魔法傷害 +20%"},
-  "big_bell_card": {"id":"big_bell_card","monsterId":"big_bell","name":"Big Bell卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmg_formless":10,"raceDmg_demon":10},"desc":"對無形傷害 +10%、對惡魔傷害 +10%"},
-  "neo_punk_card": {"id":"neo_punk_card","monsterId":"neo_punk","name":"Neo-punk卡片","icon":"🛡️","slot":"armor","bonus":{"raceDmgReduce_formless":20,"raceDmgReduce_demon":20},"desc":"受無形傷害 +-20%、受惡魔傷害 +-20%"},
+  "big_bell_card": {"id":"big_bell_card","monsterId":"big_bell","name":"Big Bell卡片","icon":"🛡️","slot":"weapon","bonus":{"raceDmg_formless":10,"raceDmg_demon":10},"desc":"對無形傷害 +10%、對惡魔傷害 +10%"},
+  "neo_punk_card": {"id":"neo_punk_card","monsterId":"neo_punk","name":"Neo-punk卡片","icon":"🛡️","slot":"shield","bonus":{"raceDmgReduce_formless":20,"raceDmgReduce_demon":20},"desc":"受無形傷害 +-20%、受惡魔傷害 +-20%"},
   "arc_elder_card": {"id":"arc_elder_card","monsterId":"arc_elder","name":"Arc Elder卡片","icon":"🧣","slot":"garment","bonus":{"eleReduce_none":15},"desc":"無屬性減傷 +15%(原版另有 1 項條件效果尚未實作)"},
   "evil_fanatics_card": {"id":"evil_fanatics_card","monsterId":"mm_evil_fanatics","name":"Evil Believer卡片","icon":"🛡️","slot":"armor","bonus":{"eleDmg_shadow":30,"eleDmg_undead":30,"eleDmg_holy":-30,"eleDmg_fire":-30},"desc":"對暗屬性傷害 +30%、對不死屬性傷害 +30%、對聖屬性傷害 -30%、對火屬性傷害 -30%(原版另有 4 項條件效果尚未實作)"},
   "xm_celine_kimi_card": {"id":"xm_celine_kimi_card","monsterId":"xm_celine_kimi","name":"Celine Kimi卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":10},"desc":"魔法傷害 +10%(原版另有 1 項條件效果尚未實作)"},
   "livingdeath_card": {"id":"livingdeath_card","monsterId":"ep14_3_death_a_mob1","name":"Fallen Orc Baby卡片","icon":"👑","slot":"head","bonus":{"hp":500,"sp":50,"raceDmgReduce_angel":-50},"desc":"MaxHP +500、MaxSP +50、受天使傷害 -50%"},
-  "timeholder_card": {"id":"timeholder_card","monsterId":"timeholder","name":"Timeholder卡片","icon":"🛡️","slot":"armor","bonus":{"matkPct":20},"desc":"魔法傷害 +20%(原版另有 1 項條件效果尚未實作)"},
+  "timeholder_card": {"id":"timeholder_card","monsterId":"timeholder","name":"Timeholder卡片","icon":"🛡️","slot":"weapon","bonus":{"matkPct":20},"desc":"魔法傷害 +20%(原版另有 1 項條件效果尚未實作)"},
   "brinaranea_card": {"id":"brinaranea_card","monsterId":"mm_brinaranea","name":"Brinaranea卡片","icon":"🛡️","slot":"armor","bonus":{"magicEleDmg_water":15},"desc":"水屬性魔法傷害 +15%"},
   "muspellskoll_card": {"id":"muspellskoll_card","monsterId":"mm_muspellskoll","name":"Muspellskoll卡片","icon":"🛡️","slot":"armor","bonus":{"eleReduce_fire":30},"desc":"火屬性減傷 +30%"},
   "despairgodmorocc_card": {"id":"despairgodmorocc_card","monsterId":"mm_morocc_adt","name":"Morocc the Desparate god卡片","icon":"👢","slot":"footgear","bonus":{"atkPct":10,"hpPct":-50,"raceDmg_humanoid":60,"raceDmg_angel":30},"desc":"物理傷害 +10%、MaxHP -50%、對人形傷害 +60%、對天使傷害 +30%(原版另有 2 項條件效果尚未實作)"},
@@ -25104,6 +25104,12 @@ const REFINEMENT_MATERIALS = {
   refine_stone:   { id: 'refine_stone',   name: '精煉石',       desc: '道具商店 100z，適用 Lv1~Lv2 武器', usableWeaponLv: [1, 2], usableArmor: false, failPenalty: 'break' },
   oridecon:       { id: 'oridecon',       name: '神之金屬',     desc: '5 個原石可合成，適用 Lv3~Lv4 武器', usableWeaponLv: [3, 4], usableArmor: false, failPenalty: 'break' },
   elunium:        { id: 'elunium',        name: '鋁',           desc: '5 個原石可合成，適用防具',         usableWeaponLv: [],     usableArmor: true,  failPenalty: 'break' },
+  /* 濃縮礦石（官方 Enriched）：成功率照 REFINEMENT_ENRICHED_RATE 提高，失敗照一般礦；MVP 點數商店賣（使用者 2026-11-14） */
+  enriched_oridecon: { id: 'enriched_oridecon', name: '濃縮神之金屬', desc: '所有武器，成功率比神之金屬高', usableWeaponLv: [1, 2, 3, 4], usableArmor: false, failPenalty: 'break', enriched: true },
+  enriched_elunium:  { id: 'enriched_elunium',  name: '濃縮鋁',       desc: '防具，成功率比鋁高',         usableWeaponLv: [],     usableArmor: true,  failPenalty: 'break', enriched: true },
+  /* 魔力之石／混沌金屬（官方 Bradium／Carnium，+10 以上的一般礦）：成功率同一般礦，失敗照一般礦 */
+  bradium:        { id: 'bradium',        name: '魔力之石',     desc: '武器 +10 以上用',         usableWeaponLv: [1, 2, 3, 4], usableArmor: false, failPenalty: 'break', minLevel: 10 },
+  carnium:        { id: 'carnium',        name: '混沌金屬',     desc: '防具 +10 以上用',         usableWeaponLv: [],     usableArmor: true,  failPenalty: 'break', minLevel: 10 },
   /* 高密度礦石（官方 HD Bradium／HD Carnium）：只能用在 +10 以上，成功率同一般礦，
      失敗只 -1、不會損壞（rAthena refine.yml：BreakingRate 0、Downgrade 1） */
   hd_bradium:     { id: 'hd_bradium',     name: '高密度鈽鐳礦石', desc: '武器 +10 以上用，失敗只 -1', usableWeaponLv: [1, 2, 3, 4], usableArmor: false, failPenalty: 'minus1', minLevel: 10 },
@@ -28890,45 +28896,7 @@ var GRANT_SKILL_FIX = {
 /* ==== COSTUMESTONE END ==== */
 
 /* ==== STONENOTE BEGIN ==== */
-/* 附魔石（職業石／之石／輔助附魔／魔神精髓…）在本服是**當卡片插**的。
-
-   玩家回報（feedback #322、世界頻道 1574）：「職業石頭有用嗎？我也找不到可以附魔的地方」
-   —— 找不到是對的，本服沒有附魔介面。那些石頭同時登記在 CARDS 裡而且 slot='any'，
-   所以任何有空孔的裝備都插得進去（已實測：鎧甲、鞋子皆成功）。
-
-   判斷條件刻意寬鬆但精確：
-     · 在 CARDS 裡
-     · slot === 'any'（'any' 才是「哪裡都能插」的那一類）
-     · 名稱**不是**以「卡片」結尾（真正的卡片不需要這段說明）
-   這樣以後新增的附魔石會自動涵蓋，不必回來改清單。 */
-{
-  let _sn = 0;
-  if (typeof CARDS !== 'undefined' && typeof ITEMS !== 'undefined') {
-    for (const id in CARDS) {
-      const c = CARDS[id];
-      const it = ITEMS[id];
-      if (!c || !it || !it.desc) continue;
-      if (c.slot !== 'any') continue;
-      if (/卡片$/.test(c.name || '')) continue;
-      if (it.desc.indexOf('🧩 本服用法') >= 0) continue;      // 避免重複附加
-      it.desc += ' （🧩 本服用法：這顆石頭當成「卡片」插在裝備上即可 ——'
-        + '本服沒有另外的附魔介面。它的插槽是「任意部位」，'
-        + '任何還有空卡片孔的裝備都插得進去。'
-        /* acc124 #3464：只講「怎麼用」不講「拿不到」，玩家會一直找。
-           五條管道全查過：商店 0、箱子 0、鍛造 0、卡冊 0
-           （卡冊的過濾是名稱以「卡片」結尾，附魔石叫「STR+1」全被排除）；
-           有掉落來源的 12 顆，來源怪也不在任何地圖的配怪表或王名單上。 */
-        /* ⚠ 這裡刻意**不用**「本服目前沒有取得管道」那串字 ——
-           那是 SRCNOTE 產生器的機器標記，testsrcnote 靠它做比對，
-           在這裡寫會讓 108 顆附魔石全被誤認為已標記。 */
-        + '⚠ 不過實際上弄不到：商店、箱子、鍛造、卡冊都沒有；'
-        + '少數幾顆雖然登記了掉落來源，但那些怪不會出現在任何地圖上。'
-        + '所以手上沒有的話，目前是拿不到的。）';
-      _sn++;
-    }
-  }
-  console.log('[data] STONENOTE 標明附魔石當卡片插 ' + _sn + ' 顆');
-}
+/* 附魔石說明改由 js/enchants.js 附加（D7，2026-11-14） */
 /* ==== STONENOTE END ==== */
 /* ==== CARDPCTNOTE BEGIN ==== */
 /* acc370 #2101：官方寫「MATK+10%」，本服資料卻是固定值 +10。

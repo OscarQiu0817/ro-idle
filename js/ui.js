@@ -35,7 +35,6 @@ function initApp() {
   renderDisclaimers();          // 免責聲明（#118）：四個位置一次填好
   showScreen('screen-title');
   showTitleMenu();
-  maybeShowConsent();           // 首次開啟才出現的一次性確認（#121）
   // 瀏覽器要使用者先互動才能出聲：標題畫面第一次點擊時開始播標題音樂
   document.addEventListener('pointerdown', ensureTitleMusic, { once: true });
 }
@@ -123,45 +122,7 @@ function legalSectionsHtml() {
   </div>`;
 }
 
-/* ---- 首次開啟的一次性確認（#121）----
-   勾過就記住，之後不再出現。**不是每次都擋的同意閘**——見 js/about.js 的說明。
-   讀寫 localStorage 包 try：無痕模式或停用儲存時會丟例外，
-   那種情況就當成「沒同意過」每次問，也比整個畫面掛掉好。 */
-function legalConsentGiven() {
-  try { return localStorage.getItem(CONSENT_KEY) === '1'; } catch (e) { return false; }
-}
-function setLegalConsent() {
-  try { localStorage.setItem(CONSENT_KEY, '1'); } catch (e) { /* 存不了就算了 */ }
-}
-function onConsentCheck(el) {
-  const btn = document.getElementById('consent-enter');
-  if (btn) btn.disabled = !el.checked;
-}
-function acceptLegalConsent() {
-  const box = document.getElementById('consent-check');
-  if (!box || !box.checked) return;
-  setLegalConsent();
-  const m = document.getElementById('consent-modal');
-  if (m) m.classList.add('hidden');
-}
-/* 標題畫面載入時叫一次。已經同意過就什麼都不做 */
-function maybeShowConsent() {
-  if (legalConsentGiven()) return;
-  const body = document.getElementById('consent-modal-body');
-  if (body) {
-    body.innerHTML = `
-      <div class="disclaimer-badge">💚 完全免費　🚫 禁止販售　🕹️ 純為懷舊</div>
-      <div class="about-lines">${DISCLAIMER_LINES.map(t => `<p>${t}</p>`).join('')}</div>
-      ${legalSectionsHtml()}
-      <div class="about-sec">
-        <h4>📄 授權條款　${LICENSE_NAME}</h4>
-        <p>${LICENSE_NOTE}</p>
-      </div>`;
-  }
-  const m = document.getElementById('consent-modal');
-  if (m) m.classList.remove('hidden');
-}
-
+/* 首次開啟的一次性確認（#121）2026-11-14 拿掉（使用者）；聲明仍在「關於」視窗 */
 
 /* 注音／中文輸入法送出時補一次重畫。
 
@@ -582,8 +543,7 @@ function onTickUI() {
     renderLogNow();
     renderTopBar();
     // 檢測怪物列表是否變更
-    const currentIds = state.monsters ? state.monsters.map(m => m.id).join(',') : '';
-    if (lastMonsterDefId !== currentIds) {
+    if (lastMonsterDefId !== monsterListKey()) {
       renderMonster();
     } else {
       updateMonsterHp();
@@ -1305,6 +1265,7 @@ const flatPct = (label, b, flatUnit) => {
   return parts.join('、');
 };
 const BUFF_EFFECT_TEXT = {
+  foodstat: b => `${b.buffName || '料理'}：${String(b.stat || '').toUpperCase()} +${b.flatBonus || 0}`,
   blessing: b => `STR/INT/DEX ${sgn(b.strBonus || 0)}`,
   flatstat: b => [b.strBonus ? `STR ${sgn(b.strBonus)}` : '', b.flatBonus ? `ATK ${sgn(b.flatBonus)}` : ''].filter(Boolean).join('、'),
   statpct: b => `DEX/AGI ${sgn(Math.round(b.mult * 100), '%')}`,
@@ -1382,7 +1343,7 @@ function buffChipGroups(list) {
   const order = [];
   const map = new Map();
   list.forEach(b => {
-    const key = b.skillId ? ('s:' + b.skillId) : ('t:' + (b.type || ''));
+    const key = buffChipKey([b]);
     if (!map.has(key)) { map.set(key, []); order.push(key); }
     map.get(key).push(b);
   });
@@ -1390,7 +1351,8 @@ function buffChipGroups(list) {
 }
 function buffChipKey(group) {
   const b = group[0];
-  return b.skillId ? ('s:' + b.skillId) : ('t:' + (b.type || ''));
+  // 素質料理每種素質各一格
+  return b.skillId ? ('s:' + b.skillId) : ('t:' + (b.type || '') + (b.stat ? ':' + b.stat : ''));
 }
 function buffChipRemain(group) {
   return group.reduce((m, b) => Math.max(m, Math.ceil((b.msRemaining || 0) / 1000)), 0);
@@ -1473,6 +1435,7 @@ function buffChipIconSrc(group) {
   const key = b.skillId || ('type_' + (b.type || ''));
   if (typeof SKILL_STATUS_ICONS !== 'undefined' && SKILL_STATUS_ICONS.has(key)) return `images/skills/status/${key}.png`;
   if (b.skillId && SKILLS[b.skillId]) return `images/skills/${b.skillId}.png`;
+  if (b.itemId && ITEMS[b.itemId]) return itemImgSrc(b.itemId);   // 料理等道具增益用道具圖
   return '';
 }
 function buffChipLabel(group) {
@@ -1605,7 +1568,7 @@ const TAB_GROUP = {
   map: 'fight', autobattle: 'fight', quests: 'fight',
   character: 'grow', skills: 'grow', jobtree: 'grow',
   inventory: 'gear', equip: 'gear',
-  codex: 'social', achievements: 'social', pets: 'social'
+  codex: 'social', pets: 'social'
 };
 const TAB_GROUP_FIRST = { fight: 'map', grow: 'character', gear: 'inventory', social: 'codex' };
 function setTabGroup(g) {
@@ -1647,7 +1610,6 @@ function switchTab(name) {
   if (name === 'jobtree') renderJobTree();
   if (name === 'character') renderCharacterTab();
   if (name === 'codex') renderCodexTab();
-  if (name === 'achievements') renderAchievementsTab();
   if (name === 'attendance') renderAttendanceTab();
   if (name === 'quests') renderQuestsTab();
   if (name === 'pets') renderPetsTab();
@@ -2184,6 +2146,180 @@ function showSkillCastEffect(sk) {
   setTimeout(() => img.remove(), fx.spriteMs);
 }
 
+/* ---------------- 技能命中特效（T24，2026-11-14 樣品：火箭術／冰箭術／雷擊術／火球術） ----------------
+   動畫格由 scripts/gen_skill_fx.py 從 grf 轉出（images/effects/skill/<名稱>/000.png…，表在 js/skill_fx_data.js）。
+   時間軸照 roBrowser 的官方特效定義：火箭／冰箭每級一支、每 10 tick（約 166ms）一支，火箭落地加火花；
+   雷擊術每級一道雷加風屬性火花；火球術從施法者射出 4 顆（間隔 67ms）飛向目標，到達時爆火花。
+   官方特效照 RO 畫面像素畫，本作角色較小，各組自帶縮放。 */
+const MAX_LIVE_SKILL_FX = 40;
+let _liveSkillFx = 0;
+const _fxPreloaded = {};
+/* 一招一張 WebP 合圖（格狀排列、已是顯示大小，scripts/gen_skill_fx.py 產生），用背景位置切格 */
+function fxSheetSrc(name) { return `images/effects/skill/${name}.webp`; }
+function preloadFx(name) {
+  if (_fxPreloaded[name] || typeof SKILL_FX_ANIM === 'undefined' || !SKILL_FX_ANIM[name]) return;
+  const im = new Image(); im.src = fxSheetSrc(name); _fxPreloaded[name] = im;
+}
+/* 在畫面座標 (x, y) 播一組動畫：(x, y) 對齊這組的錨點。opt.move＝{x, y, ms} 會從起點飛到終點（火球用）；opt.rot 旋轉角度 */
+function playFxAnim(name, x, y, delayMs, opt) {
+  const m = typeof SKILL_FX_ANIM !== 'undefined' && SKILL_FX_ANIM[name];
+  if (!m || _liveSkillFx >= MAX_LIVE_SKILL_FX) return;
+  preloadFx(name);
+  opt = opt || {};
+  setTimeout(() => {
+    if (_liveSkillFx >= MAX_LIVE_SKILL_FX) return;
+    const el = document.createElement('div');
+    el.className = 'skill-hit-fx';
+    el.style.width = m.w + 'px';
+    el.style.height = m.h + 'px';
+    el.style.backgroundImage = `url("${fxSheetSrc(name)}")`;
+    el.style.transformOrigin = `${m.ax}px ${m.ay}px`;
+    if (opt.rot) el.style.transform = `rotate(${opt.rot}deg)`;
+    const place = (px, py) => { el.style.left = (px - m.ax) + 'px'; el.style.top = (py - m.ay) + 'px'; };
+    const frame = i => { el.style.backgroundPosition = `${-(i % m.cols) * m.w}px ${-Math.floor(i / m.cols) * m.h}px`; };
+    place(x, y);
+    frame(0);
+    document.body.appendChild(el);
+    _liveSkillFx++;
+    const t0 = performance.now();
+    const total = opt.move ? opt.move.ms : m.n * m.ms;
+    let last = -1;
+    const step = now => {
+      const t = now - t0;
+      if (t >= total) { el.remove(); _liveSkillFx--; if (opt.done) opt.done(); return; }
+      const i = opt.move ? Math.floor(t / m.ms) % m.n : Math.min(m.n - 1, Math.floor(t / m.ms));
+      if (i !== last) { frame(i); last = i; }
+      if (opt.move) { const k = t / total; place(x + (opt.move.x - x) * k, y + (opt.move.y - y) * k); }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, delayMs || 0);
+}
+function fxRectOf(el) {
+  if (!el) return null;
+  const host = el.querySelector ? (el.querySelector('canvas, img') || el) : el;
+  const r = host.getBoundingClientRect();
+  return r.width || r.height ? r : (el.getBoundingClientRect ? el.getBoundingClientRect() : null);
+}
+/* engine.castSkill 確定放出去時呼叫（玩家與隊友都會）。目標＝當下的 monsters[0] */
+/* 其他技能（roBrowser 官方特效定義轉來的 SKILL_FX_PLAN）：
+   anim＝整段播（同一種有幾個版本時隨機挑一個，repeat 就循環到 duration）；
+   particle＝光點，照官方的數量、間隔、隨機範圍（格）、上升、大小、淡入淡出。
+   at：caster 施法者、target 目標、ground 目標腳下；自身增益技（沒有打怪的類型）目標就是施法者。 */
+const FX_CELL_PX = 22;   // 1 格 ≈ 22px（本作角色約 88px 高）
+function fxCasterEl() {
+  const ally = typeof _allyActing !== 'undefined' ? _allyActing : null;
+  const owner = (typeof _allyOwnerState !== 'undefined' && _allyOwnerState) || state;
+  const i = ally ? ((owner.allies || []).indexOf(ally)) : -1;
+  return i >= 0 ? document.getElementById('ally-sprite-' + i) : document.getElementById('player-sprite');
+}
+function playFxParticle(name, x, y, L, delay) {
+  const m = SKILL_FX_ANIM[name];
+  if (!m || _liveSkillFx >= MAX_LIVE_SKILL_FX) return;
+  preloadFx(name);
+  setTimeout(() => {
+    if (_liveSkillFx >= MAX_LIVE_SKILL_FX) return;
+    const isTex = name.startsWith('tex_');
+    const sc = isTex ? Math.max(6, Math.min(140, L.size || 100)) * 0.3 / Math.max(m.w, m.h) : (L.size || 100) / 100;   // 精靈圖素材已先縮 0.6 倍
+    const el = document.createElement('div');
+    el.className = 'skill-hit-fx fx-particle';
+    el.style.width = m.w + 'px'; el.style.height = m.h + 'px';
+    el.style.backgroundImage = `url("${fxSheetSrc(name)}")`;
+    el.style.transformOrigin = `${m.ax}px ${m.ay}px`;
+    const px = x + (Math.random() * 2 - 1) * (L.rx || 0) * FX_CELL_PX, py = y + (Math.random() * 2 - 1) * (L.ry || 0) * FX_CELL_PX * 0.5;
+    el.style.left = (px - m.ax) + 'px'; el.style.top = (py - m.ay) + 'px';
+    document.body.appendChild(el);
+    _liveSkillFx++;
+    const dur = Math.max(100, L.duration || 500), amax = (L.alphaMax != null ? L.alphaMax : 1) * 0.75, t0 = performance.now();
+    const step = now => {
+      const t = now - t0;
+      if (t >= dur) { el.remove(); _liveSkillFx--; return; }
+      const k = t / dur;
+      let a = amax;
+      if (L.fadeIn && k < 0.25) a *= k / 0.25;
+      if (L.fadeOut && k > 0.6) a *= (1 - k) / 0.4;
+      el.style.opacity = a.toFixed(3);
+      const i = m.n > 1 ? Math.floor(t / m.ms) % m.n : 0;
+      el.style.backgroundPosition = `${-(i % m.cols) * m.w}px ${-Math.floor(i / m.cols) * m.h}px`;
+      el.style.transform = `translateY(${-(L.rise || 0) * FX_CELL_PX * 0.5 * k}px) scale(${sc})`;
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, delay);
+}
+function skillSfxUrl(w) { return 'WAV/skill/' + w.split('/').map(encodeURIComponent).join('/') + '.ogg'; }
+/* 這招有沒有官方音效（有的話 playSkillSound 就不再放通用的屬性音效，免得響兩聲） */
+const SKILL_FX_CUSTOM = ['mg_firebolt', 'mg_coldbolt', 'mg_lightningbolt', 'mg_fireball'];   // 手調特效的四招沿用原本的連發音效
+function skillHasPlanSfx(id) { return !SKILL_FX_CUSTOM.includes(id) && typeof SKILL_FX_PLAN !== 'undefined' && !!SKILL_FX_PLAN[id] && SKILL_FX_PLAN[id].some(L => L.wav && L.wav.length); }
+function playSkillPlanFx(sk) {
+  if (typeof SKILL_FX_PLAN === 'undefined' || !SKILL_FX_PLAN[sk.id]) return;
+  const ce = fxCasterEl();
+  const cr = fxRectOf(ce);
+  const offensive = typeof SKILL_ATTACK_TYPES !== 'undefined' && SKILL_ATTACK_TYPES.includes(sk.type) && sk.autoSlot !== 'support';
+  const mon = state.monsters && state.monsters[0];
+  const tr = offensive && mon ? fxRectOf(monSlotAnchor(mon.id)) : cr;
+  for (const L of SKILL_FX_PLAN[sk.id]) {
+    // 官方音效（scripts/gen_skill_sfx.py 轉成 WAV/skill/<路徑>.ogg）：照官方延遲，幾個版本隨機挑一個
+    if (L.wav && L.wav.length) {
+      const w = L.wav[Math.floor(Math.random() * L.wav.length)];
+      setTimeout(() => playSfx(skillSfxUrl(w), 40), (L.delay || 0) + (L.wavDelay || 0));
+    }
+    if (L.play === 'sound') continue;
+    const r = L.at === 'caster' ? cr : (tr || cr);
+    if (!r) continue;
+    const x = r.left + r.width / 2;
+    let y = L.at === 'ground' ? r.top + r.height * 0.9 : r.top + r.height * 0.55;
+    if (L.head) y = r.top + r.height * 0.45;   // 精靈圖本身已畫在角色上方，不再加官方的 yOffset
+    if (L.play === 'anim') {
+      const name = L.fx[Math.floor(Math.random() * L.fx.length)];
+      const m = SKILL_FX_ANIM[name];
+      if (!m) continue;
+      const once = m.n * m.ms;
+      const times = L.repeat && L.duration ? Math.max(1, Math.min(4, Math.round(L.duration / Math.max(1, once)))) : 1;
+      for (let k = 0; k < times; k++) playFxAnim(name, x, y, (L.delay || 0) + k * once);
+    } else {
+      const n = Math.max(1, Math.min(5, L.dup || 1));
+      for (let k = 0; k < n; k++) playFxParticle(L.fx[0], x, y, L, (L.delay || 0) + k * (L.gap || 0));
+    }
+  }
+}
+
+function playSkillHitFx(sk, lv) {
+  if (!sk || typeof SKILL_FX_ANIM === 'undefined' || !state) return;
+  const kind = { mg_firebolt: 'firebolt', mg_coldbolt: 'coldbolt', mg_lightningbolt: 'lightning', mg_fireball: 'fireball' }[sk.id];
+  if (!kind) { playSkillPlanFx(sk); return; }
+  if (!state.monsters || !state.monsters.length) return;
+  const tr = fxRectOf(monSlotAnchor(state.monsters[0].id));
+  if (!tr) return;
+  const tx = tr.left + tr.width / 2, ty = tr.top + tr.height * 0.85, tcy = tr.top + tr.height * 0.5;
+  const n = Math.max(1, Math.min(10, lv || 1));
+  const hit = (pre, i) => pre + (1 + ((i * 7) % 3));   // firehit1~3 輪流
+  if (kind === 'firebolt' || kind === 'coldbolt') {
+    for (let i = 0; i < n; i++) {
+      const jx = ((i * 37) % 21) - 10, jy = ((i * 23) % 11) - 5;
+      playFxAnim(kind, tx + jx, ty + jy, i * 166);
+      if (kind === 'firebolt') playFxAnim(hit('firehit', i), tx + jx, tcy + jy, i * 166 + 400);
+    }
+  } else if (kind === 'lightning') {
+    for (let i = 0; i < n; i++) {
+      playFxAnim('lightning', tx, ty, i * 200);
+      playFxAnim(hit('windhit', i), tx, tcy, i * 200 + 250);
+    }
+  } else {
+    const ally = typeof _allyActing !== 'undefined' ? _allyActing : null;
+    const owner = (typeof _allyOwnerState !== 'undefined' && _allyOwnerState) || state;
+    const ci = ally ? ((owner.allies || []).indexOf(ally)) : -1;
+    const cr = fxRectOf(ci >= 0 ? document.getElementById('ally-sprite-' + ci) : document.getElementById('player-sprite'));
+    if (!cr) return;
+    const sx = cr.left + cr.width / 2, sy = cr.top + cr.height * 0.45;
+    const rot = Math.atan2(tcy - sy, tx - sx) * 180 / Math.PI + 90;   // 火球圖的頭朝上、尾巴朝下
+    for (let i = 0; i < 4; i++) {
+      playFxAnim('fireball', sx, sy, i * 67, { move: { x: tx, y: tcy, ms: 333 }, rot,
+        done: i === 0 ? () => playFxAnim(hit('firehit', 0), tx, tcy, 0) : null });
+    }
+  }
+}
+
 /* 持續時間內的光芒：每個 tick 對照 buff 是否還在，決定 class 加或拿掉。
    比對 skillId 而不是 buff type——攻速藥水也是 type:'aspd'，比 type 會讓喝藥也發光。 */
 function updateSkillAura() {
@@ -2374,6 +2510,7 @@ function playHitSound(isCrit) {
    物理技能沒有專屬音檔，交給普攻那組處理，這裡不出聲。 */
 function playSkillSound(sk, lv) {
   if (!sk) return;
+  if (skillHasPlanSfx(sk.id)) return;   // 官方音效由 playSkillPlanFx 跟著特效播
   // 有專屬音檔的技能優先，不再往下走箭術／屬性那幾條規則
   if (SFX_SKILL[sk.id]) { playSfx(SFX_SKILL[sk.id]); return; }
   const bolt = SFX_MAGIC_BOLT[sk.id];
@@ -2403,12 +2540,18 @@ function playStatusSound(kind) {
 }
 
 let lastMonsterDefId = null; // 追蹤目前顯示的怪物，避免重複渲染
+/* 畫面上怪物區的簽章。空的時候也要有固定值（地圖＋討伐中），
+   原本空時記 null、比對用 ''，永遠不相等 → 搜尋中／城鎮裡每拍整區重畫 */
+function monsterListKey() {
+  const list = state.monsters || [];
+  return list.length ? list.map(m => m.id + ':' + m.defId).join(',') : 'empty:' + state.mapId + ':' + (state.bossHunt ? 1 : 0);
+}
 function renderMonster() {
   const wrap = document.getElementById('monster-area');
   if (!wrap) return;
   const graves = takeMonsterGraves(wrap);
   if (!state.monsters || state.monsters.length === 0) {
-    lastMonsterDefId = null;
+    lastMonsterDefId = monsterListKey();
     const map = currentMap();
     if ((map && map.monsters.length === 0) || state.bossHunt) {   // 討伐首領中畫面上有討伐條，不顯示「搜尋中」
       wrap.innerHTML = '';
@@ -2444,7 +2587,7 @@ function renderMonster() {
   wrap.innerHTML = html;
   putMonsterGraves(wrap, graves);
   wrap.querySelectorAll('.monster-slot:not(.dying) img[data-def]').forEach(img => mobAnimBind(img));
-  lastMonsterDefId = state.monsters.map(m => m.id).join(',');
+  lastMonsterDefId = monsterListKey();
   layoutBattlefield();
 }
 
@@ -2528,9 +2671,13 @@ function showPlayerFloat(dmg, type) {
   el.className = 'damage-float';
   if (type === 'crit') el.classList.add('crit');
   else if (type === 'heal') el.classList.add('heal');
+  else if (type === 'sp') el.classList.add('sp');
   else if (type === 'miss') el.classList.add('miss');
   else if (type === 'element-good') el.classList.add('element-good');
   else if (type === 'element-bad') el.classList.add('element-bad');
+  // 角色被打（含 MISS）一律紅字，比照官方（使用者 2026-11-14）；補 HP 綠字、補 SP 藍字
+  const recover = type === 'heal' || type === 'sp';
+  if (!recover) el.classList.add('taken');
   el.textContent = dmg;
 
   // 換身中（隊友被打、隊友自己的 MISS）飄在那位隊友頭上
@@ -2543,10 +2690,13 @@ function showPlayerFloat(dmg, type) {
   }
   if (!playerEl) playerEl = document.getElementById('player-sprite');
   if (playerEl) {
-    const rect = playerEl.getBoundingClientRect();
+    /* 回復量打在角色身上、比頭低一點（使用者 2026-11-14，比照官方）：用紙娃娃 canvas 的範圍定位 */
+    const paper = recover ? playerEl.querySelector('canvas') : null;
+    const host = paper && paper.offsetWidth ? paper : playerEl;
+    const rect = host.getBoundingClientRect();
     el.style.position = 'fixed';
-    el.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * 20) + 'px';
-    el.style.top = (rect.top - 10) + 'px';
+    el.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * (recover ? 8 : 20)) + 'px';
+    el.style.top = (recover && host === paper ? rect.top + rect.height * 0.4 : rect.top - 10) + 'px';
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1500);
   }
@@ -3193,11 +3343,20 @@ function playerKeepsDistance() {
   } catch (e) { return false; }
 }
 function bfClamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+/* 排版幀內的位置快取（T57）：場景與容器不會跟著角色移動，一幀量一次就好。
+   不快取的話每次都夾在 style 寫入之間讀 getBoundingClientRect，每讀一次就強制重排一次。 */
+let _bfRects = null;
+function bfRect(el) {
+  if (!_bfRects) return el.getBoundingClientRect();
+  let r = _bfRects.get(el);
+  if (!r) { r = el.getBoundingClientRect(); _bfRects.set(el, r); }
+  return r;
+}
 function sceneToLocal(parent, sx, sy) {
   const scene = document.getElementById('battle-scene');
   if (!scene || !parent) return null;
-  const s = scene.getBoundingClientRect();
-  const p = parent.getBoundingClientRect();
+  const s = bfRect(scene);
+  const p = bfRect(parent);
   if (!s.width || !s.height) return null;
   return {
     x: s.left + s.width * sx / 100 - p.left,
@@ -3226,6 +3385,10 @@ function approachPoint(self, other, gap) {
 }
 function layoutBattlefield() {
   if (typeof state === 'undefined' || !state) return;
+  _bfRects = new Map();
+  try { layoutBattlefieldInner(); } finally { _bfRects = null; }
+}
+function layoutBattlefieldInner() {
   const now = Date.now();
   const dt = bfLast ? Math.min(0.12, (now - bfLast) / 1000) : 0;
   bfLast = now;
@@ -3242,14 +3405,16 @@ function layoutBattlefield() {
   }
   const stepped = dt ? bfStep(bfPlayer, goal, dt) : { x: bfPlayer.x, y: bfPlayer.y, moved: false };
   bfPlayer = { x: stepped.x, y: stepped.y };
-  if (ps && ps.offsetParent) {
-    const local = sceneToLocal(ps.offsetParent, bfPlayer.x, bfPlayer.y);
+  const psParent = ps && ps.offsetParent;
+  if (psParent) {
+    const local = sceneToLocal(psParent, bfPlayer.x, bfPlayer.y);
     if (local) {
+      const w = ps.offsetWidth, h = ps.offsetHeight;   // 先讀再寫，免得每個屬性各重排一次
       ps.classList.add('bf-on');
       ps.style.position = 'absolute';
       ps.style.margin = '0';
-      ps.style.left = (local.x - ps.offsetWidth / 2) + 'px';
-      ps.style.top = (local.y - ps.offsetHeight) + 'px';
+      ps.style.left = (local.x - w / 2) + 'px';
+      ps.style.top = (local.y - h) + 'px';
     }
   }
   // 城鎮裡平常不走動；趕路（D1b）時會走向傳點，那時也要播走路
@@ -3628,8 +3793,16 @@ function mobAnimTick() {
 }
 
 // 跟螢幕更新同步（原本 setInterval 50ms＝20fps，走路補間要每幀畫才順）；先排下一幀，出錯也不斷
+/* 高更新率螢幕（120／144Hz）不用每幀都排版：間隔不到 12ms 跳過，
+   60Hz 照樣每幀、120Hz 變 60 次、144Hz 變 72 次，補間看起來一樣順，排版成本少一半 */
+let _bfFrameAt = 0;
 if (!bfTimer) {
-  const bfLoop = () => { bfTimer = requestAnimationFrame(bfLoop); layoutBattlefield(); };
+  const bfLoop = (t) => {
+    bfTimer = requestAnimationFrame(bfLoop);
+    if (t - _bfFrameAt < 12) return;
+    _bfFrameAt = t;
+    layoutBattlefield();
+  };
   bfTimer = requestAnimationFrame(bfLoop);
 }
 
@@ -4024,7 +4197,9 @@ function huntTabSig() {
   return hb.q.map(e => {
     const p = (typeof huntProgress === 'function' && huntProgress(e)) || [];
     return e.id + ':' + p.map(x => x.have).join(',');
-  }).join('|') + '#' + (hb.noAuto || 0) + '#' + mainQuestSig();
+  }).join('|') + '#' + (hb.noAuto || 0) + '#' + mainQuestSig()
+    + '#' + (typeof periodQuestClaimable === 'function' ? periodQuestClaimable() : 0)
+    + '#' + Object.keys(((state.achievements || {}).done) || {}).length;
 }
 function mainQuestSig() {
   const st = typeof mainQuestStep === 'function' ? mainQuestStep() : null;
@@ -4283,11 +4458,14 @@ function cashShopBuy(id, n) {
   renderCashShopModal();
   renderTopBar();
 }
-function renderCashShopModal() {
-  const el = document.getElementById('cash-shop-modal-body');
-  if (!el || !state || typeof CASH_SHOP === 'undefined') return;
-  const pts = cashPoints();
-  const sec = CASH_SHOP.map(c => {
+function mvpShopBuy(id, n) {
+  runWithNotice('🏅 MVP 點數商店', () => buyMvpItem(id, n));
+  renderCashShopModal();
+  renderTopBar();
+}
+// 商城與 MVP 點數商店共用的格子列表
+function shopGridHtml(shop, pts, icon, buyFn) {
+  return shop.map(c => {
     const cells = c.items.filter(([id]) => ITEMS[id]).map(([id, p]) => {
       const nm = ITEMS[id].name;
       const have = getItemQty(id);
@@ -4297,22 +4475,33 @@ function renderCashShopModal() {
           <div class="att-name">${shopEsc(nm)}</div>
           <div class="att-day">持有 ${have}</div>
         </div>
-        <div class="att-tag">💎 ${p}</div>
+        <div class="att-tag">${icon} ${p}</div>
         <div class="cash-btns">
-          <button class="btn-small" ${pts < p ? 'disabled' : ''} onclick="cashShopBuy('${id}',1)">買 1</button>
-          <button class="btn-small ghost" ${pts < p * 10 ? 'disabled' : ''} onclick="cashShopBuy('${id}',10)">×10</button>
+          <button class="btn-small" ${pts < p ? 'disabled' : ''} onclick="${buyFn}('${id}',1)">買 1</button>
+          <button class="btn-small ghost" ${pts < p * 10 ? 'disabled' : ''} onclick="${buyFn}('${id}',10)">×10</button>
         </div>
       </div>`;
     }).join('');
     return `<h4 class="cash-cat">${shopEsc(c.cat)}</h4><div class="att-grid">${cells}</div>`;
   }).join('');
-  el.innerHTML = `<div class="empty-hint">持有 <b>💎 ${pts.toLocaleString()}</b> ${CASH_POINT_NAME}。主線每一步、每日簽到都會發點數。點圖示看道具說明。</div>${sec}`;
+}
+function renderCashShopModal() {
+  const el = document.getElementById('cash-shop-modal-body');
+  if (!el || !state || typeof CASH_SHOP === 'undefined') return;
+  const pts = cashPoints();
+  const mvp = typeof MVP_SHOP !== 'undefined'
+    ? `<h3 class="panel-title">🏅 MVP 點數商店</h3>
+      <div class="empty-hint">持有 <b>🏅 ${mvpPoints().toLocaleString()}</b> ${MVP_POINT_NAME}。打倒 MVP 得 1 點，每天最多 ${MVP_POINT_DAILY_CAP} 點（今天已得 ${mvpPointsToday()}）。</div>
+      ${shopGridHtml(MVP_SHOP, mvpPoints(), '🏅', 'mvpShopBuy')}` : '';
+  el.innerHTML = `<h3 class="panel-title">💎 商城</h3>
+    <div class="empty-hint">持有 <b>💎 ${pts.toLocaleString()}</b> ${CASH_POINT_NAME}。主線每一步、每日簽到都會發點數。點圖示看道具說明。</div>
+    ${shopGridHtml(CASH_SHOP, pts, '💎', 'cashShopBuy')}${mvp}`;
 }
 function renderQuestsTab() {
   const el = document.getElementById('tab-quests');
   if (!el || !state) return;
   const hb = ensureHuntBoard();
-  let html = mainQuestHtml() + `<h3 class="panel-title">📜 討伐佈告欄</h3>
+  let html = mainQuestHtml() + periodQuestHtml() + sideQuestHtml() + `<h3 class="panel-title">📜 討伐佈告欄</h3>
     <div class="empty-hint">接下之後，擊殺目標會自動計數。完成後回來領。不想做可以放棄換一張。</div>`;
   if (!hb.q.length) html += '<div class="empty-hint">佈告欄是空的，稍等幾秒會貼上新的。</div>';
   html += '<div class="acv-list">';
@@ -4514,6 +4703,7 @@ function openTownNpc(id) {
   if (n.role === 'gmt' || n.role === 'gmtshop') { el.innerHTML = gmtNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'gvg') { el.innerHTML = gvgNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'dojo') { el.innerHTML = dojoNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
+  if (n.role === 'enchant') { el.innerHTML = enchantNpcPanelHtml(n, back); return; }
   if (n.role === 'kafra') {
     el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💁 ${shopEsc(n.name)}</h3></div>
       <div class="town-npc-say">歡迎光臨卡普拉服務，今天需要什麼服務呢？</div>
@@ -4558,7 +4748,7 @@ function townNpcPanelHtml() {
   }
   const here = townDistrictHere();
   const icon = n => n.role === 'shop' ? ((NPC_SHOPS[n.shop] || {}).icon || '🏪')
-    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : n.role === 'dojo' ? '🥋' : '🧑';
+    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : n.role === 'dojo' ? '🥋' : n.role === 'enchant' ? '💠' : '🧑';
   return `<div class="town-npcs">
     <h4 class="town-npc-title">🏙️ 城內　<span class="town-here">目前在：${here ? shopEsc(here.name) : '—'}</span></h4>
     ${L.districts.map(d => {
@@ -5479,94 +5669,69 @@ function toggleJobSection(jobId) {
    技能全部改由自動戰鬥分頁設定：攻擊技能兩個下拉、輔助技能各自的勾選框。
    castSkill() 本身沒有動，卡片自動念咒、技能連段那些內部呼叫照舊。 */
 
-/* ---------------- 成就分頁 ---------------- */
-let acvCat = 'all';
-let acvHideDone = false;
+/* ---------------- 支線任務（原成就，使用者 2026-11-14）＋每日／每週任務 ---------------- */
+let sideQuestShowAll = false;
+function setSideQuestShowAll(v) { sideQuestShowAll = v; renderQuestsTab(); }
 
-function setAcvCat(c) { acvCat = c; renderAchievementsTab(); }
-function setAcvHideDone(v) { acvHideDone = v; renderAchievementsTab(); }
-
-// 由 checkAchievements() 解鎖時回呼
+// 由 checkAchievements() 達成時回呼
 function onAchievementUnlocked(list) {
   const first = list[0];
   const extra = list.length > 1 ? `（+${list.length - 1}）` : '';
-  showToast(`🏆 達成成就「${first.name}」${extra}`);
-  const btn = document.querySelector('.tab-btn[data-tab="achievements"]');
-  if (btn && activeTab !== 'achievements') btn.classList.add('has-new');
-  if (activeTab === 'achievements') renderAchievementsTab();
+  showToast(`📜 完成支線「${first.name}」${extra}`);
+  if (activeTab === 'quests') renderQuestsTab();
   renderTopBar();
 }
 
-function renderAchievementsTab() {
-  const el = document.getElementById('tab-achievements');
-  if (!el || !state) return;
+function periodQuestHtml() {
+  if (typeof periodQuestList !== 'function') return '';
+  const block = (type, title) => {
+    const rows = periodQuestList(type).map(x => {
+      const ready = !x.claimed && x.have >= x.goal;
+      return `<div class="acv-row ${x.claimed ? 'done' : ''}">
+        <div class="acv-icon">${type === 'd' ? '📅' : '🗓️'}</div>
+        <div class="acv-body">
+          <div class="acv-name">${shopEsc(x.name)}${x.claimed ? ' <span class="acv-check">✔</span>' : ''}</div>
+          <div class="acv-bar"><div class="acv-bar-fill" style="width:${Math.min(100, x.have / x.goal * 100)}%"></div></div>
+        </div>
+        <div class="acv-side"><div class="acv-count">${x.have.toLocaleString()} / ${x.goal.toLocaleString()}</div>
+          ${ready ? `<button class="btn-small active" onclick="claimPeriodQuest('${type}','${x.id}');renderQuestsTab();renderTopBar();">領 💎 ${x.pts}</button>` : `<div class="acv-reward">💎 ${x.pts}</div>`}</div>
+      </div>`;
+    }).join('');
+    return `<h3 class="panel-title">${title}</h3><div class="acv-list">${rows}</div>`;
+  };
+  return block('d', '📅 每日任務') + block('w', '🗓️ 每週任務（週一更新）');
+}
 
-  const btn = document.querySelector('.tab-btn[data-tab="achievements"]');
-  if (btn) btn.classList.remove('has-new');
-
-  const sum = getAchievementSummary();
+function sideQuestHtml() {
+  if (typeof ACHIEVEMENTS === 'undefined') return '';
   const done = ensureAchievements().done;
-
-  let list = ACHIEVEMENTS.filter(a => acvCat === 'all' || a.cat === acvCat);
-  if (acvHideDone) list = list.filter(a => !done[a.id]);
-
-  // 未完成的排前面，並且「差最少就達成」的排最前——玩家一打開就看到下一個目標
-  const rows = list.map(a => {
+  const rows = ACHIEVEMENTS.map(a => {
     const cur = achievementProgress(a);
     return { a, cur, done: !!done[a.id], ratio: Math.min(1, cur / a.goal) };
-  });
-  rows.sort((x, y) => {
-    if (x.done !== y.done) return x.done ? 1 : -1;
-    if (x.done) return (done[y.a.id] || 0) - (done[x.a.id] || 0); // 已完成：最近解鎖的在前
-    return y.ratio - x.ratio;
-  });
-
-  const catBtns = ['all'].concat(Object.keys(ACHIEVEMENT_CATEGORIES)).map(c => {
-    const label = c === 'all' ? '全部' : `${ACHIEVEMENT_CATEGORIES[c].icon} ${ACHIEVEMENT_CATEGORIES[c].name}`;
-    const n = c === 'all' ? `${sum.done}/${sum.total}` : `${sum.byCat[c].done}/${sum.byCat[c].total}`;
-    return `<button class="btn-small ${acvCat === c ? 'active' : ''}" onclick="setAcvCat('${c}')">${label} <span class="acv-cat-n">${n}</span></button>`;
-  }).join('');
-
-  const pctDone = sum.total ? (sum.done / sum.total * 100) : 0;
-
-  let html = `<h3 class="panel-title">🏆 成就</h3>
-    <div class="acv-summary">
-      <div class="acv-points"><span class="acv-points-num">${sum.points}</span><span class="acv-points-label">成就點數</span></div>
-      <div class="acv-summary-bar">
-        <div class="codex-prog-head"><span>總進度</span><span>${sum.done} / ${sum.total}　${pctDone.toFixed(1)}%</span></div>
-        <div class="bar-track"><div class="bar-fill acv-prog-fill" style="width:${pctDone}%"></div></div>
+  }).filter(r => sideQuestShowAll || !r.done);
+  // 未完成的排前面，差最少就達成的排最前
+  rows.sort((x, y) => (x.done !== y.done) ? (x.done ? 1 : -1) : y.ratio - x.ratio);
+  const shown = sideQuestShowAll ? rows : rows.slice(0, 8);
+  const nDone = Object.keys(done).length;
+  let html = `<h3 class="panel-title">🧭 支線任務 <span class="acv-cat-n">${nDone} / ${ACHIEVEMENTS.length}</span></h3>
+    <div class="empty-hint">達成條件自動完成、發鋅幣。${sideQuestShowAll ? '' : '只列最接近完成的 8 項。'}
+    <label class="auto-toggle"><input type="checkbox" ${sideQuestShowAll ? 'checked' : ''} onchange="setSideQuestShowAll(this.checked)"> 全部（含已完成）</label></div><div class="acv-list">`;
+  shown.forEach(r => {
+    const a = r.a;
+    html += `<div class="acv-row ${r.done ? 'done' : ''} tier-${Math.min(a.tier || 1, 5)}">
+      <div class="acv-icon">${a.icon}</div>
+      <div class="acv-body">
+        <div class="acv-name">${a.name}${r.done ? ' <span class="acv-check">✔</span>' : ''}</div>
+        <div class="acv-desc">${a.desc}</div>
+        <div class="acv-bar"><div class="acv-bar-fill" style="width:${r.ratio * 100}%"></div></div>
       </div>
-    </div>
-    <div class="acv-cats">${catBtns}</div>
-    <label class="auto-toggle acv-hide"><input type="checkbox" ${acvHideDone ? 'checked' : ''} onchange="setAcvHideDone(this.checked)"> 隱藏已完成</label>`;
-
-  if (!rows.length) {
-    html += '<div class="empty-hint">這個分類已經全部完成了！</div>';
-  } else {
-    html += '<div class="acv-list">';
-    rows.forEach(r => {
-      const a = r.a;
-      const p = r.ratio * 100;
-      const goalTxt = a.goal.toLocaleString();
-      const curTxt = Math.min(r.cur, a.goal).toLocaleString();
-      const rewardTxt = `${a.reward.gold ? `💰 ${a.reward.gold.toLocaleString()}　` : ''}🏆 ${a.reward.point}`;
-      html += `<div class="acv-row ${r.done ? 'done' : ''} tier-${Math.min(a.tier || 1, 5)}">
-        <div class="acv-icon">${a.icon}</div>
-        <div class="acv-body">
-          <div class="acv-name">${a.name}${r.done ? ' <span class="acv-check">✔</span>' : ''}</div>
-          <div class="acv-desc">${a.desc}</div>
-          <div class="acv-bar"><div class="acv-bar-fill" style="width:${p}%"></div></div>
-        </div>
-        <div class="acv-side">
-          <div class="acv-count">${curTxt} / ${goalTxt}</div>
-          <div class="acv-reward">${rewardTxt}</div>
-        </div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  el.innerHTML = html;
+      <div class="acv-side">
+        <div class="acv-count">${Math.min(r.cur, a.goal).toLocaleString()} / ${a.goal.toLocaleString()}</div>
+        <div class="acv-reward">${a.reward.gold ? `💰 ${a.reward.gold.toLocaleString()}` : ''}</div>
+      </div>
+    </div>`;
+  });
+  return html + '</div>';
 }
 
 /* ---------------- 圖鑑分頁 ---------------- */
@@ -10296,7 +10461,7 @@ function gmtNpcPanelHtml(n, back) {
 /* 攻城戰管理員（T55）：城主、開放時間、進城 */
 function gvgNpcPanelHtml(n, back) {
   // 城主資料在雲端：太舊就重抓，抓完重畫這個面板
-  if (gvgToken() && !_gvgFetching && (!_gvgCastle || gameNow() - _gvgCastle.at > 60000)) gvgRefresh().then(() => { if (document.querySelector('.gvg-panel')) openTownNpc('gvg'); });
+  if (gvgToken() && !_gvgFetching && gameNow() - _gvgFailAt > 30000 && (!_gvgCastle || gameNow() - _gvgCastle.at > 60000)) gvgRefresh().then(() => { if (document.querySelector('.gvg-panel')) openTownNpc('gvg'); });
   const owner = gvgOwner();
   const why = gvgBlockReason();
   const since = owner ? new Date(owner.since) : null;
@@ -10310,29 +10475,53 @@ function gvgNpcPanelHtml(n, back) {
       <li>角色互打的傷害 ×${GVG_DMG_RATE}；倒下就出局、沒有復活，三人全倒或時間到才算失敗</li>
       <li>城主每天領 ${GVG_DAILY_POINTS} 商城點數</li>
     </ul>
-    <div class="gmt-stat">${!gvgToken() ? '登入雲端帳號後才看得到城主。' : !_gvgCastle ? '讀取城主資料中…' : owner ? `城主：<b>${shopEsc(owner.name)}</b>（${since.getMonth() + 1}/${since.getDate()} 起）${gvgIsOwner() ? '　（就是你）' : ''}<br>守城隊伍：${team}` : '目前沒有城主。'}</div>
+    <div class="gmt-stat">${!gvgToken() ? '登入雲端帳號後才看得到城主。' : !_gvgCastle ? (_gvgFailAt ? '讀取城主資料失敗，請稍後再試。' : '讀取城主資料中…') : owner ? `城主：<b>${shopEsc(owner.name)}</b>（${since.getMonth() + 1}/${since.getDate()} 起）${gvgIsOwner() ? '　（就是你）' : ''}<br>守城隊伍：${team}` : '目前沒有城主。'}</div>
     <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gvgEnter().then(renderMapTab)">進城</button>
     ${why ? `<div class="ab-info-text">${shopEsc(why)}</div>` : ''}</div>`;
 }
 /* 道館館主（T53）：難度、報名、代幣兌換 */
+/* 附魔師（D7，使用者 2026-11-14）：每件裝備最多 2 個附魔孔；有附魔石直接裝，沒有就隨機 */
+function enchantNpcPanelHtml(n, back) {
+  const stones = (state.inventory || []).filter(r => !r.instanceId && CARDS[r.item] && CARDS[r.item].slot === 'enchant' && r.qty > 0);
+  const opts = stones.map(r => `<option value="${r.item}">${shopEsc(CARDS[r.item].name)} ×${r.qty}</option>`).join('');
+  const rows = EQUIP_SLOTS_ALL.filter(k => getEquipBaseItemId(k)).map(k => {
+    const iid = getEquipBaseItemId(k);
+    const { opened, enchants } = enchantInfo(k);
+    const holes = [];
+    for (let i = 0; i < opened; i++) {
+      const cur = enchants[i];
+      holes.push(`<div class="gmt-price">第 ${i + 1} 孔：${cur ? '💠 ' + shopEsc(CARDS[cur] ? CARDS[cur].name : cur) : '（空）'}
+        <button class="btn-small" onclick="enchantRandom('${k}',${i});openTownNpc('enchanter')">隨機 🪙${ENCHANT_RANDOM_TOKENS}</button>
+        ${opts ? `<select id="ench-${k}-${i}">${opts}</select><button class="btn-small" onclick="enchantInstall('${k}',${i},document.getElementById('ench-${k}-${i}').value);openTownNpc('enchanter')">裝上 ${ENCHANT_INSTALL_COST / 10000} 萬z</button>` : ''}</div>`);
+    }
+    const open = opened < ENCHANT_MAX_SLOTS
+      ? `<button class="btn-small" onclick="enchantOpenSlot('${k}');openTownNpc('enchanter')">開第 ${opened + 1} 孔 ${ENCHANT_OPEN_COST[opened] / 10000} 萬z</button>` : '';
+    return `<div class="town-npc-card enchant-card">
+      <img class="shop-item-icon" src="${itemImgSrc(iid)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+      <div class="town-npc-name">${shopEsc(ITEMS[iid].name)}</div>${holes.join('')}${open}</div>`;
+  }).join('');
+  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💠 ${shopEsc(n.name)}</h3></div>
+    <div class="town-npc-say">每件裝備最多 ${ENCHANT_MAX_SLOTS} 個附魔孔，不佔卡片孔。有附魔石就直接裝；沒有就隨機附魔。孔上已經有的會被換掉。隨機附魔要道館代幣。　持有 ${(state.gold || 0).toLocaleString()}z・🪙 ${getItemQty(DOJO_TOKEN)}</div>
+    <div class="town-npc-list">${rows || '<div class="empty-hint">身上沒有裝備。</div>'}</div></div>`;
+}
 function dojoNpcPanelHtml(n, back) {
+  const poolText = id => { const pl = dojoRewardPool(id), tw = pl.reduce((a, e) => a + e.w, 0);
+    return pl.map(e => `${ITEMS[e.item] ? ITEMS[e.item].name : e.item}${e.qty > 1 ? ' ×' + e.qty : ''}（${Math.round(e.w / tw * 100)}%）`).join('、'); };
   const tok = getItemQty(DOJO_TOKEN);
   const tiers = DOJO_TIERS.map(t => {
     const why = dojoBlockReason(t.id);
     const best = (state.dojoBest || {})[t.id] ? '　✔ 全破過' : '';
     return `<div class="town-npc-card"><div class="town-npc-name">${t.name}${best}</div>
-      <div class="gmt-price">Lv${t.minLv}↑・${dojoPool(t).length} 隻 MVP 抽 5 隻・${Math.round(t.limitMs / 60000)} 分鐘</div>
-      <div class="gmt-price" title="${shopEsc(dojoPool(t).map(m => m.name).join('、'))}">今天：${shopEsc(dojoLineup(t, dojoSeed(t)).map(id => MONSTERS[id].name).join(' → '))}</div>
-      <div class="gmt-price">每關抽 1 次・全破加抽 ${t.bonusDraws} 次</div>
+      <div class="gmt-price">Lv${t.minLv}↑・入場 ${DOJO_ENTRY_FEE / 10000} 萬z・${dojoPool(t).length} 隻 MVP 抽 5 隻</div>
+      <div class="gmt-price">每關抽 1 次・全破加抽 ${t.bonusDraws} 次＋🪙 ${t.clearTokens}</div>
+      <div class="gmt-price" style="white-space:normal">獎品：${poolText(t.id)}</div>
       <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="dojoEnter('${t.id}');renderMapTab()">挑戰</button></div>`;
   }).join('');
   const shop = DOJO_SHOP.map((e, i) => `<div class="town-npc-card">
       <div class="town-npc-name">${e.points ? e.points + ' ' + CASH_POINT_NAME : shopEsc(ITEMS[e.item].name)}</div><div class="gmt-price">🪙 ${e.price}</div>
       <button class="btn-small" ${tok < e.price ? 'disabled' : ''} onclick="dojoBuy(${i});openTownNpc('dojo')">兌換</button></div>`).join('');
-  const tw = DOJO_REWARD_POOL.reduce((a, e) => a + e.w, 0);
-  const pool = DOJO_REWARD_POOL.map(e => `${ITEMS[e.item] ? ITEMS[e.item].name : e.item}${e.qty > 1 ? ' ×' + e.qty : ''}（${Math.round(e.w / tw * 100)}%）`).join('、');
   return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🥋 ${shopEsc(n.name)}</h3></div>
-    <div class="town-npc-say">道館每個難度 ${DOJO_FLOORS} 關、每關一隻 MVP，可以帶隊友；難度越高，王的版本越新越強。每過一關抽 1 次，全破加抽；每個難度每天 1 次，倒下、離開或時間到就結束，照過的關數抽。獎品池：${pool}。道館代幣可以換商城點數。</div>
+    <div class="town-npc-say">道館每個難度 ${DOJO_FLOORS} 關、每關一隻 MVP，可以帶隊友；難度越高，王的版本越新越強。入場費 ${DOJO_ENTRY_FEE / 10000} 萬z，不限次數。每過一關抽 1 次，全破加抽並固定給道館代幣；全隊倒下或放棄就結束，照過的關數抽。難度越高獎品池的精煉材料越高階。道館代幣可以隨機附魔、換商城點數。</div>
     <div class="town-npc-list">${tiers}</div>
     <div class="gmt-stat">道館代幣：${tok} 枚</div>
     <div class="town-npc-list">${shop}</div></div>`;
@@ -10341,14 +10530,30 @@ function syncDojoHud() {
   const scene = document.getElementById('battle-scene');
   if (!scene) return;
   let el = document.getElementById('bf-dojo-hud');
+  let npc = document.getElementById('bf-dojo-npc');
   const d = state && state.dojo;
-  if (!d) { if (el) el.remove(); return; }
+  if (!d) { if (el) el.remove(); if (npc) npc.remove(); return; }
   if (!el) { el = document.createElement('div'); el.id = 'bf-dojo-hud'; el.className = 'bf-gmt-hud'; scene.appendChild(el); }
   const t = dojoTier(d.tier);
-  const wait = d.nextAt ? `　下一關 ${Math.max(0, Math.ceil((d.nextAt - Date.now()) / 1000))} 秒` : '';
-  const html = `🥋 道館（${t.name}）　第 ${Math.max(1, d.floor)}／${DOJO_FLOORS} 關　剩 ${fmtMs(Math.max(0, d.endAt - Date.now()))}${wait}
-    <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定放棄？會照過的關數抽獎。'))dojoAbandon()">放棄</button>`;
+  const down = !(state.hp > 0) && d.downAt ? `　💀 倒下 ${Math.floor((Date.now() - d.downAt) / 1000)} 秒（${DOJO_REVIVE_WAIT_MS / 1000} 秒後隊友扶你）` : '';
+  const html = `🥋 道館（${t.name}）　第 ${Math.max(1, d.floor)}／${DOJO_FLOORS} 關　已過 ${fmtMs(Math.max(0, Date.now() - d.startAt))}${down}
+    <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定放棄？打完沒領的關會補抽。'))dojoAbandon()">放棄</button>`;
   if (el._html !== html) { el.innerHTML = html; el._html = html; }
+  /* 館主對話框（使用者 2026-11-14）：開打前、每關打完都要找館主 */
+  if (d.phase === 'fight') { if (npc) npc.remove(); return; }
+  if (!npc) { npc = document.createElement('div'); npc.id = 'bf-dojo-npc'; npc.className = 'bf-dojo-npc'; scene.appendChild(npc); }
+  const nextId = d.phase === 'talk' ? dojoFloorPlan(t, d.floor + 1, d.seed)[0] : null;
+  const last = d.floor >= DOJO_FLOORS;
+  const say = d.phase === 'reward'
+    ? `第 ${d.floor} 關通過，打得漂亮！這是你的獎勵。${last ? '五關全破，領完獎就送你回城。' : ''}`
+    : (d.floor === 0 ? `歡迎來到道館（${t.name}）。準備好就開始第 1 關。` : `要繼續第 ${d.floor + 1} 關嗎？`)
+      + (nextId ? `<br>下一關：<b>${shopEsc(MONSTERS[nextId].name)}</b>（Lv${MONSTERS[nextId].level}）` : '');
+  const btn = d.phase === 'reward'
+    ? `<button class="btn-small active" onclick="event.stopPropagation();dojoClaimFloor()">${last ? '領取獎勵並回城' : '領取獎勵'}</button>`
+    : `<button class="btn-small active" ${state.hp > 0 ? '' : 'disabled'} onclick="event.stopPropagation();dojoNextFloor()">開始第 ${d.floor + 1} 關</button>`;
+  const nh = `<img src="images/npc/2_m_swordmaster.png" alt="" onerror="this.remove()">
+    <div class="bf-dojo-say"><b>道館館主</b><br>${say}<div class="bf-dojo-btns">${btn}</div></div>`;
+  if (npc._html !== nh) { npc.innerHTML = nh; npc._html = nh; }
 }
 function syncGvgHud() {
   const scene = document.getElementById('battle-scene');

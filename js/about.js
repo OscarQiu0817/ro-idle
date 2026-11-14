@@ -97,9 +97,3 @@ const LEGAL_SECTIONS = [
   },
 ];
 
-/* 首次開啟時的一次性確認（#121）。
-
-   **刻意不做每次都擋的同意閘**：威脅模型是「有人下載去改成收費」，
-   而那個人第一件事就是把閘門刪掉——擋不到他，只會讓正當玩家每次都被擋一次。
-   勾過就記在 localStorage，之後不再出現。 */
-const CONSENT_KEY = 'ro_idle_legal_consent_v1';
