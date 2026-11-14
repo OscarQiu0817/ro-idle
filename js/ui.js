@@ -7364,6 +7364,8 @@ function renderEquipTab() {
       const bits = [];
       if (d.atk) bits.push(`ATK ${statWithRefine(r.item, 'atk', refine)}`);
       if (d.def) bits.push(`DEF ${statWithRefine(r.item, 'def', refine)}`);
+      const mdef = d.mdef || (d.bonus && d.bonus.mdef);   // 載入時防具的 mdef 會搬進 bonus
+      if (mdef) bits.push(`MDEF ${mdef}`);
       if (d.matk) bits.push(`MATK ${d.matk}`);
       if (d.element) bits.push(`${ELEMENT_ICONS[d.element]}${ELEMENT_NAMES[d.element]}`);
       if (!r.instanceId && r.qty > 1) bits.push(`×${r.qty}`);
@@ -8462,6 +8464,8 @@ function wmZoomAt(cx, cy, s) {
   WM.s = s;
   WM.tx = cx - mx * s; WM.ty = cy - my * s;
   wmApply();
+  // 只有玩家手動縮放（按鈕、滾輪、雙指）走這裡；記在瀏覽器，下次開照用（使用者 2026-11-14）
+  try { localStorage.setItem('roWorldMapZoom', String(s)); } catch (_) {}
 }
 function wmCenter(p) {
   if (!p) return;
@@ -8475,8 +8479,10 @@ function openWorldMap(focusId) {
   if (!WM.el) wmBuild();
   WM.el.classList.remove('hidden');
   wmFitMin();
-  // 開啟時縮放到格子約 44px（手指點得準），不小於整張塞得下的比例
-  WM.s = Math.min(WM_MAX, Math.max(WM.min, 44 / 58));
+  // 開啟時用上次手動縮放的大小；沒記錄就縮放到格子約 44px（手指點得準），不小於整張塞得下的比例
+  let saved = 0;
+  try { saved = parseFloat(localStorage.getItem('roWorldMapZoom')) || 0; } catch (_) {}
+  WM.s = Math.min(WM_MAX, Math.max(WM.min, saved || 44 / 58));
   WM.sel = null; WM.dun = null; WM.hint = []; WM.route = null;
   wmCenter(wmPos(focusId) || wmPos(state.mapId) || [WORLD.main.w / 2, WORLD.main.h / 2]);
   if (focusId) wmSelect(focusId); else wmSheet('');
