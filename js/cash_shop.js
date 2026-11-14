@@ -12,7 +12,7 @@ const CASH_SHOP = [
   { cat: '卡冊', items: [['sealed_card_album', 100], ['old_card_album', 30], ['old_c_album_weapon', 40], ['old_c_album_armor', 40], ['old_c_album_shield', 40],
     ['old_c_album_helm', 40], ['old_c_album_garment', 40], ['old_c_album_shoes', 40], ['old_c_album_acc', 40], ['magic_card_album', 120]] },
   { cat: '轉蛋', items: [['gift_box', 3], ['old_blue_box', 5], ['old_violet_box', 8]] },
-  { cat: '精煉', items: [['blacksmith_blessing', 15]] },
+  // 鐵匠的祝福 2026-11-14 移到 MVP 點數商店（50 點）
 ];
 
 /* 每日簽到（使用者 2026-11-07：取代原本匯入的官方簽到表，那份多是本作沒效果的道具）
@@ -75,7 +75,7 @@ function grantAttendance(idx) {
 
 /* 各部位裝備轉蛋（使用者 2026-11-13）：很多頭飾等裝備原本只有神秘箱子開得到。
    每顆轉蛋只開「該部位、沒有怪物掉落也沒有 NPC 販賣」的裝備，均勻抽。
-   池子用 boxEligible 同一套過濾（中文名、非時裝），跟神秘箱子的池是子集合。 */
+   池子用 boxEligible 同一套過濾（中文名、非時裝）。 */
 const GEAR_GACHA = [
   // [道具 id, 名稱, 圖, 商城點數, 篩選]
   ['gacha_head_top', '頭上裝備轉蛋', 14800, 20, d => d.armorType === 'headgear' && /頭上/.test(d.desc || '')],
@@ -108,3 +108,58 @@ GEAR_GACHA.forEach(([id, name, img, , pick]) => {
   };
 });
 CASH_SHOP.find(c => c.cat === '轉蛋').items.push(...GEAR_GACHA.map(([id, , , p]) => [id, p]));
+
+/* 附魔轉蛋（D7，使用者 2026-11-14）：開出一顆附魔石，照 ENCHANTS 稀有度權重抽；石頭找附魔師裝 */
+ITEMS.gacha_enchant = {
+  id: 'gacha_enchant', imgId: 4811, name: '附魔轉蛋', type: 'consumable', icon: '💠', weight: 1, sell: 0, boxOpen: 'enchant',
+  desc: '打開後隨機獲得一顆附魔石（等級越高越難抽到）。附魔石到各城「精煉・附魔區」找附魔師裝在附魔孔上。',
+};
+BOX_POOLS.enchant = { build: () => Object.keys(ENCHANTS).filter(k => ITEMS[k]), weight: id => ENCHANTS[id].weight };
+CASH_SHOP.find(c => c.cat === '轉蛋').items.push(['gacha_enchant', 10]);
+
+/* ---------------- MVP 點數（T10，使用者 2026-11-14） ----------------
+   跟商城點數分開：打倒 MVP 得 1 點（線上、離線、討伐結算都算），每天上限 50 點。
+   用途偏日常消耗品：素質料理、精煉材料、鐵匠的祝福。商城點數主要拿去抽獎。 */
+const MVP_POINT_NAME = 'MVP 點數';
+const MVP_POINT_DAILY_CAP = 50;
+const STAT_KEYS6 = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+const MVP_SHOP = [
+  { cat: '素質料理 +5（20 分鐘）', items: STAT_KEYS6.map(k => [k + '_dish05', 5]) },
+  { cat: '素質料理 +10（20 分鐘）', items: STAT_KEYS6.map(k => [k + '_dish10', 10]) },
+  { cat: '精煉', items: [['enriched_oridecon', 5], ['enriched_elunium', 5], ['bradium', 3], ['carnium', 3],
+    ['hd_bradium', 10], ['hd_carnium', 10], ['blacksmith_blessing', 50]] },
+];
+function mvpPoints() { return (state && state.mvpPoints) || 0; }
+function mvpPointsToday() {
+  const d = state && state.mvpPointsDay;
+  return d && d.day === gmtToday() ? d.got : 0;
+}
+/* 加點受每日上限；owner 省略＝玩家（隊友打死的也算玩家的） */
+function addMvpPoints(n, owner) {
+  const st = owner || state;
+  if (!st || !(n > 0)) return 0;
+  const day = gmtToday();
+  if (!st.mvpPointsDay || st.mvpPointsDay.day !== day) st.mvpPointsDay = { day, got: 0 };
+  const add = Math.min(n, MVP_POINT_DAILY_CAP - st.mvpPointsDay.got);
+  if (add <= 0) return 0;
+  st.mvpPointsDay.got += add;
+  st.mvpPoints = (st.mvpPoints || 0) + add;
+  logMsg(`🏅 ${MVP_POINT_NAME} +${add}（今天 ${st.mvpPointsDay.got}／${MVP_POINT_DAILY_CAP}）`);
+  return add;
+}
+function mvpShopPrice(itemId) {
+  for (const c of MVP_SHOP) for (const [id, p] of c.items) if (id === itemId) return p;
+  return 0;
+}
+function buyMvpItem(itemId, qty) {
+  const p = mvpShopPrice(itemId);
+  const def = ITEMS[itemId];
+  if (!p || !def) return false;
+  const n = Math.min(qty || 1, Math.floor(mvpPoints() / p));
+  if (n <= 0) { logMsg(`⚠️ ${MVP_POINT_NAME}不足，${def.name} 要 ${p} 點。`); return false; }
+  state.mvpPoints -= p * n;
+  addItem(itemId, n);
+  logMsg(`🏅 用 ${p * n} ${MVP_POINT_NAME}買了 ${def.name} ×${n}。`);
+  saveGame();
+  return true;
+}

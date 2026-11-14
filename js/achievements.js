@@ -1,5 +1,6 @@
 /* ============================================================
-   成就 / 里程碑系統
+   支線任務（原成就系統；使用者 2026-11-14：成就拿掉，條件挪來當支線——等級、素質、擊殺、收集…）
+   達成自動發鋅幣；成就點數拿掉。資料仍存在 state.achievements（沿用 key）。
 
    設計取向：不在戰鬥流程裡到處埋 hook，而是每秒在慢速 tick 裡做一次
    集中判定。成就幾乎都是「累計數量門檻」，而這些累計值圖鑑系統
@@ -48,8 +49,10 @@ function acvRaceKills(race) {
   for (const k in mon) if (MONSTERS[k] && MONSTERS[k].race === race) n += mon[k];
   return n;
 }
+/* 圖鑑進度要掃整個圖鑑池（約 0.7ms），一次 checkAchievements 有 15 條會查；檢查期間只算一次 */
+let _acvChecking = false, _acvCodex = null;
 function acvCodexCount(kind) {
-  const p = getCodexProgress();
+  const p = _acvChecking ? (_acvCodex || (_acvCodex = getCodexProgress())) : getCodexProgress();
   return p[kind].found;
 }
 function acvMapsVisited() {
@@ -206,18 +209,20 @@ function checkAchievements() {
   if (!state) return;
   const av = ensureAchievements();
   const unlocked = [];
-  for (let i = 0; i < ACHIEVEMENTS.length; i++) {
-    const a = ACHIEVEMENTS[i];
-    if (av.done[a.id]) continue;
-    if (achievementProgress(a) < a.goal) continue;
-    av.done[a.id] = Date.now();
-    av.points += a.reward.point || 0;
-    if (a.reward.gold) state.gold += a.reward.gold;
-    unlocked.push(a);
-  }
+  _acvChecking = true; _acvCodex = null;
+  try {
+    for (let i = 0; i < ACHIEVEMENTS.length; i++) {
+      const a = ACHIEVEMENTS[i];
+      if (av.done[a.id]) continue;
+      if (achievementProgress(a) < a.goal) continue;
+      av.done[a.id] = Date.now();
+      if (a.reward.gold) state.gold += a.reward.gold;
+      unlocked.push(a);
+    }
+  } finally { _acvChecking = false; _acvCodex = null; }
   if (!unlocked.length) return;
   unlocked.forEach(a => {
-    logMsg(`🏆 達成成就「${a.name}」！${a.reward.gold ? `獲得 ${a.reward.gold.toLocaleString()} 鋅幣、` : ''}成就點數 +${a.reward.point}`);
+    logMsg(`📜 完成支線「${a.name}」！${a.reward.gold ? `獲得 ${a.reward.gold.toLocaleString()} 鋅幣` : ''}`);
   });
   if (typeof onAchievementUnlocked === 'function') onAchievementUnlocked(unlocked);
   saveGame();

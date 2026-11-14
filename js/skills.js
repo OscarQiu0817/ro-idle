@@ -157,7 +157,8 @@ const SKILLS = {
     mult: [1.5, 2.0, 2.5, 3.0, 3.5],
     desc: '被動技能，需裝備長矛。目標在普攻距離外、投擲射程（3~11 格）內時，自動投擲長矛造成 ATK 150%~350% 的遠距離物理傷害（內部冷卻 2 秒），不耗 SP。'
   },
-  kn_brandishspear: {"id":"kn_brandishspear","name":"騎乘攻擊 Brandish Spear","maxLv":1,"type":"damage_aoe","element":"neutral","spCost":[24],"cooldown":[3],"mult":[5],"strScaleMax":[100],"requiresWeapon":"spear","desc":"長矛專用技能，對全部敵人造成ATK500%傷害，並依STR增加傷害（STR120時+100%），需裝備矛類武器。"},
+  /* 官方最高 10 級（使用者 2026-11-14 指正）：Renewal 倍率 400%＋100%×等級、SP 固定 24 */
+  kn_brandishspear: {"id":"kn_brandishspear","name":"騎乘攻擊 Brandish Spear","maxLv":10,"type":"damage_aoe","element":"neutral","spCost":[24,24,24,24,24,24,24,24,24,24],"cooldown":[3,3,3,3,3,3,3,3,3,3],"mult":[5,6,7,8,9,10,11,12,13,14],"strScaleMax":[100,100,100,100,100,100,100,100,100,100],"requiresWeapon":"spear","desc":"長矛專用技能，對全部敵人造成ATK500%~1400%傷害，並依STR增加傷害（STR120時+100%），需裝備矛類武器。"},
   kn_autocounter: {"id":"kn_autocounter","name":"反擊 Counter Attack","maxLv":10,"type":"passive","passiveStat":"counterAttack","element":"neutral","spCost":[0],"cooldown":[0],"mult":[15,18,21,24,27,29,31,33,35,35],"desc":"被攻擊時15%~35%機率完全迴避該次傷害並反擊一下必暴。"},
   wz_estimation: {"id":"wz_estimation","name":"怪物情報","maxLv":1,"isQuest":true,"type":"passive","passiveStat":"fleeFlat","spCost":[0],"cooldown":[0],"mult":[10],"intBonus":[5],"desc":"被動技能，永久提升迴避+10、INT+5。"},
   wz_sightrasher: {

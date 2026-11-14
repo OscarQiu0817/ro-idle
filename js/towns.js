@@ -10,7 +10,8 @@
      kafra   卡普拉職員：倉庫、傳送服務
      refine  精煉師
      job     轉職官
-     soon    還沒開放的功能（附魔、副本），點了只顯示說明
+     enchant 附魔師（D7：開附魔孔、裝附魔石、隨機附魔）
+     soon    還沒開放的功能（副本），點了只顯示說明
    外觀 spr＝RO NPC sprite 名稱（grf_ex/sprite/npc → images/npc/<spr>.png，scripts/gen_npc_sprites.py）。
    配置（使用者 2026-11-06）：一進城是卡普拉（倉庫、傳送），分商店街／精煉・附魔區／副本三區，所有城鎮共用。 */
 
@@ -127,7 +128,7 @@ const TOWN_TEMPLATE = {
     { id: 'item', name: '道具商人', role: 'shop', shopKind: 'item', district: 'shops', x: 1, y: -15 },
     { id: 'pet', name: '寵物商人', role: 'shop', shopKind: 'pet', district: 'shops', x: 3, y: -15 },
     { id: 'refiner', name: '精煉師', role: 'refine', district: 'forge', x: 14, y: -1, spr: '4_m_03' },
-    { id: 'enchanter', name: '附魔師', role: 'soon', district: 'forge', x: 16, y: -1, soon: '附魔還沒開放（D7）。', spr: '4_m_sage_a' },
+    { id: 'enchanter', name: '附魔師', role: 'enchant', district: 'forge', x: 16, y: -1, spr: '4_m_sage_a' },
     { id: 'dungeon', name: '副本管理員', role: 'soon', district: 'dungeon', x: -15, y: -1, soon: '副本還沒開放。', spr: '4_m_knight_silver' },
   ],
 };

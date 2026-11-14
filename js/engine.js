@@ -174,7 +174,8 @@ function depositInstanceToWarehouse(instanceId) {
     item: inst.item, qty: 1,
     instanceId: 'wh_' + inst.item + '_' + gameNow() + '_' + Math.floor(rng() * 10000),
     refine: inst.refine || 0,
-    cards: (inst.cards || []).slice()
+    cards: (inst.cards || []).slice(),
+    enchSlots: inst.enchSlots || 0, enchants: (inst.enchants || []).slice()
   });
   saveWarehouse(wh);
   saveGame();
@@ -190,7 +191,8 @@ function withdrawInstanceFromWarehouse(whInstanceId) {
   saveWarehouse(wh);
   if (!state.instances) state.instances = {};
   const id = row.item + '#' + gameNow() + '_' + Math.floor(rng() * 10000);
-  state.instances[id] = { item: row.item, refine: row.refine || 0, cards: (row.cards || []).slice() };
+  state.instances[id] = { item: row.item, refine: row.refine || 0, cards: (row.cards || []).slice(),
+    enchSlots: row.enchSlots || 0, enchants: (row.enchants || []).slice() };
   state.inventory.push({ item: row.item, qty: 1, instanceId: id });
   codexRecordItem(row.item, 1);
   saveGame();
@@ -546,7 +548,7 @@ function maybeDeinstanceSlot(slot) {
   const ref = state.equip[slot];
   if (!ref || !state.instances[ref]) return;
   const inst = state.instances[ref];
-  if ((inst.refine || 0) === 0 && (!inst.cards || inst.cards.length === 0)) {
+  if ((inst.refine || 0) === 0 && (!inst.cards || inst.cards.length === 0) && !inst.enchSlots) {
     state.equip[slot] = inst.item;
     delete state.instances[ref];
   }
@@ -855,6 +857,11 @@ function passiveSourceSkills() {
 }
 
 function recomputeDerived(fullHeal) {
+  const prev = _gearFrame;
+  _gearFrame = { st: state };
+  try { return recomputeDerivedInner(fullHeal); } finally { _gearFrame = prev; }
+}
+function recomputeDerivedInner(fullHeal) {
   const job = currentJob();
   const s = state.stats;
   const bl = state.baseLevel;
@@ -978,6 +985,8 @@ function recomputeDerived(fullHeal) {
     if (b.type === 'allstat') {
       BASE_STAT_KEYS.forEach(k => addSrc(buffSrc, buffFlat, k, b.flatBonus || 0, label));
     }
+    // 素質料理（官方 SC_STRFOOD…）：單一素質 +N
+    if (b.type === 'foodstat') addSrc(buffSrc, buffFlat, b.stat, b.flatBonus || 0, label);
   });
 
   const passiveStrBonus = skillFlat.str + buffFlat.str;
@@ -3514,33 +3523,17 @@ function boxEligible(k) {
   return true;
 }
 
+/* T30（使用者 2026-11-14）：神秘箱子／神秘紫箱／禮物箱照官方內容與權重（js/box_pools.js，
+   rAthena BLUEBOX／VIOLETBOX／GIFTBOX）。原本「全道具池均勻抽」的做法拿掉；
+   只在箱子才拿得到的道具大多沒有其他來源了（使用者決定不另外給，附魔類改走附魔轉蛋）。 */
+const officialBoxSpec = kind => ({
+  build: () => Object.keys(OFFICIAL_BOX_POOLS[kind] || {}).filter(boxEligible),
+  weight: id => OFFICIAL_BOX_POOLS[kind][id],
+});
 const BOX_POOLS = {
-  /* 神秘箱子：過濾之後裝備的天然占比會從 20% 跳到 31%（被擋掉的多半是雜物而不是裝備），
-     所以改成兩段抽：先擲 20% 決定要不要給裝備，再從對應的子池裡均勻抽。
-     三轉裝與 1z 雜物照樣留在池子裡——這個箱子的定位就是賭博。 */
-  any: {
-    build: () => Object.keys(ITEMS).filter(boxEligible),
-    split: { rate: 0.2, pick: k => EQUIP_TYPES.includes(ITEMS[k].type) },
-  },
-  /* 神秘紫箱：跟神秘箱子同一個道具池，差別只在**裝備比例 40%**（神秘箱子是 20%）。
-     兩者在官方都是「開出隨機道具」的雜物箱，本作拿裝備比例做出區隔——
-     紫箱比較容易開出裝備，藍箱比較容易開出雜物但兩邊的大獎池一模一樣。 */
-  violet: {
-    build: () => Object.keys(ITEMS).filter(boxEligible),
-    split: { rate: 0.4, pick: k => EQUIP_TYPES.includes(ITEMS[k].type) },
-  },
-  /* 禮物箱：售價 500z~3,000,000z，權重 1/√售價。
-     均勻抽的期望值是 15,432z（全系 1% 等於每 10 分鐘 8.3 個箱子，收入會變成 8.8 倍），
-     因為價格帶前 5% 的那 35 件吃掉了 83% 的期望值。加權之後降到 1,800z 上下，
-     300 萬的世界之星鑽石照樣抽得到，只是機率壓到 0.005%。 */
-  valuable: {
-    build: () => Object.keys(ITEMS).filter(k => {
-      if (!boxEligible(k)) return false;
-      const s = ITEMS[k].sell || 0;
-      return s >= 500 && s <= 3000000;
-    }),
-    weight: id => 1 / Math.sqrt(ITEMS[id].sell || 1),
-  },
+  any: officialBoxSpec('any'),
+  violet: officialBoxSpec('violet'),
+  valuable: officialBoxSpec('valuable'),
 };
 /* ---------------- 卡冊 ----------------
    一條「花錢換運氣」的鏈：道具商人賣 500 萬的**未解封的卡冊** → 開出某一種卡冊 → 再開出卡片。
@@ -5788,6 +5781,7 @@ function gameTick() {
 
   if (state.hp <= 0) {   // 等待復活流程；攻城中玩家倒下、隊友繼續打（js/gvg.js）
     if (state.gvg && typeof gvgDownedTick === 'function') gvgDownedTick();
+    else if (state.dojo && typeof dojoDownedTick === 'function') dojoDownedTick();   // 道館：隊友繼續打、撐 15 秒扶主角
     return;
   }
 
@@ -5907,6 +5901,7 @@ function gameTick() {
   state._lastMoveTick = moveNow;
   tickGroundUnits(moveNow);
   tickMonsterMovement(moveDt, moveNow);
+  tickMonsterMetamorph();
   tickAllyFormation(moveDt);
   if (typeof tickBossFight === 'function') tickBossFight(moveDt, moveNow);   // 打王：紅圈與自動閃避（js/boss_fight.js）
   tickCasting(moveNow);
@@ -5967,8 +5962,10 @@ const MELEE_MAX_MONSTERS = 5;
 const MELEE_SPAWN_BATCH_MAX = 3;
 /* 開了 BOSS 模式之後，每次補怪抽到 MVP 的機率（%）。
    圖鑑的「出沒地圖」也讀這個數字換算每張圖的出現率（#108），
-   所以兩邊不會各寫各的。 */
-const MVP_SPAWN_CHANCE_PCT = 20;
+   所以兩邊不會各寫各的。
+   20 → 5（使用者 2026-11-14：有了 MVP 點數，免得狂刷 MVP） */
+const MVP_SPAWN_CHANCE_PCT = 5;
+const MINIBOSS_SPAWN_CHANCE_PCT = 20;   // 迷你王維持 20%
 
 /* ---------------- 打寶模式（#110）----------------
 
@@ -6554,8 +6551,9 @@ function activeBossLists(mapId) {
   const out = [];
   const on = id => typeof bossEnabled === 'function' && bossEnabled(id);
   const mvp = bossListOf(mapId, 'mvp').filter(on), mini = bossListOf(mapId, 'mini').filter(on);
-  if (mvp.length) out.push(mvp);
-  if (mini.length) out.push(mini);
+  // pct：每次補怪擲中這份名單的機率
+  if (mvp.length) { mvp.pct = MVP_SPAWN_CHANCE_PCT; out.push(mvp); }
+  if (mini.length) { mini.pct = MINIBOSS_SPAWN_CHANCE_PCT; out.push(mini); }
   return out;
 }
 
@@ -6991,6 +6989,30 @@ function zoneSlowMult(mon) {
    被動怪要等被打（血量少於上限）才會靠過來。受擊硬直用血量下降偵測，不必改各傷害路徑。 */
 /* 玩家走遠之後，被留在後面、沒打過的怪直接消失（不然會一直佔著場上名額，新的怪補不進來） */
 const MON_DESPAWN_DIST = 20;
+/* 怪物變身（官方 NPC_METAMORPHOSIS，使用者 2026-11-14：比照正服，貝雷傑血掉到一半變詛咒蠅王）。
+   表在 js/mob_metamorph.js。血量跌破門檻時照官方機率擲一次，成功就換成新怪物、血量補滿；
+   個體 id、位置、異常狀態保留（首領挑戰認的是個體 id，變身不影響判定）。每隻只變一次，免得盧德／奎夫來回變。 */
+/* 必定變身的頭目（貝雷傑→詛咒蠅王）離線照最終型態算：打死的是真身，擊殺紀錄與掉落都記在真身上 */
+function mobFinalForm(id) {
+  const r = typeof MOB_METAMORPH !== 'undefined' ? MOB_METAMORPH[id] : null;
+  return r && r.rate >= 1 && MONSTERS[r.into] && MONSTERS[r.into].isBoss ? r.into : id;
+}
+function tickMonsterMetamorph() {
+  if (typeof MOB_METAMORPH === 'undefined') return;
+  for (const m of state.monsters || []) {
+    const r = MOB_METAMORPH[m.defId];
+    if (!r || m._morphTried || !(m.hp > 0) || m.hp * 100 >= m.maxHp * r.hpPct) continue;
+    m._morphTried = true;
+    if (rng() >= r.rate) continue;
+    const from = MONSTERS[m.defId], to = MONSTERS[r.into];
+    if (!from || !to) continue;
+    const mult = from.hp > 0 ? m.maxHp / from.hp : 1;   // 保留打寶模式之類的血量倍率
+    m.defId = r.into;
+    m.maxHp = m.hp = Math.max(1, Math.round(to.hp * mult));
+    m._morphTried = true;
+    logMsg(`🦋 ${from.name} 變身成了 ${to.name}！`);
+  }
+}
 function tickMonsterMovement(dtMs, now) {
   for (let i = state.monsters.length - 1; i >= 0; i--) {   // 原地移除：別處可能拿著同一個陣列
     const m = state.monsters[i];
@@ -7063,7 +7085,7 @@ function spawnMonster() {
     /* 場上已經有首領（MVP 或迷你王，任何一隻）就不再刷另一隻（使用者 2026-11-08）。
        以前只擋「同一份名單的還活著」，MVP 與迷你王可以同時在場。 */
     const bossAlive = state.monsters.some(m => m.hp > 0 && MONSTERS[m.defId] && MONSTERS[m.defId].isBoss);
-    const hit = bossAlive ? [] : bossLists.filter(l => rng() * 100 < MVP_SPAWN_CHANCE_PCT);
+    const hit = bossAlive ? [] : bossLists.filter(l => rng() * 100 < l.pct);
     if (hit.length) {
       const l = hit[Math.floor(rng() * hit.length)];
       defId = l[Math.floor(rng() * l.length)];
@@ -8229,12 +8251,12 @@ function codexRecordBox(itemId) {
   if (!state || !itemId) return;
   ensureCodex().box[itemId] = 1;
 }
-/* 隱藏圖鑑清單：神秘箱子／神秘紫箱的道具池（兩者同一池）。
+/* 隱藏圖鑑清單：神秘箱子＋神秘紫箱的官方池聯集（T30）。
    排序按筆畫外的名稱，讓分頁列表穩定。 */
 let _boxCodexIds = null;
 function getBoxCodexPool() {
   if (_boxCodexIds) return _boxCodexIds;
-  _boxCodexIds = Object.keys(ITEMS).filter(boxEligible)
+  _boxCodexIds = [...new Set(boxPool('any').ids.concat(boxPool('violet').ids))]
     .sort((a, b) => (ITEMS[a].name || '').localeCompare(ITEMS[b].name || '', 'zh-Hant'));
   return _boxCodexIds;
 }
@@ -8363,7 +8385,7 @@ function getMonsterMaps(monId) {
           if (!MONSTERS[id]) return;
           (_codexMapCache[id] = _codexMapCache[id] || []).push({
             id: m.id, name: m.name, weight: 0,
-            pct: MVP_SPAWN_CHANCE_PCT / list.length,
+            pct: (MONSTERS[id].isMvp ? MVP_SPAWN_CHANCE_PCT : MINIBOSS_SPAWN_CHANCE_PCT) / list.filter(x => MONSTERS[x] && !!MONSTERS[x].isMvp === !!MONSTERS[id].isMvp).length,
             mvp: true,
           });
         });
@@ -8699,6 +8721,8 @@ function killMonster(def, monObj) {
   /* 打贏 MVP 的音效（#146）。只認正牌 MVP，迷你王不放——
      迷你王在 #147 之後是獨立的一類，出現頻率高得多，每隻都放會變成背景音。 */
   if (def.isMvp && !acting && typeof playEventSfx === 'function') playEventSfx('mvp');
+  if (def.isMvp && typeof addMvpPoints === 'function') addMvpPoints(1, owner);
+  if (typeof questCount === 'function') { questCount('kill', 1, owner); if (def.isMvp) questCount('mvp', 1, owner); }
   const goldGain = Math.round((3 + def.level * 1.4) * buffMult('gold').mult * farmMult('gold'));
   owner.gold += goldGain;
   if (owner.dpsTracker) {
@@ -8855,6 +8879,7 @@ function offlineDownToTown() {
 }
 function onPlayerDown() {
   if (state.gvg && typeof gvgOnPlayerDown === 'function' && gvgOnPlayerDown()) return;   // 攻城中：留在城裡，隊友繼續
+  if (state.dojo && typeof dojoOnPlayerDown === 'function' && dojoOnPlayerDown()) return;   // 道館：隊友還站著就繼續
   state.deaths = (state.deaths || 0) + 1;
   logMsg(`⚠️ 你被擊倒了！正在返回安全地帶療傷……`);
   state.monster = null;
@@ -10102,6 +10127,8 @@ function monsterAttackAlly(mon, monDef, ally) {
   dmg = absorbWithShields(ally, dmg, ally._allyName, 'ally', monMove(mon).range >= RANGED_ATTACK_CELLS);
   if (dmg > 0) allyTakeDamage(ally, dmg, monDef.name);
   pushCombatLog(`  → ${monDef.name} 攻擊 ${ally._allyName}，造成 ${dmg} 點傷害！`, 'ally');
+  // 受擊觸發的被動攻擊技（冰凍術等）隊友也吃得到（T50，使用者 2026-11-14）
+  if (!ally._downed && ally.hp > 0 && mon.hp > 0 && !ally.casting) withAlly(ally, () => tryPassiveProcs('hit', mon));
   if (typeof renderLog === 'function') renderLog();
 }
 
@@ -11192,6 +11219,7 @@ function castSkillInner(skillId, opts) {
      **特效**換身中不播（不該讓玩家的立繪擺出施放姿勢），**音效**照播。 */
   if (typeof playSkillSound === 'function') playSkillSound(sk, lv);
   if (!_allyActing && typeof showSkillCastEffect === 'function') showSkillCastEffect(sk, lv);
+  if (typeof playSkillHitFx === 'function') playSkillHitFx(sk, lv);   // 命中特效（火箭術等，T24）
   if (typeof showSkillNameFloat === 'function') showSkillNameFloat(skillDisplayName(sk), lv);
 
   /* 卡片對「特定技能」的傷害加成（火蜥蜴：隕石術+40%、小雪怪：冰箭術+25%…）。
@@ -13367,6 +13395,11 @@ function doJobChange(targetId) {
     logMsg(`🧹 離開原本的路線：清除了 ${pruned.skills.length} 個技能`
       + (pruned.points ? `與 ${pruned.points} 點未使用的技能點` : '') + '。');
   }
+  /* 新職業不能用的裝備卸回背包（比照官方；2026-11-14 補上，test_sing 分支那版沒合進 v2） */
+  EQUIP_SLOTS_ALL.forEach(slot => {
+    const id = getEquipBaseItemId(slot);
+    if (id && equipBlockReason(id)) unequipItem(slot);
+  });
 
   // 自動習得新職業的任務技能
   target.skills.forEach(sk => {
@@ -13453,7 +13486,7 @@ const NPC_SHOPS = {
   armor: {
     name: '防具商人',
     icon: '🛡️',
-    items: ['flu_mask', 'granpa_beard', 'hood', 'muffler', 'manteau', 'novice_manteau', 'cotton_shirt', 'leather_jacket', 'adventure_suit', 'mantle', 'coat', 'padded_armor', 'chain_mail', 'plate_armor', 'silk_robe', 'scapulare', 'saint_robe', 'wooden_mail', 'tights', 'silver_robe', 'thief_clothes', 'wedding_dress', 'novice_breast', 'full_plate_armor', 'guard', 'buckler', 'shield', 'mirror_shield', 'novice_shield', 'arm_guard', 'sandals', 'shoes', 'boots', 'grave', 'novice_shoes', 'rosary', 'skul_ring', 'flower_ring', 'diamond_ring', 'belt', 'novice_armlet', 'wedding_veil', 'ribbon', 'bandana', 'biretta', 'hat', 'turban', 'cap', 'helm', 'gemmed_sallet', 'circlet', 'super_novice_hat', 'fedora', 'sunglasses', 'glasses', 'item_2205', 'eye_bandage', 'one_eyed_glass', 'luxury_sunglasses', 'spinning_eyes', 'goggle', 'blue_coif'],
+    items: ['flu_mask', 'granpa_beard', 'hood', 'muffler', 'manteau', 'novice_manteau', 'cotton_shirt', 'leather_jacket', 'adventure_suit', 'mantle', 'coat', 'padded_armor', 'chain_mail', 'plate_armor', 'silk_robe', 'scapulare', 'saint_robe', 'wooden_mail', 'tights', 'silver_robe', 'thief_clothes', 'wedding_dress', 'novice_breast', 'full_plate_armor', 'guard', 'buckler', 'shield', 'mirror_shield', 'novice_shield', 'sandals', 'shoes', 'boots', 'grave', 'novice_shoes', 'rosary', 'skul_ring', 'flower_ring', 'diamond_ring', 'belt', 'novice_armlet', 'wedding_veil', 'ribbon', 'bandana', 'biretta', 'hat', 'turban', 'cap', 'helm', 'gemmed_sallet', 'circlet', 'super_novice_hat', 'fedora', 'sunglasses', 'glasses', 'item_2205', 'eye_bandage', 'one_eyed_glass', 'luxury_sunglasses', 'spinning_eyes', 'goggle', 'blue_coif'],
     getItems() {
       return this.items.filter(id => {
         const item = ITEMS[id];
@@ -14063,6 +14096,16 @@ function candyMult(kind) {
   return (b && typeof b.mult === 'number') ? b.mult : 1;
 }
 
+const FOOD_STAT_SEC = 1200;
+/* 素質料理：<素質>_dish01～10 ＝ 該素質 +1～+10（官方 SC_*FOOD 的值就是編號）。說明裡的「未實作」註記拿掉 */
+['str', 'agi', 'vit', 'int', 'dex', 'luk'].forEach(stat => {
+  for (let n = 1; n <= 10; n++) {
+    const it = ITEMS[stat + '_dish' + String(n).padStart(2, '0')];
+    if (!it) continue;
+    it.foodStat = { stat, val: n };
+    if (it.desc) it.desc = it.desc.replace(/\s*（⚠本服未實作：敘述裡的\*\*素質加成沒有做\*\*[^）]*）/, '') + `（本服：${stat.toUpperCase()} +${n}，20 分鐘）`;
+  }
+});
 function useItem(itemId) {
   const def = ITEMS[itemId];
   const row = state.inventory.find(r => r.item === itemId && !r.instanceId);
@@ -14149,6 +14192,20 @@ function useItem(itemId) {
       });
       recomputeDerived(false);
       logMsg(`🧪 使用了 ${def.name}，${ELEMENT_NAMES[def.eleResist.element]}屬性傷害 −${def.eleResist.pct}%，持續 ${Math.round(def.eleResist.sec / 60)} 分鐘。`);
+      saveGame();
+      return true;
+    }
+    /* 素質料理（使用者 2026-11-14，官方 sc_start SC_<素質>FOOD,1200000,N）：同素質只留一個、20 分鐘；
+       附帶的百分比回復照常結算 */
+    if (def.foodStat) {
+      const { stat, val } = def.foodStat;
+      removeItem(itemId, 1);
+      state.buffs = state.buffs.filter(b => !(b.type === 'foodstat' && b.stat === stat));
+      state.buffs.push({ type: 'foodstat', stat, flatBonus: val, mult: 1, msRemaining: FOOD_STAT_SEC * 1000, buffName: def.name, itemId });
+      if (def.healPct) state.hp = Math.min(state.maxHp, state.hp + Math.round(state.maxHp * def.healPct / 100));
+      if (def.restoreSpPct) state.sp = Math.min(state.maxSp, state.sp + Math.round(state.maxSp * def.restoreSpPct / 100));
+      recomputeDerived(false);
+      logMsg(`🍖 吃了 ${def.name}，${stat.toUpperCase()} +${val}（${FOOD_STAT_SEC / 60} 分鐘）。`);
       saveGame();
       return true;
     }
@@ -14574,6 +14631,7 @@ function refineItem(slotKey, materialType, useBless) {
 
   // 扣除材料和費用（祝福成敗都會消耗）
   removeItem(mat.id, 1);
+  if (typeof questCount === 'function') questCount('refine', 1);
   if (blessNeed) removeItem('blacksmith_blessing', blessNeed);
   state.gold -= cost;
 
@@ -14656,6 +14714,7 @@ const EQUIP_SLOT_NAMES = {
 };
 
 function cardFitsSlot(card, equipSlot) {
+  if (card.slot === 'enchant') return false;   // 附魔石只能找附魔師裝（D7）
   const targets = CARD_SLOT_TARGETS[card.slot] || CARD_SLOT_TARGETS.any;
   return targets.includes(equipSlot);
 }
@@ -14690,7 +14749,9 @@ function describeInstance(inst) {
   const ref = inst.refine > 0 ? `+${inst.refine} ` : '';
   const cards = (inst.cards && inst.cards.length)
     ? `（🃏${inst.cards.map(id => CARDS[id] ? CARDS[id].name : id).join('、')}）` : '';
-  return `${ref}${name}${cards}`;
+  const ench = (inst.enchants || []).filter(Boolean);
+  const enchTxt = ench.length ? `（💠${ench.map(id => CARDS[id] ? CARDS[id].name : id).join('、')}）` : '';
+  return `${ref}${name}${cards}${enchTxt}`;
 }
 
 function insertCard(equipSlot, cardId) {
@@ -14734,6 +14795,72 @@ function insertCard(equipSlot, cardId) {
   recomputeDerived(false);
   saveGame();
   return true;
+}
+
+/* ---------------- 附魔（D7，使用者 2026-11-14） ----------------
+   全裝備最多 2 個附魔孔，跟卡片孔分開；找附魔師開孔。
+   孔上有石頭也能再附魔（舊的那顆消失）。有附魔石→直接裝；沒有→花鋅幣隨機抽 ENCHANTS（照 weight）。 */
+const ENCHANT_MAX_SLOTS = 2;
+const ENCHANT_OPEN_COST = [200000, 1000000];   // 開第 1、2 孔
+const ENCHANT_RANDOM_TOKENS = 1;   // 隨機附魔吃道館代幣（使用者 2026-11-14）
+const ENCHANT_INSTALL_COST = 50000;
+function enchantInfo(equipSlot) {
+  const inst = getEquipInstance(equipSlot);
+  return { opened: (inst && inst.enchSlots) || 0, enchants: (inst && inst.enchants) || [] };
+}
+function enchantPay(cost, what) {
+  if ((state.gold || 0) < cost) { logMsg(`⚠️ 鋅幣不足，${what}要 ${cost.toLocaleString()}z。`); return false; }
+  state.gold -= cost;
+  return true;
+}
+function enchantOpenSlot(equipSlot) {
+  const baseItemId = getEquipBaseItemId(equipSlot);
+  if (!baseItemId) { logMsg('⚠️ 該欄位沒有裝備。'); return false; }
+  const { opened } = enchantInfo(equipSlot);
+  if (opened >= ENCHANT_MAX_SLOTS) { logMsg(`⚠️ 最多 ${ENCHANT_MAX_SLOTS} 個附魔孔。`); return false; }
+  if (!enchantPay(ENCHANT_OPEN_COST[opened], '開孔')) return false;
+  const inst = state.instances[getOrCreateEquipInstance(equipSlot)];
+  inst.enchSlots = opened + 1;
+  if (!inst.enchants) inst.enchants = [];
+  logMsg(`💠 ${ITEMS[baseItemId].name} 開了第 ${inst.enchSlots} 個附魔孔。`);
+  saveGame();
+  return true;
+}
+function enchantSet(equipSlot, idx, stoneId) {
+  const inst = state.instances[getOrCreateEquipInstance(equipSlot)];
+  const old = inst.enchants[idx];
+  inst.enchants[idx] = stoneId;
+  const nm = id => (CARDS[id] ? CARDS[id].name : id);
+  logMsg(`💠 ${ITEMS[inst.item].name} 第 ${idx + 1} 孔：${old ? nm(old) + ' → ' : ''}${nm(stoneId)}`);
+  recomputeDerived(false);
+  saveGame();
+}
+function enchantInstall(equipSlot, idx, stoneId) {
+  const { opened } = enchantInfo(equipSlot);
+  if (!(idx >= 0 && idx < opened)) { logMsg('⚠️ 這個附魔孔還沒開。'); return false; }
+  const c = CARDS[stoneId];
+  if (!c || c.slot !== 'enchant') return false;
+  if (getItemQty(stoneId) < 1) { logMsg(`⚠️ 你沒有${c.name}。`); return false; }
+  if (!enchantPay(ENCHANT_INSTALL_COST, '裝附魔石')) return false;
+  removeItem(stoneId, 1);
+  enchantSet(equipSlot, idx, stoneId);
+  return true;
+}
+function drawEnchant() {
+  const ids = Object.keys(ENCHANTS);
+  const total = ids.reduce((t, k) => t + ENCHANTS[k].weight, 0);
+  let r = rng() * total;
+  for (const k of ids) { r -= ENCHANTS[k].weight; if (r < 0) return k; }
+  return ids[ids.length - 1];
+}
+function enchantRandom(equipSlot, idx) {
+  const { opened } = enchantInfo(equipSlot);
+  if (!(idx >= 0 && idx < opened)) { logMsg('⚠️ 這個附魔孔還沒開。'); return null; }
+  if (getItemQty('dojo_token') < ENCHANT_RANDOM_TOKENS) { logMsg(`⚠️ 隨機附魔要道館代幣 ×${ENCHANT_RANDOM_TOKENS}。`); return null; }
+  removeItem('dojo_token', ENCHANT_RANDOM_TOKENS);
+  const id = drawEnchant();
+  enchantSet(equipSlot, idx, id);
+  return id;
 }
 
 /* 拔卡：卡片可以取回，但裝備會在拆卸過程中損毀。
@@ -14788,12 +14915,16 @@ function applyCardLeech(dmg) {
   if (!dmg || dmg <= 0) return;
   if (state.cardLifeStealChance && rng() * 100 < state.cardLifeStealChance) {
     const heal = Math.max(1, Math.round(dmg * state.cardLifeStealPct / 100));
+    const before = state.hp;
     state.hp = Math.min(state.maxHp, state.hp + heal);
     logMsg(`🩸 吸血發動！回復了 ${heal} 點HP。`);
+    if (state.hp > before && typeof showPlayerFloat === 'function') showPlayerFloat('+' + (state.hp - before), 'heal');
   }
   if (state.cardSpStealChance && rng() * 100 < state.cardSpStealChance) {
     const gain = Math.max(1, Math.round(dmg * state.cardSpStealPct / 100));
+    const spBefore = state.sp;
     state.sp = Math.min(state.maxSp, state.sp + gain);
+    if (state.sp > spBefore && typeof showPlayerFloat === 'function') showPlayerFloat('+' + (state.sp - spBefore), 'sp');
     logMsg(`💧 吸取魔力發動！回復了 ${gain} 點SP。`);
   }
 }
@@ -14876,7 +15007,8 @@ function buildLoadout() {
     if (!itemId) return;
     const inst = getEquipInstance(slot);
     const refine = (inst && inst.refine) || 0;
-    const list = (inst && inst.cards) ? inst.cards.filter(Boolean) : [];
+    // 附魔石跟卡片走同一條加成流程（D7）
+    const list = ((inst && inst.cards) || []).concat((inst && inst.enchants) || []).filter(Boolean);
     slots[slot] = { itemId, refine, cards: list };
     items.add(itemId);
     list.forEach(cid => {
@@ -14979,10 +15111,21 @@ function mergeBonus(target, bonus, scale) {
 
 /* 全身裝備提供的加成總表（卡片無條件 + 卡片條件式 + 依精煉倍增 + 套裝）。
    同一份簽章不變就直接回快取，戰鬥迴圈每次揮擊都會查到這裡。 */
-let _gearBonusCache = null;
-let _gearBonusKey = '';
 let _activeSets = [];
+/* 每個角色各存一份（WeakMap 以 state 物件為鍵）：withOwner 切到隊友時不會把玩家的快取洗掉。
+   _gearFrame：recomputeDerived 期間裝備不會變，同一次重算裡直接共用結果，
+   不用每次查詢都重建 loadout、組簽章（一次重算會查 80 多次）。 */
+const _gearBonusByState = new WeakMap();
+let _gearFrame = null;
+function gearFrame() { return _gearFrame && _gearFrame.st === state ? _gearFrame : null; }
 function effectiveGearBonuses() {
+  const fr = gearFrame();
+  if (fr && fr.all) { _activeSets = fr.sets; return fr.all; }
+  const all = effectiveGearBonusesKeyed();
+  if (fr) { fr.all = all; fr.sets = _activeSets; }
+  return all;
+}
+function effectiveGearBonusesKeyed() {
   const lo = buildLoadout();
   /* 簽章要涵蓋**每一個 condMet() 看得到的東西**，不然條件式加成會卡在舊值。
      加點素質原本沒進簽章，所以 `statMin` / `statMax` 那幾張卡（雙子星-S58 的
@@ -15004,7 +15147,8 @@ function effectiveGearBonuses() {
     + '#' + Object.keys(ls).length + ':' + Object.values(ls).reduce((a, b) => a + (b || 0), 0)
     + '#' + new Date(gameNow() + 8 * 3600 * 1000).getUTCMonth()
     + '#' + (state.buffs || []).filter(b => b.type === 'gearbonus').map(b => b.skillId).join(',');
-  if (_gearBonusCache && _gearBonusKey === key2) return _gearBonusCache;
+  const hit = state && _gearBonusByState.get(state);
+  if (hit && hit.key === key2) { _activeSets = hit.sets; return hit.total; }
 
   const total = {};
   const sets = [];
@@ -15139,11 +15283,10 @@ function effectiveGearBonuses() {
   const petBonus = activePetBonus();
   if (petBonus) mergeBonus(total, petBonus);
 
-  _gearBonusKey = key2;
   _activeSets = sets;
   // 觸發中的裝備增益（autobonus）：持續期間把那份加成併進來
   (state.buffs || []).forEach(b => { if (b.type === 'gearbonus' && b.bonus) mergeBonus(total, b.bonus); });
-  _gearBonusCache = total;
+  if (state) _gearBonusByState.set(state, { key: key2, total, sets });
   return total;
 }
 function activeEquipSets() { effectiveGearBonuses(); return _activeSets; }
@@ -15219,6 +15362,14 @@ function getDevotionTargetPct() {
 
 const BASE_STAT_KEYS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
 function getCardBonus(stat) {
+  const fr = gearFrame();
+  if (fr) {
+    const c = fr.cb || (fr.cb = Object.create(null));
+    return stat in c ? c[stat] : (c[stat] = getCardBonusRaw(stat));
+  }
+  return getCardBonusRaw(stat);
+}
+function getCardBonusRaw(stat) {
   const all = effectiveGearBonuses();
   let total = all[stat] || 0;
   /* perBaseLv10_<目標>（緋紅色系列）：官方「角色等級 70 以上，BaseLv 每上升 10 時 ATK+5」。
@@ -16376,7 +16527,7 @@ function computeOfflineProgress(minMs, opts) {
   if (typeof MVP_MAP_DATA !== 'undefined') {
     const lists = activeBossLists(map.id);
     const bossPool = lists.length
-      ? [].concat.apply([], lists).filter(id => MONSTERS[id])
+      ? [...new Set([].concat.apply([], lists).map(mobFinalForm))].filter(id => MONSTERS[id])
       : [];
     if (bossPool.length) {
       // 殺得動的頭目先過濾出來：擲中了卻沒紀錄的，那一輪時間照樣損失（跟線上抽到打不動的一樣）
@@ -16387,10 +16538,13 @@ function computeOfflineProgress(minMs, opts) {
       });
       const rolls = Math.floor(elapsedSec / BOSS_ROLL_SEC);
       for (let i = 0; i < rolls; i++) {
-        if (rng() * 100 >= MVP_SPAWN_CHANCE_PCT) continue;
-        // 等機率抽：先從殺得動的抽；全都殺不動時，這一輪照樣損失
-        const pickFrom = killable.length ? killable : bossPool;
-        const id = pickFrom[Math.floor(rng() * pickFrom.length)];
+        // 跟線上一樣：MVP／迷你王各擲各的，都中就選一份
+        const hitLists = lists.filter(l => rng() * 100 < l.pct);
+        if (!hitLists.length) continue;
+        const hl = hitLists[Math.floor(rng() * hitLists.length)].filter(id => MONSTERS[id]);
+        if (!hl.length) continue;
+        // 等機率抽：抽到殺不動的，這一輪照樣損失
+        const id = hl[Math.floor(rng() * hl.length)];
         if (!killable.includes(id)) continue;   // 抽到殺不動的 → 白耗一輪
         const rec = bossKillRecord(id, farmMode());
         const killSec = (rec.bestMs || rec.lastMs) / 1000;
@@ -16424,8 +16578,9 @@ function computeOfflineProgress(minMs, opts) {
   const lootBossKills = bossKills * lootScale;
   const expBossList = bossGained.map(b => ({ id: b.id, kills: b.kills * expScale }));
   const lootBossList = bossGained.map(b => ({ id: b.id, kills: b.kills * lootScale }));
-  const expNormalShare = expBossKills > 0 ? 1 - MVP_SPAWN_CHANCE_PCT / 100 : 1;
-  const lootNormalShare = lootBossKills > 0 ? 1 - MVP_SPAWN_CHANCE_PCT / 100 : 1;
+  const bossPct = typeof MVP_MAP_DATA !== 'undefined' ? Math.min(100, activeBossLists(map.id).reduce((t, l) => t + l.pct, 0)) : 0;
+  const expNormalShare = expBossKills > 0 ? 1 - bossPct / 100 : 1;
+  const lootNormalShare = lootBossKills > 0 ? 1 - bossPct / 100 : 1;
   const expTotalKills = killsPerSec * expSec * expNormalShare;
   const totalKills = killsPerSec * lootSec * lootNormalShare;
 
@@ -16449,6 +16604,12 @@ function computeOfflineProgress(minMs, opts) {
     const bd = MONSTERS[b.id];
     goldGained += Math.round((3 + ((bd && bd.level) || 0) * 1.4) * b.kills * goldFarm);
   });
+  // MVP 點數：離線擊殺一樣算，受每日上限
+  if (typeof addMvpPoints === 'function') {
+    const mvpN = Math.floor(lootBossList.reduce((t, b) => t + (MONSTERS[b.id] && MONSTERS[b.id].isMvp ? b.kills : 0), 0));
+    if (mvpN > 0) addMvpPoints(mvpN);
+    if (typeof questCount === 'function') { questCount('kill', Math.floor(totalKills + bossKills * lootScale)); questCount('mvp', mvpN); }
+  }
 
   /* 掉落物期望值（依真實怪物密度權重計算每次擊殺的期望掉落機率）。
 

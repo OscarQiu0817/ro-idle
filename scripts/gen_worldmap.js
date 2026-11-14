@@ -226,8 +226,12 @@ const FERRIES = [
 ];
 /* 官方刷怪檔沒有、本作手動放的首領（使用者 2026-11-08）：
    水晶龍——rAthena 把冰穴的刷點改成任務召喚，本作放回「拉赫冰穴 封印的空間」（MVP 模式才出） */
-const EXTRA_BOSSES = { ice_dun04: ['ktullanux'] };
+// 使用者 2026-11-14：魔劍士 達納托斯放塔台最高層；迪文（研究所 MVP）跟其他進階二轉人形王一起放研究所地下 3 樓
+const EXTRA_BOSSES = { ice_dun04: ['ktullanux'], tha_t12: ['thanatos'] };
+// 整張替換（使用者 2026-11-14）：研究所地下 3 樓放 MVP 型態的 6 隻人形王（官方 lhz_dun03 的 MVP），不放 g_ 護衛版
+const REPLACE_BOSSES = { lhz_dun03: ['b_seyren', 'b_eremes', 'b_harword', 'b_magaleta', 'b_katrinn', 'b_shecil'] };
 for (const [m, l] of Object.entries(EXTRA_BOSSES)) { const b = bosses[m] = bosses[m] || []; l.forEach(k => { if (!b.includes(k)) b.push(k); }); }
+for (const [m, l] of Object.entries(REPLACE_BOSSES)) bosses[m] = l.slice();
 const game = {
   main: { img: 'images/worldmap/worldmap.jpg', w: 1280, h: 1024, tiles, dungeons },
   links: [...links].map(l => l.split('|')),
