@@ -6,7 +6,8 @@
    就照經過的格數內插位置、四角、角度、顏色、貼圖格；四角畫成四邊形，加亮層用加法混色。
    一張蓋滿視窗的透明 canvas，不擋點擊；沒有特效在播時不跑迴圈。
 
-   StrPlayer.play(name, x, y, { scale, loop, onDone })   x, y＝特效原點（STR 的 320,320）的畫面座標；同時最多 MAX_ACTIVE 個
+   StrPlayer.play(name, x, y, { scale, loop, hold, onDone })   x, y＝特效原點（STR 的 320,320）的畫面座標；同時最多 MAX_ACTIVE 個
+     hold：播完停在最後一格不消失，要自己 stop()；回傳的 handle.e 載入後才有，可改 e.x／e.y／e.scale 讓特效跟著目標走
    StrPlayer.base    資源路徑前綴（proto/ 底下的頁面設 '../'）
    StrPlayer.stats   { frames, ms }：累計畫了幾幀、花了幾毫秒（量效能用）
 
@@ -139,7 +140,8 @@ const StrPlayer = (() => {
       const e = active[i], d = e.data;
       let k = d.k0 + (now - e.t0) / 1000 * d.fps;
       if (k >= d.k1) {
-        if (e.loop) { e.t0 = now; k = d.k0; } else { active.splice(i, 1); if (e.onDone) e.onDone(); continue; }
+        if (e.hold) k = d.k1 - 1;   // 停在最後一格，直到呼叫 stop()（冰凍的冰塊）
+        else if (e.loop) { e.t0 = now; k = d.k0; } else { active.splice(i, 1); if (e.onDone) e.onDone(); continue; }
       }
       const s = e.scale * dpr, ox = e.x * dpr, oy = e.y * dpr;
       for (const L of d.layers) {
@@ -177,10 +179,11 @@ const StrPlayer = (() => {
   api.preload = name => load(name, () => {});
   api.play = (name, x, y, opt) => {
     opt = opt || {};
-    const h = { stop() { const i = active.indexOf(h.e); if (i >= 0) active.splice(i, 1); } };
+    const h = { stopped: false, stop() { h.stopped = true; const i = active.indexOf(h.e); if (i >= 0) active.splice(i, 1); } };
     load(name, d => {
+      if (h.stopped) return;   // 還在載入就被叫停（冰凍很快解除）
       if (!d || !gl || active.length >= MAX_ACTIVE) { if (opt.onDone) opt.onDone(); return; }
-      h.e = { data: d, x, y, scale: opt.scale || 0.5, loop: !!opt.loop, onDone: opt.onDone, t0: performance.now() };
+      h.e = { data: d, x, y, scale: opt.scale || 0.5, loop: !!opt.loop, hold: !!opt.hold, onDone: opt.onDone, t0: performance.now() };
       active.push(h.e);
       if (!raf) raf = requestAnimationFrame(frame);
     });

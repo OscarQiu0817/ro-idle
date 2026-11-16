@@ -1087,6 +1087,8 @@ function renderAllyAutoBattle(a) {
     html += cfg.slots.map((sl, i) => `<div class="ally-slot-row">
       <label>第 ${i + 1} 招
         <select class="ally-sel" onchange="setAllyAutoSlot('${a._slot}', ${i}, 'skillId', this.value)">${opt(atk, sl.skillId)}</select></label>
+      ${sl.skillId && atk.find(e => e.sk.id === sl.skillId) ? `<label>等級
+        <select class="ally-sel" onchange="setAllyAutoSlot('${a._slot}', ${i}, 'lv', parseInt(this.value) || null)">${withAlly(a, () => autoSlotLvOptions(sl, atk.find(e => e.sk.id === sl.skillId).lv))}</select></label>` : ''}
       ${sl.skillId ? `<label>SP 保留
         <input class="ally-num" type="number" min="0" max="90" value="${sl.spThreshold || 0}"
           onchange="setAllyAutoSlot('${a._slot}', ${i}, 'spThreshold', Math.max(0, Math.min(90, parseInt(this.value) || 0)))">%</label>
@@ -1116,6 +1118,7 @@ function setAllyAutoSlot(slot, i, key, v) {
   const sl = a.autoSkillConfig.slots[i];
   if (!sl) return;
   sl[key] = v === '' ? null : v;
+  if (key === 'skillId') sl.lv = null;   // 換技能：施放等級回到最高
   saveGame();
   renderAllyPanel();
 }
@@ -1597,6 +1600,7 @@ function toggleHudMenu(ev) {
 document.addEventListener('click', closeHudMenu);
 function switchTab(name) {
   activeTab = name;
+  equipCardSlot = null;   // 換分頁就離開插卡模式
   if (TAB_GROUP[name]) setTabGroup(TAB_GROUP[name]);
   bagTipPinned = false;
   hideEquipTooltip();
@@ -2171,7 +2175,7 @@ function playFxAnim(name, x, y, delayMs, opt) {
   opt = opt || {};
   if (m.str) {
     if (typeof StrPlayer === 'undefined') return;
-    setTimeout(() => StrPlayer.play(m.str, x, y, { scale: m.sc, onDone: opt.done }), delayMs || 0);
+    setTimeout(() => StrPlayer.play(m.str, x, y, { scale: opt.scale || m.sc, onDone: opt.done }), delayMs || 0);
     return;
   }
   setTimeout(() => {
@@ -2284,12 +2288,59 @@ function playSkillPlanFx(sk) {
       if (!m) continue;
       const once = m.n * m.ms;
       const times = L.repeat && L.duration ? Math.max(1, Math.min(4, Math.round(L.duration / Math.max(1, once)))) : 1;
+      // 場地魔法（暴風雪、隕石術…）的主特效對齊地上的範圍圈：圈心、圈寬（使用者 2026-11-16 回報對不上）
+      if (sk.fieldRadius && m.str && m.ex && L.key !== 'hitEffectId') {
+        playFieldFx(sk, name, m, times, once, L.delay || 0, x, y);
+        continue;
+      }
       for (let k = 0; k < times; k++) playFxAnim(name, x, y, (L.delay || 0) + k * once);
     } else {
       const n = Math.max(1, Math.min(5, L.dup || 1));
       for (let k = 0; k < n; k++) playFxParticle(L.fx[0], x, y, L, (L.delay || 0) + k * (L.gap || 0));
     }
   }
+}
+
+/* 場地魔法的範圍圈在 castSkill 稍後才建立（state.activeFieldEffects），下一拍再找圈。
+   圈心＝syncGroundUnits 畫圈的位置（bfPolarPoint），縮放讓特效看得清楚的寬度（m.ex，STR 座標）等於圈寬。
+   找不到圈（舊存檔、沒目標）就照原本的位置播。
+   角色走動時整個戰場會平移、圈心也跟著移（engine 平移 center、畫面還有補間 bfWorldLag），
+   特效每一幀重算位置跟著圈走，不然會停在施放當下的螢幕位置（使用者 2026-11-16 回報越播越偏）。 */
+function fieldFxPlace(sk, m) {
+  const f = ((state && state.activeFieldEffects) || []).find(e => e.fxSkillId === sk.id && e.center && e.radius > 0);   // fxSkillId 只給特效找圈用，不用 skillId（自動施放會拿 skillId 擋重放）
+  const scene = document.getElementById('battle-scene');
+  if (!f || !scene || typeof bfPolarPoint !== 'function') return null;
+  const sr = scene.getBoundingClientRect();
+  // 跟 syncGroundUnits 的 at() 同一套：加上畫面補間落差
+  const lx = f.center.d * Math.cos(f.center.a) + bfWorldLag.x, ly = f.center.d * Math.sin(f.center.a) + bfWorldLag.y;
+  const p = bfPolarPoint({ d: Math.hypot(lx, ly), a: Math.atan2(ly, lx) });
+  const cx = sr.left + sr.width * p.x / 100, cy = sr.top + sr.height * p.y / 100;
+  const scale = (f.radius * 2 + 1) * BF_CELL_X / 100 * sr.width / Math.max(1, m.ex[2] - m.ex[0]);
+  // STR 原點本來就是地面上的那一點：原點放圈心，只把左右偏掉的部分拉回中間（隕石這種從天上落下的才不會被往下推）
+  return { x: cx - (m.ex[0] + m.ex[2]) / 2 * scale, y: cy, scale };
+}
+function playFieldFx(sk, name, m, times, once, delay, fx, fy) {
+  setTimeout(() => {
+    const at = fieldFxPlace(sk, m);
+    if (!at || typeof StrPlayer === 'undefined') {
+      for (let k = 0; k < times; k++) playFxAnim(name, fx, fy, k * once);
+      return;
+    }
+    for (let k = 0; k < times; k++) {
+      setTimeout(() => {
+        const start = fieldFxPlace(sk, m) || at;
+        let live = true;
+        const h = StrPlayer.play(m.str, start.x, start.y, { scale: start.scale, onDone: () => { live = false; } });
+        const follow = () => {
+          if (!live) return;
+          const q = fieldFxPlace(sk, m);
+          if (q && h.e) { h.e.x = q.x; h.e.y = q.y; h.e.scale = q.scale; }
+          requestAnimationFrame(follow);
+        };
+        requestAnimationFrame(follow);
+      }, k * once);
+    }
+  }, delay);
 }
 
 function playSkillHitFx(sk, lv) {
@@ -2624,8 +2675,26 @@ function updateMonsterHp() {
         slot.classList.toggle('ail-stone', list.includes('stone'));
         slot.classList.toggle('ail-freeze', list.includes('freeze'));
       }
+      if (slot) syncFreezeIce(slot, list.includes('freeze'));
     }
   });
+}
+
+/* 冰凍的冰塊（使用者 2026-11-16：怪物變藍、腳下一塊冰）：官方冰晶貼圖 freeze_ice（黑底，CSS 用濾色疊掉黑色），
+   釘在怪物圖的底部，寬度跟著怪物圖。元素放在怪物格子裡，怪物移動、死掉時跟著走／一起消失。 */
+function syncFreezeIce(slot, frozen) {
+  let ice = slot.querySelector(':scope > .freeze-ice');
+  if (!frozen) { if (ice) ice.remove(); return; }
+  const img = slot.querySelector('img, canvas');
+  if (!img || !img.offsetWidth) return;
+  if (!ice) {
+    ice = document.createElement('span');
+    ice.className = 'freeze-ice';
+    slot.appendChild(ice);
+  }
+  ice.style.left = (img.offsetLeft + img.offsetWidth / 2) + 'px';
+  ice.style.top = (img.offsetTop + img.offsetHeight) + 'px';
+  ice.style.width = Math.max(30, img.offsetWidth * 0.9) + 'px';
 }
 
 /* 怪物身上的增益（#36）在 HP 條下面的圖示。鍵對應 engine.js 的 MON_BUFF_KEYS */
@@ -4937,7 +5006,7 @@ function renderAutoBattleTab() {
   if (abSelSlot >= config.slots.length) abSelSlot = 0;
   const slotCards = config.slots.map((sl, i) => {
     const sk = sl.skillId && SKILLS[sl.skillId];
-    const lv = sk ? skillLv(sk.id) : 0;
+    const lv = sk ? autoSlotLv(sl, sk) : 0;   // 這格選的施放等級
     const t = sk ? autoSkillTiming(sk, lv) : null;
     return `<button class="ab-slot-card${i === abSelSlot ? ' sel' : ''}${sk ? '' : ' empty'}" onclick="selectAutoSkillSlot(${i})">
         <span class="ab-slot-no">${i + 1}</span>
@@ -4964,6 +5033,10 @@ function renderAutoBattleTab() {
             </select>
           </div>
           ${cur.skillId ? `
+          <div class="ab-config-row">
+            <label class="ab-config-label">施放等級</label>
+            <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'lv', parseInt(this.value) || null)">${autoSlotLvOptions(cur, skillLv(cur.skillId))}</select>
+          </div>
           <div class="ab-config-row">
             <label class="ab-config-label">SP 保留 %</label>
             <input type="range" class="ab-slider" min="0" max="90" value="${cur.spThreshold || 0}"
@@ -5185,6 +5258,18 @@ function clearAutoSkillSlot(i) {
   renderAutoBattleTab();
 }
 /* 一招的詠唱／後延遲／冷卻（毫秒），照目前的 DEX、INT 與普攻間隔算 */
+/* 施放等級下拉（每格可選放低等級：詠唱短、SP 少）；空值＝最高等級，學了更高等級會跟著升 */
+function autoSlotLvOptions(sl, maxLv) {
+  const sk = SKILLS[sl.skillId];
+  const opt = lv => {
+    const sp = sk ? skillSpCost(sk, lv) : 0;
+    const ct = sk ? skillCastTimeMs(sk, lv) : 0;
+    return `${lv} 級（SP ${sp}${ct ? '・詠 ' + (ct / 1000).toFixed(1) + 's' : '・瞬發'}）`;
+  };
+  let h = `<option value="" ${sl.lv > 0 ? '' : 'selected'}>最高（${opt(maxLv)}）</option>`;
+  for (let lv = maxLv; lv >= 1; lv--) h += `<option value="${lv}" ${sl.lv === lv ? 'selected' : ''}>${opt(lv)}</option>`;
+  return h;
+}
 function autoSkillTiming(sk, lv) {
   const row = skillCastRow(sk.id);
   return {
@@ -5226,6 +5311,7 @@ function setAutoSkillSlot(i, key, value, quiet) {
   const sl = state.autoSkillConfig.slots[i];
   if (!sl) return;
   sl[key] = value;
+  if (key === 'skillId') sl.lv = null;   // 換技能：施放等級回到最高
   saveGame();
   if (!quiet) renderAutoBattleTab();
 }
@@ -5829,23 +5915,10 @@ const CODEX_CATS = {
     // 其餘一律算素材（含少數 type 沒歸類乾淨的）
     { k: 'material', label: '素材', test: id => !['weapon', 'armor', 'consumable', 'ammo'].includes(ITEMS[id].type) },
   ],
-  /* 隱藏圖鑑（神秘箱挑戰）：池子已排除卡片與箱子本身，照道具類型分類。
-     另收「卡冊限定卡」——來源怪沒實裝、只能靠卡冊開出來的 7 張。 */
-  hidden: [
-    { k: 'all', label: '全部' },
-    { k: 'weapon', label: '武器', test: id => ITEMS[id].type === 'weapon' },
-    { k: 'armor', label: '防具', test: id => ITEMS[id].type === 'armor' && ITEMS[id].armorType !== 'accessory' },
-    { k: 'accessory', label: '飾品', test: id => ITEMS[id].type === 'armor' && ITEMS[id].armorType === 'accessory' },
-    { k: 'consumable', label: '消耗品', test: id => ITEMS[id].type === 'consumable' || ITEMS[id].type === 'ammo' },
-    { k: 'albumcard', label: '卡冊限定卡', test: id => !!(CARDS[id] && typeof getAlbumOnlyCards === 'function' && getAlbumOnlyCards().includes(id)) },
-    { k: 'material', label: '素材', test: id => !['weapon', 'armor', 'consumable', 'ammo'].includes(ITEMS[id].type) && !(CARDS[id] && typeof getAlbumOnlyCards === 'function' && getAlbumOnlyCards().includes(id)) },
-  ],
 };
-let codexCat = { mon: 'all', card: 'all', item: 'all', hidden: 'all' };
+let codexCat = { mon: 'all', card: 'all', item: 'all' };
 function setCodexView(v) {
   codexView = v; codexPage = 0; codexOpenId = null;
-  /* 進隱藏圖鑑時重置篩選，避免殘留的「已發現」把未開出的卡藏起來 */
-  if (v === 'hidden') { codexFilter = 'all'; codexSearch = ''; codexSearchRaw = ''; }
   renderCodexTab();
 }
 function setCodexFilter(f) { codexFilter = f; codexPage = 0; renderCodexTab(); }
@@ -5977,22 +6050,15 @@ function renderCodexTab() {
   const book = ensureCodex();
   const prog = getCodexProgress();
 
-  /* 隱藏圖鑑：三大收集全滿之後解鎖（神秘箱挑戰）。沒解鎖就強制回道具分頁。 */
-  const boxUnlocked = prog.monsters.total > 0 && prog.cards.total > 0 && prog.items.total > 0
-    && prog.monsters.found >= prog.monsters.total
-    && prog.cards.found >= prog.cards.total
-    && prog.items.found >= prog.items.total;
-  if (codexView === 'hidden' && !boxUnlocked) codexView = 'item';
+  if (codexView === 'hidden') codexView = 'item';   // 隱藏圖鑑 2026-11-16 拿掉，內容併進道具／卡片分頁
 
   // 依目前分頁組出清單，並套用搜尋/篩選
   let rows;
   // 分類列要顯示**各類的總數**，所以算數量用的是還沒篩過的全表
   const allIds = codexView === 'mon' ? pool.monsters
-    : codexView === 'card' ? pool.cards
-    /* 卡冊限定卡排最前面：7 張混在 1.2 萬件後面永遠翻不到 */
-    : codexView === 'hidden' ? getAlbumOnlyCards().concat(getBoxCodexPool())
+    : codexView === 'card' ? pool.cards.concat(pool.cardsExtra || [])   // 卡冊限定卡排後面，不算進收集總數
     : codexView === 'set' ? Object.keys(codexSetDefs())
-    : pool.items;
+    : pool.items.concat(pool.gacha || []);   // 只有箱子／轉蛋開得到的排在後面，不算進收集總數
   const catBar = codexCatBar(allIds);
   let ids = codexCatFilter(allIds);
   const subBar = codexSubBar(ids);
@@ -6001,8 +6067,6 @@ function renderCodexTab() {
     rows = ids.map(id => ({ id, name: MONSTERS[id].name, found: !!book.seen[id] }));
   } else if (codexView === 'card') {
     rows = ids.map(id => ({ id, name: (CARDS[id] || ITEMS[id]).name, found: !!book.item[id] }));
-  } else if (codexView === 'hidden') {
-    rows = ids.map(id => ({ id, name: ITEMS[id].name, found: !!(book.box && book.box[id]) }));
   } else if (codexView === 'set') {
     const sd = codexSetDefs();
     /* 搜尋也比對成員名稱：查「這張卡有沒有套卡」 */
@@ -6060,17 +6124,14 @@ function renderCodexTab() {
       ${codexBar('👾 怪物', prog.monsters.found, prog.monsters.total)}
       ${codexBar('🃏 卡片', prog.cards.found, prog.cards.total)}
       ${codexBar('🎒 道具', prog.items.found, prog.items.total)}
-      ${boxUnlocked ? codexBoxBar(book) : ''}
     </div>
     <div class="codex-tabs">
       <button class="btn-small ${codexView === 'mon' ? 'active' : ''}" onclick="setCodexView('mon')">👾 怪物</button>
       <button class="btn-small ${codexView === 'card' ? 'active' : ''}" onclick="setCodexView('card')">🃏 卡片</button>
       <button class="btn-small ${codexView === 'item' ? 'active' : ''}" onclick="setCodexView('item')">🎒 道具</button>
       <button class="btn-small ${codexView === 'set' ? 'active' : ''}" onclick="setCodexView('set')">🧩 套裝</button>
-      ${boxUnlocked ? `<button class="btn-small ${codexView === 'hidden' ? 'active' : ''}" onclick="setCodexView('hidden')">🎁 隱藏</button>` : ''}
-    </div>` +
-    (!boxUnlocked ? `<div class="empty-hint">🔒 三大收集（怪物／卡片／道具）全滿後，解鎖「隱藏圖鑑」——神秘箱挑戰。</div>`
-      : ``) + `
+    </div>
+
     <div class="codex-controls">
       <input id="codex-search" class="codex-search" type="text" placeholder="搜尋名稱，找到就能看到去哪裡打…"
         value="${codexSearchRaw.replace(/"/g, '&quot;')}" oninput="onCodexSearch(this.value, event)">
@@ -6094,7 +6155,6 @@ function renderCodexTab() {
     html += codexView === 'set' ? '<div class="codex-set-list">' : '<div class="codex-grid">';
     pageRows.forEach(r => {
       html += (codexView === 'mon') ? codexMonCell(r, book)
-        : (codexView === 'hidden') ? codexBoxCell(r, book)
         : (codexView === 'set') ? codexSetCell(r, book)
         : codexItemCell(r, book);
     });
@@ -6147,32 +6207,6 @@ function codexItemCell(r, book) {
     <div class="codex-cell-name">${getItemDisplayName(r.id)}</div>
     <div class="codex-cell-sub">${sub}</div>
     <div class="codex-cell-count ${got ? '' : 'zero'}">${got ? '×' + got : '未取得'}</div>
-  </div>`;
-}
-
-/* 隱藏圖鑑格子：只看「有沒有從神秘箱/卡冊開出來」，不看持有數。 */
-function codexBoxCell(r, book) {
-  const isCard = !!CARDS[r.id];
-  const d = ITEMS[r.id] || {};
-  const got = !!(book.box && book.box[r.id]);
-  const sub = isCard ? '卡片（卡冊限定）' : (ITEM_TYPE_LABELS[d.type] || d.type || '');
-  const img = isCard ? cardArtSrc(r.id) : itemImgSrc(r.id);
-  return `<div class="codex-cell ${codexOpenId === r.id ? 'open' : ''} ${got ? '' : 'unfound'}" onclick="toggleCodexDetail('${r.id}')">
-    <img class="codex-icon" src="${img}" alt="${isCard ? (CARDS[r.id].name || '') : d.name}" onerror="this.onerror=null;this.src='${placeholderImgSrc(isCard ? 'card' : itemPlaceholderKind(d))}'">
-    <div class="codex-cell-name">${isCard ? (CARDS[r.id].name || r.id) : getItemDisplayName(r.id)}</div>
-    <div class="codex-cell-sub">${sub}</div>
-    <div class="codex-cell-count ${got ? '' : 'zero'}">${got ? '✔ 已開出' : '未開出'}</div>
-  </div>`;
-}
-
-/* 隱藏圖鑑進度條（解鎖後才會出現）：神秘箱池＋卡冊限定卡 */
-function codexBoxBar(book) {
-  const ids = getBoxCodexPool().concat(getAlbumOnlyCards());
-  const found = ids.reduce((n, id) => n + ((book.box && book.box[id]) ? 1 : 0), 0);
-  const p = ids.length ? Math.min(100, found / ids.length * 100) : 0;
-  return `<div class="codex-prog">
-    <div class="codex-prog-head"><span>🎁 神秘箱挑戰</span><span>${found} / ${ids.length}　${p.toFixed(1)}%</span></div>
-    <div class="bar-track"><div class="bar-fill codex-prog-fill" style="width:${p}%"></div></div>
   </div>`;
 }
 
@@ -6399,6 +6433,11 @@ function codexOtherSourcesHtml(id) {
     const kinds = ['card', 'cardFlat', 'sealed', ...Object.values(ALBUM_SLOT || {}).map(sl => 'card_' + sl)];
     const boxes = Object.values(ITEMS).filter(x => x.boxOpen && kinds.includes(x.boxOpen) && (boxPool(x.boxOpen).ids || []).includes(id));
     if (boxes.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">📕 卡冊</span><span class="codex-spot-name">${boxes.map(x => shopEsc(getItemDisplayName(x.id))).join('、')}</span></div>`);
+  }
+  // 神秘箱子／神秘紫箱開得到的（隱藏圖鑑拿掉後，這是那些道具唯一看得到來源的地方）
+  if (!CARDS[id] && typeof boxPool === 'function') {
+    const boxes = Object.values(ITEMS).filter(x => (x.boxOpen === 'any' || x.boxOpen === 'violet') && (boxPool(x.boxOpen).ids || []).includes(id));
+    if (boxes.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">🎁 箱子</span><span class="codex-spot-name">${[...new Set(boxes.map(x => getItemDisplayName(x.id)))].map(shopEsc).join('、')}</span></div>`);
   }
   if (typeof GEAR_GACHA !== 'undefined' && ITEMS[id] && (ITEMS[id].type === 'armor' || ITEMS[id].type === 'weapon')) {
     const eggs = GEAR_GACHA.filter(([gid]) => (boxPool('gear_' + gid).ids || []).includes(id));
@@ -7388,18 +7427,22 @@ function renderEquipTab() {
     /* 裝備欄與「武器／防具」切換鈕包在同一個 sticky 容器裡。
        以前只有 .equip-fixed 是 sticky，切換鈕會跟著清單一起捲走——
        清單一長就得先捲回最上面才能換分類。 */
+    // 插卡模式：裝備窗不動，下半部換成卡片清單（2026-11-16：以前整頁換掉會閃）
+    const cardSel = equipCardSlot && cardSelectParts(equipCardSlot);
+    if (!cardSel) equipCardSlot = null;
     el.innerHTML = `
       <div class="equip-sticky">
         <div class="equip-fixed">
           ${buildEquipPanelHtml()}
         </div>
+        <div id="equip-pick-top">${cardSel ? cardSel.head : `
         <div class="equip-pick-head">
           ${equipPickTabsHtml()}
           <span class="equip-pick-stats">${currentJob().name}可裝備 ${wearable.length} 件</span>
         </div>
-        ${subChips}
+        ${subChips}`}</div>
       </div>
-      ${listHtml}`;
+      <div id="equip-lower">${cardSel ? cardSel.body : listHtml}</div>`;
     paintEquipDoll();
   } catch (e) {
     el.innerHTML = `<div class="empty-hint">裝備分頁載入錯誤：${e.message}</div>`;
@@ -9577,11 +9620,85 @@ function forgeIsOpen() {
   return !!win && !win.classList.contains('hidden');
 }
 
-/* 鍛造系統重製中（2026-11-01 移除客製武器鍛造），視窗只顯示未實裝。 */
-function refreshForgeIfChanged() {}
+/* 開著時材料與鋅幣會變（掛機照跑）。每秒重畫會洗掉捲動位置，所以比簽章，變了才重畫。 */
+let _forgeSig = '';
+function refreshForgeIfChanged() {
+  const parts = [state.gold, (state.unlockedMaterialCrafts || []).join('|'), (state.unlockedCraftCategories || []).join('|'), getCraftingSuccessChance()];
+  Object.values(MATERIAL_CRAFT_RECIPES).forEach(r => r.consume.forEach(c => parts.push(getItemQty(c.item))));
+  Object.values(WEAPON_CRAFT_RECIPES).forEach(r => r.mats.forEach(([id]) => parts.push(getItemQty(id))));
+  const sig = parts.join(',');
+  if (sig === _forgeSig) return;
+  _forgeSig = sig;
+  showCraftingPanel();
+}
+/* 原料鍛造（鐵／鋼／屬性原石／毒藥瓶）＋ 武器鍛造（官方配方，依學會的製作技能列出）。 */
 function showCraftingPanel() {
   const el = document.getElementById('forge-body');
-  if (el) el.innerHTML = '<div class="empty-hint">鍛造系統未實裝。</div>';
+  if (!el) return;
+  const unlocked = state.unlockedMaterialCrafts || [];
+  let html = `<div class="wh-hint">失敗材料照樣消耗。持有鋅幣 ${state.gold.toLocaleString()}</div>`;
+  const kinds = Object.keys(MATERIAL_CRAFT_RECIPES).filter(k => unlocked.includes(MATERIAL_CRAFT_RECIPES[k].unlockCategory));
+  if (kinds.length) {
+    html += '<h3 class="panel-title">原料鍛造</h3><div class="card-list">';
+    kinds.forEach(kind => {
+      const recipe = MATERIAL_CRAFT_RECIPES[kind];
+      const resultDef = ITEMS[recipe.result];
+      const rate = materialCraftChance(recipe);
+      const cost = materialCraftCost(recipe);
+      const matText = recipe.consume.map(c => `${ITEMS[c.item] ? ITEMS[c.item].name : c.item}x${c.qty}（持有${getItemQty(c.item)}）`).join('、');
+      const canCraft = recipe.consume.every(c => getItemQty(c.item) >= c.qty) && state.gold >= cost;
+      html += `<div class="card-row${canCraft ? ' enabled' : ''}">
+        <div class="card-info">
+          <span class="card-icon">${resultDef ? resultDef.icon : '📦'}</span>
+          <div class="card-details">
+            <span class="card-name">${resultDef ? resultDef.name : recipe.result}　<span class="card-desc">成功率 ${rate}%</span></span>
+            <span class="card-desc">需要：${matText}、鋅幣${cost}</span>
+          </div>
+        </div>
+        <button class="btn-small" ${canCraft ? '' : 'disabled'} onclick="doCraftMaterial('${kind}')">鍛造</button>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  if ((state.unlockedCraftCategories || []).length) {
+    const cats = state.unlockedCraftCategories;
+    html += `<h3 class="panel-title">武器鍛造　<span class="card-desc">成功率 ${getCraftingSuccessChance().toFixed(1)}%</span></h3>`;
+    html += '<div class="empty-hint">成功率：15% + DEX/LUK 加成 + 神之金屬研究 + 武器研究。</div>';
+    Object.keys(CRAFT_CATEGORY_NAMES).filter(c => cats.includes(c)).forEach(cat => {
+      html += `<h4 class="panel-title">${CRAFT_CATEGORY_NAMES[cat]}</h4><div class="card-list">`;
+      Object.keys(WEAPON_CRAFT_RECIPES).filter(id => WEAPON_CRAFT_RECIPES[id].cat === cat && ITEMS[id]).forEach(id => {
+        const r = WEAPON_CRAFT_RECIPES[id];
+        const def = ITEMS[id];
+        const matText = r.mats.map(([m, n]) => `${ITEMS[m] ? ITEMS[m].name : m}x${n}（持有${getItemQty(m)}）`).join('、');
+        const canCraft = !weaponCraftBlockReason(id);
+        html += `<div class="card-row${canCraft ? ' enabled' : ''}">
+          <div class="card-info">
+            <span class="card-icon">${def.icon || '⚔️'}</span>
+            <div class="card-details">
+              <span class="card-name">${def.name}　<span class="card-desc">武器 Lv${r.wlv}</span></span>
+              <span class="card-desc">需要：${matText}</span>
+            </div>
+          </div>
+          <button class="btn-small" ${canCraft ? '' : 'disabled'} onclick="doCraftWeapon('${id}')">鍛造</button>
+        </div>`;
+      });
+      html += '</div>';
+    });
+  }
+  if (!kinds.length && !(state.unlockedCraftCategories || []).length) {
+    html += '<div class="empty-hint">還沒學會任何鍛造技能。</div>';
+  }
+  el.innerHTML = html;
+}
+function doCraftWeapon(itemId) {
+  craftWeapon(itemId);
+  showCraftingPanel();
+  renderTopBar();
+}
+function doCraftMaterial(kind) {
+  craftMaterial(kind);
+  showCraftingPanel();
+  renderTopBar();
 }
 
 function openRenameWindow() {
@@ -10211,12 +10328,24 @@ function doDestroyInstance(instanceId) {
   }
 }
 
-// 插卡入口在裝備欄上，而裝備欄住在「裝備」分頁，所以這個選單也畫在那裡
+// 插卡入口在裝備欄上，而裝備欄住在「裝備」分頁，所以這個選單也畫在那裡。
+/* 2026-11-16（使用者：插卡會閃一下）：以前整個裝備分頁 innerHTML 換掉（裝備窗圖片跟著重載），
+   改成只換下半部（#equip-pick-top／#equip-lower）；equipCardSlot 記住插卡模式，別處重畫裝備分頁也維持 */
+let equipCardSlot = null;
 function showCardSelect(slotKey) {
-  const el = document.getElementById('tab-equip');
-  if (!el) return;
   hideEquipTooltip();
-
+  equipCardSlot = slotKey;
+  const top = document.getElementById('equip-pick-top'), low = document.getElementById('equip-lower');
+  const parts = cardSelectParts(slotKey);
+  if (!top || !low || !parts) { renderEquipTab(); return; }
+  top.innerHTML = parts.head;
+  low.innerHTML = parts.body;
+}
+function closeCardSelect() {
+  equipCardSlot = null;
+  renderEquipTab();
+}
+function cardSelectParts(slotKey) {
   const equipId = getEquipBaseItemId(slotKey);
   const equipName = equipId && ITEMS[equipId] ? getItemDisplayName(equipId) : '（無裝備）';
   const maxSlots = getEquipCardSlots(slotKey);
@@ -10228,8 +10357,10 @@ function showCardSelect(slotKey) {
     .map(row => ({ cardId: row.item, qty: row.qty, card: CARDS[row.item] }))
     .filter(c => cardFitsSlot(c.card, slotKey));
 
-  let html = `<h3 class="panel-title">🃏 ${equipName}　插槽 ${used.length}/${maxSlots}</h3>`;
-  html += `<button class="btn-small" onclick="renderEquipTab()">← 返回裝備欄</button>`;
+  if (!equipId || !maxSlots) return null;
+  const head = `<div class="equip-pick-head"><button class="btn-small" onclick="closeCardSelect()">← 返回裝備欄</button>
+    <span class="equip-pick-stats">🃏 ${equipName}　插槽 ${used.length}/${maxSlots}</span></div>`;
+  let html = '';
 
   if (used.length) {
     html += '<div class="codex-detail-sec">已插入</div><div class="card-list">';
@@ -10269,8 +10400,7 @@ function showCardSelect(slotKey) {
     });
     html += '</div>';
   }
-
-  el.innerHTML = html;
+  return { head, body: html };
 }
 
 /* 這些按鈕操作的結果改用彈窗（使用者 2026-11-05：寫進戰鬥訊息很快就被洗掉）。
