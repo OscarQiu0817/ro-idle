@@ -2659,3 +2659,14 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
   color: #fff !important;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.8) !important;
 }
+/* 打王：王蓄力紅圈時發光（js/ui.js updateMonsterHp）；物理紅、魔法紫 */
+.monster-slot.boss-casting img { animation: boss-cast-glow-phys 0.5s ease-in-out infinite alternate; }
+.monster-slot.boss-casting-magic img { animation: boss-cast-glow-magic 0.5s ease-in-out infinite alternate; }
+@keyframes boss-cast-glow-phys {
+  from { filter: drop-shadow(0 0 2px rgba(255, 70, 40, 0.6)) drop-shadow(0 4px 10px rgba(0,0,0,0.4)); }
+  to   { filter: drop-shadow(0 0 9px rgba(255, 70, 40, 1)) drop-shadow(0 0 3px #ffd0a0); }
+}
+@keyframes boss-cast-glow-magic {
+  from { filter: drop-shadow(0 0 2px rgba(170, 90, 255, 0.6)) drop-shadow(0 4px 10px rgba(0,0,0,0.4)); }
+  to   { filter: drop-shadow(0 0 9px rgba(170, 90, 255, 1)) drop-shadow(0 0 3px #e6d0ff); }
+}

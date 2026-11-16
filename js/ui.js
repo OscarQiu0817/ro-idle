@@ -2263,13 +2263,13 @@ function skillSfxUrl(w) { return 'WAV/skill/' + w.split('/').map(encodeURICompon
 /* 這招有沒有官方音效（有的話 playSkillSound 就不再放通用的屬性音效，免得響兩聲） */
 const SKILL_FX_CUSTOM = ['mg_firebolt', 'mg_coldbolt', 'mg_lightningbolt', 'mg_fireball'];   // 手調特效的四招沿用原本的連發音效
 function skillHasPlanSfx(id) { return !SKILL_FX_CUSTOM.includes(id) && typeof SKILL_FX_PLAN !== 'undefined' && !!SKILL_FX_PLAN[id] && SKILL_FX_PLAN[id].some(L => L.wav && L.wav.length); }
-function playSkillPlanFx(sk) {
+// at：指定施法者＝目標的位置（打王的自身行為播在王身上）；不給就照玩家／隊友施法
+function playSkillPlanFx(sk, at) {
   if (typeof SKILL_FX_PLAN === 'undefined' || !SKILL_FX_PLAN[sk.id]) return;
-  const ce = fxCasterEl();
-  const cr = fxRectOf(ce);
+  const cr = at || fxRectOf(fxCasterEl());
   const offensive = typeof SKILL_ATTACK_TYPES !== 'undefined' && SKILL_ATTACK_TYPES.includes(sk.type) && sk.autoSlot !== 'support';
   const mon = state.monsters && state.monsters[0];
-  const tr = offensive && mon ? fxRectOf(monSlotAnchor(mon.id)) : cr;
+  const tr = !at && offensive && mon ? fxRectOf(monSlotAnchor(mon.id)) : cr;
   for (const L of SKILL_FX_PLAN[sk.id]) {
     // 官方音效（scripts/gen_skill_sfx.py 轉成 WAV/skill/<路徑>.ogg）：照官方延遲，幾個版本隨機挑一個
     if (L.wav && L.wav.length) {
@@ -2341,6 +2341,81 @@ function playFieldFx(sk, name, m, times, once, delay, fx, fy) {
       }, k * once);
     }
   }, delay);
+}
+
+/* 打王的官方技能特效（使用者 2026-11-16，js/boss_patterns.js 的 fx）
+   紅圈招式：倒數結束（生效）時在每個紅圈播；主特效（有 .str 與可視寬 ex）縮放到圈的大小，命中火花等其他層照原尺寸。
+   紅圈的 x／y 以玩家為原點、玩家走動會平移，所以記成世界座標（＋state.worldX／worldY），每幀換回來，跟著地面走。
+   自身行為（回血、增益）：播在王身上。 */
+const BOSS_FX_MAX_ZONES = 4;   // 連環轟炸最多播 4 顆
+function bossFxPoint(w) {
+  const scene = document.getElementById('battle-scene');
+  if (!scene || !state) return null;
+  const sr = scene.getBoundingClientRect();
+  const x = w.x - (state.worldX || 0), y = w.y - (state.worldY || 0);
+  const px = bfPlayer.x + (x + bfWorldLag.x) * BF_CELL_X, py = bfPlayer.y + (y + bfWorldLag.y) * BF_CELL_Y;
+  return { x: sr.left + sr.width * px / 100, y: sr.top + sr.height * py / 100, cellPx: sr.width * BF_CELL_X / 100 };
+}
+// 紅圈 → 特效錨點（格）與要蓋住的寬度（格）
+function bossZoneAnchor(z) {
+  const along = (k, size) => ({ x: z.x + Math.cos(z.ang) * z.len * k, y: z.y + Math.sin(z.ang) * z.len * k, size });
+  if (z.type === 'circle') return { x: z.x, y: z.y, size: z.r * 2 };
+  if (z.type === 'donut') return { x: z.x, y: z.y, size: z.r1 * 2 };
+  if (z.type === 'cone') return along(0.55, z.len);
+  if (z.type === 'line') return along(0.6, Math.max(2, z.w * 2));
+  return { x: 0, y: 0, size: 8 };   // 全場：隊伍中間（玩家）
+}
+function playBossCastFx(c) {
+  if (!c || !c.fx || typeof SKILL_FX_PLAN === 'undefined' || !SKILL_FX_PLAN[c.fx] || !state) return;
+  const wx = state.worldX || 0, wy = state.worldY || 0;
+  const spots = c.zones.slice(0, BOSS_FX_MAX_ZONES).map(z => { const a = bossZoneAnchor(z); return { x: a.x + wx, y: a.y + wy, size: a.size }; });
+  for (const L of SKILL_FX_PLAN[c.fx]) {
+    if (L.wav && L.wav.length) {
+      const w = L.wav[Math.floor(Math.random() * L.wav.length)];
+      setTimeout(() => playSfx(skillSfxUrl(w), 40), (L.delay || 0) + (L.wavDelay || 0));
+    }
+    if (L.play === 'sound') continue;
+    spots.forEach((s, i) => {
+      const delay = (L.delay || 0) + i * 120;
+      const p0 = bossFxPoint(s);
+      if (!p0) return;
+      const lift = L.at === 'ground' ? 0 : 40;   // 打在人身上的層：抬到身體中段（跟 playSkillPlanFx 一致）
+      if (L.play !== 'anim') { playFxParticle(L.fx[0], p0.x, p0.y - lift, L, delay); return; }
+      const name = L.fx[Math.floor(Math.random() * L.fx.length)];
+      const m = SKILL_FX_ANIM[name];
+      if (!m) return;
+      if (!(m.str && m.ex && L.key !== 'hitEffectId' && typeof StrPlayer !== 'undefined')) { playFxAnim(name, p0.x, p0.y - lift, delay); return; }
+      const once = m.n * m.ms;
+      const times = L.repeat && L.duration ? Math.max(1, Math.min(4, Math.round(L.duration / Math.max(1, once)))) : 1;
+      const place = () => {
+        const p = bossFxPoint(s);
+        if (!p) return null;
+        const scale = s.size * p.cellPx / Math.max(1, m.ex[2] - m.ex[0]);
+        return { x: p.x - (m.ex[0] + m.ex[2]) / 2 * scale, y: p.y, scale };
+      };
+      for (let k = 0; k < times; k++) {
+        setTimeout(() => {
+          const a = place();
+          if (!a) return;
+          let live = true;
+          const h = StrPlayer.play(m.str, a.x, a.y, { scale: a.scale, onDone: () => { live = false; } });
+          const follow = () => {
+            if (!live) return;
+            const q = place();
+            if (q && h.e) { h.e.x = q.x; h.e.y = q.y; h.e.scale = q.scale; }
+            requestAnimationFrame(follow);
+          };
+          requestAnimationFrame(follow);
+        }, delay + k * once);
+      }
+    });
+  }
+}
+function playBossSelfFx(mon, sk) {
+  if (!mon) return;
+  if (sk.self === 'buff') showDamageFloatAt(mon.id, sk.name, 'heal');
+  const r = fxRectOf(monSlotAnchor(mon.id));
+  if (r && sk.fx) playSkillPlanFx({ id: sk.fx }, r);
 }
 
 function playSkillHitFx(sk, lv) {
@@ -2674,6 +2749,10 @@ function updateMonsterHp() {
       if (slot) {
         slot.classList.toggle('ail-stone', list.includes('stone'));
         slot.classList.toggle('ail-freeze', list.includes('freeze'));
+        // 打王：紅圈倒數（蓄力）時王身上發光，魔法紫、物理紅（css .boss-casting）
+        const cast = mon._bossCast && (state.bossCasts || []).find(c => c.uid === mon._bossCast);
+        slot.classList.toggle('boss-casting', !!cast && cast.kind !== 'magic');
+        slot.classList.toggle('boss-casting-magic', !!cast && cast.kind === 'magic');
       }
       if (slot) syncFreezeIce(slot, list.includes('freeze'));
     }
@@ -2966,7 +3045,7 @@ function showSkillHitNumbers(monsterId, total, hits, element, crit) {
    被打播一次受擊，死掉停在最後一幀。 */
 const MOB_ANIM_DIR = 'images/mob_anim/';
 const MOB_ANIM_BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-const MOB_ANIM_ONCE = { hit: 1, die: 1 };
+const MOB_ANIM_ONCE = { hit: 1, die: 1, attack: 1 };   // 攻擊：每出手一次播一次（使用者 2026-11-16）
 let MOB_ANIM = null;
 let mobAnimTimer = null;
 const mobAnimMiss = {};
@@ -3112,6 +3191,13 @@ function playMonsterHit(id) {
   const img = slot && slot.querySelector('img');
   if (!img || !img._maDef || slot.classList.contains('dying')) return;
   mobAnimPlay(img, 'hit', true);
+}
+// 怪物出手（普攻、打王的招式生效、自身行為）時播一次攻擊動畫
+function playMonsterAttack(id) {
+  const slot = document.getElementById('monster-slot-' + id);
+  const img = slot && slot.querySelector('img');
+  if (!img || !img._maDef || slot.classList.contains('dying')) return;
+  mobAnimPlay(img, 'attack', true);
 }
 function playMonsterDie(id) {
   const slot = document.getElementById('monster-slot-' + id);
@@ -3291,7 +3377,7 @@ function bossZonesSvg(casts) {
     c.zones.forEach(z => { out += shape(z, 1, light) + (k > 0 ? shape(z, k, dark) : ''); });
     // 技能名與倒數寫在第一個形狀上（HTML：SVG 不保持比例，字會被拉寬）
     const [lx, ly] = P(c.zones[0].x, c.zones[0].y);
-    labels += `<span class="bf-gu bf-boss-name" style="left:${lx}%;top:${ly}%">${c.name} ${Math.max(0, (c.end - now) / 1000).toFixed(1)}</span>`;
+    labels += `<span class="bf-gu bf-boss-name" style="left:${lx}%;top:${ly}%">${c.name}${c.ail && typeof PLAYER_AILMENTS !== 'undefined' && PLAYER_AILMENTS[c.ail] ? PLAYER_AILMENTS[c.ail].icon : ''} ${Math.max(0, (c.end - now) / 1000).toFixed(1)}</span>`;
   });
   return `<svg class="bf-boss-zones" viewBox="0 0 100 100" preserveAspectRatio="none">${out}</svg>${labels}`;
 }
@@ -3559,9 +3645,9 @@ function layoutBattlefieldInner() {
     const nativeLeft = !!img._maDef;
     const flipMon = faceLeft !== nativeLeft, offX = img._maOffX || 0;
     img.style.transform = (offX ? `translateX(${flipMon ? -offX : offX}px) ` : '') + (flipMon ? 'scaleX(-1)' : '');
-    if (img._maDef && img._maAct !== 'hit' && img._maAct !== 'die') {
-      const arrived = Number.isFinite(mon.d) ? monInRange(mon) : Math.hypot(bfPlayer.x - mon.bx, bfPlayer.y - mon.by) <= gap + 0.6;
-      mobAnimPlay(img, mv.moved ? 'walk' : (arrived ? 'attack' : 'idle'), false);
+    // 攻擊動畫只在真的出手時播一次（playMonsterAttack）；其餘時間走路或待機
+    if (img._maDef && img._maAct !== 'hit' && img._maAct !== 'die' && img._maAct !== 'attack') {
+      mobAnimPlay(img, mv.moved ? 'walk' : 'idle', false);
     }
   });
 }

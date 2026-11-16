@@ -5927,6 +5927,7 @@ function gameTick() {
         if (!monInRange(mon) || mon._bossCast) { mon.lastAttackTime = now; return; }
         if (now - mon.lastAttackTime >= interval) {
           mon.lastAttackTime = now;
+          if (typeof playMonsterAttack === 'function') playMonsterAttack(mon.id);
           monsterAttackSingle(mon);
         }
       });

@@ -3,7 +3,7 @@
      - 王照輪替放「紅圈技能」：地上先畫範圍，倒數結束才結算，站在圈裡的人吃傷害（最大 HP 的 %）
      - 隊員看到自己在紅圈裡，過「反應時間」（隨 AGI／DEX 變快）後走到最近的安全點；
        閃避途中不普攻、詠唱中斷
-     - 王蓄力（倒數）期間不走、不普攻；原本的 pre-RE 怪物技能在王身上停用
+     - 王蓄力（倒數）期間不走、不普攻；pre-RE 怪物技能不直接放，改照官方技能轉成紅圈招式（js/boss_patterns.js）
 
    座標：紅圈存成以玩家為原點的 x／y（格），玩家走路時跟場上其他東西一起平移（playerMoveBy）。
    玩家閃避＝真的走（playerMoveBy）；隊友閃避＝在站位位置上加一個偏移（ally._dodgeOff）。
@@ -12,6 +12,8 @@
 /* ---- 紅圈技能表在 js/boss_patterns.js（第 4 期：每隻王各自的輪替、閃不掉的全場技、分攤圈、快速預警） ---- */
 const BOSS_CAST_GAP_MS = [4500, 6000];   // 放完一招到下一招的間隔（隨機）
 const BOSS_FIRST_CAST_MS = 2500;         // 王出現後第一招
+const BOSS_SELF_GAP_MS = 1500;           // 自身行為（回血、增益）不畫紅圈，放完很快接下一招
+const BOSS_SELF_HEAL_BELOW = 0.7;        // 血量低於 70% 才補
 const DODGE_REACT_BASE_MS = 600, DODGE_REACT_MIN_MS = 250;
 const DODGE_SAFE_MARGIN = 0.6;           // 安全點要離紅圈邊緣多遠
 const DODGE_SEE_MARGIN = 0.4;            // 離紅圈邊緣多近就算「在裡面」，要躲
@@ -85,9 +87,30 @@ function landProtectorMult() {
   const lv = Math.max(0, ...bossMembers().map(m => (m.learnedSkills || {}).sa_landprotector || 0));
   return lv ? 1 - (5 + 5 * lv) / 100 : 1;
 }
+/* 自身行為（官方的回血、增益技，不畫紅圈）：現在能不能放——血夠多不補、同一種增益還在不重放 */
+function bossSelfReady(mon, sk) {
+  if (sk.self === 'heal') return mon.hp < mon.maxHp * BOSS_SELF_HEAL_BELOW;
+  return Object.keys(sk.buff || {}).some(k => !(monBuff(mon, k) > 0));
+}
+function bossSelfCast(mon, sk) {
+  const def = MONSTERS[mon.defId];
+  if (sk.self === 'heal') {
+    const before = mon.hp;
+    mon.hp = Math.min(mon.maxHp, mon.hp + Math.round(mon.maxHp * sk.heal));
+    logMsg(`💚 ${def.name} 施放「${sk.name}」，回復 ${mon.hp - before} HP。`);
+    if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '+' + (mon.hp - before), 'heal');
+  } else {
+    Object.keys(sk.buff).forEach(k => monBuffAdd(mon, k, sk.buff[k], sk.dur));
+    const txt = Object.keys(sk.buff).map(k => (typeof MON_BUFF_LABELS !== 'undefined' && MON_BUFF_LABELS[k]) || k).join('、');
+    logMsg(`✨ ${def.name} 施放「${sk.name}」：${txt}（${sk.dur} 秒）`);
+  }
+  if (typeof playMonsterAttack === 'function') playMonsterAttack(mon.id);
+  if (typeof playBossSelfFx === 'function') playBossSelfFx(mon, sk);
+}
 function bossCast(mon, skill, now) {
   const def = MONSTERS[mon.defId];
   const sk = typeof skill === 'string' ? Object.assign({}, BOSS_SKILL_LIB[skill]) : skill;   // 測試可直接傳範本名
+  if (sk.self) { bossSelfCast(mon, sk); return null; }
   const id = sk.shape;
   if (bossSpellBreak(def, sk, now)) return null;
   const tgt = bossPickTarget();
@@ -117,10 +140,12 @@ function bossCast(mon, skill, now) {
   // 只存編號不存物件：存檔時 state 會整包 JSON，互相參照會變成循環
   state.bossCastSeq = (state.bossCastSeq || 0) + 1;
   const c = { uid: state.bossCastSeq, id, name: sk.name, monId: mon.id, zones, t0: now, end: now + sk.wind, dmg: sk.dmg, ang,
-    kind: sk.kind || 'phys', share: id === 'share', nova: id === 'nova', heal: sk.heal || 0 };
+    kind: sk.kind || 'phys', share: id === 'share', nova: id === 'nova', heal: sk.heal || 0,
+    elem: sk.elem || null, ail: sk.ail || null, ailPct: sk.ail ? (sk.ailPct || 50) : 0, drain: !!sk.drain, fx: sk.fx || null };
   (state.bossCasts = state.bossCasts || []).push(c);
   mon._bossCast = c.uid;
-  logMsg(`⚠️ ${def.name} 準備施放「${sk.name}」${id === 'nova' ? '（全場，閃不掉）' : id === 'share' ? '（分攤，站進圈裡）' : ''}！`);
+  const ailTxt = c.ail && PLAYER_AILMENTS[c.ail] ? `，${PLAYER_AILMENTS[c.ail].icon}${PLAYER_AILMENTS[c.ail].name}` : '';
+  logMsg(`⚠️ ${def.name} 準備施放「${sk.name}」${id === 'nova' ? '（全場，閃不掉' + ailTxt + '）' : id === 'share' ? '（分攤，站進圈裡）' : ailTxt ? '（' + ailTxt.slice(1) + '）' : ''}！`);
   return c;
 }
 /* 倒數結束：圈裡的人吃傷害；衝撞、彈跳讓王移到落點 */
@@ -136,14 +161,28 @@ function bossResolve(c) {
   // 分攤：圈裡每多一人，每人少吃一份
   const shareDiv = c.share ? Math.max(1, inside.length) : 1;
   if (!(c.dmg > 0)) inside.length = 0;   // 純回復的招（虛擬對手的治癒術）：只回施術者的血
+  // 王的增益：力量提升（atkPct）連紅圈一起加重；武器完全瞄準（maxRoll）取浮動上限
+  const atkMult = 1 + (monBuff(mon, 'atkPct') || 0) / 100, maxRoll = monBuff(mon, 'maxRoll') > 0;
+  let drained = 0;
+  if (typeof playMonsterAttack === 'function') playMonsterAttack(mon.id);   // 招式生效：王做一次攻擊動作
+  if (typeof playBossCastFx === 'function') playBossCastFx(c);
   inside.forEach(m => {
-    const base = m.maxHp * c.dmg * lpMult * (0.9 + rng() * 0.2) / shareDiv;
+    const base = m.maxHp * c.dmg * lpMult * atkMult * (maxRoll ? 1.1 : 0.9 + rng() * 0.2) / shareDiv;
     const dmg = bossMitigate(m, base, c);
     bossNoteDodge(m, false);
     if (dmg <= 0) return;
+    drained += dmg;
     if (m === allyOwnerState()) bossHurtPlayer(dmg, def, c);
     else allyTakeDamage(m, dmg, def.name);
+    // 官方技能附帶的異常（暴風雪冰凍、隕石暈眩…）：卡片抗性照樣擋（applyPlayerAilment 讀 ailResist）
+    if (c.ail && m.hp > 0 && !m._downed && rng() * 100 < c.ailPct) withHolder(m, () => applyPlayerAilment(c.ail));
   });
+  // 吸血：打中多少補多少
+  if (c.drain && drained > 0 && mon.hp > 0) {
+    const before = mon.hp;
+    mon.hp = Math.min(mon.maxHp, mon.hp + drained);
+    if (mon.hp > before) logMsg(`🩸 ${def.name} 吸走了 ${mon.hp - before} 點HP！`);
+  }
   if (c.share && inside.length > 1) logMsg(`🤝 ${inside.length} 人分攤了「${c.name}」。`);
   // 施術者回血（虛擬對手的祭司：十字驅魔、光耀之堂）
   if (c.heal > 0 && mon.hp > 0) mon.hp = Math.min(mon.maxHp, mon.hp + Math.round(mon.maxHp * c.heal));
@@ -167,6 +206,11 @@ function bossMitigate(m, dmg, c) {
   } else {
     const hd = m.defHard || 0;
     dmg *= (4000 + hd) / (4000 + 10 * hd) * (1 - Math.min(0.3, (st.vit || 0) * 0.003));
+  }
+  // 屬性：官方技能帶屬性時吃鎧甲屬性與屬性減傷卡（跟怪物技能同一套）
+  if (c.elem) dmg *= withHolder(m, () => getElementMultiplier(c.elem, state.playerElement || 'none')
+    * (1 - ((state.cardEleDmgReduce || {})[c.elem] || 0)));
+  if (c.kind !== 'magic') {
     const blk = withHolder(m, () => buffMult('block').flatBonus || 0);
     if (blk > 0 && rng() * 100 < blk) {
       logMsg(`🛡️ ${m === allyOwnerState() ? '你' : (m._allyName || '隊友')}擋下了「${c.name}」！`);
@@ -326,9 +370,16 @@ function tickBossFight(dt, now) {
     if (!mon._bossNextAt) { mon._bossNextAt = now + BOSS_FIRST_CAST_MS; mon._bossIdx = 0; return; }
     if (now < mon._bossNextAt) return;
     const set = bossSkillSet(mon);
-    const sk = set[(mon._bossIdx++) % set.length];
+    // 自身行為現在放不了（血夠多、增益還在）就跳過，最多繞一圈
+    let sk = null;
+    for (let i = 0; i < set.length; i++) {
+      const s = set[(mon._bossIdx++) % set.length];
+      if (!s.self || bossSelfReady(mon, s)) { sk = s; break; }
+    }
+    if (!sk) { mon._bossNextAt = now + BOSS_SELF_GAP_MS; return; }
     bossCast(mon, sk, now);
-    mon._bossNextAt = now + sk.wind + BOSS_CAST_GAP_MS[0] + rng() * (BOSS_CAST_GAP_MS[1] - BOSS_CAST_GAP_MS[0]);
+    mon._bossNextAt = sk.self ? now + BOSS_SELF_GAP_MS
+      : now + sk.wind + BOSS_CAST_GAP_MS[0] + rng() * (BOSS_CAST_GAP_MS[1] - BOSS_CAST_GAP_MS[0]);
   });
   bossMembers().forEach(m => bossDodgeTick(m, dt, now));
   state._manualMoving = tickBossManual(dt);

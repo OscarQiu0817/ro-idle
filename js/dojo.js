@@ -115,7 +115,7 @@ function dojoSpawnFloor() {
     if (!MONSTERS[id]) {
       MONSTERS[id] = Object.assign({}, MONSTERS[src], { id, exp: 0, jobExp: 0, drops: [], isVirtual: true, dojo: true });
       if (typeof MOB_MOVE !== 'undefined') MOB_MOVE[id] = Object.assign({}, MOB_MOVE[src] || {}, { aggressive: true });
-      if (typeof BOSS_PATTERNS !== 'undefined' && BOSS_PATTERNS[src]) BOSS_PATTERNS[id] = BOSS_PATTERNS[src];
+      if (typeof bossPatternFor === 'function') BOSS_PATTERNS[id] = bossPatternFor(src);   // 道館複製體沿用本尊的官方技能輪替
     }
     const def = MONSTERS[id];
     state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
