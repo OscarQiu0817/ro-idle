@@ -5639,7 +5639,8 @@ function tickFieldEffects() {
             noteMonsterDamage(mon, dmg);
             mon.hp -= dmg;
             wakeIfFrozen(mon);
-            if (f.stunChance && rng() * 100 < f.stunChance) applyStun(mon, f.stunSec || 1, true);
+            // 暴風雪照官方是冰凍（fieldAilment，使用者 2026-11-16 回報看起來是暈眩）；其餘場地魔法維持暈眩
+            if (f.stunChance && rng() * 100 < f.stunChance) { if (f.ailment === 'freeze') applyAilment(mon, monDef, 'freeze', { sec: f.stunSec || 1 }); else applyStun(mon, f.stunSec || 1, true); }
             if (f.knockback && mon.hp > 0) pushBack(mon, f.knockback);
             pushCombatLog(`  → 「${f.name}」對 ${monDef.name} 造成 ${dmg} 點傷害！`);
             // 場地魔法（隕石術、十字驅魔…）每一跳也照屬性上色
@@ -6835,7 +6836,7 @@ function playerEngageRange() {
   let best = 0;
   for (const sl of autoSkillSlots(cfg)) {
     const sk = sl && sl.skillId && findSkillForUse(sl.skillId);
-    const lv = sk && skillLv(sk.id);
+    const lv = sk && autoSlotLv(sl, sk);
     if (!lv || !skillDealsDamage(sk) || state.sp < skillSpCost(sk, lv)) continue;
     if (autoAttack && !autoSkillCastableNow(sk, lv)) continue;
     best = Math.max(best, skillRangeCells(sk, lv));
@@ -8229,7 +8230,6 @@ function ensureCodex() {
   if (!state.codex.seen) state.codex.seen = {};
   if (!state.codex.item) state.codex.item = {};
   if (!state.codex.maps) state.codex.maps = {};
-  if (!state.codex.box) state.codex.box = {};   // 隱藏圖鑑：神秘箱開出過的道具
   return state.codex;
 }
 function codexRecordSeen(defId) {
@@ -8247,22 +8247,8 @@ function codexRecordItem(itemId, qty) {
   const c = ensureCodex();
   c.item[itemId] = (c.item[itemId] || 0) + (qty || 1);
 }
-/* 隱藏圖鑑：只有「從神秘箱開出來」才算收集（挑戰用，買商店的不算）。 */
-function codexRecordBox(itemId) {
-  if (!state || !itemId) return;
-  ensureCodex().box[itemId] = 1;
-}
-/* 隱藏圖鑑清單：神秘箱子＋神秘紫箱的官方池聯集（T30）。
-   排序按筆畫外的名稱，讓分頁列表穩定。 */
-let _boxCodexIds = null;
-function getBoxCodexPool() {
-  if (_boxCodexIds) return _boxCodexIds;
-  _boxCodexIds = [...new Set(boxPool('any').ids.concat(boxPool('violet').ids))]
-    .sort((a, b) => (ITEMS[a].name || '').localeCompare(ITEMS[b].name || '', 'zh-Hant'));
-  return _boxCodexIds;
-}
 /* 卡冊限定卡：卡冊抽得到、但來源怪根本沒實裝（打不到）的卡片。
-   這些也納入隱藏圖鑑讓玩家收集——來源只有卡冊。 */
+   列在圖鑑卡片分頁最後面、不算收集總數（2026-11-16 隱藏圖鑑拿掉後併進來）。 */
 let _albumOnlyCards = null;
 function getAlbumOnlyCards() {
   if (_albumOnlyCards) return _albumOnlyCards;
@@ -8276,11 +8262,6 @@ function getAlbumOnlyCards() {
   }));
   _albumOnlyCards = drawable.filter(c => !farmable.has(c));
   return _albumOnlyCards;
-}
-/* 卡冊開出的卡若是「卡冊限定」也記進隱藏圖鑑 */
-function codexRecordBoxCardIfAlbumOnly(cardId) {
-  if (!state || !cardId) return;
-  if (getAlbumOnlyCards().includes(cardId)) ensureCodex().box[cardId] = 1;
 }
 
 // 可收集清單是靜態資料算出來的，只算一次後快取
@@ -8309,10 +8290,18 @@ function getCodexPool() {
   Object.values(NPC_SHOPS).forEach(shop => (shop.items || []).forEach(id => { if (ITEMS[id]) itemSet.add(id); }));
   POTION_TIERS.forEach(id => { if (ITEMS[id]) itemSet.add(id); });
   const cardSet = new Set([...itemSet].filter(id => CARDS[id]));
+  /* 只有箱子開得到的：各部位轉蛋（js/cash_shop.js GEAR_GACHA）、神秘箱子／神秘紫箱的官方池、卡冊限定卡。
+     列在道具／卡片分頁最後面，不算進收集總數（上千件）。使用者 2026-11-16：隱藏圖鑑拿掉，內容併進來 */
+  const gacha = new Set();
+  const addX = id => { if (ITEMS[id] && !itemSet.has(id) && !CARDS[id]) gacha.add(id); };
+  if (typeof GEAR_GACHA !== 'undefined') GEAR_GACHA.forEach(([gid]) => (BOX_POOLS['gear_' + gid].build() || []).forEach(addX));
+  ['any', 'violet'].forEach(k => (boxPool(k).ids || []).forEach(addX));
   _codexPoolCache = {
     monsters: [...monSet].sort((a, b) => (MONSTERS[a].level || 0) - (MONSTERS[b].level || 0)),
     items: [...itemSet].filter(id => !CARDS[id]),
-    cards: [...cardSet]
+    cards: [...cardSet],
+    gacha: [...gacha],
+    cardsExtra: getAlbumOnlyCards().filter(id => !cardSet.has(id))
   };
   return _codexPoolCache;
 }
@@ -10189,42 +10178,6 @@ function gmAddGold(n) {
   if (typeof renderAll === 'function') renderAll();
   return state.gold;
 }
-/* 隱藏圖鑑（神秘箱挑戰）測試用：
-   ① gmBoxCodexBatch(n) —— 把「還沒開出過」的池子道具**真的取得**進背包並記到隱藏圖鑑，
-      一次一批（預設 100、上限 500），避免上萬件一次灌進來把瀏覽器弄掛。
-      回傳剩餘件數；跑到回傳 0 就是全收集。
-   ② gmUnlockHiddenCodex() —— 只把三大收集的圖鑑**記錄**灌滿（不發任何道具），
-      純粹為了解鎖隱藏分頁來查看。 */
-function gmBoxCodexBatch(n) {
-  const batch = Math.min(Math.max(1, n || 100), 500);
-  const c = ensureCodex();
-  const missing = getBoxCodexPool().filter(id => !c.box[id]);
-  if (!missing.length) {
-    logMsg('🛠️ GM：隱藏圖鑑（神秘箱挑戰）已全收集，沒有剩餘。');
-    saveGame();
-    return 0;
-  }
-  const take = missing.slice(0, batch);
-  take.forEach(id => { addItem(id, 1); codexRecordBox(id); });
-  const remain = missing.length - take.length;
-  logMsg(`🛠️ GM：隱藏圖鑑批次取得 ${take.length} 件（剩餘 ${remain}／總池 ${getBoxCodexPool().length}）。`);
-  saveGame();
-  if (typeof renderAll === 'function') renderAll();
-  return remain;
-}
-function gmUnlockHiddenCodex() {
-  const pool = getCodexPool();
-  const c = ensureCodex();
-  pool.monsters.forEach(id => { c.seen[id] = 1; c.mon[id] = (c.mon[id] || 0) + 1; });
-  pool.cards.forEach(id => { if (ITEMS[id]) c.item[id] = (c.item[id] || 0) + 1; });
-  pool.items.forEach(id => { c.item[id] = (c.item[id] || 0) + 1; });
-  const prog = getCodexProgress();
-  logMsg(`🛠️ GM：三大收集記錄已灌滿（怪 ${prog.monsters.total}／卡 ${prog.cards.total}／道 ${prog.items.total}），隱藏圖鑑解鎖。`);
-  saveGame();
-  if (typeof renderAll === 'function') renderAll();
-  return true;
-}
-
 /* ---------------- 屬性加點 ----------------
    兩條公式皆採用 RO 正式版對照表（巴哈姆特/RO Wiki 公開資料）換算：
      每級獲得素質點 = floor((等級-1)/5) + 3   （36~40級每級10點、41~45級每級11點...，與官方對照表一致）
@@ -10963,7 +10916,9 @@ function castSkill(skillId, opts) {
     if (free) { const okF = castSkillInner(skillId, opts); if (okF) afterSkillCast(skillId, tgt0); return okF; }
     if (state.casting || gameNow() < (state.acdUntil || 0)) return false;
     const sk = findSkillForUse(skillId);
-    const lv = sk ? skillLv(skillId) : 0;
+    let lv = sk ? skillLv(skillId) : 0;
+    // 指定施放等級（自動戰鬥技能欄每格可選，2026-11-16）：不超過學到的等級，castSkillInner 照 forceLv 放
+    if (lv && opts && opts.forceLv) { lv = Math.max(1, Math.min(lv, opts.forceLv)); opts = Object.assign({}, opts, { forceLv: lv }); }
     const ct = lv ? skillCastTimeMs(sk, lv) : 0;
     if (ct > 0) return beginCast(sk, lv, ct, opts);
     const ok = castSkillInner(skillId, opts);
@@ -12062,7 +12017,7 @@ function castSkillInner(skillId, opts) {
       const tgt = state.monsters[0];
       const center = sk.fieldRadius && tgt && Number.isFinite(tgt.d) ? { d: tgt.d, a: tgt.a || 0 } : null;
       const row = skillCastRow(sk.id);
-      state.activeFieldEffects.push({ kind: 'aoe_holydmg', name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
+      state.activeFieldEffects.push({ kind: 'aoe_holydmg', fxSkillId: sk.id, name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, ailment: sk.fieldAilment || 'stun', tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
         center, radius: sk.fieldRadius || 0, knockback: row ? castLv(row.knockback, lv) || 0 : 0 });
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動！`);
       break;
@@ -12829,6 +12784,11 @@ function skillNeedsMonster(sk) { return !!sk && SKILL_NEEDS_MONSTER_TYPES.includ
    舊格式（skillId / skillId2 兩招，隊友設定仍是這種）在這裡轉成同一種格子。 */
 const AUTO_SKILL_SLOTS = 4;
 function emptyAutoSkillSlot() { return { skillId: null, spThreshold: 30, minMobs: 1 }; }
+/* 這格實際施放的等級：格子的 lv（玩家選的，null＝最高）與學到的等級取小（2026-11-16：想放低等級縮短詠唱） */
+function autoSlotLv(sl, sk) {
+  const lv = sk ? skillLv(sk.id) : 0;
+  return lv && sl && sl.lv > 0 ? Math.min(lv, sl.lv) : lv;
+}
 function autoSkillSlots(cfg) {
   if (!cfg) return [];
   if (Array.isArray(cfg.slots)) return cfg.slots;
@@ -12867,7 +12827,7 @@ function tryAutoCastSkill(skipSupport) {
   const monsterCount = state.monsters ? state.monsters.length : 0;
   for (const sl of slots) {
     const sk = findSkillForUse(sl.skillId);
-    const lv = sk && skillLv(sk.id);
+    const lv = sk && autoSlotLv(sl, sk);
     if (!lv || !skillReady(sk.id) || !weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) continue;
     if (state.sp < skillSpCost(sk, lv) || spPct < (sl.spThreshold || 0) || wastesResourceInTown(sk, lv)) continue;
     const isAttack = skillNeedsMonster(sk);
@@ -12875,7 +12835,7 @@ function tryAutoCastSkill(skipSupport) {
     if (isAttack && !autoSkillInRange(sk, lv)) continue;
     if (isAttack && state.travel && !isTravelThreat(state.monsters[0])) continue;   // 趕路：被動怪不打
     if (autoSkillWasted(sk)) continue;
-    castSkill(sk.id);
+    castSkill(sk.id, lv < skillLv(sk.id) ? { forceLv: lv } : undefined);
     return;
   }
 }
@@ -14061,8 +14021,6 @@ function openAllBoxes(itemId) {
   let worth = 0;
   Object.entries(got).forEach(([id, q]) => {
     addItem(id, q);
-    if (def.boxOpen === 'any' || def.boxOpen === 'violet' || String(def.boxOpen).indexOf('gear_') === 0) codexRecordBox(id);
-    if (def.boxOpen === 'card' || def.boxOpen === 'cardFlat' || String(def.boxOpen).indexOf('card_') === 0) codexRecordBoxCardIfAlbumOnly(id);
     worth += (ITEMS[id].sell || 0) * q;
   });
 
@@ -14161,8 +14119,6 @@ function useItem(itemId) {
       if (!got) { logMsg(`⚠️ ${def.name} 打不開（道具池是空的）。`); return false; }
       removeItem(itemId, 1);
       addItem(got, 1);
-      if (def.boxOpen === 'any' || def.boxOpen === 'violet' || String(def.boxOpen).indexOf('gear_') === 0) codexRecordBox(got);
-      if (def.boxOpen === 'card' || def.boxOpen === 'cardFlat' || String(def.boxOpen).indexOf('card_') === 0) codexRecordBoxCardIfAlbumOnly(got);
       const g = ITEMS[got];
       // 卡片跟高價道具各自有自己的「中大獎」提示
       const kind = CARDS[got] ? bossCardKind(got) : null;
@@ -15740,6 +15696,101 @@ function craftMaterial(kind) {
   if (success) {
     addItem(recipe.result, 1);
     logMsg(`🔨 鍛造成功！獲得了 ${ITEMS[recipe.result].name}！`);
+  } else {
+    logMsg('🔨 鍛造失敗了……材料已經消耗。');
+  }
+  saveGame();
+  return success;
+}
+
+/* ---------------- 武器鍛造（官方配方）----------------
+   配方照 rAthena db/pre-re/produce_db.txt 武器段（ItemLV 1~3，52 道），材料數量不改。
+   本作差異：不需鐵砧／錘子（商店沒賣）、不加屬性原石與星星的角（道具沒有個體屬性）、
+   不收鋅幣（官方不收）。成功率照技能敘述：15% + DEX(120 封頂 +20%) + LUK(120 封頂 +10%)
+   + 神之金屬研究 + 武器研究（state.craftBonusPct）。cat 對應技能 craftCategory：
+   雙手劍歸 bs_sword、雙手斧歸 bs_axe（本作合併）。 */
+const WEAPON_CRAFT_RECIPES = {
+  sword: { cat: 'sword', wlv: 1, mats: [['iron', 2]] },
+  falchion: { cat: 'sword', wlv: 1, mats: [['iron', 30]] },
+  blade: { cat: 'sword', wlv: 1, mats: [['iron', 45], ['tooth_of_bat', 25]] },
+  lapier: { cat: 'sword', wlv: 2, mats: [['steel', 20]] },
+  scimiter: { cat: 'sword', wlv: 2, mats: [['steel', 35]] },
+  ring_pommel_saber: { cat: 'sword', wlv: 2, mats: [['steel', 40], ['claw_of_wolves', 50]] },
+  saber: { cat: 'sword', wlv: 3, mats: [['steel', 5], ['oridecon', 8], ['white_jewel', 1]] },
+  haedonggum: { cat: 'sword', wlv: 3, mats: [['oridecon', 8], ['steel', 10], ['golden_jewel', 1]] },
+  tsurugi: { cat: 'sword', wlv: 3, mats: [['oridecon', 8], ['steel', 15], ['dark_red_jewel', 1]] },
+  item_1129: { cat: 'sword', wlv: 3, mats: [['oridecon', 16], ['cardinal_jewel_', 1]] },
+  knife: { cat: 'dagger', wlv: 1, mats: [['iron', 1], ['jellopy', 10]] },
+  cutter: { cat: 'dagger', wlv: 1, mats: [['iron', 25]] },
+  main_gauche: { cat: 'dagger', wlv: 1, mats: [['iron', 50]] },
+  dirk: { cat: 'dagger', wlv: 2, mats: [['steel', 17]] },
+  dagger: { cat: 'dagger', wlv: 2, mats: [['steel', 30]] },
+  stiletto: { cat: 'dagger', wlv: 2, mats: [['steel', 40]] },
+  gladius: { cat: 'dagger', wlv: 3, mats: [['oridecon', 4], ['steel', 40], ['blue_jewel', 1]] },
+  damascus: { cat: 'dagger', wlv: 3, mats: [['oridecon', 4], ['steel', 60], ['bluish_green_jewel', 1]] },
+  katana: { cat: 'sword', wlv: 1, mats: [['iron', 35], ['horrendous_mouth', 15]] },
+  slayer: { cat: 'sword', wlv: 2, mats: [['steel', 25], ['decayed_nail', 20]] },
+  bastard_sword: { cat: 'sword', wlv: 2, mats: [['steel', 45]] },
+  two_hand_sword: { cat: 'sword', wlv: 3, mats: [['oridecon', 12], ['steel', 10]] },
+  broad_sword: { cat: 'sword', wlv: 3, mats: [['oridecon', 12], ['steel', 20]] },
+  claymore: { cat: 'sword', wlv: 3, mats: [['oridecon', 16], ['steel', 20], ['crystal_jewel__', 1]] },
+  axe: { cat: 'axe', wlv: 1, mats: [['iron', 10]] },
+  battle_axe: { cat: 'axe', wlv: 1, mats: [['iron', 110]] },
+  hammer: { cat: 'axe', wlv: 2, mats: [['steel', 30]] },
+  buster: { cat: 'axe', wlv: 3, mats: [['oridecon', 4], ['steel', 20], ['orcish_cuspid', 30]] },
+  two_handed_axe: { cat: 'axe', wlv: 3, mats: [['oridecon', 8], ['steel', 10], ['violet_jewel', 1]] },
+  club: { cat: 'mace', wlv: 1, mats: [['iron', 3]] },
+  mace: { cat: 'mace', wlv: 1, mats: [['iron', 30]] },
+  smasher: { cat: 'mace', wlv: 2, mats: [['steel', 20]] },
+  flail: { cat: 'mace', wlv: 2, mats: [['steel', 33]] },
+  chain: { cat: 'mace', wlv: 2, mats: [['steel', 45]] },
+  morning_star: { cat: 'mace', wlv: 3, mats: [['steel', 85], ['crystal_jewel', 1]] },
+  sword_mace: { cat: 'mace', wlv: 3, mats: [['steel', 100], ['sharp_scale', 20]] },
+  stunner: { cat: 'mace', wlv: 3, mats: [['steel', 120], ['voucher_of_orcish_hero', 1]] },
+  waghnakh: { cat: 'knuckle', wlv: 1, mats: [['iron', 160], ['scarlet_jewel', 1]] },
+  knuckle_duster: { cat: 'knuckle', wlv: 2, mats: [['steel', 50]] },
+  hora: { cat: 'knuckle', wlv: 2, mats: [['steel', 65]] },
+  fist: { cat: 'knuckle', wlv: 3, mats: [['oridecon', 4], ['cardinal_jewel', 10]] },
+  claw: { cat: 'knuckle', wlv: 3, mats: [['oridecon', 8], ['golden_jewel', 10]] },
+  finger: { cat: 'knuckle', wlv: 3, mats: [['oridecon', 4], ['white_jewel', 10]] },
+  javelin: { cat: 'spear', wlv: 1, mats: [['iron', 3]] },
+  spear: { cat: 'spear', wlv: 1, mats: [['iron', 35]] },
+  pike: { cat: 'spear', wlv: 1, mats: [['iron', 70]] },
+  guisarme: { cat: 'spear', wlv: 2, mats: [['steel', 25]] },
+  glaive: { cat: 'spear', wlv: 2, mats: [['steel', 40]] },
+  partizan: { cat: 'spear', wlv: 2, mats: [['steel', 55]] },
+  trident: { cat: 'spear', wlv: 3, mats: [['oridecon', 8], ['steel', 10], ['skyblue_jewel', 5]] },
+  halberd: { cat: 'spear', wlv: 3, mats: [['oridecon', 12], ['steel', 10]] },
+  lance: { cat: 'spear', wlv: 3, mats: [['oridecon', 12], ['cardinal_jewel', 3], ['evil_horn', 2]] },
+};
+const CRAFT_CATEGORY_NAMES = { dagger: '短劍', sword: '劍', axe: '斧頭', knuckle: '拳套', mace: '鈍器', spear: '長矛' };
+
+function getCraftingSuccessChance() {
+  const st = state.stats || {};
+  const dexBonus = Math.min(20, (st.dex || 0) / 120 * 20);
+  const lukBonus = Math.min(10, (st.luk || 0) / 120 * 10);
+  return Math.min(100, 15 + dexBonus + lukBonus + (state.craftBonusPct || 0));
+}
+
+// 不能鍛的原因，null＝可以
+function weaponCraftBlockReason(itemId) {
+  const r = WEAPON_CRAFT_RECIPES[itemId];
+  if (!r || !ITEMS[itemId]) return '沒有這道配方。';
+  if (!isBlacksmithLine(state.jobId)) return '只有鐵匠系能鍛造武器。';
+  if (!(state.unlockedCraftCategories || []).includes(r.cat)) return `尚未學會${CRAFT_CATEGORY_NAMES[r.cat] || r.cat}製作。`;
+  if (r.mats.some(([id, n]) => getItemQty(id) < n)) return '材料不足。';
+  return null;
+}
+
+function craftWeapon(itemId) {
+  const why = weaponCraftBlockReason(itemId);
+  if (why) { logMsg('⚠️ ' + why); return false; }
+  const r = WEAPON_CRAFT_RECIPES[itemId];
+  r.mats.forEach(([id, n]) => removeItem(id, n));   // 成敗都扣
+  const success = rng() * 100 < getCraftingSuccessChance();
+  if (success) {
+    addItem(itemId, 1);
+    logMsg(`🔨 鍛造成功！獲得了 ${ITEMS[itemId].name}！`);
   } else {
     logMsg('🔨 鍛造失敗了……材料已經消耗。');
   }

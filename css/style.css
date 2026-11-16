@@ -2557,7 +2557,17 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .bf-zone.bf-field.elem-ring-holy { background: rgba(255, 240, 160, 0.07); border-color: rgba(255, 235, 150, 0.38); }
 .bf-zone.bf-field.elem-ring-wind { background: rgba(200, 255, 140, 0.06); border-color: rgba(210, 255, 150, 0.35); }
 .monster-slot.ail-stone img { filter: grayscale(1) contrast(0.85) brightness(0.95) drop-shadow(0 4px 10px rgba(0,0,0,0.4)) !important; }
-.monster-slot.ail-freeze img { filter: saturate(0.4) brightness(1.15) sepia(0.2) hue-rotate(170deg) drop-shadow(0 0 3px #9fe0ff) drop-shadow(0 4px 10px rgba(0,0,0,0.4)) !important; }
+/* 冰凍（使用者 2026-11-16 加重）：整隻變冰藍——先轉灰再染成藍色，外圈冰藍光；腳下疊官方冰晶貼圖 */
+.monster-slot.ail-freeze img { filter: grayscale(1) sepia(1) hue-rotate(165deg) saturate(3.2) brightness(1.15) drop-shadow(0 0 4px #9fe0ff) drop-shadow(0 4px 10px rgba(0,0,0,0.4)) !important; }
+.freeze-ice {
+  position: absolute; aspect-ratio: 1; pointer-events: none; z-index: 2;
+  transform: translate(-50%, -52%);   /* 冰晶下半截在腳下、上半截包住怪物底部 */
+  /* 官方 freeze_ice 黑底加亮圖轉成透明底（亮度＝透明度、裁掉空白），怪物格子自成一層，用濾色疊不掉黑底 */
+  background: url("../images/effects/freeze_ice.webp") center bottom / contain no-repeat;
+  opacity: 0.9;
+  animation: freezeIceIn 0.25s ease-out;
+}
+@keyframes freezeIceIn { from { opacity: 0; transform: translate(-50%, -40%) scale(0.6); } }
 
 /* 雲端存檔 */
 .cloud-title-btn { display: block; margin: 10px auto 0; }

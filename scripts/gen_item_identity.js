@@ -104,6 +104,8 @@ function main() {
     /* 類型：只在雜物↔消耗品之間修；消耗品身上有效果欄位的不改 */
     if (it.type === 'material' && raType === 'consumable') put(it.id, 'type', 'consumable');
     if (it.type === 'consumable' && raType === 'material' && !Object.keys(it).some(k => !BASE_KEYS.has(k))) put(it.id, 'type', 'material');
+    /* 影子裝備：本作沒有影子裝備欄，跟服飾一樣當收藏品（material）。data.js 原值有一半是 consumable（2026-11-16） */
+    if (raType === 'shadow' && it.type !== 'material') put(it.id, 'type', 'material');
     /* 名稱：非裝備直接用台服名稱；裝備在下面加孔數後綴 */
     /* 本作自加、借用官方圖片編號的道具（以太神之金屬／以太鋁借 984／985）：用編號對到的台服名稱會蓋掉自己的名字 */
     const KEEP_OWN_NAME = ['ether_oridecon', 'ether_elunium'];

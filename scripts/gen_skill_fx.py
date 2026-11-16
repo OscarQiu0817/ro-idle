@@ -336,15 +336,29 @@ def export_str(file):
         out_layers.append({'tex': names, 'keys': keys})
         kept.append(L)
     k0, k1 = None, 0
+    # ex：整段動畫看得清楚（不透明度 > 0.1）的範圍，STR 座標、以原點 (320,320) 為 0；場地魔法拿來對齊地上的範圍圈
+    bx0 = by0 = 1e9
+    bx1 = by1 = -1e9
     for k in range(max_key):
+        seen = False
         for L in kept:
             key = str_key_at(L, k)
-            if key and key['color'][3] > 0.004:
-                k0 = k if k0 is None else k0
-                k1 = k + 1
-                break
+            if not key or key['color'][3] <= 0.004:
+                continue
+            seen = True
+            if key['color'][3] > 0.1:
+                cx, cy = key['pos'][0] - 320, key['pos'][1] - 320
+                a = math.radians(key['angle'])
+                ca, sa = math.cos(a), math.sin(a)
+                for x, y in zip(key['xy'][0:4], key['xy'][4:8]):
+                    px, py = cx + x * ca - y * sa, cy + x * sa + y * ca
+                    bx0, by0, bx1, by1 = min(bx0, px), min(by0, py), max(bx1, px), max(by1, py)
+        if seen:
+            k0 = k if k0 is None else k0
+            k1 = k + 1
     k0 = k0 or 0
     k1 = k1 or max_key
+    export_str.ex = [round(bx0), round(by0), round(bx1), round(by1)] if bx1 > bx0 else None
     os.makedirs(STR_OUT, exist_ok=True)
     with open(os.path.join(STR_OUT, file + '.js'), 'w', encoding='utf-8') as f:
         f.write('(window.STR_DATA=window.STR_DATA||{})["%s"]=' % file
@@ -355,7 +369,10 @@ def export_str(file):
 def str_meta(file, scale):
     """SKILL_FX_ANIM 的即時畫項目：str 檔名、sc 縮放；n＝1、ms＝整段毫秒（重播次數照這個算）"""
     k0, k1, fps = export_str(file)
-    return {'str': file, 'sc': scale, 'n': 1, 'ms': max(1, round((k1 - k0) * 1000 / fps))}
+    m = {'str': file, 'sc': scale, 'n': 1, 'ms': max(1, round((k1 - k0) * 1000 / fps))}
+    if export_str.ex:
+        m['ex'] = export_str.ex
+    return m
 
 
 # ---------- 精靈圖（.spr／.act 動作 0） ----------

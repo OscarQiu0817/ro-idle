@@ -89,11 +89,29 @@ const GEAR_GACHA = [
   ['gacha_weapon', '武器轉蛋', 12623, 20, d => d.type === 'weapon'],
 ];
 let _gearSourced = null;
-// 有其他取得管道的裝備（怪物掉落、NPC 商店）不進轉蛋
+/* 打得到、會掉寶的怪：地圖上的怪＋各圖 MVP／迷你王，再加它們叫出來的護衛（! 開頭的不掉寶）與變身後的樣子。
+   2026-11-16：以前算全部怪物，只有地圖外的怪（惡精靈礦石、道館才有的伊夫利特）會掉的四大屬性魔劍、火焰國王戒指因此沒進轉蛋 */
+function reachableLootMonsters() {
+  const ids = new Set();
+  MAPS.forEach(mp => (mp.monsters || []).forEach(x => ids.add(x.id || x)));
+  if (typeof MVP_MAP_DATA !== 'undefined') Object.values(MVP_MAP_DATA).forEach(l => l.forEach(id => ids.add(id)));
+  for (let grew = true; grew;) {
+    grew = false;
+    const add = id => { if (MONSTERS[id] && !ids.has(id)) { ids.add(id); grew = true; } };
+    [...ids].forEach(id => {
+      const sl = typeof BOSS_SLAVES !== 'undefined' && BOSS_SLAVES[id];
+      if (sl) [sl.spawn, ...(sl.recall || [])].forEach(e => e && (e.mobs || []).forEach(s => { if (s[0] !== '!') add(s); }));
+      const mm = typeof MOB_METAMORPH !== 'undefined' && MOB_METAMORPH[id];
+      if (mm) add(mm.into);
+    });
+  }
+  return ids;
+}
+// 有其他取得管道的裝備（打得到的怪會掉、NPC 商店）不進轉蛋
 function gearHasOtherSource(id) {
   if (!_gearSourced) {
     _gearSourced = new Set();
-    Object.values(MONSTERS).forEach(m => (m.drops || []).forEach(d => _gearSourced.add(d.item)));
+    reachableLootMonsters().forEach(k => (MONSTERS[k].drops || []).forEach(d => _gearSourced.add(d.item)));
     Object.values(NPC_SHOPS).forEach(s => (s.items || []).forEach(i => _gearSourced.add(i)));
   }
   return _gearSourced.has(id);
