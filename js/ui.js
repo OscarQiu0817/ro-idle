@@ -10651,7 +10651,7 @@ function bossStanceRowsHtml() {
     if (!typing(e) && typeof manualActive === 'function' && manualActive() && !e.repeat) {
       if (e.code === 'Space') { e.preventDefault(); manualAttack(); syncManualHud(); return; }
       const n = /^Digit([1-4])$/.exec(e.code);
-      if (n) { e.preventDefault(); manualSkillPress(+n[1] - 1); return; }
+      if (n) { e.preventDefault(); manualSkillPress(+n[1] - 1, manualMouseGround()); return; }
     }
     if (!KEYS[e.code] || typing(e) || typeof manualMoveActive !== 'function' || !manualMoveActive()) return;
     e.preventDefault();   // 方向鍵不要捲動頁面
@@ -10690,13 +10690,70 @@ function openManualDrawer(group) {
   document.body.classList.add('manual-drawer');
 }
 function closeManualDrawer() { document.body.classList.remove('manual-drawer'); }
-function manualSkillPress(i) {
-  const why = manualCastSlot(i);
+function manualSkillPress(i, ground) {
+  const why = manualCastSlot(i, ground && manualSlotAim(i) ? ground : undefined);
   if (why) {
     const b = document.querySelector(`#manual-pad .manual-sk[data-i="${i}"]`);
     if (b) { b.dataset.why = why; b.classList.remove('deny'); void b.offsetWidth; b.classList.add('deny'); }
   }
   syncManualHud();
+}
+/* 範圍技瞄準：按住技能鈕拖曳＝落點（拖到底＝射程邊緣），放開施放；點一下照舊打目標。
+   電腦按 1～4：滑鼠在戰鬥畫面上就放在滑鼠位置。座標＝格，玩家為原點（跟點地面移動同一套換算） */
+let manualMouse = null;   // 滑鼠在戰鬥畫面上的位置（% 座標），離開就 null
+document.addEventListener('mousemove', e => {
+  const scene = document.getElementById('battle-scene');
+  if (!scene || !e.target || !e.target.closest || !e.target.closest('#battle-scene')) { manualMouse = null; return; }
+  const r = scene.getBoundingClientRect();
+  manualMouse = { px: (e.clientX - r.left) / r.width * 100, py: (e.clientY - r.top) / r.height * 100 };
+});
+function manualMouseGround() {
+  if (!manualMouse) return null;
+  return { x: (manualMouse.px - bfPlayer.x) / BF_CELL_X - bfWorldLag.x, y: (manualMouse.py - bfPlayer.y) / BF_CELL_Y - bfWorldLag.y };
+}
+// 引擎座標（格）→ 畫面 %
+function manualGroundPoint(x, y) {
+  return { x: bfPlayer.x + (x + bfWorldLag.x) * BF_CELL_X, y: bfPlayer.y + (y + bfWorldLag.y) * BF_CELL_Y };
+}
+function manualAimDraw(aim, ground) {
+  const scene = document.getElementById('battle-scene');
+  let ring = document.getElementById('manual-aim-range'), dot = document.getElementById('manual-aim');
+  if (!aim) { if (ring) ring.remove(); if (dot) dot.remove(); return; }
+  if (!ring) { ring = document.createElement('div'); ring.id = 'manual-aim-range'; scene.appendChild(ring); }
+  if (!dot) { dot = document.createElement('div'); dot.id = 'manual-aim'; scene.appendChild(dot); }
+  const c = manualGroundPoint(0, 0), p = manualGroundPoint(ground.x, ground.y);
+  Object.assign(ring.style, { left: c.x + '%', top: c.y + '%', width: aim.range * 2 * BF_CELL_X + '%', height: aim.range * 2 * BF_CELL_Y + '%' });
+  Object.assign(dot.style, { left: p.x + '%', top: p.y + '%', width: (aim.radius * 2 + 1) * BF_CELL_X + '%', height: (aim.radius * 2 + 1) * BF_CELL_Y + '%' });
+}
+const MANUAL_AIM_DRAG_PX = 90;   // 拖這麼遠＝射程邊緣
+function manualBindSkillBtn(b) {
+  const i = +b.dataset.i;
+  let drag = null;
+  const groundOf = e => {
+    const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    const k = Math.min(1, Math.hypot(dx, dy) / MANUAL_AIM_DRAG_PX) * drag.aim.range / Math.max(1, Math.hypot(dx, dy));
+    return { x: dx * k, y: dy * k };
+  };
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const aim = manualSlotAim(i);
+    if (!aim) { manualSkillPress(i); return; }
+    drag = { aim, x0: e.clientX, y0: e.clientY, moved: false, pid: e.pointerId };
+    try { b.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  b.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 10) drag.moved = true;
+    if (drag.moved) manualAimDraw(drag.aim, groundOf(e));
+  });
+  b.addEventListener('pointerup', e => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const g = drag.moved ? groundOf(e) : null;
+    drag = null;
+    manualAimDraw(null);
+    manualSkillPress(i, g);
+  });
+  b.addEventListener('pointercancel', () => { drag = null; manualAimDraw(null); });
 }
 function ensureManualHud(scene) {
   if (document.getElementById('manual-pad')) return;
@@ -10719,7 +10776,7 @@ function ensureManualHud(scene) {
   const stop = e => e.stopPropagation();
   pad.addEventListener('click', stop);
   pad.querySelector('#manual-atk').addEventListener('pointerdown', e => { e.preventDefault(); manualAttack(); syncManualHud(); });
-  pad.querySelectorAll('.manual-sk').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); manualSkillPress(+b.dataset.i); }));
+  pad.querySelectorAll('.manual-sk').forEach(manualBindSkillBtn);
   // 搖桿：拖曳方向＝移動方向，放開停下
   const stick = pad.querySelector('#manual-stick'), knob = stick.firstElementChild;
   let pid = null;
@@ -10768,6 +10825,9 @@ function syncManualHud() {
     const cdTxt = cd > 0 ? (cd >= 10000 ? Math.ceil(cd / 1000) : (cd / 1000).toFixed(1)) : '';
     const cdEl = b.querySelector('.manual-sk-cd');
     if (cdEl.textContent !== cdTxt) cdEl.textContent = cdTxt;
+    // 轉圈遮罩：冷卻剛開始＝整圈暗，順時針褪掉（總長取這輪冷卻看到的最大值）
+    b._cdMax = cd > 0 ? Math.max(b._cdMax || 0, cd) : 0;
+    cdEl.style.setProperty('--cd', cd > 0 ? (cd / b._cdMax * 360).toFixed(1) + 'deg' : '0deg');
     b.classList.toggle('empty', !id);
     b.classList.toggle('dim', !!id && (cd > 0 || state.sp < skillSpCost(sk, lv)));
     b.classList.toggle('queued', state._manualQueued === i);

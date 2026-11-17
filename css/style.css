@@ -2743,7 +2743,12 @@ body.manual-play .bf-boss-hud { bottom: auto; top: 36px; }
 .manual-sk[data-i="2"] { right: 68px; bottom: 105px; }
 .manual-sk[data-i="3"] { right: 18px; bottom: 118px; }
 .manual-sk-ico .skill-icon { width: 30px; height: 30px; image-rendering: pixelated; }
-.manual-sk-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; text-shadow: 0 1px 2px #000; }
+.manual-sk-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; text-shadow: 0 1px 2px #000; border-radius: 50%;
+  --cd: 0deg; background: conic-gradient(from 0deg, transparent calc(360deg - var(--cd)), rgba(0,0,0,.68) 0); }
+/* 範圍技瞄準：射程圈（玩家為中心）＋落點圈 */
+#manual-aim-range, #manual-aim { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; z-index: 29; }
+#manual-aim-range { border: 2px dashed rgba(255,255,255,.35); background: rgba(255,255,255,.04); }
+#manual-aim { border: 2px solid rgba(111,200,255,.95); background: rgba(111,200,255,.22); box-shadow: 0 0 12px rgba(111,200,255,.6); }
 .manual-sk.empty { opacity: .35; }
 .manual-sk.dim .manual-sk-ico { filter: grayscale(1) brightness(.55); }
 .manual-sk.queued { border-color: #6fc8ff; box-shadow: 0 0 10px rgba(111,200,255,.8); }

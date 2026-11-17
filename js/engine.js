@@ -10985,7 +10985,9 @@ function castSkill(skillId, opts) {
     if (lv && opts && opts.forceLv) { lv = Math.max(1, Math.min(lv, opts.forceLv)); opts = Object.assign({}, opts, { forceLv: lv }); }
     const ct = lv ? skillCastTimeMs(sk, lv) : 0;
     if (ct > 0) return beginCast(sk, lv, ct, opts);
-    const ok = castSkillInner(skillId, opts);
+    _castGround = (opts && opts.ground) || null;   // 瞬發的指定落點
+    let ok;
+    try { ok = castSkillInner(skillId, opts); } finally { _castGround = null; }
     if (ok) { applyAfterCastDelay(skillId, lv); afterSkillCast(skillId, tgt0); }
     return ok;
   });
@@ -11081,7 +11083,8 @@ function beginCast(sk, lv, ct, opts) {
   /* 場地魔法開始詠唱就鎖定落點（官方 RO，使用者 2026-11-17）：詠唱中畫圈，放出來就在那裡；怪走出去就打不到。
      座標跟場地魔法同一套（施放者為原點），玩家走動時 playerMoveBy 一起平移 */
   const tgt = sk.fieldRadius && state.monsters && state.monsters[0];
-  if (tgt && Number.isFinite(tgt.d)) state.casting.ground = { d: tgt.d, a: tgt.a || 0 };
+  if (opts && opts.ground) state.casting.ground = { d: opts.ground.d, a: opts.ground.a };   // 手操指定落點（js/manual_play.js）
+  else if (tgt && Number.isFinite(tgt.d)) state.casting.ground = { d: tgt.d, a: tgt.a || 0 };
   logMsg(`🔮 詠唱「${skillDisplayName(sk)}」（${(ct / 1000).toFixed(1)} 秒）`);
   return true;
 }
@@ -12098,9 +12101,9 @@ function castSkillInner(skillId, opts) {
     }
     /* 場地技（工作 4）：放在最近那隻怪的方向上，判定見 tickGroundUnits／tickMonsterMovement */
     case 'ground_wall': {
-      const tgt = pickGroundTarget();
+      const tgt = _castGround || pickGroundTarget();   // 手操指定的落點優先
       if (!tgt) break;
-      const w = tgt.d <= 1.5 ? Math.max(1, tgt.d) : Math.min(3, tgt.d - 0.5);
+      const w = _castGround ? Math.max(1, tgt.d) : tgt.d <= 1.5 ? Math.max(1, tgt.d) : Math.min(3, tgt.d - 0.5);
       const row = skillCastRow(sk.id);
       const wall = { kind: 'wall', skillId: sk.id, name: sk.name, d: w, a: tgt.a || 0,
         cells: sk.wallCells || 3, half: Math.min(Math.PI, (sk.wallCells || 3) / 2 / w), hits: lvArr(sk.wallHits, lv) || (lv + 2),
@@ -12115,12 +12118,12 @@ function castSkillInner(skillId, opts) {
       break;
     }
     case 'ground_trap': {
-      const tgt = pickGroundTarget();
+      const tgt = _castGround || pickGroundTarget();
       if (!tgt) break;
       const row = skillCastRow(sk.id);
       const range = row ? Math.abs(castLv(row.range, lv)) || 3 : 3;
-      // 放在怪的來路上；已經貼身就直接放在牠腳下
-      const d = tgt.d <= 1.2 ? tgt.d : Math.max(1, Math.min(range, tgt.d - 1));
+      // 放在怪的來路上；已經貼身就直接放在牠腳下；手操指定就放那裡
+      const d = _castGround ? Math.min(range, tgt.d) : tgt.d <= 1.2 ? tgt.d : Math.max(1, Math.min(range, tgt.d - 1));
       if (!state.groundUnits) state.groundUnits = [];
       state.groundUnits.push({ kind: 'trap', skillId: sk.id, name: sk.name, d, a: tgt.a || 0,
         effect: sk.trapEffect, radius: row ? castLv(row.splash, lv) || 0 : 0,
@@ -12133,7 +12136,7 @@ function castSkillInner(skillId, opts) {
       break;
     }
     case 'ground_zone': {
-      const tgt = pickGroundTarget();
+      const tgt = _castGround || pickGroundTarget();
       if (!tgt) break;
       const row = skillCastRow(sk.id);
       if (!state.groundUnits) state.groundUnits = [];
@@ -12147,9 +12150,9 @@ function castSkillInner(skillId, opts) {
       break;
     }
     case 'ground_icewall': {
-      const tgt = pickGroundTarget();
+      const tgt = _castGround || pickGroundTarget();
       if (!tgt) break;
-      const d = Math.max(1, Math.min(9, tgt.d - 1));
+      const d = _castGround ? Math.max(1, Math.min(9, tgt.d)) : Math.max(1, Math.min(9, tgt.d - 1));
       if (!state.groundUnits) state.groundUnits = [];
       const hp = lvArr(sk.iceHp, lv) || 400;
       state.groundUnits.push({ kind: 'ice', uid: gameNow() + rng(), skillId: sk.id, name: sk.name, d, a: tgt.a || 0,

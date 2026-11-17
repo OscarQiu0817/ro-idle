@@ -52,9 +52,30 @@ function manualAttack(monId) {
   manualFocus(m);
   return true;
 }
+/* 範圍技指定落點：場地魔法（暴風雪、隕石…）與場地技（火牆、陷阱、泥沼、冰牆） */
+const MANUAL_AIM_TYPES = ['ground_wall', 'ground_trap', 'ground_zone', 'ground_icewall'];
+function skillAimable(sk) { return !!sk && (sk.fieldRadius > 0 || MANUAL_AIM_TYPES.includes(sk.type)); }
+// 預覽圈半徑（格）
+function skillAimRadius(sk, lv) {
+  if (sk.fieldRadius) return sk.fieldRadius;
+  if (sk.zoneRadius) return sk.zoneRadius;
+  const row = skillCastRow(sk.id);
+  return (row && castLv(row.splash, lv)) || (sk.wallCells ? sk.wallCells / 2 : 1);
+}
+// 落點最遠幾格：技能射程，沒有射程資料就 9 格
+function skillAimRange(sk, lv) { return skillRangeCells(sk, lv) || 9; }
+// 第 i 格能不能瞄準；能的話回 { sk, lv, radius, range }
+function manualSlotAim(i) {
+  const sl = autoSkillSlots(state.autoSkillConfig)[i];
+  const sk = sl && sl.skillId && findSkillForUse(sl.skillId);
+  const lv = sk && autoSlotLv(sl, sk);
+  if (!lv || !skillAimable(sk)) return null;
+  return { sk, lv, radius: skillAimRadius(sk, lv), range: skillAimRange(sk, lv) };
+}
 /* 技能鈕：第 i 格。打怪的技能沒目標就鎖最近的；射程不夠先走過去，到了再放。回傳失敗原因（空字串＝成功或已排入） */
-function manualCastSlot(i) {
+function manualCastSlot(i, ground) {
   if (!manualActive()) return '不在手操模式';
+  if (ground) return manualCastAt(i, ground);
   const sl = autoSkillSlots(state.autoSkillConfig)[i];
   const sk = sl && sl.skillId && findSkillForUse(sl.skillId);
   const lv = sk && autoSlotLv(sl, sk);
@@ -148,4 +169,20 @@ function manualCombatStep(moveDt) {
     if (state.monsters.length === 0) break;
   }
   return false;
+}
+/* 指定落點施放：ground＝{x,y}（格，玩家為原點），超出射程就拉回射程邊緣。不追怪、不排隊 */
+function manualCastAt(i, ground) {
+  const aim = manualSlotAim(i);
+  if (!aim) return manualCastSlot(i);
+  const { sk, lv } = aim;
+  if (!skillReady(sk.id)) return '冷卻中';
+  if (!weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) return '裝備不符';
+  if (state.sp < skillSpCost(sk, lv)) return 'SP 不足';
+  if (state.casting || gameNow() < (state.acdUntil || 0)) return '詠唱中';
+  const d = Math.min(aim.range, Math.hypot(ground.x, ground.y));
+  const a = Math.atan2(ground.y, ground.x);
+  state._manualQueued = null;
+  const opts = { ground: { d, a } };
+  if (lv < skillLv(sk.id)) opts.forceLv = lv;
+  return castSkill(sk.id, opts) ? '' : '無法施放';
 }
