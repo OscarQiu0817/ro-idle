@@ -296,7 +296,7 @@ function bossSafeSpot(p) {
 }
 function bossDodgeTick(m, dt, now) {
   const isOwner = m === allyOwnerState();
-  if (bossStance(m) === 'tank' || (isOwner && state.bossManual)) { m._dodgeTo = null; return; }
+  if (bossStance(m) === 'tank' || (isOwner && (state.bossManual || (typeof manualActive === 'function' && manualActive())))) { m._dodgeTo = null; return; }
   const p = bossMemberXY(m);
   // 分攤圈：自動閃避的人往圈裡站（全場技閃不掉，不用動）
   const shareC = (state.bossCasts || []).find(c => c.share && !castHas(c, p, -0.3));

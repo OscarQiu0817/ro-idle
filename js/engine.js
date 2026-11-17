@@ -5720,6 +5720,7 @@ function tickFieldEffects() {
 /* 玩家（state 指向的那個人）這一拍的戰鬥：找目標、攻擊技能欄、走位、普攻。
    gameTick 與攻城戰的敵方世界（js/actor_battle.js）共用。回傳 dodging。 */
 function playerCombatStep(moveDt) {
+  if (typeof manualActive === 'function' && manualActive()) return manualCombatStep(moveDt);   // 手操（js/manual_play.js）
   ensureNearestTarget();
   const dodging = typeof bossDodging === 'function' && bossDodging(state);   // 打王閃避中：不放技能、不普攻、不追怪
   if (state.autoSkill && !dodging) tryAutoCastSkill();
@@ -5905,6 +5906,7 @@ function gameTick() {
   tickMonsterMetamorph();
   tickAllyFormation(moveDt);
   if (typeof tickBossFight === 'function') tickBossFight(moveDt, moveNow);   // 打王：紅圈與自動閃避（js/boss_fight.js）
+  if (typeof tickManualPlay === 'function') tickManualPlay(moveDt);   // 手操走位（js/manual_play.js）
   tickCasting(moveNow);
   alliesCastTick(moveNow);
   /* 攻擊技能欄每拍檢查（原本在每秒一次的慢心跳）：交戰距離每拍都在判斷「技能可放就站在技能射程」，
@@ -5938,6 +5940,7 @@ function gameTick() {
     if (state.bossHunt) { /* 討伐首領中：完全停下（js/boss_fight.js） */ }
     else if (state.travel) tickTravel(moveDt);   // 趕路：沒有擋路的就往傳點走
     else if (state.townTarget && typeof tickTownWalk === 'function') tickTownWalk(moveDt);   // T27：城裡走向 NPC
+    else if (typeof manualActive === 'function' && manualActive()) { /* 手操：不漫遊 */ }
     else tickRoam(moveDt, moveNow);         // 沒怪：漫遊找怪
   }
   if (typeof tickActorBattle === 'function') tickActorBattle(gameNow());   // 攻城戰：敵方隊伍（js/actor_battle.js）

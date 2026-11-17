@@ -2410,6 +2410,9 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 
 /* ---------------- 世界地圖浮層（工作 7、D1b）---------------- */
 .map-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.map-adj { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; }
+.map-adj-title { font-size: 13px; color: var(--ink-dim); margin-right: 2px; }
+.map-adj-lv { font-size: 11px; opacity: .7; }
 .map-here-lv { font-size: 13px; color: var(--ro-text-dim); font-weight: normal; }
 .wm-overlay { position: fixed; inset: 0; z-index: 900; background: rgba(8, 6, 4, .92); display: flex; flex-direction: column; }
 .wm-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px; color: var(--ro-gold); }
@@ -2703,3 +2706,63 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
   from { filter: drop-shadow(0 0 2px rgba(170, 90, 255, 0.6)) drop-shadow(0 4px 10px rgba(0,0,0,0.4)); }
   to   { filter: drop-shadow(0 0 9px rgba(170, 90, 255, 1)) drop-shadow(0 0 3px #e6d0ff); }
 }
+
+/* ---------- 手操模式（使用者 2026-11-17）：分頁收成抽屜、戰鬥畫面放大、右下攻擊＋技能、左下搖桿 ---------- */
+.bf-manual-bar { position: absolute; left: 6px; top: 6px; z-index: 31; display: flex; gap: 4px; }
+.bf-manual-bar.hidden, .manual-pad.hidden { display: none; }
+.bf-manual-btn { font-size: 12px; line-height: 1.2; padding: 4px 9px; border-radius: 6px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.6); color: #fff; cursor: pointer; white-space: nowrap; }
+#bf-manual-toggle { border-color: #f0c040; color: #ffe7a0; }
+.bf-manual-tabs { display: none; gap: 4px; }
+body.manual-play .bf-manual-tabs { display: flex; }
+.manual-drawer-close { display: none; }
+body.manual-play .manual-drawer-close { display: block; flex: none; padding: 6px; border: none; border-bottom: 1px solid var(--line); background: var(--bg-panel-2, #1c2230); color: var(--ink-dim); cursor: pointer; }
+body.manual-play .side-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 92vw); max-width: none; z-index: 140;   /* 彈窗 .modal-overlay 是 150，要蓋在抽屜上面 */
+  transform: translateX(105%); transition: transform .2s ease; box-shadow: -8px 0 24px rgba(0,0,0,.55);
+}
+body.manual-play.manual-drawer .side-panel { transform: none; }
+body.manual-drawer .damage-float, body.manual-drawer .skill-name-float { visibility: hidden; }   /* 傷害數字是 fixed 最上層，抽屜打開時別浮在面板上 */
+body.manual-play .battle-buffs { bottom: 190px; }
+body.manual-play .bf-boss-hud { bottom: auto; top: 36px; }
+
+.manual-pad { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+.manual-stick { position: absolute; left: 18px; bottom: 18px; width: 124px; height: 124px; border-radius: 50%;
+  background: rgba(255,255,255,.07); border: 2px solid rgba(255,255,255,.22); pointer-events: auto; touch-action: none; }
+.manual-stick-knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%;
+  background: rgba(255,255,255,.3); border: 1px solid rgba(255,255,255,.5); pointer-events: none; }
+.manual-actions { position: absolute; right: 14px; bottom: 14px; width: 170px; height: 170px; }
+.manual-atk, .manual-sk { position: absolute; border-radius: 50%; pointer-events: auto; touch-action: manipulation; cursor: pointer;
+  color: #fff; border: 2px solid rgba(255,255,255,.45); background: rgba(10,12,20,.55); display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+.manual-atk small, .manual-sk small { position: absolute; bottom: -2px; right: -2px; font-size: 10px; line-height: 1; padding: 2px 4px; border-radius: 6px; background: rgba(0,0,0,.75); color: #ddd; }
+.manual-atk { right: 0; bottom: 0; width: 84px; height: 84px; font-size: 32px; border-color: rgba(240,192,64,.8); background: rgba(120,70,0,.5); }
+.manual-atk.on { box-shadow: 0 0 12px rgba(255,200,60,.8); }
+.manual-atk:active, .manual-sk:active { transform: scale(.92); }
+.manual-sk { width: 48px; height: 48px; overflow: hidden; }
+.manual-sk[data-i="0"] { right: 118px; bottom: 18px; }
+.manual-sk[data-i="1"] { right: 105px; bottom: 68px; }
+.manual-sk[data-i="2"] { right: 68px; bottom: 105px; }
+.manual-sk[data-i="3"] { right: 18px; bottom: 118px; }
+.manual-sk-ico .skill-icon { width: 30px; height: 30px; image-rendering: pixelated; }
+.manual-sk-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; text-shadow: 0 1px 2px #000; }
+.manual-sk.empty { opacity: .35; }
+.manual-sk.dim .manual-sk-ico { filter: grayscale(1) brightness(.55); }
+.manual-sk.queued { border-color: #6fc8ff; box-shadow: 0 0 10px rgba(111,200,255,.8); }
+.manual-sk.deny { animation: manual-deny .4s; }
+.manual-sk.deny::after { content: attr(data-why); position: absolute; bottom: 100%; white-space: nowrap; font-size: 11px; color: #ffb3b3; text-shadow: 0 1px 2px #000; animation: manual-why 1s forwards; }
+@keyframes manual-deny { 0%,100% { transform: none; } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@keyframes manual-why { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+/* 電腦（滑鼠）：不顯示搖桿，按鈕縮小 */
+@media (hover: hover) and (pointer: fine) {
+  .manual-stick { display: none; }
+  .manual-actions { transform: scale(.8); transform-origin: 100% 100%; }
+}
+@media (max-width: 860px) {
+  body.manual-play .game-shell { height: 100vh; height: 100dvh; min-height: 0; }
+  body.manual-play .game-body { flex: 1 1 auto; min-height: 0; }
+  body.manual-play .battle-panel { flex: 1 1 auto; min-height: 0; }
+  body.manual-play .battle-scene { height: auto; flex: 1 1 auto; }
+  body.manual-play .combat-log { height: 96px; }
+  body.manual-play .side-panel { top: auto; left: 0; width: auto; height: 72vh; transform: translateY(105%); box-shadow: 0 -8px 24px rgba(0,0,0,.55); }
+  body.manual-play.manual-drawer .side-panel { transform: none; }
+}
+

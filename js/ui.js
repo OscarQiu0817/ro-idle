@@ -611,6 +611,7 @@ function onTickUI() {
     renderAllySprites();
     updateAllyPanelLive();   // 只改數字，整個重畫會把展開中的下拉選單刪掉
     if (activeTab === 'autobattle') updateAutoSkillLive();
+    syncManualHud();
     if (activeTab === 'quests' && huntTabSig() !== _huntSig
         && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#tab-quests'))) {
       renderQuestsTab();
@@ -4237,13 +4238,25 @@ function travelFightText(short) {
 
 /* ---------------- 地圖分頁 ---------------- */
 // 趕路中：目的地、第幾張、下一張；可以停下來
+/* 相鄰地圖（使用者 2026-11-17）：傳送點直接連到的圖，點了跟從世界地圖點一樣出發，不必世界地圖 > 格子 > 地城 > 樓層 */
+function mapAdjacentHtml(mapId) {
+  const ids = [...new Set(WORLD_ADJ[mapId] || [])].filter(id => MAPS.some(m => m.id === id));
+  if (!ids.length) return '';
+  const dest = state.travel && state.travel.dest;
+  const btn = id => {
+    const m = MAPS.find(x => x.id === id);
+    const lv = m.town ? '城鎮' : mapLvRangeText(m);
+    return `<button class="btn-small map-adj-btn${id === dest ? ' active' : ''}" onclick="worldGo('${id}')" title="${shopEsc(mapLvText(m) || '')}">${shopEsc(m.name)}${lv ? ` <span class="map-adj-lv">${lv}</span>` : ''}</button>`;
+  };
+  return `<div class="map-adj"><span class="map-adj-title">🚪 相鄰地圖</span>${ids.map(btn).join('')}</div>`;
+}
 function mapTravelBox() {
   const t = state.travel;
   if (!t) return '';
   const nm = id => shopEsc((MAPS.find(m => m.id === id) || {}).name || id);
   const i = Math.max(0, t.path.indexOf(state.mapId));
   const next = travelNextMapId();
-  return `<div class="map-travel" id="map-travel-box">🧭 前往 <b>${nm(t.dest)}</b>　第 ${i + 1}／${t.path.length} 張${next ? `・下一張 ${nm(next)}` : ''}${travelFightText()}
+  return `<div class="map-travel" id="map-travel-box">🧭 前往 <b>${nm(t.dest)}</b>　第 ${i + 1}／${t.path.length} 張${next ? `・下一張 ${nm(next)}` : ''}${travelFightText().replace(/^・/, '<br>')}
     <button class="btn-small" onclick="cancelTravel(); renderMapTab();">停止</button></div>`;
 }
 
@@ -5028,6 +5041,7 @@ function renderMapTab() {
         ${currentMapObj.town ? '' : `<button class="btn-small" onclick="openTownWarp('portal')">✨ 傳送之陣</button>`}` : ''}
     </div>
     ${mapTravelBox()}
+    ${mapAdjacentHtml(currentMapObj.id)}
     ${isCity ? townNpcPanelHtml() : ''}
     ${isCity ? '' : `<details class="map-preview-box" ${encounterListOpen ? 'open' : ''} ontoggle="setEncounterListOpen(this.open)">
       <summary class="map-preview-title">⚔️ 遇怪列表：${currentMapObj.name} ${mapLvText(currentMapObj)}</summary>
@@ -10633,7 +10647,13 @@ function bossStanceRowsHtml() {
   };
   const typing = e => { const t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); };
   window.addEventListener('keydown', e => {
-    if (!KEYS[e.code] || typing(e) || typeof bossManualActive !== 'function' || !bossManualActive()) return;
+    // 手操：空白鍵攻擊、1～4 放技能欄
+    if (!typing(e) && typeof manualActive === 'function' && manualActive() && !e.repeat) {
+      if (e.code === 'Space') { e.preventDefault(); manualAttack(); syncManualHud(); return; }
+      const n = /^Digit([1-4])$/.exec(e.code);
+      if (n) { e.preventDefault(); manualSkillPress(+n[1] - 1); return; }
+    }
+    if (!KEYS[e.code] || typing(e) || typeof manualMoveActive !== 'function' || !manualMoveActive()) return;
     e.preventDefault();   // 方向鍵不要捲動頁面
     held.add(e.code); push();
   });
@@ -10642,13 +10662,118 @@ function bossStanceRowsHtml() {
   // 點戰鬥畫面的地面：換算成世界座標（一格＝橫 BF_CELL_X%、直 BF_CELL_Y%，玩家在 bfPlayer）
   document.addEventListener('click', e => {
     const scene = e.target && e.target.closest && e.target.closest('#battle-scene');
-    if (!scene || e.target.closest('#bf-boss-hud') || typeof bossManualActive !== 'function' || !bossManualActive()) return;
+    if (!scene || e.target.closest('#bf-boss-hud, #manual-pad, .bf-manual-bar') || typeof manualMoveActive !== 'function' || !manualMoveActive()) return;
+    // 手操點到怪：改打那隻
+    const slot = e.target.closest('.monster-slot');
+    if (slot && manualActive()) { manualAttack(+slot.id.replace('monster-slot-', '')); return; }
     const r = scene.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width * 100, py = (e.clientY - r.top) / r.height * 100;
     bossManualMoveTo({ x: (px - bfPlayer.x) / BF_CELL_X - bfWorldLag.x, y: (py - bfPlayer.y) / BF_CELL_Y - bfWorldLag.y });
   });
 })();
 
+
+/* ---------------- 手操介面（使用者 2026-11-17）----------------
+   戰鬥畫面左上：🎮 手操／⏸ 放置切換，手操時多四顆分頁鈕（點了從旁邊／下方拉出抽屜）。
+   手操時分頁收起、戰鬥畫面放大；右下大圈攻擊＋四顆技能（自動戰鬥 4 格），觸控裝置左下有搖桿。
+   電腦：WASD 移動、空白鍵攻擊、1～4 技能、點地面走過去、點怪改打牠。 */
+function manualHudShouldShow() {
+  return !!state && !state.travel && !state.gvg && typeof isInTown === 'function' && !isInTown();
+}
+function toggleManualPlay() {
+  setManualPlay(!state.manualPlay);
+  if (!state.manualPlay) closeManualDrawer();
+  syncManualHud();
+}
+function openManualDrawer(group) {
+  openTabGroup(group);
+  document.body.classList.add('manual-drawer');
+}
+function closeManualDrawer() { document.body.classList.remove('manual-drawer'); }
+function manualSkillPress(i) {
+  const why = manualCastSlot(i);
+  if (why) {
+    const b = document.querySelector(`#manual-pad .manual-sk[data-i="${i}"]`);
+    if (b) { b.dataset.why = why; b.classList.remove('deny'); void b.offsetWidth; b.classList.add('deny'); }
+  }
+  syncManualHud();
+}
+function ensureManualHud(scene) {
+  if (document.getElementById('manual-pad')) return;
+  const bar = document.createElement('div');
+  bar.className = 'bf-manual-bar';
+  bar.innerHTML = `<button class="bf-manual-btn" id="bf-manual-toggle" onclick="event.stopPropagation();toggleManualPlay()"></button>
+    <span class="bf-manual-tabs">${[['fight', '打怪'], ['grow', '升級'], ['gear', '物品'], ['social', '收集']]
+      .map(([g, n]) => `<button class="bf-manual-btn" onclick="event.stopPropagation();openManualDrawer('${g}')">${n}</button>`).join('')}</span>`;
+  scene.appendChild(bar);
+  const pad = document.createElement('div');
+  pad.id = 'manual-pad';
+  pad.className = 'manual-pad';
+  const KEY = ['1', '2', '3', '4'];
+  pad.innerHTML = `<div class="manual-stick" id="manual-stick"><div class="manual-stick-knob"></div></div>
+    <div class="manual-actions">
+      <button class="manual-atk" id="manual-atk" title="攻擊（空白鍵）">⚔️<small>Space</small></button>
+      ${KEY.map((k, i) => `<button class="manual-sk" data-i="${i}" title="技能欄第 ${i + 1} 格（${k}）"><span class="manual-sk-ico"></span><span class="manual-sk-cd"></span><small>${k}</small></button>`).join('')}
+    </div>`;
+  scene.appendChild(pad);
+  const stop = e => e.stopPropagation();
+  pad.addEventListener('click', stop);
+  pad.querySelector('#manual-atk').addEventListener('pointerdown', e => { e.preventDefault(); manualAttack(); syncManualHud(); });
+  pad.querySelectorAll('.manual-sk').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); manualSkillPress(+b.dataset.i); }));
+  // 搖桿：拖曳方向＝移動方向，放開停下
+  const stick = pad.querySelector('#manual-stick'), knob = stick.firstElementChild;
+  let pid = null;
+  const move = e => {
+    const r = stick.getBoundingClientRect();
+    let x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
+    const max = r.width / 2 - 14, d = Math.hypot(x, y);
+    if (d > max) { x *= max / d; y *= max / d; }
+    knob.style.transform = `translate(${x}px, ${y}px)`;
+    bossManualSetDir(d > 8 ? { x: x / Math.max(1, Math.hypot(x, y)), y: y / Math.max(1, Math.hypot(x, y)) } : null);
+  };
+  const end = () => { pid = null; knob.style.transform = ''; bossManualSetDir(null); };
+  stick.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; stick.setPointerCapture(pid); move(e); });
+  stick.addEventListener('pointermove', e => { if (e.pointerId === pid) move(e); });
+  stick.addEventListener('pointerup', end);
+  stick.addEventListener('pointercancel', end);
+}
+function syncManualHud() {
+  const scene = document.getElementById('battle-scene');
+  if (!scene || !state) return;
+  ensureManualHud(scene);
+  const show = manualHudShouldShow();
+  const on = show && typeof manualActive === 'function' && manualActive();
+  document.body.classList.toggle('manual-play', on);
+  if (!on) document.body.classList.remove('manual-drawer');
+  const bar = scene.querySelector('.bf-manual-bar');
+  bar.classList.toggle('hidden', !show);
+  const tg = document.getElementById('bf-manual-toggle');
+  const label = on ? '⏸ 放置' : '🎮 手操';
+  if (tg.textContent !== label) { tg.textContent = label; tg.title = on ? '回到放置：自動找怪、自動放技能' : '自己操作：WASD／搖桿移動、空白鍵攻擊、1～4 放技能'; }
+  const pad = document.getElementById('manual-pad');
+  pad.classList.toggle('hidden', !on);
+  if (!on) return;
+  const slots = autoSkillSlots(state.autoSkillConfig);
+  pad.querySelectorAll('.manual-sk').forEach(b => {
+    const i = +b.dataset.i, sl = slots[i];
+    const sk = sl && sl.skillId && findSkillForUse(sl.skillId);
+    const lv = sk && autoSlotLv(sl, sk);
+    const id = lv ? sk.id : '';
+    if (b.dataset.sk !== id) {
+      b.dataset.sk = id;
+      b.querySelector('.manual-sk-ico').innerHTML = id ? skillIconHtml(sk) : '';
+      b.title = id ? `${sk.name} Lv${lv}（${i + 1}）` : `技能欄第 ${i + 1} 格是空的：到「自動戰鬥」設定`;
+    }
+    const cd = id ? (state.cooldowns || {})[id] || 0 : 0;
+    const cdTxt = cd > 0 ? (cd >= 10000 ? Math.ceil(cd / 1000) : (cd / 1000).toFixed(1)) : '';
+    const cdEl = b.querySelector('.manual-sk-cd');
+    if (cdEl.textContent !== cdTxt) cdEl.textContent = cdTxt;
+    b.classList.toggle('empty', !id);
+    b.classList.toggle('dim', !!id && (cd > 0 || state.sp < skillSpCost(sk, lv)));
+    b.classList.toggle('queued', state._manualQueued === i);
+  });
+  document.getElementById('manual-atk').classList.toggle('on', !!state._manualChase && !!manualTarget());
+}
 
 /* 打王即時切換（戰鬥畫面左下角，使用者 2026-11-13）：只在打王時出現。
    每位隊員一顆站姿鈕（🏃 閃避 ⇄ 🛡️ 硬扛），加一顆手動操控開關。內容沒變就不重畫 */
