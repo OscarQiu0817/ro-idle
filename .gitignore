@@ -182,3 +182,6 @@ grf_ex/
 
 # 產生腳本的報告輸出
 scripts/out/
+
+# 地板生圖原圖（只當轉換來源；遊戲用 images/maps/floor/*.jpg，由 scripts/gen_floor_tiles.py 產生）
+images/maps/ro_idle_floor_atlas_v2_no_text/

@@ -63,23 +63,37 @@ const monBoss = {};     // rAthena 怪物 id → 首領階級（MVP 或迷你王
 }
 
 const W = readLub(path.join(SRC, 'worldviewdata_table.lub'));
-const main = W.worldtable_main;
-const tiles = main.filter(e => e[0] >= 100).map(e => ({
-  id: mapId(e[1]), x1: e[2], y1: e[3], x2: e[4], y2: e[5], lv: e[7] || '',
-}));
 const lcp = list => {
   let p = list[0] || '';
   for (const s of list) while (p && !s.startsWith(p)) p = p.slice(0, -1);
   return p.replace(/(?:[\s\d樓F層一二三四五六七八九十-]|地上|地下|地)+$/, '').trim();
 };
-const dungeons = W.worldtable_main_Dun.map(e => {
-  const floors = main.filter(f => f[0] === e[0]).map(f => ({ id: mapId(f[1]), lv: f[7] || '' }));
-  const floorNames = floors.map(f => names[f.id]).filter(Boolean);
-  return {
-    group: e[0], x1: e[1], y1: e[2], x2: e[3], y2: e[4], lv: e[6] || '',
-    name: lcp(floorNames) || floorNames[0] || floors[0].id, floors,
-  };
-});
+// 一張世界地圖表 → 原野／城鎮格子（群組 ≥ 100）＋地城入口與樓層（群組 < 100）
+function regionOf(table) {
+  const rows = W[table] || [];
+  const tiles = rows.filter(e => e[0] >= 100).map(e => ({
+    id: mapId(e[1]), x1: e[2], y1: e[3], x2: e[4], y2: e[5], lv: e[7] || '',
+  }));
+  const dungeons = (W[table + '_Dun'] || []).map(e => {
+    const floors = rows.filter(f => f[0] === e[0]).map(f => ({ id: mapId(f[1]), lv: f[7] || '' }));
+    const floorNames = floors.map(f => names[f.id]).filter(Boolean);
+    return {
+      group: e[0], x1: e[1], y1: e[2], x2: e[3], y2: e[4], lv: e[6] || '',
+      name: lcp(floorNames) || floorNames[0] || (floors[0] || {}).id || '', floors,
+    };
+  }).filter(d => d.floors.length);
+  return { tiles, dungeons };
+}
+/* 世界地圖分區（使用者 2026-11-17：比照正版，人在哪一區就開哪一張）。
+   只收 grf_ex/world_map 有底圖的；Doram、north、Crack_of_Dimension1 沒圖，先不收（補圖後加一行即可）。
+   WorldMap_Pw02（新大陸）、worldtable_Isgard（伊斯加德）不收：沒有怪、也走不到（使用者 2026-11-17） */
+const REGIONS = [
+  { key: 'main', name: '主大陸', table: 'worldtable_main', src: 'worldmap.jpg' },
+  { key: 'east', name: '東方', table: 'worldtable_localizing1', src: 'worldmap_localizing1.bmp' },
+  { key: 'foreign', name: '異國', table: 'worldtable_localizing2', src: 'worldmap_localizing2.bmp' },
+  { key: 'dimension', name: '異世界', table: 'worldtable_dimensions', src: 'worldmap_dimension.bmp' },
+].map(r => Object.assign(r, regionOf(r.table), { img: 'images/worldmap/' + r.src.replace(/\.bmp$/i, '.jpg'), w: 1280, h: 1024 }));
+const { tiles, dungeons } = REGIONS[0];
 
 // 傳送點連線（無向；同一對只留一條）。註解掉的行（// 開頭）不讀
 // 手動補的：復興後夢羅克北邊封路（moc_fild07↔moc_fild06 等被註解），沙漠一帶跟主大陸斷開；從正北的普隆德拉原野接過去
@@ -233,7 +247,7 @@ const REPLACE_BOSSES = { lhz_dun03: ['b_seyren', 'b_eremes', 'b_harword', 'b_mag
 for (const [m, l] of Object.entries(EXTRA_BOSSES)) { const b = bosses[m] = bosses[m] || []; l.forEach(k => { if (!b.includes(k)) b.push(k); }); }
 for (const [m, l] of Object.entries(REPLACE_BOSSES)) bosses[m] = l.slice();
 const game = {
-  main: { img: 'images/worldmap/worldmap.jpg', w: 1280, h: 1024, tiles, dungeons },
+  regions: REGIONS.map(({ key, name, img, w, h, tiles: t, dungeons: d }) => ({ key, name, img, w, h, tiles: t, dungeons: d })),
   links: [...links].map(l => l.split('|')),
   towns,
   ferries: FERRIES,
@@ -243,7 +257,11 @@ fs.writeFileSync(OUT_GAME, '/* 由 scripts/gen_worldmap.js 產生，不要手改
   + 'const WORLD_MAPS = ' + JSON.stringify(maps) + ';\n'
   + 'const WORLD_BOSSES = ' + JSON.stringify(bosses) + ';\n');
 const copy = (from, to) => { fs.mkdirSync(path.dirname(to), { recursive: true }); fs.copyFileSync(from, to); };
-copy(path.join(SRC, 'worldmap.jpg'), path.join(ROOT, 'images', 'worldmap', 'worldmap.jpg'));
+for (const r of REGIONS) {
+  const to = path.join(ROOT, r.img);
+  if (/\.jpg$/i.test(r.src)) copy(path.join(SRC, r.src), to);
+  else require('child_process').execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', path.join(SRC, r.src), '-q:v', '3', to]);   // .bmp → .jpg（需要 ffmpeg）
+}
 
 console.log(`遊戲地圖 ${maps.length} 張（有怪 ${maps.filter(m => m.monsters.length).length}、城鎮 ${maps.filter(m => m.town).length}）、有首領的圖 ${Object.keys(bosses).length}`);
 console.log(`格子 ${tiles.length}、地城 ${dungeons.length}（樓層 ${dungeons.reduce((n, d) => n + d.floors.length, 0)}）、連線 ${links.size}、有刷怪 ${Object.keys(mobs).length} 張`);

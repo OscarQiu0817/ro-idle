@@ -289,15 +289,15 @@ function pushCombatLog(text, lane) {
 }
 
 /* ---------------- 建立新角色 ---------------- */
-function createCharacter(name, statAlloc, gender) {
+function createCharacter(name, statAlloc, gender, look) {
   const stats = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 };
   STAT_KEYS.forEach(k => { stats[k] += (statAlloc[k] || 0); });
 
   state = {
     name: name || '無名冒險者',
     gender: gender || 'male',
-    hairStyle: 1,
-    hairColor: 5,
+    hairStyle: (look && look.hairStyle) || 1,
+    hairColor: look && look.hairColor != null ? look.hairColor : 5,
     jobId: 'novice',
     baseLevel: 1, baseExp: 0,
     jobLevel: 1, jobExp: 0,
@@ -6646,6 +6646,7 @@ function playerMoveBy(step, ang) {
       if (u.cells) u.half = Math.min(Math.PI, u.cells / 2 / Math.max(0.5, u.d));   // 牆寬 N 格 ≈ N ÷ 距離
     });
     (o.activeFieldEffects || []).forEach(f => shift(f.center));
+    if (o.casting && o.casting.ground) shift(o.casting.ground);   // 詠唱中鎖定的落點
   });
   // 打王的紅圈畫在地上（x／y），一起平移
   (state.bossCasts || []).forEach(c => c.zones.forEach(z => { z.x -= dx; z.y -= dy; }));
@@ -6708,7 +6709,8 @@ function placeTravelPortal() {
   const t = state.travel;
   const next = travelNextMapId();
   if (!t || !next) { state.travel = null; return; }
-  const a0 = worldMapPos(state.mapId), a1 = worldMapPos(next);
+  const rk = worldMapRegion(state.mapId);   // 兩張圖要在同一區，座標才比得出方向
+  const a0 = worldMapPos(state.mapId, rk), a1 = worldMapPos(next, rk);
   const ang = a0 && a1 && (a0[0] !== a1[0] || a0[1] !== a1[1]) ? Math.atan2(a1[1] - a0[1], a1[0] - a0[0]) : rng() * Math.PI * 2 - Math.PI;
   const m = currentMap() || {};
   const dist = m.town ? TRAVEL_PORTAL_CELLS.town : m.bg === 'map-dungeon' ? TRAVEL_PORTAL_CELLS.dungeon : TRAVEL_PORTAL_CELLS.field;
@@ -8621,14 +8623,15 @@ function grantQuotedExp(member, owner, quoted) {
     return q;
   }
   if (!(q.base > 0) && !(q.job > 0)) return q;
-  if (member === owner) withOwner(() => gainExp(q.base, q.job));
+  let got;
+  if (member === owner) got = withOwner(() => gainExp(q.base, q.job));
   else {
-    withAlly(member, () => gainExp(q.base, q.job));
+    got = withAlly(member, () => gainExp(q.base, q.job));
     if (member.hp > member.maxHp) member.hp = member.maxHp;
     if (member.sp > member.maxSp) member.sp = member.maxSp;
     writeAllyProgress(member);
   }
-  return q;
+  return got || q;
 }
 function distributeKillExp(def, monObj) {
   if (_offlineSampling || !def) return { base: 0, job: 0 };
@@ -8640,8 +8643,8 @@ function distributeKillExp(def, monObj) {
   ctx.active.forEach(member => {
     const share = partyMemberShare(ctx, member, owner, dmgBy);
     const quoted = quoteMemberKill(member, owner, def, share, farm);
-    grantQuotedExp(member, owner, quoted);
-    if (member === owner) ownerGot = quoted;
+    const got = grantQuotedExp(member, owner, quoted);   // 經驗書倍率後的實得量
+    if (member === owner) ownerGot = got;
   });
   ctx.roster.forEach(member => {
     if (member !== owner && ctx.active.indexOf(member) < 0) writeAllyProgress(member);
@@ -8913,18 +8916,26 @@ const BASE_LEVEL_CAP = 250;
 const BASE_LEVEL_CAP_ADVANCED = 250;
 const STAT_CAP = 99;
 const STAT_CAP_ADVANCED = 130;
+/* 轉生過的角色（使用者 2026-11-17）：到過 Lv99 了，上限再開一段——等級 200、單項素質 120。
+   99 以後的經驗走三轉那張表（轉生表只到 99），見 data.js 的 expToNextBaseLevel() */
+const BASE_LEVEL_CAP_REBORN = 200;
+const STAT_CAP_REBORN = 120;
+function isRebornChar(who) { const c = who || state; return !!(c && c.rebirthCount > 0); }
 function isTier3(jobId) {
   const jd = JOB_TREE[jobId || (state && state.jobId)];
   return !!(jd && jd.tier >= 3);
 }
-function baseLevelCapOf(jobId) {
+// who：要查的角色（隊友傳自己的快照），預設是玩家
+function baseLevelCapOf(jobId, who) {
   const jd = JOB_TREE[jobId || (state && state.jobId)];
   const tier = jd?.tier ?? 0;
   if (tier >= 3) return BASE_LEVEL_CAP_ADVANCED;  // 3轉 250
-  return 99;  // 1轉、2轉、進階二轉都 99
+  if (isRebornChar(who)) return BASE_LEVEL_CAP_REBORN;   // 轉生過 200
+  return 99;  // 其餘 99
 }
-function statCapOf(jobId) {
-  return isTier3(jobId) ? STAT_CAP_ADVANCED : STAT_CAP;
+function statCapOf(jobId, who) {
+  if (isTier3(jobId)) return STAT_CAP_ADVANCED;
+  return isRebornChar(who) ? STAT_CAP_REBORN : STAT_CAP;
 }
 
 function gainExp(baseExp, jobExp) {
@@ -8969,6 +8980,7 @@ function gainExp(baseExp, jobExp) {
   }
   if (leveled && typeof playEventSfx === 'function') playEventSfx('levelup');
   recomputeDerived(false);
+  return { base: baseExp, job: jobExp };   // 乘完經驗書後的實得量（訊息顯示用）
 }
 
 /* ================= 隊友（傭兵）系統 =================
@@ -9326,6 +9338,54 @@ function prepaidAllyFieldExp(ally) {
     _allyActing = savedActing;
     _allyOwnerState = savedOwner;
     _suppressSave = savedSuppress;
+  }
+  return off;
+}
+/* 隊伍跟著換圖前，先把隊友在舊圖累積的離線收益結算進他自己的存檔（使用者 2026-11-17）。
+   不先結算的話，movePartyWith 把他存檔的 mapId 改成新圖，他上線時整段道具時鐘都照新圖算。
+   結果記進他自己的掛機收益紀錄（offlineLog），上線打開紀錄看得到。 */
+let _settlingMove = false;
+function settleAllyBeforeMove(ally) {
+  if (_settlingMove || !ally || ally._slot == null || String(ally._slot) === String(currentSlot)) return null;
+  const raw = readSaveSlot(ally._slot);
+  if (!raw || !raw.jobId) return null;
+  const clockOf = k => ((typeof raw[k] === 'number' && raw[k] > 0) ? raw[k] : (raw.lastActiveAt || gameNow()));
+  if (gameNow() - Math.min(clockOf('lastExpAt'), clockOf('lastLootAt')) < OFFLINE_MIN_MS) return null;
+  const ownerSlot = currentSlot;
+  const saved = state;
+  const savedActing = _allyActing;
+  const savedOwner = _allyOwnerState;
+  const savedSuppress = _suppressSave;
+  const savedLog = logMsg;
+  let off = null;
+  try {
+    _settlingMove = true;
+    _suppressSave = true;
+    _allyActing = null;
+    _allyOwnerState = null;
+    logMsg = () => {};
+    currentSlot = ally._slot;
+    state = JSON.parse(JSON.stringify(raw));
+    if (!state.lastExpAt) state.lastExpAt = state.lastActiveAt || gameNow();
+    if (!state.lastLootAt) state.lastLootAt = state.lastActiveAt || gameNow();
+    recomputeDerived(false);
+    syncPartyOnLoad();
+    off = computeOfflineProgress(OFFLINE_MIN_MS, { excludeSlots: [String(ownerSlot)] });
+    if (off) pushOfflineLog(off);
+    stampPlayedClocks();
+    (state.allies || []).forEach(a => { if (a) { a.monsters = null; a.monster = null; } });
+    writeSaveSlot(currentSlot, state);
+  } catch (e) {
+    console.error('隊友換圖前結算失敗', e);
+    off = null;
+  } finally {
+    state = saved;
+    currentSlot = ownerSlot;
+    _allyActing = savedActing;
+    _allyOwnerState = savedOwner;
+    _suppressSave = savedSuppress;
+    logMsg = savedLog;
+    _settlingMove = false;
   }
   return off;
 }
@@ -11015,9 +11075,14 @@ function beginCast(sk, lv, ct, opts) {
   if (memo && --memo.charges <= 0) state.buffs = state.buffs.filter(b => b !== memo);
   state.casting = { skillId: sk.id, lv, startAt: now, endAt: now + ct, opts: opts || null,
     cancel: (!row || row.castCancel !== false) && !(getCardBonus('noCastCancel') > 0) };
+  /* 場地魔法開始詠唱就鎖定落點（官方 RO，使用者 2026-11-17）：詠唱中畫圈，放出來就在那裡；怪走出去就打不到。
+     座標跟場地魔法同一套（施放者為原點），玩家走動時 playerMoveBy 一起平移 */
+  const tgt = sk.fieldRadius && state.monsters && state.monsters[0];
+  if (tgt && Number.isFinite(tgt.d)) state.casting.ground = { d: tgt.d, a: tgt.a || 0 };
   logMsg(`🔮 詠唱「${skillDisplayName(sk)}」（${(ct / 1000).toFixed(1)} 秒）`);
   return true;
 }
+let _castGround = null;   // 詠唱完成那一刻：開始詠唱時鎖定的場地魔法落點
 /* gameTick 每拍呼叫：時間到就放出；昏迷類異常中斷 */
 function tickCasting(now) {
   const c = state.casting;
@@ -11026,7 +11091,10 @@ function tickCasting(now) {
   if (now < c.endAt) return;
   state.casting = null;
   const tgt0 = state.monsters && state.monsters[0];
-  const ok = withLogLane('skill', () => castSkillInner(c.skillId, c.opts || undefined));
+  _castGround = c.ground || null;
+  let ok;
+  try { ok = withLogLane('skill', () => castSkillInner(c.skillId, c.opts || undefined)); }
+  finally { _castGround = null; }
   if (ok) { applyAfterCastDelay(c.skillId, c.lv); withLogLane('skill', () => afterSkillCast(c.skillId, tgt0)); }
 }
 function interruptCast(why) {
@@ -12016,7 +12084,9 @@ function castSkillInner(skillId, opts) {
       /* T9：放在目標所在的位置、只打範圍內的怪（fieldRadius 格）；怪走進來會被打、走出去就沒事。
          擊退照 rAthena Knockback（暴風雪 2 格），每一跳都推。 */
       const tgt = state.monsters[0];
-      const center = sk.fieldRadius && tgt && Number.isFinite(tgt.d) ? { d: tgt.d, a: tgt.a || 0 } : null;
+      const center = !sk.fieldRadius ? null
+        : _castGround ? { d: _castGround.d, a: _castGround.a }   // 開始詠唱時鎖定的落點
+        : (tgt && Number.isFinite(tgt.d) ? { d: tgt.d, a: tgt.a || 0 } : null);
       const row = skillCastRow(sk.id);
       state.activeFieldEffects.push({ kind: 'aoe_holydmg', fxSkillId: sk.id, name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, ailment: sk.fieldAilment || 'stun', tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
         center, radius: sk.fieldRadius || 0, knockback: row ? castLv(row.knockback, lv) || 0 : 0 });
@@ -15823,10 +15893,11 @@ function changeMap(mapId, opt) {
    連他們自己存檔裡的位置也改掉。state.partyFollow＝false（世界地圖可關）就只有玩家走。
    要在 prepaidArrivingAllies 之後：那支是給「本來就在新地圖等的人」結算經驗，跟著走的不算 */
 function movePartyWith(prevMapId) {
-  if (state.partyFollow === false) return [];
+  if (state.partyFollow === false || _settlingMove) return [];
   const moved = [];
   (state.allies || []).forEach(a => {
     if (!a || (a._homeMapId || a.mapId) !== prevMapId) return;
+    if (settleAllyBeforeMove(a)) pullAllyLevels(a);   // 先照舊圖結算他還沒領的離線收益，再改他存檔的地圖；快照的等級跟上，免得被寫回舊值
     a._homeMapId = state.mapId;
     const raw = readSaveSlot(a._slot);
     if (raw) { raw.mapId = state.mapId; writeSaveSlot(a._slot, raw); }
@@ -15838,8 +15909,13 @@ function movePartyWith(prevMapId) {
 /* ---------------- NPC 傳送（D1b）----------------
    城鎮付費傳到 WORLD.towns 的城鎮：主城 1000z、其他 5000z，隊伍最高等級要到開放等級。
    回傳失敗原因字串，成功回 null。 */
+/* 傳送用的等級：轉生過的角色已經到過 Lv99，照 99 算（使用者 2026-11-17） */
+function warpLevelOf(c) {
+  const lv = (c && c.baseLevel) || 1;
+  return c && c.rebirthCount > 0 ? Math.max(lv, 99) : lv;
+}
 function partyTopLevel() {
-  return Math.max(state.baseLevel || 1, ...allyList().map(a => (a && a.baseLevel) || 1));
+  return Math.max(warpLevelOf(state), ...allyList().map(warpLevelOf));
 }
 function npcWarpBlockReason(townId) {
   const t = WORLD.towns.find(x => x.id === townId);
@@ -16233,7 +16309,7 @@ function pourOfflineGapExp(pool, totalWeight, normalKills, bossList, dmgBy, excl
     member: m,
     level: m.baseLevel || 1,
     exp: m.baseExp || 0,
-    cap: baseLevelCapOf(m.jobId),
+    cap: baseLevelCapOf(m.jobId, m),
     base: 0,
     job: 0,
   }));
@@ -16311,6 +16387,34 @@ function pourOfflineGapExp(pool, totalWeight, normalKills, bossList, dmgBy, excl
     })),
   };
 }
+/* 經驗書／掉寶糖離線怎麼算（使用者 2026-11-17）：
+   戰鬥地圖：倍率只套在 buff 還沒到期的那一段，結算後扣掉在戰鬥圖待的時間。
+   城鎮／不打怪：不扣時間（computeOfflineProgress 在那之前就 return）。
+   時間軸以較舊的時鐘為 0；buff 從 0 開始倒數 msRemaining。
+   經驗、道具兩條時鐘各自從自己的起點算重疊比例，倍率取時間加權平均。 */
+const OFFLINE_CANDY_KINDS = ['expboost', 'jobexpboost', 'dropboost'];
+function offlineCandyOpen(wallMs, win) {
+  const kept = [];
+  (state.buffs || []).forEach(b => {
+    if (!b || OFFLINE_CANDY_KINDS.indexOf(b.type) < 0 || typeof b.mult !== 'number') return;
+    const w = b.type === 'dropboost' ? win.loot : win.exp;
+    const startOff = Math.max(0, wallMs - w.raw);
+    const overlap = Math.min(w.ms, Math.max(0, (b.msRemaining || 0) - startOff));
+    const f = w.ms > 0 ? overlap / w.ms : 1;
+    kept.push({ type: b.type, mult: b.mult });
+    b.mult = 1 + (b.mult - 1) * f;
+  });
+  return kept;
+}
+function offlineCandyClose(kept, combatMs) {
+  kept.forEach(k => { const b = (state.buffs || []).find(x => x.type === k.type); if (b) b.mult = k.mult; });
+  if (!(combatMs > 0) || !Array.isArray(state.buffs)) return;
+  state.buffs = state.buffs.filter(b => {
+    if (!b || OFFLINE_CANDY_KINDS.indexOf(b.type) < 0) return true;
+    b.msRemaining = (b.msRemaining || 0) - combatMs;
+    return b.msRemaining > 0;
+  });
+}
 function computeOfflineProgress(minMs, opts) {
   if (!state) return null;
   opts = opts || {};
@@ -16321,8 +16425,10 @@ function computeOfflineProgress(minMs, opts) {
   /* 經驗時鐘：同圖組隊時已經領過的那段不再發。
      道具時鐘：掉落、鋅幣、圖鑑。A 掛機只推了 B 的經驗時鐘，B 上線仍領這段道具。 */
   const nowMs = gameNow();
-  const expElapsed = Math.min(Math.max(0, nowMs - activityClock('lastExpAt')), OFFLINE_CAP_MS);
-  const lootElapsed = Math.min(Math.max(0, nowMs - activityClock('lastLootAt')), OFFLINE_CAP_MS);
+  const expRaw = Math.max(0, nowMs - activityClock('lastExpAt'));
+  const lootRaw = Math.max(0, nowMs - activityClock('lastLootAt'));
+  const expElapsed = Math.min(expRaw, OFFLINE_CAP_MS);
+  const lootElapsed = Math.min(lootRaw, OFFLINE_CAP_MS);
   const elapsedMs = Math.max(expElapsed, lootElapsed);
   if (elapsedMs < gate) {
     if (!expOnly) stampPlayedClocks();
@@ -16645,6 +16751,10 @@ function computeOfflineProgress(minMs, opts) {
      只認第一隻的種族會讓「專打某族」的卡片被高估。 */
   const dmgBy = _sampleDmgBy || {};
   /* 經驗一級一級灌：升級後重算等級差，頭目跟這一段一起算。掉落仍用下面的一次結算。 */
+  /* 經驗書／掉寶糖：倍率換成這段的時間加權值，發完再還原並扣時間 */
+  const wallMs = Math.max(expRaw, lootRaw);
+  const combatMs = potion && potion.downed ? potion.survSec * 1000 : wallMs;   // 倒地後在城裡，不扣
+  const candyKept = offlineCandyOpen(wallMs, { exp: { raw: expRaw, ms: expSec * 1000 }, loot: { raw: lootRaw, ms: lootSec * 1000 } });
   const poured = pourOfflineGapExp(pool, totalWeight, expTotalKills, expBossList, dmgBy, excludeSlots);
   const ownerQuoted = poured.owner;
   let expGained = ownerQuoted.base;
@@ -16808,7 +16918,11 @@ function computeOfflineProgress(minMs, opts) {
 
   const beforeBaseLv = state.baseLevel;
   const beforeJobLv = state.jobLevel;
-  gainExp(expGained, jobExpGained);
+  const gotExp = gainExp(expGained, jobExpGained);   // 回報乘完經驗書的實得量
+  expGained = gotExp.base;
+  jobExpGained = gotExp.job;
+  /* expOnly 是替別人的存檔提前發經驗，buffs 不寫回，不扣時間（他自己上線結算時扣） */
+  offlineCandyClose(candyKept, expOnly ? 0 : combatMs);
   state.gold += goldGained;
   if (potion) {
     for (const id in potion.used) {

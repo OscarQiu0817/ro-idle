@@ -64,62 +64,48 @@
 
 <!-- ===================== 創角畫面 ===================== -->
 <div id="screen-create" class="screen">
-  <div class="create-stage">
-    <h2 class="section-title">創造你的冒險者</h2>
-    <input id="char-name-input" class="name-input" type="text" maxlength="12" placeholder="輸入角色名稱">
-
-    <div class="create-gender-select">
-      <span class="cs-name">性別</span>
-      <button class="btn-gender active" id="btn-gender-male" onclick="selectGender('male')">♂ 男</button>
-      <button class="btn-gender" id="btn-gender-female" onclick="selectGender('female')">♀ 女</button>
-    </div>
-
-    <div class="create-stats-panel">
-      <div class="create-budget">剩餘屬性點：<span id="creation-budget">24</span>　<span class="create-cap-hint">（單項屬性上限 9 點）</span></div>
-      <div class="create-stat-list">
-        <!-- str -->
-        <div class="create-stat-row">
-          <div class="cs-name">力量 <span class="cs-desc">物理攻擊 / 負重</span></div>
-          <button class="btn-tiny" id="create-minus-str" onclick="creationAdjust('str',-1)">-</button>
-          <div class="cs-val" id="create-val-str">1</div>
-          <button class="btn-tiny" id="create-plus-str" onclick="creationAdjust('str',1)">+</button>
+  <div class="create-stage ro-make">
+    <div class="ro-make-title">創造你的冒險者</div>
+    <div class="ro-make-body">
+      <!-- 左：角色外觀（比照 RO 創角視窗：預覽、性別、髮型、髮色） -->
+      <div class="ro-make-look">
+        <div class="ro-make-preview"><canvas id="create-doll"></canvas></div>
+        <div class="ro-make-pick">
+          <span class="ro-make-label">性別</span>
+          <button class="btn-gender active" id="btn-gender-male" onclick="selectGender('male')">♂</button>
+          <button class="btn-gender" id="btn-gender-female" onclick="selectGender('female')">♀</button>
         </div>
-        <div class="create-stat-row">
-          <div class="cs-name">敏捷 <span class="cs-desc">迴避 / 攻速</span></div>
-          <button class="btn-tiny" id="create-minus-agi" onclick="creationAdjust('agi',-1)">-</button>
-          <div class="cs-val" id="create-val-agi">1</div>
-          <button class="btn-tiny" id="create-plus-agi" onclick="creationAdjust('agi',1)">+</button>
+        <div class="ro-make-pick">
+          <span class="ro-make-label">髮型</span>
+          <button class="btn-tiny" onclick="createHairStep('style',-1)">◀</button>
+          <b class="ro-make-val" id="create-hair-style">1</b>
+          <button class="btn-tiny" onclick="createHairStep('style',1)">▶</button>
         </div>
-        <div class="create-stat-row">
-          <div class="cs-name">體力 <span class="cs-desc">最大HP / 防禦</span></div>
-          <button class="btn-tiny" id="create-minus-vit" onclick="creationAdjust('vit',-1)">-</button>
-          <div class="cs-val" id="create-val-vit">1</div>
-          <button class="btn-tiny" id="create-plus-vit" onclick="creationAdjust('vit',1)">+</button>
+        <div class="ro-make-pick">
+          <span class="ro-make-label">髮色</span>
+          <button class="btn-tiny" onclick="createHairStep('color',-1)">◀</button>
+          <b class="ro-make-val" id="create-hair-color">0</b>
+          <button class="btn-tiny" onclick="createHairStep('color',1)">▶</button>
         </div>
-        <div class="create-stat-row">
-          <div class="cs-name">智力 <span class="cs-desc">魔法攻擊 / 最大SP</span></div>
-          <button class="btn-tiny" id="create-minus-int" onclick="creationAdjust('int',-1)">-</button>
-          <div class="cs-val" id="create-val-int">1</div>
-          <button class="btn-tiny" id="create-plus-int" onclick="creationAdjust('int',1)">+</button>
-        </div>
-        <div class="create-stat-row">
-          <div class="cs-name">靈巧 <span class="cs-desc">命中 / 物理攻擊</span></div>
-          <button class="btn-tiny" id="create-minus-dex" onclick="creationAdjust('dex',-1)">-</button>
-          <div class="cs-val" id="create-val-dex">1</div>
-          <button class="btn-tiny" id="create-plus-dex" onclick="creationAdjust('dex',1)">+</button>
-        </div>
-        <div class="create-stat-row">
-          <div class="cs-name">幸運 <span class="cs-desc">暴擊率</span></div>
-          <button class="btn-tiny" id="create-minus-luk" onclick="creationAdjust('luk',-1)">-</button>
-          <div class="cs-val" id="create-val-luk">1</div>
-          <button class="btn-tiny" id="create-plus-luk" onclick="creationAdjust('luk',1)">+</button>
+      </div>
+      <!-- 右：六角素質圖 -->
+      <div class="ro-make-stats">
+        <svg id="create-hex" class="ro-make-hex" viewBox="-60 -56 120 112"></svg>
+        <div class="create-budget">剩餘點數 <span id="creation-budget">24</span><span class="create-cap-hint">　單項上限 9</span></div>
+        <div class="create-stat-list">
+          <div class="create-stat-row"><span class="cs-name" title="物理攻擊 / 負重">STR</span><button class="btn-tiny" id="create-minus-str" onclick="creationAdjust('str',-1)">-</button><b class="cs-val" id="create-val-str">1</b><button class="btn-tiny" id="create-plus-str" onclick="creationAdjust('str',1)">+</button></div>
+          <div class="create-stat-row"><span class="cs-name" title="魔法攻擊 / 最大SP">INT</span><button class="btn-tiny" id="create-minus-int" onclick="creationAdjust('int',-1)">-</button><b class="cs-val" id="create-val-int">1</b><button class="btn-tiny" id="create-plus-int" onclick="creationAdjust('int',1)">+</button></div>
+          <div class="create-stat-row"><span class="cs-name" title="迴避 / 攻速">AGI</span><button class="btn-tiny" id="create-minus-agi" onclick="creationAdjust('agi',-1)">-</button><b class="cs-val" id="create-val-agi">1</b><button class="btn-tiny" id="create-plus-agi" onclick="creationAdjust('agi',1)">+</button></div>
+          <div class="create-stat-row"><span class="cs-name" title="暴擊率">LUK</span><button class="btn-tiny" id="create-minus-luk" onclick="creationAdjust('luk',-1)">-</button><b class="cs-val" id="create-val-luk">1</b><button class="btn-tiny" id="create-plus-luk" onclick="creationAdjust('luk',1)">+</button></div>
+          <div class="create-stat-row"><span class="cs-name" title="最大HP / 防禦">VIT</span><button class="btn-tiny" id="create-minus-vit" onclick="creationAdjust('vit',-1)">-</button><b class="cs-val" id="create-val-vit">1</b><button class="btn-tiny" id="create-plus-vit" onclick="creationAdjust('vit',1)">+</button></div>
+          <div class="create-stat-row"><span class="cs-name" title="命中 / 物理攻擊">DEX</span><button class="btn-tiny" id="create-minus-dex" onclick="creationAdjust('dex',-1)">-</button><b class="cs-val" id="create-val-dex">1</b><button class="btn-tiny" id="create-plus-dex" onclick="creationAdjust('dex',1)">+</button></div>
         </div>
       </div>
     </div>
-
+    <input id="char-name-input" class="name-input" type="text" maxlength="12" placeholder="輸入角色名稱">
     <div class="create-actions">
-      <button class="btn btn-secondary" onclick="showScreen('screen-title')">返回</button>
-      <button class="btn btn-primary" onclick="confirmCreate()">啟程！</button>
+      <button class="btn btn-secondary" onclick="showScreen('screen-title')">取消</button>
+      <button class="btn btn-primary" onclick="confirmCreate()">確定</button>
     </div>
     <p class="disclaimer-inline" id="create-disclaimer"></p>
   </div>
@@ -365,6 +351,7 @@
 <script src="js/skill_requires.js"></script>
 <script src="js/exp_tables.js"></script>
 <script src="js/world_data.js"></script>
+<script src="js/bgm_table.js"></script>
 <script src="js/data.js"></script>
 <script src="js/item_identity.js"></script>
 <script src="js/item_prune.js"></script>

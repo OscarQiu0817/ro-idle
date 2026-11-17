@@ -17,6 +17,7 @@ let creationAlloc = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 };
 const CREATE_FREE_POINTS = 24;
 let creationBudget = CREATE_FREE_POINTS;
 let selectedGender = 'male';
+let createHair = { style: 1, color: 0 };   // 創角選的髮型／髮色（使用者 2026-11-17：比照 RO 創角視窗）
 let activeTab = 'map';
 
 /* ---------------- 初始畫面切換 ---------------- */
@@ -451,8 +452,54 @@ function onImportFileChosen(ev) {
 function goCreateNew() {
   creationAlloc = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0 };
   creationBudget = CREATE_FREE_POINTS;
+  createHair = { style: 1, color: 0 };
   renderCreationStats();
   showScreen('screen-create');
+  renderCreateLook();
+}
+// 有圖的髮型／髮色（paperdoll_layers 的 head/<性別>/<髮型>/<髮色>）
+function createHairOptions(kind) {
+  const clip = (window.PAPERDOLL && window.PAPERDOLL.clip) || {};
+  const out = [];
+  if (kind === 'style') { for (let s = 1; s <= 42; s++) if (clip['head/' + selectedGender + '/' + s + '/' + createHair.color]) out.push(s); }
+  else { for (let c = 0; c <= 8; c++) if (clip['head/' + selectedGender + '/' + createHair.style + '/' + c]) out.push(c); }
+  return out;
+}
+function createHairStep(kind, d) {
+  const opts = createHairOptions(kind);
+  if (!opts.length) return;
+  const i = opts.indexOf(createHair[kind]);
+  createHair[kind] = opts[((i < 0 ? 0 : i + d) % opts.length + opts.length) % opts.length];
+  renderCreateLook();
+}
+// 左邊預覽：初心者紙娃娃（正面站姿）
+function renderCreateLook() {
+  // 換性別後原本的組合沒圖就退回第一個有圖的
+  if (!createHairOptions('color').includes(createHair.color)) createHair.color = createHairOptions('color')[0] || 0;
+  if (!createHairOptions('style').includes(createHair.style)) createHair.style = createHairOptions('style')[0] || 1;
+  const st = document.getElementById('create-hair-style');
+  const co = document.getElementById('create-hair-color');
+  if (st) st.textContent = createHair.style;
+  if (co) co.textContent = createHair.color;
+  const c = document.getElementById('create-doll');
+  if (!c || typeof paperdollLookParts !== 'function') return;
+  const parts = paperdollLookParts({ jobId: 'novice', gender: selectedGender, hairStyle: createHair.style, hairColor: createHair.color, equip: {} });
+  const paint = () => paintDollStill(c, parts, paint);
+  paint();
+}
+// 六角素質圖：上 STR、順時針 AGI／VIT／INT（對面）／DEX／LUK，跟 RO 創角視窗同一個擺法
+function renderCreateHex() {
+  const svg = document.getElementById('create-hex');
+  if (!svg) return;
+  const order = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+  const R = 40;
+  const pt = (i, r) => { const a = -Math.PI / 2 + i * Math.PI / 3; return [(r * Math.cos(a)).toFixed(1), (r * Math.sin(a)).toFixed(1)]; };
+  const ring = r => order.map((_, i) => pt(i, r).join(',')).join(' ');
+  const val = order.map((k, i) => pt(i, R * (1 + creationAlloc[k]) / CREATE_STAT_CAP).join(',')).join(' ');
+  svg.innerHTML = [1, 2, 3].map(n => `<polygon class="hex-grid" points="${ring(R * n / 3)}"/>`).join('')
+    + order.map((_, i) => `<line class="hex-grid" x1="0" y1="0" x2="${pt(i, R)[0]}" y2="${pt(i, R)[1]}"/>`).join('')
+    + `<polygon class="hex-val" points="${val}"/>`
+    + order.map((k, i) => { const p = pt(i, R + 10); return `<text class="hex-label" x="${p[0]}" y="${p[1]}">${k.toUpperCase()} ${1 + creationAlloc[k]}</text>`; }).join('');
 }
 
 function continueGame() {
@@ -495,18 +542,20 @@ function renderCreationStats() {
     document.getElementById(`create-plus-${k}`).disabled = (creationBudget <= 0 || val >= CREATE_STAT_CAP);
     document.getElementById(`create-minus-${k}`).disabled = (creationAlloc[k] <= 0);
   });
+  renderCreateHex();
 }
 
 function selectGender(g) {
   selectedGender = g;
   document.getElementById('btn-gender-male').classList.toggle('active', g === 'male');
   document.getElementById('btn-gender-female').classList.toggle('active', g === 'female');
+  renderCreateLook();
 }
 
 function confirmCreate() {
   const nameInput = document.getElementById('char-name-input');
   const name = (nameInput.value || '').trim().slice(0, 12) || '無名冒險者';
-  createCharacter(name, creationAlloc, selectedGender);
+  createCharacter(name, creationAlloc, selectedGender, { hairStyle: createHair.style, hairColor: createHair.color });
   enterGame();
 }
 
@@ -1159,7 +1208,7 @@ function memberKillExpPairHtml(member, quoted) {
   const bl = member.baseLevel || 1;
   const jl = member.jobLevel || 1;
   const jd = JOB_TREE[member.jobId] || {};
-  const baseCap = typeof baseLevelCapOf === 'function' ? baseLevelCapOf(member.jobId) : 250;
+  const baseCap = typeof baseLevelCapOf === 'function' ? baseLevelCapOf(member.jobId, member) : 250;
   const lv = killExpPctLabel(quoted.base, expToNextBaseLevel(bl), bl >= baseCap);
   const job = killExpPctLabel(quoted.job, expToNextJobLevel(jl, jd.tier || 0), !!(jd.jobLevelMax && jl >= jd.jobLevelMax));
   const lvTxt = lv === '已滿' ? lv : ('+ ' + lv);
@@ -2306,13 +2355,39 @@ function playSkillPlanFx(sk, at) {
    找不到圈（舊存檔、沒目標）就照原本的位置播。
    角色走動時整個戰場會平移、圈心也跟著移（engine 平移 center、畫面還有補間 bfWorldLag），
    特效每一幀重算位置跟著圈走，不然會停在施放當下的螢幕位置（使用者 2026-11-16 回報越播越偏）。 */
+// 地上要畫的場地效果的擁有者：玩家＋同一張圖的隊友
+function groundOwners() {
+  if (!state) return [];
+  const allies = (state.allies || []).filter(a => a && (typeof allyOnThisMap !== 'function' || allyOnThisMap(a)));
+  return [state].concat(allies);
+}
+/* 隊友的場地魔法是換身時放的：圈心以那位隊友為原點（withAlly 把怪平移到他的座標）。
+   畫的時候加回他的站位（memberPos），換成以玩家為原點 */
+function ownerFields(owners) {
+  const out = [];
+  // 回傳 { f, o }：不把擁有者掛到 f 上，免得存檔時循環參照
+  owners.forEach(o => (o.activeFieldEffects || []).forEach(f => { if (f) out.push({ f, o: o === state ? null : o }); }));
+  return out;
+}
+function fieldCenterOf(e) {
+  const c = e.f.center;
+  const P = e.o && typeof memberPos === 'function' ? memberPos(e.o) : null;
+  if (!P || !(P.d > 0)) return c;
+  const x = c.d * Math.cos(c.a || 0) + P.d * Math.cos(P.a), y = c.d * Math.sin(c.a || 0) + P.d * Math.sin(P.a);
+  return { d: Math.hypot(x, y), a: Math.atan2(y, x) };
+}
 function fieldFxPlace(sk, m) {
-  const f = ((state && state.activeFieldEffects) || []).find(e => e.fxSkillId === sk.id && e.center && e.radius > 0);   // fxSkillId 只給特效找圈用，不用 skillId（自動施放會拿 skillId 擋重放）
+  // fxSkillId 只給特效找圈用，不用 skillId（自動施放會拿 skillId 擋重放）。玩家和隊友都可能放同一招，取最新放的那個圈
+  const hit = ownerFields(groundOwners())
+    .filter(e => e.f.fxSkillId === sk.id && e.f.center && e.f.radius > 0)
+    .sort((x, y) => (y.f.endsAt || 0) - (x.f.endsAt || 0))[0];
+  const f = hit && hit.f;
   const scene = document.getElementById('battle-scene');
   if (!f || !scene || typeof bfPolarPoint !== 'function') return null;
   const sr = scene.getBoundingClientRect();
   // 跟 syncGroundUnits 的 at() 同一套：加上畫面補間落差
-  const lx = f.center.d * Math.cos(f.center.a) + bfWorldLag.x, ly = f.center.d * Math.sin(f.center.a) + bfWorldLag.y;
+  const fc = fieldCenterOf(hit);
+  const lx = fc.d * Math.cos(fc.a) + bfWorldLag.x, ly = fc.d * Math.sin(fc.a) + bfWorldLag.y;
   const p = bfPolarPoint({ d: Math.hypot(lx, ly), a: Math.atan2(ly, lx) });
   const cx = sr.left + sr.width * p.x / 100, cy = sr.top + sr.height * p.y / 100;
   const scale = (f.radius * 2 + 1) * BF_CELL_X / 100 * sr.width / Math.max(1, m.ex[2] - m.ex[0]);
@@ -3391,7 +3466,9 @@ function syncGroundUnits() {
     layer.id = 'bf-ground';
     scene.appendChild(layer);
   }
-  const units = (state && state.groundUnits) || [];
+  /* 隊友放的場地魔法、場地物件存在隊友自己身上（withAlly 換身施放），一起畫（使用者 2026-11-17：隊友巫師大招看不到圈） */
+  const owners = groundOwners();
+  const units = [].concat(...owners.map(o => o.groundUnits || []));
   // 畫面外的場地物件由 .battle-scene 的 overflow 裁掉；加上補間落差（bfWorldLag）才不會比背景先跳
   const at = (d, a) => {
     const x = d * Math.cos(a) + bfWorldLag.x, y = d * Math.sin(a) + bfWorldLag.y;
@@ -3401,17 +3478,26 @@ function syncGroundUnits() {
   syncTownNpcs(scene, at);
   /* T24：場地魔法（暴風雪、隕石術、十字驅魔…）的範圍圈，半徑照 fieldRadius；
      中心存在 activeFieldEffects[].center，玩家走動時 engine 會一起平移 */
-  const fields = ((state && state.activeFieldEffects) || []).filter(f => f.center && f.radius > 0 && Date.now() < f.endsAt);
+  const fields = ownerFields(owners).filter(e => e.f.center && e.f.radius > 0 && Date.now() < e.f.endsAt);
+  // 詠唱中的場地魔法：開始詠唱就鎖定的落點（casting.ground），畫成閃爍的預告圈
+  const casts = owners.filter(o => o.casting && o.casting.ground && !(o !== state && o._downed))
+    .map(o => ({ f: { center: o.casting.ground, sk: SKILLS[o.casting.skillId] }, o: o === state ? null : o }))
+    .filter(e => e.f.sk && e.f.sk.fieldRadius > 0);
   const bossCasts = (state && state.bossCasts) || [];
   const hunt = state && state.bossHunt;
-  if (!units.length && !fields.length && !bossCasts.length && !hunt) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
+  if (!units.length && !fields.length && !casts.length && !bossCasts.length && !hunt) { if (layer.innerHTML) { layer.innerHTML = ''; layer._html = ''; } return; }
   let html = bossZonesSvg(bossCasts);
   if (hunt && MONSTERS[hunt.defId]) {
     const k = Math.min(1, (Date.now() - hunt.startAt) / Math.max(1, hunt.endAt - hunt.startAt));
     html += `<div class="bf-hunt">🗡️ 討伐 ${MONSTERS[hunt.defId].name} 中…<i style="width:${(k * 100).toFixed(1)}%"></i></div>`;
   }
-  for (const f of fields) {
-    const p = at(f.center.d, f.center.a);
+  for (const e of casts) {
+    const sk = e.f.sk, c = fieldCenterOf(e), p = at(c.d, c.a), r = sk.fieldRadius;
+    html += `<span class="bf-gu bf-zone bf-field bf-field-cast elem-ring-${sk.element || 'neutral'}" title="${sk.name}（詠唱中）" style="left:${p.x}%;top:${p.y}%;width:${(r * 2 + 1) * BF_CELL_X}%;height:${(r * 2 + 1) * BF_CELL_Y}%"></span>`;
+  }
+  for (const e of fields) {
+    const f = e.f, c = fieldCenterOf(e);
+    const p = at(c.d, c.a);
     html += `<span class="bf-gu bf-zone bf-field elem-ring-${f.element || 'neutral'}" title="${f.name}" style="left:${p.x}%;top:${p.y}%;width:${(f.radius * 2 + 1) * BF_CELL_X}%;height:${(f.radius * 2 + 1) * BF_CELL_Y}%"></span>`;
   }
   for (const u of units) {
@@ -8403,26 +8489,20 @@ let bgmToken = 0;
 function playMapMusic() {
   bgmToken++;
   const myToken = bgmToken;
+  const url = state.muted ? null : mapMusicUrl(state.mapId);
+  // 換到同一首曲目的地圖（城鎮與附近原野常共用）就接著播，不從頭開始
+  if (url && bgmAudio && !bgmAudio.paused && bgmAudio.src.endsWith(url)) return;
   stopMusic();
-  if (state.muted) return;
-  tryMusicExt(state.mapId, 0, myToken);
-}
-
-function tryMusicExt(mapId, extIdx, token) {
-  if (extIdx >= MUSIC_EXTS.length) return;
-  const ext = MUSIC_EXTS[extIdx];
+  if (!url) return;
   const audio = new Audio();
   audio.loop = true;
   audio.volume = (state.bgmVolume != null ? state.bgmVolume : 0.5);
-  audio.addEventListener('error', () => {
-    if (bgmToken === token) tryMusicExt(mapId, extIdx + 1, token);
-  }, { once: true });
   audio.addEventListener('canplaythrough', () => {
-    if (bgmToken !== token) return;
+    if (bgmToken !== myToken) return;
     bgmAudio = audio;
     audio.play().catch(() => {});
   }, { once: true });
-  audio.src = mapMusicUrl(mapId, ext);
+  audio.src = url;
   audio.load();
 }
 
@@ -8480,27 +8560,40 @@ function selectMap(mapId) {
 /* ---------------- 世界地圖（工作 7、D1b）----------------
    全螢幕浮層：拖曳平移、滾輪／雙指縮放、＋－按鈕；點格子或地城圖示，底部資訊卡選「前往」。
    點選自己算座標（不靠格子元素的 click），拖曳地圖時才不會誤選。
-   資料：WORLD.main（scripts/gen_worldmap.js），座標是底圖像素。 */
+   資料：WM.r（scripts/gen_worldmap.js），座標是底圖像素。 */
 const WM = { el: null, view: null, inner: null, s: 1, min: 0.3, tx: 0, ty: 0, sel: null, dun: null, ptrs: new Map(), moved: 0, pinch: 0 };
 const WM_MAX = 3;
 const WM_TAP_PX = 6;
 const wmMapOf = id => MAPS.find(m => m.id === id);
-const wmPos = id => worldMapPos(id);
-function wmBuild() {
-  const W = WORLD.main;
+// 分區（使用者 2026-11-17）：WM.r＝目前顯示的那一區（WORLD.regions），座標只在同一區裡有意義
+const wmPos = id => worldMapPos(id, WM.r && WM.r.key);
+function wmInnerHtml(W) {
   const box = (x1, y1, x2, y2) => `left:${x1}px;top:${y1}px;width:${x2 - x1}px;height:${y2 - y1}px`;
+  return `<img src="${W.img}" alt="" draggable="false">
+        ${W.tiles.map(t => { const rl = mapRecLvById(t.id); return `<div class="wm-tile" data-id="${t.id}" style="${box(t.x1, t.y1, t.x2, t.y2)}">${rl ? `<span class="wm-lv">Lv${rl}</span>` : ''}</div>`; }).join('')}
+        ${W.dungeons.map((d, i) => `<div class="wm-dun" data-i="${i}" style="${box(d.x1 - 3, d.y1 - 3, d.x2 + 3, d.y2 + 3)}"></div>`).join('')}
+        <svg class="wm-route" viewBox="0 0 ${W.w} ${W.h}" width="${W.w}" height="${W.h}"></svg>
+        <div class="wm-me"></div>`;
+}
+// 切到某一區：換底圖與格子，清掉選取
+function wmSetRegion(key) {
+  const R = WORLD.regions.find(r => r.key === key) || WORLD.regions[0];
+  if (WM.r !== R) {
+    WM.r = R;
+    WM.inner.style.width = R.w + 'px';
+    WM.inner.style.height = R.h + 'px';
+    WM.inner.innerHTML = wmInnerHtml(R);
+  }
+  WM.el.querySelectorAll('.wm-region').forEach(b => b.classList.toggle('on', b.dataset.key === R.key));
+}
+function wmBuild() {
   const el = document.createElement('div');
   el.className = 'wm-overlay hidden';
   el.innerHTML = `
     <div class="wm-head"><b>🗺️ 世界地圖</b><span class="wm-here"></span><button class="wm-btn" data-act="close" title="關閉">✕</button></div>
+    <div class="wm-regions">${WORLD.regions.map(r => `<button class="wm-region" data-act="region" data-key="${r.key}">${r.name}</button>`).join('')}</div>
     <div class="wm-view">
-      <div class="wm-inner" style="width:${W.w}px;height:${W.h}px">
-        <img src="${W.img}" alt="" draggable="false">
-        ${W.tiles.map(t => { const rl = mapRecLvById(t.id); return `<div class="wm-tile" data-id="${t.id}" style="${box(t.x1, t.y1, t.x2, t.y2)}">${rl ? `<span class="wm-lv">Lv${rl}</span>` : ''}</div>`; }).join('')}
-        ${W.dungeons.map((d, i) => `<div class="wm-dun" data-i="${i}" style="${box(d.x1 - 3, d.y1 - 3, d.x2 + 3, d.y2 + 3)}"></div>`).join('')}
-        <svg class="wm-route" viewBox="0 0 ${W.w} ${W.h}" width="${W.w}" height="${W.h}"></svg>
-        <div class="wm-me"></div>
-      </div>
+      <div class="wm-inner"></div>
     </div>
     <div class="wm-zoom">
       <button class="wm-btn" data-act="in" title="放大">＋</button>
@@ -8520,7 +8613,7 @@ function wmBuild() {
     if (act === 'close') closeWorldMap();
     else if (act === 'in') wmZoomAt(r.width / 2, r.height / 2, WM.s * 1.4);
     else if (act === 'out') wmZoomAt(r.width / 2, r.height / 2, WM.s / 1.4);
-    else if (act === 'me') wmCenter(wmPos(state.mapId));
+    else if (act === 'me') { const k = worldMapRegion(state.mapId); if (k && k !== WM.r.key) wmShowRegion(k); wmCenter(wmPos(state.mapId)); }
     else if (act === 'go') worldGo(b.dataset.id);
     else if (act === 'route') wmShowRoute(b.dataset.id);
     else if (act === 'backsel') wmSelect(b.dataset.id);
@@ -8529,7 +8622,8 @@ function wmBuild() {
     else if (act === 'hometown') { closeWorldMap(); goNearestSafeZone(); renderMapTab(); }
     else if (act === 'floor') wmSelect(b.dataset.id);
     else if (act === 'back') wmSelectDungeon(WM.dun);
-    else if (act === 'dun') wmSelectDungeon(WORLD.main.dungeons[+b.dataset.i]);
+    else if (act === 'dun') wmSelectDungeon(WM.r.dungeons[+b.dataset.i]);
+    else if (act === 'region') wmShowRegion(b.dataset.key);
   });
   const v = WM.view;
   v.addEventListener('pointerdown', e => {
@@ -8578,11 +8672,11 @@ function wmBuild() {
 }
 function wmFitMin() {
   const r = WM.view.getBoundingClientRect();
-  WM.min = Math.min(r.width / WORLD.main.w, r.height / WORLD.main.h);
+  WM.min = Math.min(r.width / WM.r.w, r.height / WM.r.h);
 }
 function wmApply() {
   const r = WM.view.getBoundingClientRect();
-  const w = WORLD.main.w * WM.s, h = WORLD.main.h * WM.s;
+  const w = WM.r.w * WM.s, h = WM.r.h * WM.s;
   WM.tx = w <= r.width ? (r.width - w) / 2 : Math.min(0, Math.max(r.width - w, WM.tx));
   WM.ty = h <= r.height ? (r.height - h) / 2 : Math.min(0, Math.max(r.height - h, WM.ty));
   WM.inner.style.transform = `translate(${WM.tx}px, ${WM.ty}px) scale(${WM.s})`;
@@ -8607,19 +8701,29 @@ function wmCenter(p) {
 function openWorldMap(focusId) {
   if (!WM.el) wmBuild();
   WM.el.classList.remove('hidden');
+  wmSetRegion(worldMapRegion(focusId) || worldMapRegion(state.mapId) || 'main');
   wmFitMin();
   // 開啟時用上次手動縮放的大小；沒記錄就縮放到格子約 44px（手指點得準），不小於整張塞得下的比例
   let saved = 0;
   try { saved = parseFloat(localStorage.getItem('roWorldMapZoom')) || 0; } catch (_) {}
   WM.s = Math.min(WM_MAX, Math.max(WM.min, saved || 44 / 58));
   WM.sel = null; WM.dun = null; WM.hint = []; WM.route = null;
-  wmCenter(wmPos(focusId) || wmPos(state.mapId) || [WORLD.main.w / 2, WORLD.main.h / 2]);
+  wmCenter(wmPos(focusId) || wmPos(state.mapId) || [WM.r.w / 2, WM.r.h / 2]);
   if (focusId) wmSelect(focusId); else wmSheet('');
   wmRefresh();
 }
 function closeWorldMap() { if (WM.el) WM.el.classList.add('hidden'); }
+// 按上方的分區按鈕：換圖、整張置中
+function wmShowRegion(key) {
+  wmSetRegion(key);
+  WM.sel = null; WM.dun = null; WM.hint = []; WM.route = null;
+  wmFitMin();
+  wmCenter(wmPos(state.mapId) || [WM.r.w / 2, WM.r.h / 2]);
+  wmSheet('');
+  wmRefresh();
+}
 function wmTap(x, y) {
-  const W = WORLD.main;
+  const W = WM.r;
   const pad = 4;
   const d = W.dungeons.find(o => x >= o.x1 - pad && x <= o.x2 + pad && y >= o.y1 - pad && y <= o.y2 + pad);
   if (d) { wmSelectDungeon(d); return; }
@@ -8629,9 +8733,9 @@ function wmTap(x, y) {
 }
 // 入口圖示落在這個格子裡的地城（點大格子時也要讓玩家知道這裡有地城）
 function wmTileDungeons(id) {
-  const t = WORLD.main.tiles.find(x => x.id === id);
+  const t = WM.r.tiles.find(x => x.id === id);
   if (!t) return [];
-  return WORLD.main.dungeons.filter(d => {
+  return WM.r.dungeons.filter(d => {
     const cx = (d.x1 + d.x2) / 2, cy = (d.y1 + d.y2) / 2;
     return cx >= t.x1 && cx <= t.x2 && cy >= t.y1 && cy <= t.y2;
   });
@@ -8686,7 +8790,7 @@ function wmSelect(id) {
   if (!m) return;
   WM.sel = id;
   WM.route = null;
-  const dun = WORLD.main.dungeons.find(x => x.floors.some(f => f.id === id));
+  const dun = WM.r.dungeons.find(x => x.floors.some(f => f.id === id));
   if (dun) WM.dun = dun;
   const inTile = dun ? [] : wmTileDungeons(id);
   WM.hint = inTile;
@@ -8698,7 +8802,7 @@ function wmSelect(id) {
   wmSheet(`${dun ? '<button class="wm-back" data-act="back">← 樓層</button>' : ''}
     <div class="wm-sheet-title">${shopEsc(m.name)} <small>${m.town ? '城鎮' : mapLvText(m)}${inTile.length ? '（含地城）' : ''}</small></div>
     ${inTile.length ? `<div class="wm-row"><span>地城</span><span>${inTile.map(d =>
-      `<button class="wm-dun-link" data-act="dun" data-i="${WORLD.main.dungeons.indexOf(d)}">${shopEsc(d.name)} ›</button>`).join(' ')}</span></div>` : ''}
+      `<button class="wm-dun-link" data-act="dun" data-i="${WM.r.dungeons.indexOf(d)}">${shopEsc(d.name)} ›</button>`).join(' ')}</span></div>` : ''}
     ${m.town ? '' : `<div class="wm-row"><span>怪物</span><span>${mons || '沒有怪物'}</span></div>`}
     ${boss ? `<div class="wm-row"><span>首領</span><span>${boss}</span></div>` : ''}
     <div class="wm-row"><span>路線</span><span>${shopEsc(plan.summary)}</span></div>
@@ -8739,7 +8843,10 @@ function wmSheet(html) {
   sh.classList.toggle('hidden', !html);
 }
 function wmRefresh() {
-  WM.el.querySelector('.wm-here').textContent = '📍 ' + ((wmMapOf(state.mapId) || {}).name || state.mapId);
+  const hereKey = worldMapRegion(state.mapId);
+  const hereR = WORLD.regions.find(r => r.key === hereKey);
+  WM.el.querySelector('.wm-here').textContent = '📍 ' + ((wmMapOf(state.mapId) || {}).name || state.mapId)
+    + (!hereR ? '（不在世界地圖上）' : hereR !== WM.r ? `（在${hereR.name}）` : '');
   // 查看路線時畫完整路線（坐船前後兩段）；只是選取時畫走路的那段
   const segs = WM.route || [WM.sel ? worldPath(state.mapId, WM.sel) : null];
   const segIds = sg => (sg && sg.ids) || sg || [];
@@ -8751,7 +8858,7 @@ function wmRefresh() {
     t.classList.toggle('route', onRoute.has(id) && id !== WM.sel && id !== state.mapId);
   });
   WM.el.querySelectorAll('.wm-dun').forEach(d => {
-    const o = WORLD.main.dungeons[+d.dataset.i];
+    const o = WM.r.dungeons[+d.dataset.i];
     d.classList.toggle('sel', WM.dun === o || (WM.hint || []).includes(o));
   });
   WM.el.querySelector('.wm-route').innerHTML = segs.map(seg => {

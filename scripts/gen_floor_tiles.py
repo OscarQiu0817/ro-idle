@@ -12,9 +12,11 @@ import os
 from PIL import Image
 
 SRC = 'images/maps/ro_idle_terrain_atlas_v1'
+SRC_V2 = 'images/maps/ro_idle_floor_atlas_v2_no_text'   # 第二批（2026-11-17）：256×205，城鎮／地城／室內
 OUT = 'images/maps/floor'
 TRIM = 4
 FADE = 56
+FADE_V2 = 32   # 第二批圖小，漸層帶跟著縮
 
 # 輸出 key → 來源檔。第 1 列檔名與內容錯一格（01_02 是廣場、01_03 是暖色石磚、01_04 是草地），照內容對
 FLOORS = {
@@ -76,10 +78,21 @@ def mirror_tile(im):
   return out
 
 
+# 第二批：檔名就是 key（manifest.csv）。有幾組是同一格裁出來的（一樣的圖），照收，git 會共用同一份內容
+FLOORS_V2 = ['town_payon', 'town_alberta', 'town_hugel', 'town_umbala', 'town_amatsu', 'town_louyang', 'town_gonryun',
+  'town_ayothaya', 'town_tropical', 'town_brasilis', 'town_geffen', 'town_yuno', 'town_einbroch', 'town_lighthalzen',
+  'town_rachel', 'town_aldebaran', 'town_lasagna', 'town_dimension', 'cave_rock', 'sewer', 'mine', 'pirate_cave',
+  'clock_tower', 'glast_heim', 'gefenia', 'nightmare', 'indoor_wood', 'indoor_tatami', 'tower_tile']
+
+
 def main():
+  global FADE
   os.makedirs(OUT, exist_ok=True)
-  for key, (fn, mode) in FLOORS.items():
-    im = Image.open(os.path.join(SRC, fn)).convert('RGB')
+  jobs = [(SRC, key, fn, mode, 56) for key, (fn, mode) in FLOORS.items()]
+  jobs += [(SRC_V2, key, key + '.png', 'fade', FADE_V2) for key in FLOORS_V2]
+  for src, key, fn, mode, fade in jobs:
+    FADE = fade
+    im = Image.open(os.path.join(src, fn)).convert('RGB')
     w, h = im.size
     im = im.crop((TRIM, TRIM, w - TRIM, h - TRIM))
     tile = mirror_tile(im) if mode == 'mirror' else fade_tile(im)

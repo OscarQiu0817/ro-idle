@@ -25020,11 +25020,19 @@ function npcTownHint(from, to) {
   const t = (WORLD.towns || []).find(x => worldPath(x.id, to));
   return t ? t.id : null;
 }
-// 世界地圖底圖上的位置：原野＝格子中心，地城樓層＝入口圖示中心；其他（室內、別的大陸）回 null
-function worldMapPos(id) {
-  const t = WORLD.main.tiles.find(x => x.id === id);
+/* 世界地圖分區（WORLD.regions，使用者 2026-11-17）：這張圖畫在哪一區；不在任何一區（室內、沒底圖的地區）回 null */
+function worldMapRegion(id) {
+  if (!id) return null;
+  const r = WORLD.regions.find(R => R.tiles.some(x => x.id === id) || R.dungeons.some(x => x.floors.some(f => f.id === id)));
+  return r ? r.key : null;
+}
+// 世界地圖底圖上的位置：原野＝格子中心，地城樓層＝入口圖示中心。key 指定只看那一區；沒指定就用它所在的區
+function worldMapPos(id, key) {
+  const R = WORLD.regions.find(x => x.key === (key || worldMapRegion(id)));
+  if (!R) return null;
+  const t = R.tiles.find(x => x.id === id);
   if (t) return [(t.x1 + t.x2) / 2, (t.y1 + t.y2) / 2];
-  const d = WORLD.main.dungeons.find(x => x.floors.some(f => f.id === id));
+  const d = R.dungeons.find(x => x.floors.some(f => f.id === id));
   return d ? [(d.x1 + d.x2) / 2, (d.y1 + d.y2) / 2] : null;
 }
 // 沿連線最近的城鎮；走不到任何城鎮回普隆德拉
@@ -25112,13 +25120,15 @@ function mapSceneryOf(mapId) {
 /* 地板素材（images/maps/floor/，scripts/gen_floor_tiles.py 從 ro_idle_terrain_atlas_v1 產生）。
    比上面 4 類細：城鎮各自指定、野外依地名分類型；對不上的退回 mapSceneryOf 的 4 張舊圖。
    分類參考 docs/MAP_FLOORS.md；洞窟／水道／礦坑沒有新素材，維持 cave.jpg */
+// 第二批地板（2026-11-17，images/maps/ro_idle_floor_atlas_v2_no_text）：各城自己的地板
 const MAP_FLOOR_TOWN = {
   prontera: 'stone_plaza', izlude: 'stone_plaza',
-  geffen: 'grey_cobble', aldebaran: 'grey_cobble', yuno: 'grey_cobble', lighthalzen: 'grey_cobble',
-  einbroch: 'grey_cobble', einbech: 'grey_cobble', rachel: 'grey_cobble', mid_camp: 'grey_cobble', sp_cor: 'grey_cobble',
-  alberta: 'warm_cobble', payon: 'warm_cobble', hugel: 'warm_cobble', umbala: 'warm_cobble', louyang: 'warm_cobble',
-  amatsu: 'warm_cobble', gonryun: 'warm_cobble', ayothaya: 'warm_cobble', malaya: 'warm_cobble', mora: 'warm_cobble',
-  manuk: 'warm_cobble', splendide: 'warm_cobble', dewata: 'warm_cobble', brasilis: 'warm_cobble', wolfvill: 'warm_cobble',
+  geffen: 'town_geffen', aldebaran: 'town_aldebaran', yuno: 'town_yuno', lighthalzen: 'town_lighthalzen',
+  einbroch: 'town_einbroch', einbech: 'town_einbroch', rachel: 'town_rachel', mid_camp: 'grey_cobble', sp_cor: 'grey_cobble',
+  alberta: 'town_alberta', payon: 'town_payon', hugel: 'town_hugel', umbala: 'town_umbala', louyang: 'town_louyang',
+  amatsu: 'town_amatsu', gonryun: 'town_gonryun', ayothaya: 'town_ayothaya', malaya: 'town_tropical', mora: 'town_dimension',
+  manuk: 'town_dimension', splendide: 'town_dimension', dewata: 'town_tropical', brasilis: 'town_brasilis', wolfvill: 'warm_cobble',
+  lasagna: 'town_lasagna', ecl_in01: 'indoor_wood',
   comodo: 'purple_stone', niflheim: 'purple_stone', dicastes01: 'purple_stone',
   morocc: 'desert', veins: 'desert', harboro1: 'desert', jawaii: 'beach',
   xmas: 'snow', icecastle: 'snow', moscovia: 'snow',
@@ -25126,13 +25136,23 @@ const MAP_FLOOR_TOWN = {
 };
 // 順序有意義：前面的先比對（例：金字塔算遺跡不算沙漠、迷宮森林算森林）
 const MAP_FLOOR_RULES = [
+  [/葛帔尼亞|地下神舍/, 'gefenia'],
+  [/噩夢|夢魘/, 'nightmare'],
+  [/古城|騎士團|^gl_/, 'glast_heim'],
+  [/鐘塔/, 'clock_tower'],
+  [/地下水道|水道/, 'sewer'],
+  [/廢礦|礦山|礦坑/, 'mine'],
+  [/海盜地洞/, 'pirate_cave'],
+  [/榻榻米|天津町內部|天水閣/, 'indoor_tatami'],
+  [/內部|室內|轉職所|公會|宅邸|等候室/, 'indoor_wood'],
+  [/高塔|中央塔/, 'tower_tile'],
   [/火山|熔岩|thor_v/, 'volcano'],
   [/冰穴|冰洞|雪|薑餅城原野|^ice_dun/, 'snow'],
   [/地獄|墓地|監獄|深淵|鬼峽谷|斯凱領頓/, 'ashen_rock'],
   [/神殿|聖域|修道院|教堂|遺跡|廢墟|金字塔|史芬克斯|人面獅身|王陵|審良宮|舊良宮|優配擂斯/, 'mossy_stone'],
   [/塔台|鐘塔|高塔|燈塔/, 'pale_stone'],
   [/古城|城堡|宮殿|騎士團|工廠|研究所|實驗|船舶|沈船|碉堡/, 'grey_cobble'],
-  [/洞穴|洞窟|地洞|水道|廢礦|礦山|密穴|隧道/, 'cave'],   // 沒有新素材，用舊的 cave.jpg
+  [/洞穴|洞窟|地洞|密穴|隧道/, 'cave_rock'],
   [/海邊|海灘|沙灘|珊瑚|海伊洛|^cmd_fild0[1-4]$/, 'beach'],
   [/森林|叢林/, 'forest'],
   [/沙漠|荒地|荒原|沙丘/, 'desert'],
@@ -25161,12 +25181,10 @@ function mapImgSrc(mapId) {
 
 
 
-const MUSIC_EXTS = ['mp3', 'ogg', 'wav'];
-
-
-function mapMusicUrl(mapId, ext) {
-  const m = MAPS.find(x => x.id === mapId);
-  return `music/maps/${m.imgId}.${ext}`;
+/* 地圖音樂照官方 mp3nametable（js/bgm_table.js，scripts/gen_bgm.py 產生）；沒對照的地圖回 null＝安靜 */
+function mapMusicUrl(mapId) {
+  const t = typeof MAP_BGM !== 'undefined' && MAP_BGM[mapId];
+  return t ? `music/bgm/${t}.ogg` : null;
 }
 
 /* ---------------- 裝備精煉系統 ----------------
@@ -25412,6 +25430,7 @@ function expToNextBaseLevel(level) {
   const tier = expTier();
   let need;
   if (tier >= 3) need = level < 200 ? EXP_TABLES.base3[level - 1] : EXP_TABLES.base4[level - 1];
+  else if (expReborn() && level >= 99) need = EXP_TABLES.base3[level - 1];   // 轉生突破 99（轉生表只到 99）
   else need = (expReborn() ? EXP_TABLES.baseHigh : EXP_TABLES.base)[level - 1];
   if (need == null) need = 999999999;   // 超出表（等級上限以上）
   return Math.floor(need * expReqScale(EXP_REQ_SCALE.base, level));

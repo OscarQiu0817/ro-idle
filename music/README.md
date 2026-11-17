@@ -1,38 +1,17 @@
-# 音樂資料夾使用說明
+# 音樂資料夾
 
-把地圖背景音樂丟進 `music/maps/`，檔名用**地圖編號**命名，進入該地圖時就會自動循環播放。
-**沒有放音樂檔的地圖，遊戲會安靜不播放，不會報錯、也不會卡住畫面。**
+## 地圖背景音樂（`music/bgm/`）
+照官方 `data\mp3nametable.txt` 的「地圖 → BGM 編號」，由 `scripts/gen_bgm.py` 產生：
 
-## 資料夾結構
 ```
-music/
-└── maps/
-    ├── 5001.mp3   新手訓練場 BGM
-    ├── 5002.mp3   普隆德拉草原 BGM
-    ├── 5003.mp3   培恩森林 BGM
-    └── 5004.mp3   半獸人村落 BGM
+python scripts/gen_bgm.py          只做城鎮（預設）
+python scripts/gen_bgm.py --all    遊戲裡全部地圖
 ```
 
-## 規格說明
-- 支援格式：`.mp3` / `.ogg` / `.wav`（遊戲會依序嘗試這三種副檔名，抓到哪個算哪個）
-- 檔名：**純數字編號**，例如 `5002.mp3`，不要加地圖名字
-- 音樂會自動循環播放（loop），切換地圖時自動停止舊的、播放新的
-- 畫面右上角有 🔊 靜音切換鈕，可以隨時關掉/開啟音樂
+- 來源：`grf_ex/BGM/<編號>.mp3`（客戶端 BGM 資料夾）＋ `grf_ex/mp3nametable.txt`（grf 的 data\）；grf_ex 不進版控
+- 輸出：`music/bgm/<編號>.ogg`（Vorbis q0）、`js/bgm_table.js`（`MAP_BGM`：地圖 id → 編號）
+- 同一首曲目的地圖共用一個檔案；換到同曲目的地圖會接著播
+- 沒在對照表的地圖（或曲目沒轉）就安靜
 
-## 地圖編號對照表
-普隆德拉地區已完整展開為 1 座城鎮 + 12 張原野，完整編號請見 `images/README.md`。
-| 編號 | 英文代號 | 名稱 |
-|---|---|---|
-| 5001 | novice_ground | 新手訓練場 |
-| 5002 | prontera | 普隆德拉 |
-| 5003~5014 | prt_fild00~11 | 普隆德拉原野系列(12張) |
-| 5015 | payon | 培恩 |
-| 5016 | payon_field | 培恩原野 |
-| 5017 | morroc | 摩洛克 |
-| 5018 | morroc_desert | 摩洛克沙漠 |
-
-（跟地圖背景圖用同一套編號，`images/maps/5011.png` 配 `music/maps/5011.mp3` 是同一張地圖。）
-
-## 之後新增地圖時怎麼辦？
-在 `js/data.js` 的 `MAPS` 裡新增地圖時，記得給它一個新的 `imgId`（延續 5005、5006…），
-把對應的圖片放進 `images/maps/`、音樂放進 `music/maps/` 即可，不用改任何程式碼。
+## 標題畫面
+`music/maps/0000.mp3`（`playTitleMusic`）。
