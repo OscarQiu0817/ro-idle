@@ -56,8 +56,9 @@ const DOJO_REWARD_POOLS = {
 };
 function dojoRewardPool(tierId) { return DOJO_REWARD_POOLS[tierId] || DOJO_REWARD_POOLS.easy; }
 // 代幣兌換：points＝商城點數（之後加高階裝備材料）
+// 2026-11-18（使用者）：1 枚換 10 點 → 1 枚換 5 點（地獄全破一次 20 枚，原本等於 10 顆轉蛋太多）
 const DOJO_SHOP = [
-  { points: 10, price: 1 },
+  { points: 5, price: 1 },
 ];
 
 if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === DOJO_MAP)) {
@@ -218,14 +219,16 @@ function dojoFinish(clear, why, floorPrize) {
   saveGame();
 }
 function dojoAbandon() { if (state.dojo) dojoFinish(false, '放棄'); }
-function dojoBuy(idx) {
+// n：兌換幾份（Infinity＝代幣換光）
+function dojoBuy(idx, n) {
   const e = DOJO_SHOP[idx];
   if (!e) return false;
   if (getItemQty(DOJO_TOKEN) < e.price) { logMsg(`⚠️ 道館代幣不足，需要 ${e.price} 枚。`); return false; }
-  removeItem(DOJO_TOKEN, e.price);
-  if (e.points) addCashPoints(e.points);
-  if (e.item) addItem(e.item, e.qty || 1);
-  logMsg(`🪙 用 ${e.price} 枚道館代幣換到了 ${e.points ? e.points + ' 商城點數' : ITEMS[e.item].name}。`);
+  const k = Math.max(1, Math.min(n || 1, Math.floor(getItemQty(DOJO_TOKEN) / e.price)));
+  removeItem(DOJO_TOKEN, e.price * k);
+  if (e.points) addCashPoints(e.points * k);
+  if (e.item) addItem(e.item, (e.qty || 1) * k);
+  logMsg(`🪙 用 ${e.price * k} 枚道館代幣換到了 ${e.points ? e.points * k + ' 商城點數' : ITEMS[e.item].name + ' ×' + (e.qty || 1) * k}。`);
   saveGame();
   return true;
 }

@@ -8805,6 +8805,7 @@ function killMonster(def, monObj) {
     const card = CARDS[cardDrop.card];
     logMsg(`🃏 掉落了稀有的 ${card.name}！`);
   }
+  if (typeof rollGachaShard === 'function') rollGachaShard(def);   // 轉蛋碎片（js/cash_shop.js）
   removeKilledFromField(monObj);
 }
 
@@ -16828,6 +16829,8 @@ function computeOfflineProgress(minMs, opts) {
       Object.entries(share).forEach(([id, p]) => addExp2(id, p * (stealRate + greedRate) * spawnShare));
     }
   });
+  // 轉蛋碎片（js/cash_shop.js）：照出沒權重的期望值
+  if (typeof gachaShardRate === 'function') pool.forEach(m => { const r = gachaShardRate(MONSTERS[m.id]); if (r > 0) addExp2(GACHA_SHARD, r * m.weight / totalWeight); });
   // 尋找礦石：跟種族無關，四種礦石均分
   if (oreRate) {
     const ores = ['boody_red', 'crystal_blue', 'wind_of_verdure', 'yellow_live'];
@@ -16864,6 +16867,7 @@ function computeOfflineProgress(minMs, opts) {
        離線以前完全沒有這一段——打了一整晚頭目卻一顆都沒有。 */
     const eth = getEtherDropChance(bd);
     if (eth > 0) ['hd_bradium', 'hd_carnium'].forEach(id => addBoss(id, eth * b.kills));
+    if (typeof gachaShardRate === 'function') addBoss(GACHA_SHARD, gachaShardRate(bd) * b.kills);
     // 頭目也吃偷竊／貪婪／卡片附加掉落，跟雜魚同一條規則
     if (stealRate || greedRate) {
       const share = {};

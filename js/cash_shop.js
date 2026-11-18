@@ -127,6 +127,43 @@ GEAR_GACHA.forEach(([id, name, img, , pick]) => {
 });
 CASH_SHOP.find(c => c.cat === '轉蛋').items.push(...GEAR_GACHA.map(([id, , , p]) => [id, p]));
 
+/* 轉蛋碎片（使用者 2026-11-18）：讓放置本身也拿得到轉蛋專屬裝備。
+   一般怪（含迷你王）每隻 GACHA_SHARD_RATE 機率掉 1 片，MVP GACHA_SHARD_MVP_RATE（1%）；線上、離線同一套（離線照期望值）。
+   不吃打寶倍率、掉寶糖。商城「碎片兌換」GACHA_SHARD_COST 片換任一部位裝備轉蛋。道館複製體、虛擬對手不掉。 */
+const GACHA_SHARD = 'gacha_shard';
+const GACHA_SHARD_RATE = 0.0001;   // 每秒殺 1 隻掛一天約 8.6 片
+const GACHA_SHARD_MVP_RATE = 0.01;   // 使用者 2026-11-18：原本 MVP 必掉，改 1%
+const GACHA_SHARD_COST = 10;
+ITEMS[GACHA_SHARD] = {
+  id: GACHA_SHARD, imgId: 7445, name: '轉蛋碎片', type: 'material', icon: '🧩', weight: 0, sell: 0,
+  desc: `打倒魔物偶爾掉落，MVP 掉率較高。集滿 ${GACHA_SHARD_COST} 片到商城「碎片兌換」換任一部位裝備轉蛋。`,
+};
+// 每隻怪期望掉幾片（離線結算用）
+function gachaShardRate(def) {
+  if (!def || def.isVirtual || def.dojo) return 0;
+  return def.isMvp ? GACHA_SHARD_MVP_RATE : GACHA_SHARD_RATE;
+}
+// 線上擊殺（killMonster 尾端呼叫）
+function rollGachaShard(def) {
+  const r = gachaShardRate(def);
+  if (r > 0 && (r >= 1 || rng() < r)) {
+    addItem(GACHA_SHARD, 1);
+    logMsg(`🧩 掉落了${ITEMS[GACHA_SHARD].name}！（持有 ${getItemQty(GACHA_SHARD)}）`);
+  }
+}
+const SHARD_SHOP = [{ cat: '碎片兌換', items: GEAR_GACHA.map(([id]) => [id, GACHA_SHARD_COST]) }];
+function buyShardItem(itemId, qty) {
+  const def = ITEMS[itemId];
+  if (!def || !GEAR_GACHA.some(([id]) => id === itemId)) return false;
+  const n = Math.min(qty || 1, Math.floor(getItemQty(GACHA_SHARD) / GACHA_SHARD_COST));
+  if (n <= 0) { logMsg(`⚠️ ${ITEMS[GACHA_SHARD].name}不足，要 ${GACHA_SHARD_COST} 片。`); return false; }
+  removeItem(GACHA_SHARD, GACHA_SHARD_COST * n);
+  addItem(itemId, n);
+  logMsg(`🧩 用 ${GACHA_SHARD_COST * n} 片${ITEMS[GACHA_SHARD].name}換到 ${def.name} ×${n}。`);
+  saveGame();
+  return true;
+}
+
 /* 附魔轉蛋（D7，使用者 2026-11-14）：開出一顆附魔石，照 ENCHANTS 稀有度權重抽；石頭找附魔師裝 */
 ITEMS.gacha_enchant = {
   id: 'gacha_enchant', imgId: 4811, name: '附魔轉蛋', type: 'consumable', icon: '💠', weight: 1, sell: 0, boxOpen: 'enchant',

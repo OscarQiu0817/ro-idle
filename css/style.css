@@ -911,6 +911,17 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 .att-cell.next .att-tag { color: #f5a623; font-weight: 700; }
 #hud-cash { margin-left: 10px; color: #9ad8ff; }
 .cash-cat { margin: 12px 0 0; font-size: 13px; color: #f0d58a; }
+/* 商城分頁：分頁列與子分類固定，只有下面的格子捲動 */
+#cash-shop-modal-body { display: flex; flex-direction: column; overflow: hidden; }
+.cash-tabs { flex: none; display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.cash-tab { flex: 1; padding: 8px 4px 6px; border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--ink-dim);
+  font-size: 13px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cash-tab small { font-size: 11px; font-weight: 400; color: #9ad8ff; }
+.cash-tab.active { color: var(--gold-soft); border-bottom-color: var(--gold); background: var(--bg-panel-2, rgba(255,255,255,.04)); }
+.cash-subs { flex: none; flex-wrap: wrap; }
+.cash-pane { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: 6px; }
+#cash-shop-modal .modal-confirm { margin-top: 14px; }
+.cash-pane > .empty-hint { margin-top: 0; }
 .cash-cell { cursor: default; }
 .cash-cell > div:first-child { cursor: pointer; }
 .cash-cell .att-tag { color: #9ad8ff; font-weight: 700; }

@@ -4740,6 +4740,11 @@ function cashShopBuy(id, n) {
   renderCashShopModal();
   renderTopBar();
 }
+function shardShopBuy(id, n) {
+  runWithNotice('🧩 碎片兌換', () => buyShardItem(id, n));
+  renderCashShopModal();
+  renderTopBar();
+}
 function mvpShopBuy(id, n) {
   runWithNotice('🏅 MVP 點數商店', () => buyMvpItem(id, n));
   renderCashShopModal();
@@ -4767,17 +4772,44 @@ function shopGridHtml(shop, pts, icon, buyFn) {
     return `<h4 class="cash-cat">${shopEsc(c.cat)}</h4><div class="att-grid">${cells}</div>`;
   }).join('');
 }
+/* 商城分頁（使用者 2026-11-18）：上排大項（商城／碎片兌換／MVP 點數），下排子分類，一次只列一類 */
+let cashTab = 'cash';
+let cashSub = {};   // 各大項目前選的子分類
+function setCashTab(t) { cashTab = t; renderCashShopModal(); }
+function setCashSub(c) { cashSub[cashTab] = c; renderCashShopModal(); }
+function cashShopTabs() {
+  const tabs = [];
+  if (typeof CASH_SHOP !== 'undefined') tabs.push({ key: 'cash', icon: '💎', name: '商城', shop: CASH_SHOP, pts: cashPoints(), buy: 'cashShopBuy',
+    hint: `持有 <b>💎 ${cashPoints().toLocaleString()}</b> ${CASH_POINT_NAME}。主線每一步、每日簽到、每日／每週任務、道館代幣都會給點數。點圖示看道具說明。` });
+  if (typeof SHARD_SHOP !== 'undefined') {
+    const n = getItemQty(GACHA_SHARD);
+    tabs.push({ key: 'shard', icon: '🧩', name: '碎片兌換', shop: SHARD_SHOP, pts: n, buy: 'shardShopBuy',
+      hint: `持有 <b>🧩 ${n.toLocaleString()}</b> 片${ITEMS[GACHA_SHARD].name}。打倒魔物偶爾掉落（掛機、離線都算），MVP 1%；${GACHA_SHARD_COST} 片換一顆裝備轉蛋。` });
+  }
+  if (typeof MVP_SHOP !== 'undefined') tabs.push({ key: 'mvp', icon: '🏅', name: 'MVP 點數', shop: MVP_SHOP, pts: mvpPoints(), buy: 'mvpShopBuy',
+    hint: `持有 <b>🏅 ${mvpPoints().toLocaleString()}</b> ${MVP_POINT_NAME}。打倒 MVP 得 1 點，每天最多 ${MVP_POINT_DAILY_CAP} 點（今天已得 ${mvpPointsToday()}）。` });
+  return tabs;
+}
 function renderCashShopModal() {
   const el = document.getElementById('cash-shop-modal-body');
-  if (!el || !state || typeof CASH_SHOP === 'undefined') return;
-  const pts = cashPoints();
-  const mvp = typeof MVP_SHOP !== 'undefined'
-    ? `<h3 class="panel-title">🏅 MVP 點數商店</h3>
-      <div class="empty-hint">持有 <b>🏅 ${mvpPoints().toLocaleString()}</b> ${MVP_POINT_NAME}。打倒 MVP 得 1 點，每天最多 ${MVP_POINT_DAILY_CAP} 點（今天已得 ${mvpPointsToday()}）。</div>
-      ${shopGridHtml(MVP_SHOP, mvpPoints(), '🏅', 'mvpShopBuy')}` : '';
-  el.innerHTML = `<h3 class="panel-title">💎 商城</h3>
-    <div class="empty-hint">持有 <b>💎 ${pts.toLocaleString()}</b> ${CASH_POINT_NAME}。主線每一步、每日簽到都會發點數。點圖示看道具說明。</div>
-    ${shopGridHtml(CASH_SHOP, pts, '💎', 'cashShopBuy')}${mvp}`;
+  if (!el || !state) return;
+  const tabs = cashShopTabs();
+  if (!tabs.length) return;
+  const tab = tabs.find(t => t.key === cashTab) || tabs[0];
+  cashTab = tab.key;
+  const cats = tab.shop.map(c => c.cat);
+  const sub = cats.includes(cashSub[tab.key]) ? cashSub[tab.key] : cats[0];
+  const pane = el.querySelector('.cash-pane');
+  const keepTop = pane && el.dataset.view === tab.key + '|' + sub ? pane.scrollTop : 0;   // 買東西重畫時捲動位置不跳
+  el.dataset.view = tab.key + '|' + sub;
+  el.innerHTML = `<div class="cash-tabs">${tabs.map(t =>
+      `<button class="cash-tab ${t.key === tab.key ? 'active' : ''}" onclick="setCashTab('${t.key}')">${t.icon} ${t.name}<small>${t.pts.toLocaleString()}</small></button>`).join('')}</div>
+    ${cats.length > 1 ? `<div class="inv-subs cash-subs">${cats.map(c =>
+      `<button class="btn-chip ${c === sub ? 'active' : ''}" onclick="setCashSub('${shopEsc(c)}')">${shopEsc(c)}</button>`).join('')}</div>` : ''}
+    <div class="cash-pane"><div class="empty-hint">${tab.hint}</div>
+      ${shopGridHtml(tab.shop.filter(c => c.cat === sub), tab.pts, tab.icon, tab.buy).replace(/<h4 class="cash-cat">[^<]*<\/h4>/, '')}</div>`;
+  const np = el.querySelector('.cash-pane');
+  if (np) np.scrollTop = keepTop;
 }
 function renderQuestsTab() {
   const el = document.getElementById('tab-quests');
@@ -10019,7 +10051,7 @@ let whSub = 'all';
 let whSearch = '';
 let whQty = '';          // 空字串＝整疊
 
-function setWhCategory(c) { whCategory = c; whSub = 'all'; renderWarehouse(); }
+function setWhCategory(c) { whCategory = INV_CATEGORIES.some(x => x.key === c) ? c : INV_CATEGORIES[0].key; whSub = 'all'; renderWarehouse(); }
 function setWhSub(s) { whSub = s; renderWarehouse(); }
 function setWhQty(v) { whQty = (v || '').trim(); }
 function onWhSearch(v, ev) {
@@ -10234,7 +10266,11 @@ function renderWarehouseInner() {
 
   const subCount = {};
   inCat(bagAll).concat(inCat(whAll)).forEach(r => { const s = invSubOf(r.item); subCount[s] = (subCount[s] || 0) + 1; });
-  const subKeys = Object.keys(subCount).sort((a, b) => subCount[b] - subCount[a]);
+  // 子分類排序跟背包一致：道具照固定用途順序，其他照數量
+  const useOrder = Object.keys(ITEM_USE_LABELS);
+  const subKeys = Object.keys(subCount).sort((a, b) => whCategory === 'item'
+    ? useOrder.indexOf(a) - useOrder.indexOf(b) : subCount[b] - subCount[a]);
+  const subAll = inCat(bagAll).length + inCat(whAll).length;
 
   const listHtml = (rows, side) => rows.length
     ? rows.map(r => {
@@ -10286,7 +10322,7 @@ function renderWarehouseInner() {
     </div>
 
     ${subKeys.length > 1 ? `<div class="inv-subs">
-      <button class="btn-chip ${whSub === 'all' ? 'active' : ''}" onclick="setWhSub('all')">全部</button>
+      <button class="btn-chip ${whSub === 'all' ? 'active' : ''}" onclick="setWhSub('all')">全部 ${subAll}</button>
       ${subKeys.map(s => `<button class="btn-chip ${whSub === s ? 'active' : ''}" onclick="setWhSub('${s}')">${invSubLabel(whCategory, s)} ${subCount[s]}</button>`).join('')}
     </div>` : ''}
 
@@ -11107,7 +11143,8 @@ function dojoNpcPanelHtml(n, back) {
   }).join('');
   const shop = DOJO_SHOP.map((e, i) => `<div class="town-npc-card">
       <div class="town-npc-name">${e.points ? e.points + ' ' + CASH_POINT_NAME : shopEsc(ITEMS[e.item].name)}</div><div class="gmt-price">🪙 ${e.price}</div>
-      <button class="btn-small" ${tok < e.price ? 'disabled' : ''} onclick="dojoBuy(${i});openTownNpc('dojo')">兌換</button></div>`).join('');
+      <button class="btn-small" ${tok < e.price ? 'disabled' : ''} onclick="dojoBuy(${i});openTownNpc('dojo')">兌換</button>
+      <button class="btn-small ghost" ${tok < e.price ? 'disabled' : ''} onclick="dojoBuy(${i},Infinity);openTownNpc('dojo')">全部兌換</button></div>`).join('');
   return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🥋 ${shopEsc(n.name)}</h3></div>
     <div class="town-npc-say">道館每個難度 ${DOJO_FLOORS} 關、每關一隻 MVP，可以帶隊友；難度越高，王的版本越新越強。入場費 ${DOJO_ENTRY_FEE / 10000} 萬z，不限次數。每過一關抽 1 次，全破加抽並固定給道館代幣；全隊倒下或放棄就結束，照過的關數抽。難度越高獎品池的精煉材料越高階。道館代幣可以隨機附魔、換商城點數。</div>
     <div class="town-npc-list">${tiers}</div>
