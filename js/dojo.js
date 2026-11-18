@@ -9,6 +9,8 @@
    全隊倒下、離開地圖、放棄就結束。
    2026-11-14（使用者）：各難度的王改成指定名單（照名單順序當難度，抽到的 5 隻照名單順序排）；
    場內有館主 NPC：對話才開打，每關打完找館主領獎才能選下一關，最後一關領完傳回城。
+   2026-11-18（使用者）：拿掉館主 NPC，改戰鬥畫面上的「挑戰」鈕（先看王的介紹再開打）；
+   每關打完獎勵直接發、跳會自己消失的彈窗（dojoNotify），最後一關打完直接結算回城。
    主角倒下但隊友還站著就繼續打；撐過 15 秒，隊友用復活術或天地樹葉子把主角扶起來。
    這個檔案在 gvg.js 之後載入。 */
 const DOJO_MAP = 'dojo_arena';
@@ -133,13 +135,19 @@ function dojoEnter(tierId) {
   if (!changeMap(DOJO_MAP, { party: true })) return false;
   state.gold -= DOJO_ENTRY_FEE;
   const seed = (Math.floor(rng() * 4294967295) >>> 0) || 1;
-  // phase：talk 等玩家找館主開打、fight 戰鬥中、reward 等玩家找館主領獎
+  // phase：talk 等玩家按挑戰、fight 戰鬥中（reward 是舊版等領獎，讀到就照領）
   state.dojo = { tier: t.id, floor: 0, cleared: 0, claimed: 0, seed, startAt: now, phase: 'talk' };
-  logMsg(`🥋 進入道館（${t.name}），跟館主對話開始第 1 關。`);
+  logMsg(`🥋 進入道館（${t.name}），按「挑戰」開始第 1 關。`);
   saveGame();
   return true;
 }
-/* 館主對話：開始下一關 */
+/* 下一關的王（還沒開打時給介紹視窗用） */
+function dojoNextMobId() {
+  const d = state.dojo;
+  if (!d || d.phase !== 'talk') return null;
+  return dojoFloorPlan(dojoTier(d.tier), d.floor + 1, d.seed)[0] || null;
+}
+/* 挑戰鈕：開始下一關 */
 function dojoNextFloor() {
   const d = state.dojo;
   if (!d || d.phase !== 'talk' || !(state.hp > 0)) return false;
@@ -155,8 +163,10 @@ function dojoClaimFloor() {
   const e = dojoDraw();
   if (ITEMS[e.item]) addItem(e.item, e.qty);
   d.claimed = d.floor;
-  logMsg(`🎁 第 ${d.floor} 關獎勵：${ITEMS[e.item] ? ITEMS[e.item].name : e.item} ×${e.qty}`);
-  if (d.floor >= DOJO_FLOORS) { dojoFinish(true); return true; }
+  const txt = `${ITEMS[e.item] ? ITEMS[e.item].name : e.item} ×${e.qty}`;
+  logMsg(`🎁 第 ${d.floor} 關獎勵：${txt}`);
+  if (d.floor >= DOJO_FLOORS) { dojoFinish(true, null, txt); return true; }
+  dojoNotify(`✅ 第 ${d.floor} 關通過！`, `🎁 ${txt}`);
   d.phase = 'talk';
   saveGame();
   return true;
@@ -174,7 +184,12 @@ function dojoClearMonsters() {
   state.bossCasts = [];
 }
 /* 結算：過幾關抽幾次，全破再加抽 */
-function dojoFinish(clear, why) {
+/* 彈窗（ui.js 有 showDojoToast 才跳；測試環境沒有就略過） */
+function dojoNotify(title, body) {
+  if (typeof showDojoToast === 'function') showDojoToast(title, body);
+}
+// floorPrize：最後一關剛領到的那一抽，併進結算彈窗
+function dojoFinish(clear, why, floorPrize) {
   const d = state.dojo;
   if (!d) return;
   state.dojo = null;
@@ -191,6 +206,8 @@ function dojoFinish(clear, why) {
   state.dojoLast = { tier: t.id, cleared: d.cleared, clear: !!clear, at: gameNow() };
   if (clear) state.dojoBest = Object.assign({}, state.dojoBest, { [t.id]: true });
   logMsg(clear ? `🏆 道館（${t.name}）全破！獲得：${list}。` : `🥋 道館（${t.name}）結束（${why || '中斷'}）：過了 ${d.cleared} 關，獲得：${list}。`);
+  if (clear) dojoNotify(`🏆 道館（${t.name}）全破！`, `🎁 ${[floorPrize, Object.keys(got).length ? list : ''].filter(Boolean).join('、')}`);
+  else if (why !== '放棄') dojoNotify(`🥋 道館結束（${why || '中斷'}）`, `過了 ${d.cleared} 關${Object.keys(got).length ? '・🎁 ' + list : ''}`);
   if (state.mapId === DOJO_MAP) changeMap(DOJO_TOWN, { party: true });
   if (!(state.hp > 0)) {   // 全隊倒下：抬回城、全隊補滿（比照 onPlayerDown）
     state.deaths = (state.deaths || 0) + 1;
@@ -219,13 +236,15 @@ function tickDojo(now) {
   if (!d) return;
   if (state.mapId !== DOJO_MAP) return dojoFinish(false, '離開了道館');
   if (!(state.hp > 0) && !allyAliveList().length) return dojoFinish(false, '全隊倒下');
+  if (d.phase === 'reward') { dojoClaimFloor(); return; }   // 舊版停在等領獎：直接發
   if (d.phase !== 'fight') return;
   const left = (state.monsters || []).filter(m => MONSTERS[m.defId] && MONSTERS[m.defId].dojo && m.hp > 0);
   if (left.length) return;
   d.cleared = d.floor;
   d.phase = 'reward';
-  logMsg(`✅ 第 ${d.floor} 關通過！找館主領獎${d.floor >= DOJO_FLOORS ? '' : '，再選下一關'}。`);
-  saveGame();
+  logMsg(`✅ 第 ${d.floor} 關通過！`);
+  dojoClearMonsters();
+  dojoClaimFloor();   // 獎勵直接發（最後一關會順便結算回城）
 }
 
 /* 主角倒下（onPlayerDown 先問這裡）：隊友還站著就留在場上繼續打 */

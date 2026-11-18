@@ -6661,6 +6661,8 @@ function playerMoveBy(step, ang) {
 /* 沒怪可打時漫遊：照 roamDir 走，隔一段時間換方向。城鎮、無法行動、詠唱中不走 */
 function tickRoam(dt, now) {
   if (isInTown() || playerImmobile() || state.casting) return;
+  const map = currentMap();
+  if (map && map.arena) return;   // 競技場（道館、吉芬大賽）：關卡之間站著等，不漫遊（使用者 2026-11-18）
   if (state.roamDir == null || now >= (state.roamTurnAt || 0)) {
     state.roamDir = rng() * Math.PI * 2 - Math.PI;
     state.roamTurnAt = now + ROAM_TURN_MS[0] + rng() * (ROAM_TURN_MS[1] - ROAM_TURN_MS[0]);

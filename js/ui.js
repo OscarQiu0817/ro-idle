@@ -3324,8 +3324,27 @@ loadMobAnim();
 const BF_HOME = { x: 50, y: 60 };
 const BF_SPEED = 20;
 /* 3b：引擎的距離 d（格）× 方向角 a 換算成場景百分比。玩家站在 BF_HOME，怪從右半邊走來。 */
-const BF_CELL_X = 7;
-const BF_CELL_Y = 5;
+/* 一格的像素固定「直＝橫 × BF_ISO」（使用者 2026-11-18：手機橫放時畫面扁，原本固定 7%／5% 會把圈壓成扁橢圓）。
+   一格 = min(寬 7%, 高 12%) 像素；畫面尺寸變了由 bfRefitCells 重算。 */
+let BF_CELL_X = 7;
+let BF_CELL_Y = 5;
+const BF_ISO = 0.5;
+function bfFitCells(w, h) {
+  if (!(w > 0 && h > 0)) return;
+  const px = Math.min(w * 0.07, h * 0.12);
+  BF_CELL_X = px / w * 100;
+  BF_CELL_Y = px * BF_ISO / h * 100;
+}
+// 每幀比對戰鬥畫面尺寸，變了才重算（ResizeObserver 在切換畫面時不一定會報）
+let _bfFitW = 0, _bfFitH = 0;
+function bfRefitCells() {
+  const sc = document.getElementById('battle-scene');
+  if (!sc) return;
+  const w = sc.clientWidth, h = sc.clientHeight;
+  if (w === _bfFitW && h === _bfFitH) return;
+  _bfFitW = w; _bfFitH = h;
+  bfFitCells(w, h);
+}
 /* 玩家正在走向目標（目標不在普攻距離內）。引擎裡是目標距離縮短，畫面上改成：
    玩家播走路動畫、背景往反方向捲動（鏡頭跟著角色，D1）。 */
 const bfBg = { x: 0, y: 0 };
@@ -3375,7 +3394,7 @@ function bfScrollBackground() {
   if (Math.hypot(dx, dy) > 30) return;   // 換圖、讀檔那種大跳不捲
   const pxPerCell = scene.getBoundingClientRect().width * BF_CELL_X / 100;
   bfBg.x -= dx * pxPerCell;
-  bfBg.y -= dy * pxPerCell * (BF_CELL_Y / BF_CELL_X);
+  bfBg.y -= dy * pxPerCell * BF_ISO;
   el.style.backgroundPosition = `${bfBg.x.toFixed(1)}px ${bfBg.y.toFixed(1)}px`;
 }
 /* 隊友跟在玩家身後兩側（面向的反方向退一步、上下錯開） */
@@ -3639,6 +3658,7 @@ function layoutBattlefield() {
   try { layoutBattlefieldInner(); } finally { _bfRects = null; }
 }
 function layoutBattlefieldInner() {
+  bfRefitCells();
   const now = Date.now();
   const dt = bfLast ? Math.min(0.12, (now - bfLast) / 1000) : 0;
   bfLast = now;
@@ -10755,44 +10775,84 @@ function manualBindSkillBtn(b) {
   });
   b.addEventListener('pointercancel', () => { drag = null; manualAimDraw(null); });
 }
+/* 戰鬥畫面左上的堆疊列（使用者 2026-11-18）：手操列、活動（道館／大賽／攻城）、站姿鈕依序排，
+   放不下就換行，不再各自絕對定位疊在一起。右邊留給狀態圖示 */
+function bfTopStack(scene) {
+  let el = document.getElementById('bf-top-stack');
+  if (!el) { el = document.createElement('div'); el.id = 'bf-top-stack'; el.className = 'bf-top-stack'; scene.appendChild(el); }
+  return el;
+}
+function toggleManualLog() {
+  state.manualLogOff = !state.manualLogOff;
+  saveGame();
+  syncManualHud();
+}
+/* 浮動搖桿（使用者 2026-11-18）：左半邊任何地方按下，搖桿就出現在手指下；
+   沒拖動就放開＝點一下，照舊轉給底下的怪（改打）或地面（走過去） */
+function manualBindStick(zone) {
+  const stick = zone.querySelector('#manual-stick'), knob = stick.firstElementChild;
+  let st = null;
+  const rest = () => { stick.style.left = ''; stick.style.top = ''; stick.style.bottom = ''; stick.classList.remove('active'); knob.style.transform = ''; };
+  const move = e => {
+    let x = e.clientX - st.cx, y = e.clientY - st.cy;
+    const max = stick.offsetWidth / 2 - 14, d = Math.hypot(x, y);
+    if (d > 10) st.moved = true;
+    if (d > max) { x *= max / d; y *= max / d; }
+    knob.style.transform = `translate(${x}px, ${y}px)`;
+    bossManualSetDir(d > 8 ? { x: x / Math.max(1, Math.hypot(x, y)), y: y / Math.max(1, Math.hypot(x, y)) } : null);
+  };
+  zone.addEventListener('pointerdown', e => {
+    if (st) return;
+    e.preventDefault();
+    const zr = zone.getBoundingClientRect(), half = stick.offsetWidth / 2;
+    st = { pid: e.pointerId, cx: e.clientX, cy: e.clientY, moved: false };
+    Object.assign(stick.style, { left: (e.clientX - zr.left - half) + 'px', top: (e.clientY - zr.top - half) + 'px', bottom: 'auto' });
+    stick.classList.add('active');
+    try { zone.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  zone.addEventListener('pointermove', e => { if (st && e.pointerId === st.pid) move(e); });
+  const end = e => {
+    if (!st || e.pointerId !== st.pid) return;
+    const tap = !st.moved && e.type === 'pointerup';
+    st = null;
+    bossManualSetDir(null);
+    rest();
+    if (!tap) return;
+    zone.style.pointerEvents = 'none';
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    zone.style.pointerEvents = '';
+    if (under) under.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: e.clientX, clientY: e.clientY }));
+  };
+  zone.addEventListener('pointerup', end);
+  zone.addEventListener('pointercancel', end);
+}
 function ensureManualHud(scene) {
   if (document.getElementById('manual-pad')) return;
   const bar = document.createElement('div');
   bar.className = 'bf-manual-bar';
   bar.innerHTML = `<button class="bf-manual-btn" id="bf-manual-toggle" onclick="event.stopPropagation();toggleManualPlay()"></button>
     <span class="bf-manual-tabs">${[['fight', '打怪'], ['grow', '升級'], ['gear', '物品'], ['social', '收集']]
-      .map(([g, n]) => `<button class="bf-manual-btn" onclick="event.stopPropagation();openManualDrawer('${g}')">${n}</button>`).join('')}</span>`;
-  scene.appendChild(bar);
+      .map(([g, n]) => `<button class="bf-manual-btn" onclick="event.stopPropagation();openManualDrawer('${g}')">${n}</button>`).join('')}
+      <button class="bf-manual-btn" id="bf-manual-log" onclick="event.stopPropagation();toggleManualLog()" title="顯示／收起戰鬥訊息">💬</button></span>`;
+  bfTopStack(scene).appendChild(bar);
   const pad = document.createElement('div');
   pad.id = 'manual-pad';
   pad.className = 'manual-pad';
   const KEY = ['1', '2', '3', '4'];
-  pad.innerHTML = `<div class="manual-stick" id="manual-stick"><div class="manual-stick-knob"></div></div>
+  pad.innerHTML = `<div class="manual-stick-zone" id="manual-stick-zone"><div class="manual-stick" id="manual-stick"><div class="manual-stick-knob"></div></div></div>
     <div class="manual-actions">
       <button class="manual-atk" id="manual-atk" title="攻擊（空白鍵）">⚔️<small>Space</small></button>
+      <button class="manual-auto" id="manual-auto" title="自動普攻：停下來就自己打最近的怪">自動</button>
       ${KEY.map((k, i) => `<button class="manual-sk" data-i="${i}" title="技能欄第 ${i + 1} 格（${k}）"><span class="manual-sk-ico"></span><span class="manual-sk-cd"></span><small>${k}</small></button>`).join('')}
     </div>`;
   scene.appendChild(pad);
   const stop = e => e.stopPropagation();
   pad.addEventListener('click', stop);
+  pad.addEventListener('contextmenu', e => e.preventDefault());   // 長按不跳選單、不反白
   pad.querySelector('#manual-atk').addEventListener('pointerdown', e => { e.preventDefault(); manualAttack(); syncManualHud(); });
+  pad.querySelector('#manual-auto').addEventListener('pointerdown', e => { e.preventDefault(); setManualAutoAtk(!state.manualAutoAtk); syncManualHud(); });
   pad.querySelectorAll('.manual-sk').forEach(manualBindSkillBtn);
-  // 搖桿：拖曳方向＝移動方向，放開停下
-  const stick = pad.querySelector('#manual-stick'), knob = stick.firstElementChild;
-  let pid = null;
-  const move = e => {
-    const r = stick.getBoundingClientRect();
-    let x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
-    const max = r.width / 2 - 14, d = Math.hypot(x, y);
-    if (d > max) { x *= max / d; y *= max / d; }
-    knob.style.transform = `translate(${x}px, ${y}px)`;
-    bossManualSetDir(d > 8 ? { x: x / Math.max(1, Math.hypot(x, y)), y: y / Math.max(1, Math.hypot(x, y)) } : null);
-  };
-  const end = () => { pid = null; knob.style.transform = ''; bossManualSetDir(null); };
-  stick.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; stick.setPointerCapture(pid); move(e); });
-  stick.addEventListener('pointermove', e => { if (e.pointerId === pid) move(e); });
-  stick.addEventListener('pointerup', end);
-  stick.addEventListener('pointercancel', end);
+  manualBindStick(pad.querySelector('#manual-stick-zone'));
 }
 function syncManualHud() {
   const scene = document.getElementById('battle-scene');
@@ -10801,6 +10861,7 @@ function syncManualHud() {
   const show = manualHudShouldShow();
   const on = show && typeof manualActive === 'function' && manualActive();
   document.body.classList.toggle('manual-play', on);
+  document.body.classList.toggle('manual-log-off', on && !!state.manualLogOff);
   if (!on) document.body.classList.remove('manual-drawer');
   const bar = scene.querySelector('.bf-manual-bar');
   bar.classList.toggle('hidden', !show);
@@ -10833,6 +10894,11 @@ function syncManualHud() {
     b.classList.toggle('queued', state._manualQueued === i);
   });
   document.getElementById('manual-atk').classList.toggle('on', !!state._manualChase && !!manualTarget());
+  const auto = document.getElementById('manual-auto');
+  auto.classList.toggle('on', !!state.manualAutoAtk);
+  const at = state.manualAutoAtk ? '自動 開' : '自動 關';
+  if (auto.textContent !== at) auto.textContent = at;
+  document.getElementById('bf-manual-log').classList.toggle('on', !state.manualLogOff);
 }
 
 /* 打王即時切換（戰鬥畫面左下角，使用者 2026-11-13）：只在打王時出現。
@@ -10847,7 +10913,7 @@ function syncBossHud() {
     hud = document.createElement('div');
     hud.id = 'bf-boss-hud';
     hud.className = 'bf-boss-hud';
-    scene.appendChild(hud);
+    bfTopStack(scene).appendChild(hud);
   }
   const btn = (who, name, m) => {
     const tank = bossStance(m) === 'tank';
@@ -11052,30 +11118,64 @@ function syncDojoHud() {
   const scene = document.getElementById('battle-scene');
   if (!scene) return;
   let el = document.getElementById('bf-dojo-hud');
-  let npc = document.getElementById('bf-dojo-npc');
   const d = state && state.dojo;
-  if (!d) { if (el) el.remove(); if (npc) npc.remove(); return; }
-  if (!el) { el = document.createElement('div'); el.id = 'bf-dojo-hud'; el.className = 'bf-gmt-hud'; scene.appendChild(el); }
+  if (!d) { if (el) el.remove(); closeDojoIntro(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'bf-dojo-hud'; el.className = 'bf-gmt-hud'; bfTopStack(scene).appendChild(el); }
   const t = dojoTier(d.tier);
   const down = !(state.hp > 0) && d.downAt ? `　💀 倒下 ${Math.floor((Date.now() - d.downAt) / 1000)} 秒（${DOJO_REVIVE_WAIT_MS / 1000} 秒後隊友扶你）` : '';
-  const html = `🥋 道館（${t.name}）　第 ${Math.max(1, d.floor)}／${DOJO_FLOORS} 關　已過 ${fmtMs(Math.max(0, Date.now() - d.startAt))}${down}
-    <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定放棄？打完沒領的關會補抽。'))dojoAbandon()">放棄</button>`;
-  if (el._html !== html) { el.innerHTML = html; el._html = html; }
-  /* 館主對話框（使用者 2026-11-14）：開打前、每關打完都要找館主 */
-  if (d.phase === 'fight') { if (npc) npc.remove(); return; }
-  if (!npc) { npc = document.createElement('div'); npc.id = 'bf-dojo-npc'; npc.className = 'bf-dojo-npc'; scene.appendChild(npc); }
-  const nextId = d.phase === 'talk' ? dojoFloorPlan(t, d.floor + 1, d.seed)[0] : null;
-  const last = d.floor >= DOJO_FLOORS;
-  const say = d.phase === 'reward'
-    ? `第 ${d.floor} 關通過，打得漂亮！這是你的獎勵。${last ? '五關全破，領完獎就送你回城。' : ''}`
-    : (d.floor === 0 ? `歡迎來到道館（${t.name}）。準備好就開始第 1 關。` : `要繼續第 ${d.floor + 1} 關嗎？`)
-      + (nextId ? `<br>下一關：<b>${shopEsc(MONSTERS[nextId].name)}</b>（Lv${MONSTERS[nextId].level}）` : '');
-  const btn = d.phase === 'reward'
-    ? `<button class="btn-small active" onclick="event.stopPropagation();dojoClaimFloor()">${last ? '領取獎勵並回城' : '領取獎勵'}</button>`
-    : `<button class="btn-small active" ${state.hp > 0 ? '' : 'disabled'} onclick="event.stopPropagation();dojoNextFloor()">開始第 ${d.floor + 1} 關</button>`;
-  const nh = `<img src="images/npc/2_m_swordmaster.png" alt="" onerror="this.remove()">
-    <div class="bf-dojo-say"><b>道館館主</b><br>${say}<div class="bf-dojo-btns">${btn}</div></div>`;
-  if (npc._html !== nh) { npc.innerHTML = nh; npc._html = nh; }
+  /* 館主 NPC 拿掉（使用者 2026-11-18）：關卡之間 HUD 上直接一顆「挑戰」，先看王的介紹再開打 */
+  const go = d.phase === 'talk'
+    ? `<button class="bf-hud-btn dojo-go" ${state.hp > 0 ? '' : 'disabled'} onclick="event.stopPropagation();openDojoIntro()">⚔️ 挑戰第 ${d.floor + 1} 關</button>` : '';
+  // 按鈕只在關卡／階段變了才重畫（計時每秒變，整塊重畫會把正要點的鈕換掉）
+  const html = `<span>🥋 ${t.name}　${Math.max(1, d.floor)}／${DOJO_FLOORS} 關　<span class="dojo-clock"></span></span>${go}
+    <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定放棄？打完的關獎勵已經發了。'))dojoAbandon()">放棄</button>`;
+  if (el._html !== html) { el.innerHTML = html; el._html = html; el._clock = el.querySelector('.dojo-clock'); }
+  const clock = fmtMs(Math.max(0, Date.now() - d.startAt)) + down;
+  if (el._clock.textContent !== clock) el._clock.textContent = clock;
+  if (d.phase !== 'talk') closeDojoIntro();
+}
+/* 挑戰前的王介紹：圖、種族／屬性／體型、HP、攻防、會的招式 */
+function closeDojoIntro() { const m = document.getElementById('dojo-intro'); if (m) m.remove(); }
+function openDojoIntro() {
+  const id = typeof dojoNextMobId === 'function' && dojoNextMobId();
+  const def = id && MONSTERS[id];
+  if (!def) return;
+  closeDojoIntro();
+  const d = state.dojo;
+  const pat = (typeof bossPatternFor === 'function' && bossPatternFor(id)) || [];
+  const moves = [...new Set(pat.map(p => p.name).filter(Boolean))];
+  const res = def.elementResistance || {};
+  const weak = Object.keys(res).filter(k => res[k] > 100).sort((a, b) => res[b] - res[a]).map(k => `${ELEMENT_NAMES[k] || k} ${res[k]}%`).join('、');
+  const row = (k, v) => `<div class="dojo-intro-row"><span>${k}</span><b>${v}</b></div>`;
+  const m = document.createElement('div');
+  m.id = 'dojo-intro';
+  m.className = 'modal-overlay';
+  m.onclick = e => { if (e.target === m) closeDojoIntro(); };
+  m.innerHTML = `<div class="modal-box dojo-intro">
+    <h3 class="modal-title">🥋 第 ${d.floor + 1}／${DOJO_FLOORS} 關</h3>
+    <div class="dojo-intro-body">
+      <div class="dojo-intro-head"><img src="${monsterImgSrc(id)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('monster')}'">
+        <div><div class="dojo-intro-name">${shopEsc(def.name)} <small>Lv.${def.level}</small></div><div class="monster-tags">${monsterTagsHtml(def)}</div></div></div>
+      ${row('HP', (def.hp || 0).toLocaleString())}${row('攻擊', (def.atk || 0).toLocaleString())}
+      ${row('防禦／魔防', `${def.def || 0}／${def.mdef || 0}`)}${row('命中／迴避', `${def.hit || 0}／${def.flee || 0}`)}
+      ${weak ? row('弱點屬性', weak) : ''}
+      ${moves.length ? `<div class="dojo-intro-moves">招式：${moves.map(shopEsc).join('、')}</div>` : ''}
+    </div>
+    <div class="modal-confirm dojo-intro-btns"><button class="btn-small" onclick="closeDojoIntro()">再等等</button>
+      <button class="btn-small active" onclick="closeDojoIntro();dojoNextFloor();syncDojoHud()">⚔️ 挑戰</button></div></div>`;
+  document.body.appendChild(m);
+}
+/* 道館彈窗：每關獎勵、全破結算；幾秒後自己消失，點一下提早關 */
+function showDojoToast(title, body) {
+  let box = document.getElementById('dojo-toasts');
+  if (!box) { box = document.createElement('div'); box.id = 'dojo-toasts'; box.className = 'dojo-toasts'; document.body.appendChild(box); }
+  const el = document.createElement('div');
+  el.className = 'dojo-toast';
+  el.innerHTML = `<b>${shopEsc(title)}</b>${body ? `<div>${shopEsc(body)}</div>` : ''}`;
+  const bye = () => { el.classList.add('out'); setTimeout(() => el.remove(), 300); };
+  el.onclick = bye;
+  box.appendChild(el);
+  setTimeout(bye, 3500);
 }
 function syncGvgHud() {
   const scene = document.getElementById('battle-scene');
@@ -11083,7 +11183,7 @@ function syncGvgHud() {
   let el = document.getElementById('bf-gvg-hud');
   const g = state && state.gvg;
   if (!g) { if (el) el.remove(); return; }
-  if (!el) { el = document.createElement('div'); el.id = 'bf-gvg-hud'; el.className = 'bf-gmt-hud'; scene.appendChild(el); }
+  if (!el) { el = document.createElement('div'); el.id = 'bf-gvg-hud'; el.className = 'bf-gmt-hud'; bfTopStack(scene).appendChild(el); }
   const v = state.vDuel;
   const phase = g.phase === 'defenders' ? `打倒城主隊伍${v ? '　剩 ' + fmtMs(Math.max(0, v.startAt + v.limitMs - Date.now())) : ''}`
     : g.phase === 'guardians' ? '打倒監護人與華麗金屬' : g.phase === 'emperium' ? '打破華麗金屬' : '';
@@ -11098,7 +11198,7 @@ function syncGmtHud() {
   let el = document.getElementById('bf-gmt-hud');
   const g = state && state.gmt;
   if (!g) { if (el) el.remove(); return; }
-  if (!el) { el = document.createElement('div'); el.id = 'bf-gmt-hud'; el.className = 'bf-gmt-hud'; scene.appendChild(el); }
+  if (!el) { el = document.createElement('div'); el.id = 'bf-gmt-hud'; el.className = 'bf-gmt-hud'; bfTopStack(scene).appendChild(el); }
   const left = Math.max(0, g.endAt - Date.now());
   const wait = g.nextAt && !state.vDuel ? `　下一輪 ${Math.max(0, Math.ceil((g.nextAt - Date.now()) / 1000))} 秒` : '';
   const html = `🏟️ 吉芬魔法大賽　第 ${Math.max(1, g.round)}／${GMT_ROUNDS} 輪　剩 ${fmtMs(left)}${wait}
