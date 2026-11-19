@@ -4752,7 +4752,7 @@ function tryMonkCombo(target, monDef) {
   const f = state.comboFinish;
   if (!f || rng() * 100 >= f.chance) return;
   const x = state.extremityFist;
-  const asuraReady = !!x && monkExplosionActive()
+  const asuraReady = !!x && monkExplosionActive() && asuraAllowed(target)
     && (state.spirits || 0) >= x.cost && rng() * 100 < x.chance;
   if (!asuraReady) {
     if ((state.spirits || 0) < f.cost) return;
@@ -4771,6 +4771,19 @@ function tryMonkCombo(target, monDef) {
 /* 阿修羅霸凰拳：消 5 顆氣球體與**全部 SP**，傷害隨消耗的 SP 上升，
    無視迴避與防禦，放完解除爆氣（官方規則）。
    猛龍誇強與氣絕崩擊（#79）兩條路都會走到這裡，所以抽成獨立函式。 */
+/* T64／T9 吃王型阿修羅（使用者 2026-11-19）：放置遊戲沒辦法手動排「狂蓄氣 → 爆氣 → 狂蓄氣 → 阿修」，
+   改成一個開關 state.asuraMode：
+     'normal'（預設）照舊：爆氣中普攻 5%、連段 40% 隨機發動，打到什麼就是什麼
+     'boss'  留給首領：一般怪完全不放（SP 留著）；打首領時 SP ≥ asuraSpPct% 就一定發動，
+             狂蓄氣對首領也必定觸發（內部冷卻照舊 5 秒）→ 補滿球 → 爆氣自動開 → 再補滿 → 阿修
+   SP 不夠就等藍水（自動戰鬥分頁的 SP 藥水）補上來。 */
+const ASURA_SP_PCT_DEFAULT = 80;
+function asuraBossMode() { return state.asuraMode === 'boss'; }
+function asuraAllowed(target) {
+  if (!asuraBossMode()) return true;
+  if (!autoTargetIsBoss(target)) return false;
+  return state.sp / Math.max(1, state.maxSp) * 100 >= (state.asuraSpPct != null ? state.asuraSpPct : ASURA_SP_PCT_DEFAULT);
+}
 function fireAsura(target, monDef) {
   const x = state.extremityFist;
   if (!x) return;
@@ -4807,7 +4820,7 @@ function tryTigerFist(target, monDef) {
   /* 氣絕崩擊之後可以接阿修羅（官方就有這條）。
      觸發機率與猛龍誇強那條相同（使用者 2026-08-15 指定），條件也一樣：爆氣中且球夠。 */
   const x = state.extremityFist;
-  if (x && monkExplosionActive() && (state.spirits || 0) >= x.cost
+  if (x && monkExplosionActive() && asuraAllowed(target) && (state.spirits || 0) >= x.cost
       && rng() * 100 < x.chance) {
     fireAsura(target, monDef);
     return target.hp <= 0;
@@ -4828,7 +4841,7 @@ function tryChampionProcs(target, monDef) {
   // 狂蓄氣：一口氣補滿 5 顆（不超過上限）
   const sc = state.soulCollect;
   if (sc && state.spiritsMax > 0 && (state.spirits || 0) < state.spiritsMax
-      && rng() * 100 < sc.chance && ready('ch_soulcollect', sc.cdSec)) {
+      && rng() * 100 < (asuraBossMode() && autoTargetIsBoss(target) ? 100 : sc.chance) && ready('ch_soulcollect', sc.cdSec)) {
     const before = state.spirits || 0;
     state.spirits = Math.min(state.spiritsMax, before + 5);
     logMsg(`🔵 「狂蓄氣」一口氣聚起 ${state.spirits - before} 顆氣球體！`);
@@ -4839,7 +4852,8 @@ function tryChampionProcs(target, monDef) {
      放在猛虎硬派山的檢查之前——沒學猛虎硬派山的修羅也照樣發動。 */
   const x = state.extremityFist;
   if (x && monkExplosionActive() && !isBowWeapon(getEquipBaseItemId('weapon'))
-      && (state.spirits || 0) >= x.cost && rng() * 100 < x.directChance) {
+      && (state.spirits || 0) >= x.cost && asuraAllowed(target)
+      && rng() * 100 < (asuraBossMode() ? 100 : x.directChance)) {
     fireAsura(target, monDef);
     return;
   }
@@ -6677,10 +6691,15 @@ function tickRoam(dt, now) {
 const TRAVEL_PORTAL_CELLS = { town: 20, dungeon: 30, field: 40 };
 const TRAVEL_ENTER_CELLS = 0.6;
 /* 趕路被怪卡住（使用者 2026-11-09）：同一張圖打滿這麼多隻就不再停下來打，比照回城直接走（怪照樣會追著打） */
-const TRAVEL_FIGHT_MAX = 30;
+const TRAVEL_FIGHT_MAX = 10;   // 2026-11-19 由 30 改 10
+const TRAVEL_NEAR_PORTAL_CELLS = 6;
 function travelForcedThrough() {
   const t = state.travel;
-  return !!t && (t.flee || (t.kills || 0) >= TRAVEL_FIGHT_MAX);
+  if (!t) return false;
+  if (t.flee || (t.kills || 0) >= TRAVEL_FIGHT_MAX) return true;
+  // 傳點就在眼前：不回頭打（隊友遠攻把怪打醒，會在傳點前走來走去，使用者 2026-11-19）
+  const p = travelPortalPolar();
+  return !!p && p.d <= TRAVEL_NEAR_PORTAL_CELLS;
 }
 function noteTravelKill() {
   const t = allyOwnerState().travel;
@@ -12912,12 +12931,53 @@ function tryAutoCastSkill(skipSupport) {
     if (state.sp < skillSpCost(sk, lv) || spPct < (sl.spThreshold || 0) || wastesResourceInTown(sk, lv)) continue;
     const isAttack = skillNeedsMonster(sk);
     if (isAttack && monsterCount < Math.max(1, sl.minMobs || 1)) continue;
+    if (!autoSlotCondOk(sl, sk)) continue;
     if (isAttack && !autoSkillInRange(sk, lv)) continue;
     if (isAttack && state.travel && !isTravelThreat(state.monsters[0])) continue;   // 趕路：被動怪不打
     if (autoSkillWasted(sk)) continue;
     castSkill(sk.id, lv < skillLv(sk.id) ? { forceLv: lv } : undefined);
     return;
   }
+}
+
+/* T64 技能發動條件（使用者 2026-11-19）：怪物隻數之外，每格可再限定
+     target     'boss' 只打首領／'normal' 只打一般怪
+     tgtHpOp    'le'／'ge' ＋ tgtHpPct：目標 HP ≤／≥ 幾 % 才放（收尾技、開場技）
+     selfHpPct  自己 HP ≤ 幾 % 才放（保命技）
+     eleAdv     技能屬性對目標有利（倍率 > 100%）才放
+   都是選填，沒設就不限制；同一格的條件全部成立才放。 */
+function autoTargetIsBoss(mon) {
+  const d = mon && MONSTERS[mon.defId];
+  return !!d && !!(d.isBoss || d.isMvp);
+}
+function autoSlotCondOk(sl, sk) {
+  const tgt = state.monsters && state.monsters[0];
+  if (sl.target === 'boss' && !autoTargetIsBoss(tgt)) return false;
+  if (sl.target === 'normal' && (!tgt || autoTargetIsBoss(tgt))) return false;
+  if ((sl.tgtHpOp === 'le' || sl.tgtHpOp === 'ge') && sl.tgtHpPct > 0) {
+    if (!tgt) return false;
+    const p = tgt.hp / Math.max(1, tgt.maxHp) * 100;
+    if (sl.tgtHpOp === 'le' ? p > sl.tgtHpPct : p < sl.tgtHpPct) return false;
+  }
+  if (sl.selfHpPct > 0 && state.hp / Math.max(1, state.maxHp) * 100 > sl.selfHpPct) return false;
+  if (sl.eleAdv && autoSlotHasElement(sk)) {
+    const d = tgt && MONSTERS[tgt.defId];
+    if (!d || getElementMultiplierVsMonster(sk.element, d, tgt) <= 1) return false;
+  }
+  return true;
+}
+function autoSlotHasElement(sk) { return !!sk && !!sk.element && sk.element !== 'neutral'; }
+// 格子上的條件摘要（UI 用），沒設條件回空字串
+function autoSlotCondText(sl) {
+  if (!sl || !sl.skillId) return '';
+  const out = [];
+  if ((sl.minMobs || 1) > 1) out.push(`${sl.minMobs}隻↑`);
+  if (sl.target === 'boss') out.push('首領');
+  if (sl.target === 'normal') out.push('一般怪');
+  if ((sl.tgtHpOp === 'le' || sl.tgtHpOp === 'ge') && sl.tgtHpPct > 0) out.push(`目標HP${sl.tgtHpOp === 'le' ? '≤' : '≥'}${sl.tgtHpPct}%`);
+  if (sl.selfHpPct > 0) out.push(`自身HP≤${sl.selfHpPct}%`);
+  if (sl.eleAdv) out.push('屬性有利');
+  return out.join('・');
 }
 
 /* 放了也沒效果的就跳過：元素更換對首領無效、目標已經是該屬性 */

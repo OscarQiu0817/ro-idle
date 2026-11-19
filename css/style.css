@@ -2871,3 +2871,12 @@ body.manual-log-off .combat-log { display: none; }
 /* 世界頻道單機模擬（沒連線時）：進入聊天室鈕縮到右下角，不蓋住模擬訊息 */
 .world-chat-local .world-chat-join-overlay { inset: auto 6px 6px auto; flex-direction: row; gap: 6px; }
 .world-chat-local-head { color: var(--ink-dim); font-size: 11px; }
+/* T64 自動戰鬥：上方切換角色（自己／隊友）＋技能條件 */
+.ab-who-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.ab-who-btn { padding: 4px 10px; border: 1px solid var(--line, #555); border-radius: 6px; background: rgba(255,255,255,.04); color: inherit; cursor: pointer; font-size: 12px; }
+.ab-who-btn small { margin-left: 4px; opacity: .7; }
+.ab-who-btn.sel { border-color: #ffd479; background: rgba(255,212,121,.16); font-weight: bold; }
+.ab-slot-cond { font-size: 10px; color: #ffd479; line-height: 1.2; }
+.ab-num { width: 4em; }
+.ab-select.ab-select-sm { flex: 0 0 auto; width: auto; }
+.ally-ab-links { display: flex; flex-wrap: wrap; gap: 6px; }

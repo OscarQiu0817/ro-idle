@@ -1054,10 +1054,10 @@ function renderAllyPanel() {
       <div class="ally-note-sm">隊友的 HP／SP 也會自然回復，公式跟你自己那套一樣。</div>
     </div>`;
 
-  // 每位隊友一份自動戰鬥設定（#105）
+  // 隊友的技能設定移到自動戰鬥分頁（T64，使用者 2026-11-19）
   if (list.length) {
-    html += `<div class="ally-sec">隊友的自動戰鬥<span class="codex-sec-hint">規則跟你自己那頁一樣</span></div>`;
-    html += list.map(a => renderAllyAutoBattle(a)).join('');
+    html += `<div class="ally-sec">隊友的自動戰鬥<span class="codex-sec-hint">在自動戰鬥分頁上方切換角色</span></div>
+      <div class="ally-opt ally-ab-links">${list.map(a => `<button class="btn-small" onclick="openAllyAutoBattle('${a._slot}')">⚔️ ${a._allyName} 的技能設定</button>`).join('')}</div>`;
   }
 
   /* 隊友的箭跟藥水同一個規則：射的是玩家背包裡的箭，錢也是玩家出（#93）。
@@ -1092,95 +1092,7 @@ function renderAllyPanel() {
   el.innerHTML = html;
   updateAllyPanelLive();
 }
-/* 一位隊友的自動戰鬥設定（#105）。
-
-   技能清單要用**隊友自己的身分**去撈（`usableSkillEntries()` 讀的是全域 state），
-   所以整段包在 withAlly 裡；分類走跟自動戰鬥分頁同一組 `isAttackSkill()` /
-   `isAutoSupportSkill()`，玩家看到什麼規則、隊友就是什麼規則。
-
-   設定值存在隊友快照自己身上（`autoSkill` / `autoSkillConfig` / `autoSupportSkills`），
-   那份物件住在 `state.allies` 裡，會跟著玩家的存檔一起存。
-   預設值是**那個角色本人掛機時的設定**——快照是整份複製過來的，直接沿用最合理。 */
-let allyAutoOpen = {};   // { slot: true } 哪幾位展開著
-function toggleAllyAuto(slot) { allyAutoOpen[slot] = !allyAutoOpen[slot]; renderAllyPanel(); }
-
-function renderAllyAutoBattle(a) {
-  const open = !!allyAutoOpen[a._slot];
-  // 隊友也是 4 招優先序（T8）；舊的兩招設定由 migrateAutoSkillConfig 轉成 4 格
-  const cfg = a.autoSkillConfig = migrateAutoSkillConfig(a.autoSkillConfig);
-  let atk = [], sup = [];
-  withAlly(a, () => {
-    orderedSupportEntries().forEach(({ sk, lv }) => {
-      if (isAttackSkill(sk)) atk.push({ sk, lv });
-      else if (isAutoSupportSkill(sk)) sup.push({ sk, lv });
-    });
-  });
-  const on = sup.filter(e => (a.autoSupportSkills || {})[e.sk.id]).length;
-  const cur = atk.find(e => cfg.slots.some(sl => sl.skillId === e.sk.id));
-  const head = `<div class="ally-sec ally-sec-toggle" onclick="toggleAllyAuto('${a._slot}')">
-      <span>${open ? '▾' : '▸'} ${a._allyName}</span>
-      <span class="codex-sec-hint">${cur ? cur.sk.name : '沒設攻擊技'}・輔助 ${on}</span>
-    </div>`;
-  if (!open) return head;
-
-  const opt = (list, sel) => '<option value="">不使用技能</option>'
-    + list.map(e => `<option value="${e.sk.id}" ${sel === e.sk.id ? 'selected' : ''}>${e.sk.name} Lv${e.lv}</option>`).join('');
-  let html = head + `<div class="ally-opt">
-    <label><input type="checkbox" ${a.autoAttack !== false ? 'checked' : ''} onchange="setAllyAutoAttack('${a._slot}', this.checked)">
-      自動普攻</label>
-    <label><input type="checkbox" ${a.autoSkill ? 'checked' : ''} onchange="setAllyAutoSkill('${a._slot}', this.checked)">
-      自動施放攻擊技能</label>
-    <div class="ally-note-sm">兩個都關＝只放輔助技能、不打怪（帶新手不搶怪）</div>`;
-  if (!atk.length) {
-    html += '<div class="ally-note-sm">這位隊友沒有學任何攻擊技能。</div>';
-  } else {
-    html += cfg.slots.map((sl, i) => `<div class="ally-slot-row">
-      <label>第 ${i + 1} 招
-        <select class="ally-sel" onchange="setAllyAutoSlot('${a._slot}', ${i}, 'skillId', this.value)">${opt(atk, sl.skillId)}</select></label>
-      ${sl.skillId && atk.find(e => e.sk.id === sl.skillId) ? `<label>等級
-        <select class="ally-sel" onchange="setAllyAutoSlot('${a._slot}', ${i}, 'lv', parseInt(this.value) || null)">${withAlly(a, () => autoSlotLvOptions(sl, atk.find(e => e.sk.id === sl.skillId).lv))}</select></label>` : ''}
-      ${sl.skillId ? `<label>SP 保留
-        <input class="ally-num" type="number" min="0" max="90" value="${sl.spThreshold || 0}"
-          onchange="setAllyAutoSlot('${a._slot}', ${i}, 'spThreshold', Math.max(0, Math.min(90, parseInt(this.value) || 0)))">%</label>
-      <label>怪物達
-        <input class="ally-num" type="number" min="1" max="${MELEE_MAX_MONSTERS}" value="${sl.minMobs || 1}"
-          onchange="setAllyAutoSlot('${a._slot}', ${i}, 'minMobs', Math.max(1, Math.min(MELEE_MAX_MONSTERS, parseInt(this.value) || 1)))">隻才放</label>` : ''}
-    </div>`).join('');
-  }
-  if (sup.length) {
-    html += '<div class="ally-note-sm">輔助技能（勾了才會放；由上往下檢查，▲▼ 調整優先）</div>';
-    html += sup.map((e, i) => `<div class="ally-sup-row">
-      <button class="btn-small" ${i === 0 ? 'disabled' : ''} onclick="moveSupportOrder('${a._slot}', '${e.sk.id}', -1)">▲</button>
-      <button class="btn-small" ${i === sup.length - 1 ? 'disabled' : ''} onclick="moveSupportOrder('${a._slot}', '${e.sk.id}', 1)">▼</button>
-      <label><input type="checkbox" ${(a.autoSupportSkills || {})[e.sk.id] ? 'checked' : ''}
-      onchange="setAllyAutoSupport('${a._slot}','${e.sk.id}', this.checked)"> ${e.sk.name} Lv${e.lv}</label></div>`).join('');
-  }
-  html += '</div>';
-  return html;
-}
 function allyBySlot(slot) { return (state.allies || []).find(a => a && String(a._slot) === String(slot)); }
-function setAllyAutoAttack(slot, v) { const a = allyBySlot(slot); if (!a) return; a.autoAttack = !!v; saveGame(); renderAllyPanel(); }
-function setAllyAutoSkill(slot, v) { const a = allyBySlot(slot); if (!a) return; a.autoSkill = !!v; saveGame(); renderAllyPanel(); }
-function setAllyAutoSlot(slot, i, key, v) {
-  const a = allyBySlot(slot);
-  if (!a) return;
-  a.autoSkillConfig = migrateAutoSkillConfig(a.autoSkillConfig);
-  const sl = a.autoSkillConfig.slots[i];
-  if (!sl) return;
-  sl[key] = v === '' ? null : v;
-  if (key === 'skillId') sl.lv = null;   // 換技能：施放等級回到最高
-  saveGame();
-  renderAllyPanel();
-}
-function setAllyAutoSupport(slot, skillId, v) {
-  const a = allyBySlot(slot);
-  if (!a) return;
-  if (!a.autoSupportSkills) a.autoSupportSkills = {};
-  a.autoSupportSkills[skillId] = !!v;
-  saveGame();
-  renderAllyPanel();
-}
-
 let allyHireListOpen = null;   // null = 照地圖決定（安全區展開、戰鬥圖收起）
 function toggleAllyHireList() {
   const safe = inSafeZone();
@@ -5345,11 +5257,10 @@ function applyFarmModeTheme() {
 }
 
 /* ---------------- 自動戰鬥分頁 ---------------- */
-function renderAutoBattleTab() {
-  const el = document.getElementById('tab-autobattle');
-  if (!el) return;
-
-  const job = currentJob();
+/* 自動戰鬥分頁的技能區塊（攻擊 4 格、阿修羅、輔助）。state 可能是隊友（renderAutoBattleTab 用 withAlly 包起來），
+   處理函式一律寫到 abOwner() */
+function abSkillSectionsHtml() {
+  const abWhoArg = abWho == null ? 'null' : `'${abWho}'`;
   state.autoSkillConfig = migrateAutoSkillConfig(state.autoSkillConfig);
   const config = state.autoSkillConfig;
 
@@ -5377,6 +5288,187 @@ function renderAutoBattleTab() {
     if (isAttackSkill(sk)) attackSkills.push(row);
     else if (isAutoSupportSkill(sk)) supportSkills.push(row);
   });
+
+  // 攻擊技能下拉選項
+  /* 4 招優先序（3d）：4 格橫向並列，點一格在下方設定；第 1 格往後檢查，第一個條件成立的就放 */
+  if (abSelSlot >= config.slots.length) abSelSlot = 0;
+  const slotCards = config.slots.map((sl, i) => {
+    const sk = sl.skillId && SKILLS[sl.skillId];
+    const lv = sk ? autoSlotLv(sl, sk) : 0;   // 這格選的施放等級
+    const t = sk ? autoSkillTiming(sk, lv) : null;
+    return `<button class="ab-slot-card${i === abSelSlot ? ' sel' : ''}${sk ? '' : ' empty'}" onclick="selectAutoSkillSlot(${i})">
+        <span class="ab-slot-no">${i + 1}</span>
+        ${sk ? `<span class="ab-slot-icon el-${sk.element || 'neutral'}">${skillIconHtml(sk) || skillDisplayName(sk).slice(0, 1)}</span>
+          <span class="ab-slot-name">${skillDisplayName(sk)}</span>
+          <span class="ab-slot-meta">Lv${lv}${t.cast ? ' · 詠 ' + (t.cast / 1000).toFixed(1) + 's' : ' · 瞬發'}</span>
+          <span class="ab-slot-meta">延 ${(t.acd / 1000).toFixed(1)}s${t.cd ? ' · 冷 ' + (t.cd / 1000).toFixed(1) + 's' : ''}</span>
+          ${autoSlotCondText(sl) ? `<span class="ab-slot-cond">${autoSlotCondText(sl)}</span>` : ''}
+          <span class="ab-slot-cd" id="ab-slot-cd-${i}"></span>` : '<span class="ab-slot-empty">＋<br>空格</span>'}
+      </button>`;
+  }).join('');
+  const cur = config.slots[abSelSlot];
+  const curOpts = attackSkills.map(sk =>
+    `<option value="${sk.id}" ${cur.skillId === sk.id ? 'selected' : ''}>[${sk.jobName}] ${sk.name} Lv${sk.lv}</option>`).join('');
+  const i = abSelSlot;
+  const slotHtml = `
+        <div class="ab-slots-row">${slotCards}</div>
+        <div class="ab-skill-slot">
+          <div class="ab-skill-slot-label">第 ${i + 1} 格設定</div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">選擇技能</label>
+            <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'skillId', this.value || null)">
+              <option value="">不使用技能</option>
+              ${curOpts}
+            </select>
+          </div>
+          ${cur.skillId ? `
+          <div class="ab-config-row">
+            <label class="ab-config-label">施放等級</label>
+            <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'lv', parseInt(this.value) || null)">${autoSlotLvOptions(cur, skillLv(cur.skillId))}</select>
+          </div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">SP 保留 %</label>
+            <input type="range" class="ab-slider" min="0" max="90" value="${cur.spThreshold || 0}"
+              oninput="setAutoSkillSlot(${i}, 'spThreshold', parseInt(this.value), true);document.getElementById('sp-threshold-val-${i}').textContent=this.value+'%'">
+            <span id="sp-threshold-val-${i}" class="ab-slider-val">${cur.spThreshold || 0}%</span>
+          </div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">怪物數量門檻</label>
+            <input type="range" class="ab-slider" min="1" max="5" value="${cur.minMobs || 1}"
+              oninput="setAutoSkillSlot(${i}, 'minMobs', parseInt(this.value), true);document.getElementById('min-mobs-val-${i}').textContent=this.value+'隻'">
+            <span id="min-mobs-val-${i}" class="ab-slider-val">${cur.minMobs || 1}隻</span>
+          </div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">目標</label>
+            <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'target', this.value || null)">
+              <option value="">不限</option>
+              <option value="boss" ${cur.target === 'boss' ? 'selected' : ''}>只打首領（MVP／迷你王）</option>
+              <option value="normal" ${cur.target === 'normal' ? 'selected' : ''}>只打一般怪</option>
+            </select>
+          </div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">目標 HP</label>
+            <select class="ab-select ab-select-sm" onchange="setAutoSkillSlot(${i}, 'tgtHpOp', this.value || null)">
+              <option value="">不限</option>
+              <option value="le" ${cur.tgtHpOp === 'le' ? 'selected' : ''}>低於（收尾）</option>
+              <option value="ge" ${cur.tgtHpOp === 'ge' ? 'selected' : ''}>高於（開場）</option>
+            </select>
+            ${cur.tgtHpOp ? `<input type="number" class="ab-num" min="1" max="100" value="${cur.tgtHpPct || 50}"
+              onchange="setAutoSkillSlot(${i}, 'tgtHpPct', Math.max(1, Math.min(100, parseInt(this.value) || 50)))"><span class="ab-config-hint">%</span>` : ''}
+          </div>
+          <div class="ab-config-row">
+            <label class="ab-config-label">自己 HP</label>
+            <input type="range" class="ab-slider" min="0" max="90" step="5" value="${cur.selfHpPct || 0}"
+              oninput="setAutoSkillSlot(${i}, 'selfHpPct', parseInt(this.value), true);document.getElementById('self-hp-val-${i}').textContent=this.value>0?this.value+'% 以下':'不限'">
+            <span id="self-hp-val-${i}" class="ab-slider-val">${cur.selfHpPct > 0 ? cur.selfHpPct + '% 以下' : '不限'}</span>
+          </div>
+          ${autoSlotHasElement(SKILLS[cur.skillId]) ? `<div class="ab-config-row">
+            <label class="auto-toggle"><input type="checkbox" ${cur.eleAdv ? 'checked' : ''} onchange="setAutoSkillSlot(${i}, 'eleAdv', this.checked)">
+              屬性有利才放（${ELEMENT_NAMES[SKILLS[cur.skillId].element] || SKILLS[cur.skillId].element}屬性對目標傷害 &gt; 100%）</label>
+          </div>` : ''}
+          <div class="ab-info-text">條件全部成立才放；不成立就往下一格找。</div>` : ''}
+          <div class="ab-slot-actions">
+            <button class="btn-small" ${i === 0 ? 'disabled' : ''} onclick="moveAutoSkillSlot(${i}, -1)">◀ 往左移</button>
+            <button class="btn-small" ${i === config.slots.length - 1 ? 'disabled' : ''} onclick="moveAutoSkillSlot(${i}, 1)">往右移 ▶</button>
+            <button class="btn-small ghost" ${cur.skillId ? '' : 'disabled'} onclick="clearAutoSkillSlot(${i})">✕ 清空</button>
+          </div>
+        </div>`;
+
+  // 輔助技能勾選
+  const supportRows = supportSkills.map((sk, si) => {
+    const enabled = state.autoSupportSkills && state.autoSupportSkills[sk.id];
+    const spCost = Array.isArray(sk.spCost) ? sk.spCost[sk.lv - 1] : sk.spCost;
+    // 顯示卡片修正後的冷卻（#55），不然畫面數字跟實際等待時間對不上
+    const cd = effectiveCooldownMs(sk.id, Array.isArray(sk.cooldown) ? sk.cooldown[sk.lv - 1] : sk.cooldown) / 1000;
+    let healCfgHtml = '';
+    if (sk.type === 'heal') {
+      const healCfg = (state.autoHealConfig && state.autoHealConfig[sk.id]) || { hpThreshold: 70, spThreshold: 0 };
+      healCfgHtml = `<span class="support-skill-heal-cfg">
+        HP% ≤ <input type="number" min="1" max="99" value="${healCfg.hpThreshold}" style="width:3.5em" onchange="abSetHeal('${sk.id}', 'hpThreshold', this.value)">才施放
+        ・ SP% ≥ <input type="number" min="0" max="100" value="${healCfg.spThreshold}" style="width:3.5em" onchange="abSetHeal('${sk.id}', 'spThreshold', this.value)">才施放
+      </span>`;
+    }
+    return `<div class="support-skill-row ${enabled ? 'enabled' : ''}">
+      <span class="support-order">
+        <button class="btn-small" ${si === 0 ? 'disabled' : ''} onclick="moveSupportOrder(${abWhoArg}, '${sk.id}', -1)" title="提高優先">▲</button>
+        <button class="btn-small" ${si === supportSkills.length - 1 ? 'disabled' : ''} onclick="moveSupportOrder(${abWhoArg}, '${sk.id}', 1)" title="降低優先">▼</button>
+      </span>
+      <label class="support-skill-toggle">
+        <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleAutoSupportSkill('${sk.id}', this.checked);">
+        <span class="support-skill-info">
+          <span class="support-skill-name">${skillIconHtml(sk)}${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} Lv${sk.lv}</span>
+          <span class="support-skill-desc">${sk.desc}</span>
+          <span class="support-skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</span>
+          ${healCfgHtml}
+        </span>
+      </label>
+    </div>`;
+  }).join('');
+
+  return {
+    attack: `
+    <!-- 攻擊技能設定 -->
+    <div class="ab-section">
+      <h4 class="ab-section-title">🗡️ 攻擊方式</h4>
+      <div class="ab-toggle-row">
+        <label class="auto-toggle" title="技能放不出來時走過去普攻；關掉時停在技能射程只放技能（法師類適用）"><input type="checkbox" ${state.autoAttack !== false ? 'checked' : ''} onchange="abOwner().autoAttack=this.checked;saveGame();"> 自動普攻</label>
+        <label class="auto-toggle"><input type="checkbox" ${state.autoSkill ? 'checked' : ''} onchange="abOwner().autoSkill=this.checked;saveGame();"> 自動施放技能</label>
+      </div>
+      <div class="ab-info-text">由第 1 招往後檢查，第一個條件成立的就施放；常駐增益在下方「輔助技能」設定，不占欄位。</div>
+      <div class="ab-cast-status" id="ab-cast-status"></div>
+      <div class="ab-attack-config">${slotHtml}
+      </div>
+    </div>
+
+
+    ${state.extremityFist ? `
+    <div class="ab-section">
+      <h4 class="ab-section-title">💢 阿修羅霸凰拳</h4>
+      <div class="ab-toggle-row">
+        <label class="auto-toggle"><input type="radio" name="asura-mode" ${state.asuraMode === 'boss' ? '' : 'checked'} onchange="abSet('asuraMode', 'normal')"> 隨機發動</label>
+        <label class="auto-toggle"><input type="radio" name="asura-mode" ${state.asuraMode === 'boss' ? 'checked' : ''} onchange="abSet('asuraMode', 'boss')"> 留給首領（爆發序列）</label>
+      </div>
+      <div class="ab-info-text">${state.asuraMode === 'boss'
+        ? '一般怪不放、SP 留著。打首領時：狂蓄氣必定觸發（冷卻 5 秒）補滿球 → 爆氣自動開 → 再補滿球 → SP 夠就必定放阿修羅。記得開 SP 藥水。'
+        : '爆氣中普攻、連段接上時機率發動，打到什麼怪就是什麼怪。'}</div>
+      ${state.asuraMode === 'boss' ? `<div class="ab-config-row">
+        <label class="ab-config-label">SP 至少</label>
+        <input type="range" class="ab-slider" min="10" max="100" step="5" value="${state.asuraSpPct != null ? state.asuraSpPct : ASURA_SP_PCT_DEFAULT}"
+          oninput="abSet('asuraSpPct', parseInt(this.value), true);document.getElementById('asura-sp-val').textContent=this.value+'%'">
+        <span id="asura-sp-val" class="ab-slider-val">${state.asuraSpPct != null ? state.asuraSpPct : ASURA_SP_PCT_DEFAULT}%</span>
+        <span class="ab-config-hint">才放（傷害隨燒掉的 SP 上升）</span>
+      </div>` : ''}
+    </div>` : ''}
+`,
+    support: `
+    <!-- 輔助技能設定 -->
+    ${supportSkills.length > 0 ? `
+    <div class="ab-section">
+      <h4 class="ab-section-title">💚 輔助技能</h4>
+      <div class="ab-info-text">由上往下檢查，第一個需要補的先放；用 ▲▼ 調整優先順序。</div>
+      <div class="support-skill-list">${supportRows}</div>
+    </div>
+    ` : ''}
+
+`,
+  };
+}
+
+function renderAutoBattleTab() {
+  const el = document.getElementById('tab-autobattle');
+  if (!el) return;
+  /* T64：隊伍分頁的「隊友的自動戰鬥」併到這裡（使用者 2026-11-19），上方切換角色。
+     隊友的技能清單要用他自己的身分撈，整段包在 withAlly 裡；藥水、箭矢、復活是全隊共用玩家背包，仍在隊伍分頁 */
+  const ally = abAlly();
+  if (ally) {
+    const secs = withAlly(ally, () => abSkillSectionsHtml());
+    el.innerHTML = `<h3 class="panel-title">⚔️ 自動戰鬥設定</h3>${abWhoBarHtml()}${secs.attack}${secs.support}
+      <div class="ab-info-text">隊友的藥水、藍水、箭矢、復活在「隊伍」分頁設定（用的是你背包裡的）。</div>`;
+    updateAutoSkillLive();
+    return;
+  }
+
+  const secs = abSkillSectionsHtml();
 
   // 藥水設定 - 兩個下拉選單
   const hpThreshold = state.autoPotion.hpThreshold || 50;
@@ -5427,109 +5519,12 @@ function renderAutoBattleTab() {
     ? `<option value="blue_potion" selected>${spFallbackDef.name} (恢復${spFallbackDef.restoreSp}SP) 持有${getItemQty('blue_potion')}</option>`
     : '';
 
-  // 攻擊技能下拉選項
-  /* 4 招優先序（3d）：4 格橫向並列，點一格在下方設定；第 1 格往後檢查，第一個條件成立的就放 */
-  if (abSelSlot >= config.slots.length) abSelSlot = 0;
-  const slotCards = config.slots.map((sl, i) => {
-    const sk = sl.skillId && SKILLS[sl.skillId];
-    const lv = sk ? autoSlotLv(sl, sk) : 0;   // 這格選的施放等級
-    const t = sk ? autoSkillTiming(sk, lv) : null;
-    return `<button class="ab-slot-card${i === abSelSlot ? ' sel' : ''}${sk ? '' : ' empty'}" onclick="selectAutoSkillSlot(${i})">
-        <span class="ab-slot-no">${i + 1}</span>
-        ${sk ? `<span class="ab-slot-icon el-${sk.element || 'neutral'}">${skillIconHtml(sk) || skillDisplayName(sk).slice(0, 1)}</span>
-          <span class="ab-slot-name">${skillDisplayName(sk)}</span>
-          <span class="ab-slot-meta">Lv${lv}${t.cast ? ' · 詠 ' + (t.cast / 1000).toFixed(1) + 's' : ' · 瞬發'}</span>
-          <span class="ab-slot-meta">延 ${(t.acd / 1000).toFixed(1)}s${t.cd ? ' · 冷 ' + (t.cd / 1000).toFixed(1) + 's' : ''}</span>
-          <span class="ab-slot-cd" id="ab-slot-cd-${i}"></span>` : '<span class="ab-slot-empty">＋<br>空格</span>'}
-      </button>`;
-  }).join('');
-  const cur = config.slots[abSelSlot];
-  const curOpts = attackSkills.map(sk =>
-    `<option value="${sk.id}" ${cur.skillId === sk.id ? 'selected' : ''}>[${sk.jobName}] ${sk.name} Lv${sk.lv}</option>`).join('');
-  const i = abSelSlot;
-  const slotHtml = `
-        <div class="ab-slots-row">${slotCards}</div>
-        <div class="ab-skill-slot">
-          <div class="ab-skill-slot-label">第 ${i + 1} 格設定</div>
-          <div class="ab-config-row">
-            <label class="ab-config-label">選擇技能</label>
-            <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'skillId', this.value || null)">
-              <option value="">不使用技能</option>
-              ${curOpts}
-            </select>
-          </div>
-          ${cur.skillId ? `
-          <div class="ab-config-row">
-            <label class="ab-config-label">施放等級</label>
-            <select class="ab-select" onchange="setAutoSkillSlot(${i}, 'lv', parseInt(this.value) || null)">${autoSlotLvOptions(cur, skillLv(cur.skillId))}</select>
-          </div>
-          <div class="ab-config-row">
-            <label class="ab-config-label">SP 保留 %</label>
-            <input type="range" class="ab-slider" min="0" max="90" value="${cur.spThreshold || 0}"
-              oninput="setAutoSkillSlot(${i}, 'spThreshold', parseInt(this.value), true);document.getElementById('sp-threshold-val-${i}').textContent=this.value+'%'">
-            <span id="sp-threshold-val-${i}" class="ab-slider-val">${cur.spThreshold || 0}%</span>
-          </div>
-          <div class="ab-config-row">
-            <label class="ab-config-label">怪物數量門檻</label>
-            <input type="range" class="ab-slider" min="1" max="5" value="${cur.minMobs || 1}"
-              oninput="setAutoSkillSlot(${i}, 'minMobs', parseInt(this.value), true);document.getElementById('min-mobs-val-${i}').textContent=this.value+'隻'">
-            <span id="min-mobs-val-${i}" class="ab-slider-val">${cur.minMobs || 1}隻</span>
-          </div>` : ''}
-          <div class="ab-slot-actions">
-            <button class="btn-small" ${i === 0 ? 'disabled' : ''} onclick="moveAutoSkillSlot(${i}, -1)">◀ 往左移</button>
-            <button class="btn-small" ${i === config.slots.length - 1 ? 'disabled' : ''} onclick="moveAutoSkillSlot(${i}, 1)">往右移 ▶</button>
-            <button class="btn-small ghost" ${cur.skillId ? '' : 'disabled'} onclick="clearAutoSkillSlot(${i})">✕ 清空</button>
-          </div>
-        </div>`;
-
-  // 輔助技能勾選
-  const supportRows = supportSkills.map((sk, si) => {
-    const enabled = state.autoSupportSkills && state.autoSupportSkills[sk.id];
-    const spCost = Array.isArray(sk.spCost) ? sk.spCost[sk.lv - 1] : sk.spCost;
-    // 顯示卡片修正後的冷卻（#55），不然畫面數字跟實際等待時間對不上
-    const cd = effectiveCooldownMs(sk.id, Array.isArray(sk.cooldown) ? sk.cooldown[sk.lv - 1] : sk.cooldown) / 1000;
-    let healCfgHtml = '';
-    if (sk.type === 'heal') {
-      const healCfg = (state.autoHealConfig && state.autoHealConfig[sk.id]) || { hpThreshold: 70, spThreshold: 0 };
-      healCfgHtml = `<span class="support-skill-heal-cfg">
-        HP% ≤ <input type="number" min="1" max="99" value="${healCfg.hpThreshold}" style="width:3.5em" onchange="setAutoHealHpThreshold('${sk.id}', this.value)">才施放
-        ・ SP% ≥ <input type="number" min="0" max="100" value="${healCfg.spThreshold}" style="width:3.5em" onchange="setAutoHealSpThreshold('${sk.id}', this.value)">才施放
-      </span>`;
-    }
-    return `<div class="support-skill-row ${enabled ? 'enabled' : ''}">
-      <span class="support-order">
-        <button class="btn-small" ${si === 0 ? 'disabled' : ''} onclick="moveSupportOrder(null, '${sk.id}', -1)" title="提高優先">▲</button>
-        <button class="btn-small" ${si === supportSkills.length - 1 ? 'disabled' : ''} onclick="moveSupportOrder(null, '${sk.id}', 1)" title="降低優先">▼</button>
-      </span>
-      <label class="support-skill-toggle">
-        <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleAutoSupportSkill('${sk.id}', this.checked);">
-        <span class="support-skill-info">
-          <span class="support-skill-name">${skillIconHtml(sk)}${typeof skillDisplayName === 'function' ? skillDisplayName(sk) : sk.name} Lv${sk.lv}</span>
-          <span class="support-skill-desc">${sk.desc}</span>
-          <span class="support-skill-cost">SP ${spCost} ・ 冷卻 ${cd}s</span>
-          ${healCfgHtml}
-        </span>
-      </label>
-    </div>`;
-  }).join('');
-
   el.innerHTML = `
     <h3 class="panel-title">⚔️ 自動戰鬥設定</h3>
+    ${abWhoBarHtml()}
 
     ${sageConverterHtml()}
-
-    <!-- 攻擊技能設定 -->
-    <div class="ab-section">
-      <h4 class="ab-section-title">🗡️ 攻擊方式</h4>
-      <div class="ab-toggle-row">
-        <label class="auto-toggle" title="技能放不出來時走過去普攻；關掉時停在技能射程只放技能（法師類適用）"><input type="checkbox" ${state.autoAttack !== false ? 'checked' : ''} onchange="state.autoAttack=this.checked;saveGame();"> 自動普攻</label>
-        <label class="auto-toggle"><input type="checkbox" ${state.autoSkill ? 'checked' : ''} onchange="state.autoSkill=this.checked;saveGame();"> 自動施放技能</label>
-      </div>
-      <div class="ab-info-text">由第 1 招往後檢查，第一個條件成立的就施放；常駐增益在下方「輔助技能」設定，不占欄位。</div>
-      <div class="ab-cast-status" id="ab-cast-status"></div>
-      <div class="ab-attack-config">${slotHtml}
-      </div>
-    </div>
+    ${secs.attack}
 
     <!-- 能量外套 -->
     ${state.hasEnergyCoatUnlock ? `
@@ -5546,15 +5541,7 @@ function renderAutoBattleTab() {
     </div>
     ` : ''}
 
-    <!-- 輔助技能設定 -->
-    ${supportSkills.length > 0 ? `
-    <div class="ab-section">
-      <h4 class="ab-section-title">💚 輔助技能</h4>
-      <div class="ab-info-text">由上往下檢查，第一個需要補的先放；用 ▲▼ 調整優先順序。</div>
-      <div class="support-skill-list">${supportRows}</div>
-    </div>
-    ` : ''}
-
+    ${secs.support}
     <!-- 藥水設定 -->
     <div class="ab-section">
       <h4 class="ab-section-title">🧪 藥水設定</h4>
@@ -5668,9 +5655,36 @@ function renderAutoBattleTab() {
 
 // 自動戰鬥配置設定
 let abSelSlot = 0;
+let abWho = null;   // null＝自己；否則是隊友的 _slot
+function abAlly() {
+  if (abWho == null) return null;
+  const a = allyBySlot(abWho);
+  if (!a) abWho = null;
+  return a || null;
+}
+function abOwner() { return abAlly() || state; }
+function selectAbWho(slot) { abWho = slot; abSelSlot = 0; renderAutoBattleTab(); }
+function openAllyAutoBattle(slot) { abWho = slot; abSelSlot = 0; switchTab('autobattle'); }
+function abWhoBarHtml() {
+  const list = (state.allies || []).filter(Boolean);
+  if (!list.length) return '';
+  const btn = (slot, label) => `<button class="ab-who-btn${String(abWho) === String(slot) ? ' sel' : ''}"
+    onclick="selectAbWho(${slot == null ? 'null' : `'${slot}'`})">${label}</button>`;
+  return `<div class="ab-who-row">${btn(null, '🙋 ' + shopEsc(state.name || '自己'))}${list.map(a =>
+    btn(a._slot, `${shopEsc(a._allyName || a.name || '隊友')}<small>${(JOB_TREE[a.jobId] || {}).name || ''}</small>`)).join('')}</div>`;
+}
+function abSet(key, v, quiet) { abOwner()[key] = v; saveGame(); if (!quiet) renderAutoBattleTab(); }
+function abSetHeal(id, key, v) {
+  const o = abOwner();
+  if (!o.autoHealConfig) o.autoHealConfig = {};
+  const c = o.autoHealConfig[id] || (o.autoHealConfig[id] = { hpThreshold: 70, spThreshold: 0 });
+  c[key] = key === 'hpThreshold' ? Math.max(1, Math.min(99, parseInt(v) || 70)) : Math.max(0, Math.min(100, parseInt(v) || 0));
+  saveGame();
+}
 function selectAutoSkillSlot(i) { abSelSlot = i; renderAutoBattleTab(); }
 function moveAutoSkillSlot(i, dir) {
-  const slots = migrateAutoSkillConfig(state.autoSkillConfig).slots;
+  const o = abOwner();
+  const slots = (o.autoSkillConfig = migrateAutoSkillConfig(o.autoSkillConfig)).slots;
   const j = i + dir;
   if (j < 0 || j >= slots.length) return;
   [slots[i], slots[j]] = [slots[j], slots[i]];
@@ -5679,7 +5693,8 @@ function moveAutoSkillSlot(i, dir) {
   renderAutoBattleTab();
 }
 function clearAutoSkillSlot(i) {
-  migrateAutoSkillConfig(state.autoSkillConfig).slots[i] = emptyAutoSkillSlot();
+  const o = abOwner();
+  (o.autoSkillConfig = migrateAutoSkillConfig(o.autoSkillConfig)).slots[i] = emptyAutoSkillSlot();
   saveGame();
   renderAutoBattleTab();
 }
@@ -5709,35 +5724,38 @@ function updateAutoSkillLive() {
   const box = document.getElementById('ab-cast-status');
   if (!box) return;
   const now = Date.now();
-  const c = state.casting;
+  const o = abOwner();
+  const c = o.casting;
   let label = '待命', pct = 0, kind = 'idle';
   if (c) {
     const sk = SKILLS[c.skillId];
     label = `🔮 詠唱「${sk ? skillDisplayName(sk) : c.skillId}」剩 ${Math.max(0, (c.endAt - now) / 1000).toFixed(1)} 秒`;
     pct = (now - c.startAt) / Math.max(1, c.endAt - c.startAt) * 100;
     kind = 'cast';
-  } else if (now < (state.acdUntil || 0)) {
-    const total = Math.max(1, state.acdUntil - (state.acdFrom || now));
-    label = `⏳ 後延遲 剩 ${((state.acdUntil - now) / 1000).toFixed(1)} 秒（所有技能共用）`;
-    pct = (1 - (state.acdUntil - now) / total) * 100;
+  } else if (now < (o.acdUntil || 0)) {
+    const total = Math.max(1, o.acdUntil - (o.acdFrom || now));
+    label = `⏳ 後延遲 剩 ${((o.acdUntil - now) / 1000).toFixed(1)} 秒（所有技能共用）`;
+    pct = (1 - (o.acdUntil - now) / total) * 100;
     kind = 'acd';
   }
   box.className = 'ab-cast-status ' + kind;
   box.innerHTML = `<span>${label}</span><div class="ab-cast-track"><i style="width:${Math.min(100, Math.max(0, pct)).toFixed(0)}%"></i></div>`;
-  (state.autoSkillConfig && state.autoSkillConfig.slots || []).forEach((sl, i) => {
+  (o.autoSkillConfig && o.autoSkillConfig.slots || []).forEach((sl, i) => {
     const el = document.getElementById('ab-slot-cd-' + i);
     if (!el) return;
-    const left = sl.skillId ? (state.cooldowns && state.cooldowns[sl.skillId]) || 0 : 0;
+    const left = sl.skillId ? (o.cooldowns && o.cooldowns[sl.skillId]) || 0 : 0;
     el.textContent = left > 0 ? `冷卻 ${(left / 1000).toFixed(1)}s` : '';
   });
 }
 /* quiet：拖拉滑桿時只存值、不重繪（重繪會讓滑桿失去焦點） */
 function setAutoSkillSlot(i, key, value, quiet) {
-  state.autoSkillConfig = migrateAutoSkillConfig(state.autoSkillConfig);
-  const sl = state.autoSkillConfig.slots[i];
+  const o = abOwner();
+  o.autoSkillConfig = migrateAutoSkillConfig(o.autoSkillConfig);
+  const sl = o.autoSkillConfig.slots[i];
   if (!sl) return;
   sl[key] = value;
   if (key === 'skillId') sl.lv = null;   // 換技能：施放等級回到最高
+  if (key === 'tgtHpOp' && value && !sl.tgtHpPct) sl.tgtHpPct = value === 'le' ? 30 : 90;
   saveGame();
   if (!quiet) renderAutoBattleTab();
 }
@@ -5755,16 +5773,17 @@ function moveSupportOrder(slot, skillId, dir) {
   [ids[i], ids[j]] = [ids[j], ids[i]];
   who.autoSupportOrder = ids;
   saveGame();
-  if (who === state) renderAutoBattleTab(); else renderAllyPanel();
+  renderAutoBattleTab();
 }
 function toggleAutoSupportSkill(skillId, enabled) {
-  if (!state.autoSupportSkills) state.autoSupportSkills = {};
-  state.autoSupportSkills[skillId] = enabled;
+  const o = abOwner();
+  if (!o.autoSupportSkills) o.autoSupportSkills = {};
+  o.autoSupportSkills[skillId] = enabled;
   // 隱匿（盜賊）與偽裝（刺客）效果重疊，自動施放只能二選一
   const fleeExclusivePair = ['tf_hiding', 'as_cloaking'];
   if (enabled && fleeExclusivePair.includes(skillId)) {
     const other = fleeExclusivePair.find(id => id !== skillId);
-    state.autoSupportSkills[other] = false;
+    o.autoSupportSkills[other] = false;
   }
   saveGame();
   renderAutoBattleTab();
