@@ -6784,6 +6784,9 @@ function tickTravel(dt) {
   if (next === t.dest) {
     state.travel = null;
     logMsg(`🧭 抵達「${(MAPS.find(m => m.id === next) || {}).name || next}」。`);
+    // 要去主城（每日任務「前往」從野外出發）：走回城後接著找傳送 NPC 傳過去
+    const goal = state.townGoal;
+    if (goal && typeof HUB_TOWN !== 'undefined' && goal.map === HUB_TOWN && next !== HUB_TOWN && !npcWarp(HUB_TOWN)) state.townGoal = goal;
   } else {
     placeTravelPortal();
   }

@@ -238,6 +238,21 @@ function goToJobGuildNpc(g) {
   state.townGoal = null;
   return false;
 }
+/* 前往主城的某個 NPC（每日任務的「前往」）：在主城直接走過去；在別的城找傳送 NPC 免費傳；
+   在野外先走回最近的城，抵達時 tickTravel 接著傳（npcWarp 會清掉 townGoal，所以傳完再設） */
+function goToHubNpc(npcId) {
+  if (isHubTown(state.mapId)) return walkToTownNpc(npcId);
+  const goal = { map: HUB_TOWN, npc: npcId };
+  if ((currentMap() || {}).town) {
+    if (npcWarp(HUB_TOWN)) return false;
+    state.townGoal = goal;
+    return true;
+  }
+  state.townGoal = goal;
+  if (startTravel(nearestTownId(state.mapId))) return true;
+  state.townGoal = null;
+  return false;
+}
 function goToJobGuild(jobId) { return goToJobGuildNpc(jobGuildFor(jobId)); }
 function goToRebirth() { return goToJobGuildNpc(JOB_GUILDS.find(x => x.rebirth)); }
 

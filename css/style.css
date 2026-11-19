@@ -2880,3 +2880,7 @@ body.manual-log-off .combat-log { display: none; }
 .ab-num { width: 4em; }
 .ab-select.ab-select-sm { flex: 0 0 auto; width: auto; }
 .ally-ab-links { display: flex; flex-wrap: wrap; gap: 6px; }
+/* 任務分頁子分頁（2026-11-20） */
+.quest-subs { margin-bottom: 8px; }
+.quest-sub-n { display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 8px; background: #e0533d; color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
+.acv-side .btn-small + .btn-small, .acv-side .acv-reward + .btn-small { margin-top: 4px; }

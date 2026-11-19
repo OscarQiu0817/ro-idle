@@ -83,7 +83,7 @@ function claimMainQuest() {
     got.push(`${ITEMS[id].name} ×${n}`);
   });
   mainQuestState().i++;
-  logMsg(`📖 主線「${step.title}」完成！獲得 ${got.join('、') || '—'}。`);
+  logMsg(`📖 新手教學「${step.title}」完成！獲得 ${got.join('、') || '—'}。`);
   return true;
 }
 function questMark(flag) {

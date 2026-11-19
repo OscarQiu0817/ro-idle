@@ -4392,7 +4392,7 @@ function huntTabSig() {
   return hb.q.map(e => {
     const p = (typeof huntProgress === 'function' && huntProgress(e)) || [];
     return e.id + ':' + p.map(x => x.have).join(',');
-  }).join('|') + '#' + (hb.noAuto || 0) + '#' + mainQuestSig()
+  }).join('|') + '#' + (hb.noAuto || 0) + '#' + mainQuestSig() + '#' + questSub + (questSub === 'daily' && typeof periodQuestList === 'function' ? ':' + periodQuestList('d').concat(periodQuestList('w')).map(x => x.have + (x.claimed ? 'c' : '')).join(',') : '')
     + '#' + (typeof periodQuestClaimable === 'function' ? periodQuestClaimable() : 0)
     + '#' + Object.keys(((state.achievements || {}).done) || {}).length;
 }
@@ -4404,7 +4404,7 @@ function mainQuestSig() {
 function mainQuestHtml() {
   if (typeof mainQuestStep !== 'function') return '';
   const st = mainQuestStep();
-  if (!st) return `<h3 class="panel-title">📖 主線</h3><div class="empty-hint">目前的主線都完成了，後續章節製作中。</div>`;
+  if (!st) return `<div class="empty-hint">新手教學都完成了。之後有劇情任務會放在這裡。</div>`;
   const i = mainQuestState().i;
   const no = MAIN_QUEST.filter((s2, k) => k <= i && s2.ch === st.ch).length;
   const total = MAIN_QUEST.filter(s2 => s2.ch === st.ch).length;
@@ -4416,7 +4416,8 @@ function mainQuestHtml() {
   if (r.zeny) bits.push(`${r.zeny.toLocaleString()} 鋅幣`);
   (r.items || []).forEach(([id, n]) => { if (ITEMS[id]) bits.push(`${ITEMS[id].name} ×${n}`); });
   const go = !done && st.go ? `<button class="btn-small" onclick="switchTab('${st.go}')">前往</button>` : '';
-  return `<h3 class="panel-title">📖 主線　<span class="dim">第 ${st.ch} 章 ${no}／${total}</span></h3>
+  return `<div class="empty-hint">放置遊戲沒有劇情主線，這裡一步一步帶你認識各種玩法，每步都送${CASH_POINT_NAME}。</div>
+    <h3 class="panel-title">📖 新手教學　<span class="dim">第 ${st.ch} 章 ${no}／${total}</span></h3>
     <div class="acv-list"><div class="acv-row ${done ? 'done' : ''}">
       <div class="acv-icon">📖</div>
       <div class="acv-body">
@@ -4693,7 +4694,7 @@ function setCashSub(c) { cashSub[cashTab] = c; renderCashShopModal(); }
 function cashShopTabs() {
   const tabs = [];
   if (typeof CASH_SHOP !== 'undefined') tabs.push({ key: 'cash', icon: '💎', name: '商城', shop: CASH_SHOP, pts: cashPoints(), buy: 'cashShopBuy',
-    hint: `持有 <b>💎 ${cashPoints().toLocaleString()}</b> ${CASH_POINT_NAME}。主線每一步、每日簽到、每日／每週任務、道館代幣都會給點數。點圖示看道具說明。` });
+    hint: `持有 <b>💎 ${cashPoints().toLocaleString()}</b> ${CASH_POINT_NAME}。新手教學每一步、每日簽到、每日／每週任務、道館代幣都會給點數。點圖示看道具說明。` });
   if (typeof SHARD_SHOP !== 'undefined') {
     const n = getItemQty(GACHA_SHARD);
     tabs.push({ key: 'shard', icon: '🧩', name: '碎片兌換', shop: SHARD_SHOP, pts: n, buy: 'shardShopBuy',
@@ -4724,11 +4725,26 @@ function renderCashShopModal() {
   const np = el.querySelector('.cash-pane');
   if (np) np.scrollTop = keepTop;
 }
+let questSub = 'daily';
+function setQuestSub(k) { questSub = k; renderQuestsTab(); }
 function renderQuestsTab() {
   const el = document.getElementById('tab-quests');
   if (!el || !state) return;
   const hb = ensureHuntBoard();
-  let html = mainQuestHtml() + periodQuestHtml() + sideQuestHtml() + `<h3 class="panel-title">📜 討伐佈告欄</h3>
+  /* 任務分頁拆成子分頁（使用者 2026-11-20）：新手教學（原主線）／每日・每週／討伐佈告欄／成就（原支線） */
+  const subs = [['daily', '📅 每日・每週', typeof periodQuestClaimable === 'function' ? periodQuestClaimable() : 0],
+    ['hunt', '📜 討伐', hb.q.filter(e => { const p = huntProgress(e) || []; return p.length && p.every(x => x.have >= x.need); }).length],
+    ['tutorial', '📖 新手教學', typeof mainQuestStep === 'function' && mainQuestStep() && mainQuestStep().check()[0] >= mainQuestStep().check()[1] ? 1 : 0],
+    ['achv', '🏆 成就', 0]];
+  if (!subs.some(x => x[0] === questSub)) questSub = 'daily';
+  const subBar = `<div class="inv-subs quest-subs">${subs.map(([k, label, n]) =>
+    `<button class="btn-chip ${k === questSub ? 'active' : ''}" onclick="setQuestSub('${k}')">${label}${n ? ` <span class="quest-sub-n">${n}</span>` : ''}</button>`).join('')}</div>`;
+  if (questSub !== 'hunt') {
+    el.innerHTML = subBar + (questSub === 'daily' ? periodQuestHtml() : questSub === 'tutorial' ? mainQuestHtml() : sideQuestHtml());
+    _huntSig = huntTabSig();
+    return;
+  }
+  let html = subBar + `<h3 class="panel-title">📜 討伐佈告欄</h3>
     <div class="empty-hint">接下之後，擊殺目標會自動計數。完成後回來領。不想做可以放棄換一張。</div>`;
   if (!hb.q.length) html += '<div class="empty-hint">佈告欄是空的，稍等幾秒會貼上新的。</div>';
   html += '<div class="acv-list">';
@@ -4856,7 +4872,7 @@ function syncFakeVendors(layer, place) {
     box = document.createElement('div');
     box.className = 'bf-fakes';
     box._key = key;
-    box.innerHTML = list.map(n => `<div class="bf-npc bf-fake" data-fake="${n.id}" onclick="walkToTownNpc('${n.id}')" title="${shopEsc(n.name)}">
+    box.innerHTML = list.map(n => `<div class="bf-npc bf-fake" data-fake="${n.id}" onclick="openFakeVendor('${n.id}')" title="${shopEsc(n.name)}">
         <div class="bf-fake-body" style="height:${ALLY_CHAR_H}px"><canvas></canvas></div><em>${shopEsc(n.name)}</em></div>`).join('');
     layer.appendChild(box);
     // RO 的招牌不會被角色擋住：獨立一層疊在所有角色上面
@@ -4865,7 +4881,7 @@ function syncFakeVendors(layer, place) {
     signs.innerHTML = list.map(n => {
       const v = n.fake;
       const icon = v.kind === 'sell' ? 'shop' : 'buyingshop';
-      return `<div class="bf-vend-sign ${v.kind}" data-fake="${n.id}" style="--lift:${ALLY_CHAR_H + 4}px" onclick="walkToTownNpc('${n.id}')"><img src="images/ui/vending/${icon}.png" alt="">${shopEsc(fakeShopLabel(v))}</div>`;
+      return `<div class="bf-vend-sign ${v.kind}" data-fake="${n.id}" style="--lift:${ALLY_CHAR_H + 4}px" onclick="openFakeVendor('${n.id}')"><img src="images/ui/vending/${icon}.png" alt="">${shopEsc(fakeShopLabel(v))}</div>`;
     }).join('');
     layer.appendChild(signs);
     box.querySelectorAll('.bf-fake').forEach(el => {
@@ -4877,13 +4893,13 @@ function syncFakeVendors(layer, place) {
     const n = list.find(x => x.id === el.dataset.fake);
     if (!n) return;
     place(el, n.x, n.y);
-    el.classList.toggle('target', state.townTarget === n.id);
+    el.classList.toggle('target', state.townTarget === n.id || fakeVendorSel === n.id);
     const cv = el.querySelector('canvas');
     if (cv && !cv._done) drawFakeDoll(cv, el._look, 'idle', 0, false);
   });
   signs.querySelectorAll('.bf-vend-sign').forEach(el => {
     const n = list.find(x => x.id === el.dataset.fake);
-    if (n) { place(el, n.x, n.y); el.classList.toggle('target', state.townTarget === n.id); }
+    if (n) { place(el, n.x, n.y); el.classList.toggle('target', state.townTarget === n.id || fakeVendorSel === n.id); }
   });
 }
 /* 假人的紙娃娃：畫一格；圖層還沒載完下次再畫。parts 拿不到（沒有這個職業的圖）就整個藏起來 */
@@ -4977,6 +4993,13 @@ function syncPassers(scene, at) {
 setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && Math.random() < 1 / 3 && typeof fakeShout === 'function') fakeShout(); }, 15000);
 
 /* 攤位面板（地圖分頁） */
+/* 假人攤位：點了直接開（不走過去、不捲動畫面）。使用者 2026-11-20：手機上走過去會把畫面往下捲，
+   人也跑到攤位那頭，看不到另一邊的攤子。買賣本來就不看距離。 */
+let fakeVendorSel = null;
+function openFakeVendor(id) {
+  fakeVendorSel = id;
+  openTownNpc(id);
+}
 function fakeVendorPanelHtml(n, back) {
   const v = n.fake;
   if (v.kind === 'sell') {
@@ -5114,7 +5137,7 @@ function openTownNpc(id) {
   if (n.role === 'dojo') { el.innerHTML = dojoNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'enchant') { el.innerHTML = enchantNpcPanelHtml(n, back); return; }
   if (n.role === 'warper') { openTownWarp('warp'); return; }
-  if (n.role === 'vendor' || n.role === 'buyer') { el.innerHTML = fakeVendorPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
+  if (n.role === 'vendor' || n.role === 'buyer') { el.innerHTML = fakeVendorPanelHtml(n, back); return; }
   if (n.role === 'kafra') {
     // T61：一般城鎮的卡普拉多「前往主城」（免費）；主城的卡普拉只管倉庫，傳送找傳送師
     const hub = typeof isHubTown === 'function' && isHubTown();
@@ -5169,7 +5192,7 @@ function townNpcPanelHtml() {
       const list = townNpcList(L).filter(n => n.district === d.id);
       return `<div class="town-district${here && here.id === d.id ? ' here' : ''}">
         <button class="btn-chip town-district-name" onclick="walkToTownDistrict('${d.id}')" title="走過去">📍 ${shopEsc(d.name)}</button>
-        ${list.map(n => `<button class="btn-chip town-npc-chip${state.townTarget === n.id ? ' active' : ''}" onclick="walkToTownNpc('${n.id}')">${icon(n)} ${shopEsc(n.name)}</button>`).join('')}
+        ${list.map(n => `<button class="btn-chip town-npc-chip${state.townTarget === n.id ? ' active' : ''}" onclick="${n.fake ? 'openFakeVendor' : 'walkToTownNpc'}('${n.id}')">${icon(n)} ${shopEsc(n.name)}</button>`).join('')}
       </div>`;
     }).join('')}
     <div class="town-npc-hint">點 NPC 會走過去，到了才開功能；戰鬥畫面上的 NPC 也可以直接點。</div>
@@ -6208,7 +6231,7 @@ function toggleJobSection(jobId) {
    技能全部改由自動戰鬥分頁設定：攻擊技能兩個下拉、輔助技能各自的勾選框。
    castSkill() 本身沒有動，卡片自動念咒、技能連段那些內部呼叫照舊。 */
 
-/* ---------------- 支線任務（原成就，使用者 2026-11-14）＋每日／每週任務 ---------------- */
+/* ---------------- 成就（2026-11-14 曾改名支線，2026-11-20 改回成就）＋每日／每週任務 ---------------- */
 let sideQuestShowAll = false;
 function setSideQuestShowAll(v) { sideQuestShowAll = v; renderQuestsTab(); }
 
@@ -6216,7 +6239,7 @@ function setSideQuestShowAll(v) { sideQuestShowAll = v; renderQuestsTab(); }
 function onAchievementUnlocked(list) {
   const first = list[0];
   const extra = list.length > 1 ? `（+${list.length - 1}）` : '';
-  showToast(`📜 完成支線「${first.name}」${extra}`);
+  showToast(`🏆 達成成就「${first.name}」${extra}`);
   if (activeTab === 'quests') renderQuestsTab();
   renderTopBar();
 }
@@ -6233,12 +6256,23 @@ function periodQuestHtml() {
           <div class="acv-bar"><div class="acv-bar-fill" style="width:${Math.min(100, x.have / x.goal * 100)}%"></div></div>
         </div>
         <div class="acv-side"><div class="acv-count">${x.have.toLocaleString()} / ${x.goal.toLocaleString()}</div>
-          ${ready ? `<button class="btn-small active" onclick="claimPeriodQuest('${type}','${x.id}');renderQuestsTab();renderTopBar();">領 💎 ${x.pts}</button>` : `<div class="acv-reward">💎 ${x.pts}</div>`}</div>
+          ${ready ? `<button class="btn-small active" onclick="claimPeriodQuest('${type}','${x.id}');renderQuestsTab();renderTopBar();">領 💎 ${x.pts}</button>` : `<div class="acv-reward">💎 ${x.pts}</div>`}
+          ${!ready && !x.claimed && typeof PERIOD_QUEST_GO !== 'undefined' && PERIOD_QUEST_GO[x.kind] ? `<button class="btn-small" onclick="periodQuestGo('${x.kind}')">${PERIOD_QUEST_GO[x.kind].label}</button>` : ''}</div>
       </div>`;
     }).join('');
     return `<h3 class="panel-title">${title}</h3><div class="acv-list">${rows}</div>`;
   };
   return block('d', '📅 每日任務') + block('w', '🗓️ 每週任務（週一更新）');
+}
+
+function periodQuestGo(kind) {
+  const g = PERIOD_QUEST_GO[kind];
+  if (!g) return;
+  if (g.open === 'cash') { openCashShopModal(); return; }
+  if (goToHubNpc(g.npc)) {
+    showToast(isHubTown(state.mapId) ? '走向' + (townNpc(g.npc) || {}).name : '前往主城…');
+    switchTab('map');
+  } else showToast('現在沒辦法前往（看戰鬥訊息）');
 }
 
 function sideQuestHtml() {
@@ -6252,7 +6286,7 @@ function sideQuestHtml() {
   rows.sort((x, y) => (x.done !== y.done) ? (x.done ? 1 : -1) : y.ratio - x.ratio);
   const shown = sideQuestShowAll ? rows : rows.slice(0, 8);
   const nDone = Object.keys(done).length;
-  let html = `<h3 class="panel-title">🧭 支線任務 <span class="acv-cat-n">${nDone} / ${ACHIEVEMENTS.length}</span></h3>
+  let html = `<h3 class="panel-title">🏆 成就 <span class="acv-cat-n">${nDone} / ${ACHIEVEMENTS.length}</span></h3>
     <div class="empty-hint">達成條件自動完成、發鋅幣。${sideQuestShowAll ? '' : '只列最接近完成的 8 項。'}
     <label class="auto-toggle"><input type="checkbox" ${sideQuestShowAll ? 'checked' : ''} onchange="setSideQuestShowAll(this.checked)"> 全部（含已完成）</label></div><div class="acv-list">`;
   shown.forEach(r => {

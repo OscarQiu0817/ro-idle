@@ -222,7 +222,7 @@ function checkAchievements() {
   } finally { _acvChecking = false; _acvCodex = null; }
   if (!unlocked.length) return;
   unlocked.forEach(a => {
-    logMsg(`📜 完成支線「${a.name}」！${a.reward.gold ? `獲得 ${a.reward.gold.toLocaleString()} 鋅幣` : ''}`);
+    logMsg(`🏆 達成成就「${a.name}」！${a.reward.gold ? `獲得 ${a.reward.gold.toLocaleString()} 鋅幣` : ''}`);
   });
   if (typeof onAchievementUnlocked === 'function') onAchievementUnlocked(unlocked);
   saveGame();

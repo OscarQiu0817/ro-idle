@@ -58,6 +58,13 @@ function claimPeriodQuest(type, id) {
   saveGame();
   return true;
 }
+/* 「前往」按鈕：kind → 要去的主城 NPC（goToHubNpc）或要開的畫面；沒有的就不放按鈕 */
+const PERIOD_QUEST_GO = {
+  refine: { npc: 'refiner', label: '前往精煉師' },
+  enchant: { npc: 'enchanter', label: '前往附魔師' },
+  dungeon: { npc: 'dojo', label: '前往道館' },
+  cashbuy: { open: 'cash', label: '打開商城' },
+};
 /* 可以領的數量（任務分頁按鈕提示用） */
 function periodQuestClaimable() {
   return ['d', 'w'].reduce((t, ty) => t + periodQuestList(ty).filter(x => !x.claimed && x.have >= x.goal).length, 0);
