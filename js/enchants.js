@@ -214,5 +214,5 @@ Object.values(CARDS).forEach(c => { if (c.slot === 'any' && !/卡片$/.test(c.na
 Object.values(CARDS).forEach(c => {
   const it = ITEMS[c.id];
   if (c.slot !== 'enchant' || !it || /💠 附魔石/.test(it.desc || '')) return;
-  it.desc = (it.desc || c.name) + ' （💠 附魔石：到各城「精煉・附魔區」找附魔師，裝在已開的附魔孔上' + (ENCHANTS[c.id] ? '；可從商城附魔轉蛋取得' : '') + '。）';
+  it.desc = (it.desc || c.name) + ' （💠 附魔石：到冒險者主城「精煉・附魔區」找附魔師，裝在已開的附魔孔上' + (ENCHANTS[c.id] ? '；可從商城附魔轉蛋取得' : '') + '。）';
 });

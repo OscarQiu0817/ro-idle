@@ -27,7 +27,7 @@ const GMT_SHOP = [
 ];
 
 // 硬幣說明：原本的「本服沒有兌換系統」警語已過時（吉芬有大賽兌換員）
-if (typeof ITEMS !== 'undefined' && ITEMS[GMT_COIN]) ITEMS[GMT_COIN].desc = '參加吉芬魔法大賽獲得的硬幣。到吉芬副本區的大賽兌換員換吉芬魔法袍、吉芬魔法披肩或 12 精煉方塊。';
+if (typeof ITEMS !== 'undefined' && ITEMS[GMT_COIN]) ITEMS[GMT_COIN].desc = '參加吉芬魔法大賽獲得的硬幣。到冒險者主城副本區的大賽兌換員換吉芬魔法袍、吉芬魔法披肩或 12 精煉方塊。';
 // 競技場：沒有野怪、不在世界地圖上的獨立地圖
 if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === GMT_ARENA)) {
   MAPS.push({ id: GMT_ARENA, imgId: 0, name: '吉芬魔法大賽競技場', monsters: [], bg: 'map-city', lv: '', arena: true });
@@ -134,7 +134,7 @@ function gmtBlockReason() {
   if (state.gmt) return '已經在大賽中。';
   if ((state.baseLevel || 0) < GMT_ENTRY_LV) return `基本等級 ${GMT_ENTRY_LV} 以上才能報名。`;
   if (state.gmtDay === gmtToday()) return '今天已經參加過了，明天再來。';
-  if (state.mapId !== 'geffen') return '要在吉芬報名。';
+  if (state.mapId !== HUB_TOWN) return '要在冒險者主城的副本區報名。';
   if (state.travel) return '趕路中不能報名。';
   if (state.bossChallenge || state.bossHunt || state.vDuel) return '正在打王或對戰中。';
   if (!(state.hp > 0)) return '倒下時不能報名。';
@@ -146,8 +146,8 @@ function gmtEnter() {
   const now = gameNow();
   state.gmtDay = gmtToday();
   state.gmt = { round: 0, cleared: 0, startAt: now, endAt: now + GMT_TOTAL_MS, size: 1, seed: gmtDaySeed(), level: state.baseLevel, nextAt: now + 1500 };
-  changeMap(GMT_ARENA);   // 只有自己進去，隊友留在吉芬
-  logMsg(`🏟️ 吉芬魔法大賽開始！單人挑戰${allyList().length ? '（隊友在吉芬等你）' : ''}，總時限 30 分鐘。`);
+  changeMap(GMT_ARENA);   // 只有自己進去，隊友留在主城
+  logMsg(`🏟️ 吉芬魔法大賽開始！單人挑戰${allyList().length ? '（隊友在主城等你）' : ''}，總時限 30 分鐘。`);
   saveGame();
   return true;
 }
@@ -203,7 +203,7 @@ function gmtFinish(clear, why) {
   logMsg(clear
     ? `🏆 吉芬魔法大賽全破！獲得 ${coins} 枚${ITEMS[GMT_COIN].name}${firstClear ? `，首次全破再送 ${GMT_FIRST_CLEAR_POINTS} 商城點數` : ''}！`
     : `🏟️ 吉芬魔法大賽結束（${why || '中斷'}）：打到第 ${g.cleared} 輪，獲得 ${coins} 枚${ITEMS[GMT_COIN].name}。`);
-  if (state.mapId === GMT_ARENA) changeMap('geffen');
+  if (state.mapId === GMT_ARENA) changeMap(HUB_TOWN);
   saveGame();
 }
 function gmtAbandon() { if (state.gmt) gmtFinish(false, '放棄'); }
@@ -218,7 +218,7 @@ function gmtOnLoad() {
     if (coins > 0) addItem(GMT_COIN, coins);
     state.gmtLast = { cleared: g.cleared || 0, coins, clear: false, why: '中斷', at: gameNow() };
   }
-  if (state.mapId === GMT_ARENA) state.mapId = 'geffen';
+  if (state.mapId === GMT_ARENA) state.mapId = HUB_TOWN;
 }
 /* 兌換 */
 function gmtBuy(itemId) {

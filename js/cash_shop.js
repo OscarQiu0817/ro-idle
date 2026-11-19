@@ -167,7 +167,7 @@ function buyShardItem(itemId, qty) {
 /* 附魔轉蛋（D7，使用者 2026-11-14）：開出一顆附魔石，照 ENCHANTS 稀有度權重抽；石頭找附魔師裝 */
 ITEMS.gacha_enchant = {
   id: 'gacha_enchant', imgId: 4811, name: '附魔轉蛋', type: 'consumable', icon: '💠', weight: 1, sell: 0, boxOpen: 'enchant',
-  desc: '打開後隨機獲得一顆附魔石（等級越高越難抽到）。附魔石到各城「精煉・附魔區」找附魔師裝在附魔孔上。',
+  desc: '打開後隨機獲得一顆附魔石（等級越高越難抽到）。附魔石到冒險者主城「精煉・附魔區」找附魔師裝在附魔孔上。',
 };
 BOX_POOLS.enchant = { build: () => Object.keys(ENCHANTS).filter(k => ITEMS[k]), weight: id => ENCHANTS[id].weight };
 CASH_SHOP.find(c => c.cat === '轉蛋').items.push(['gacha_enchant', 10]);

@@ -69,14 +69,16 @@ function makeTownShop(name, icon, items) {
 (function registerTownShops() {
   if (typeof NPC_SHOPS === 'undefined') return;
   const map = townItemByNum();
-  // 箭矢維持全部上架（#139），各城武器商人都賣
+  /* T61（使用者 2026-11-19）：拿掉「各城賣的武器／防具不同」（例：法杖只在吉芬），
+     主城武器、防具商人各一家，內容＝各城清單聯集＋通用商店；箭矢全部上架（#139） */
   const arrows = Object.keys(ITEMS).filter(k => ITEMS[k].type === 'ammo');
-  for (const [town, def] of Object.entries(TOWN_SHOP_RA)) {
-    const w = def.weapon.map(n => map[n]).filter(Boolean);
-    const a = def.armor.map(n => map[n]).filter(Boolean);
-    if (w.length) NPC_SHOPS[town + '_weapon'] = makeTownShop('武器商人', '⚔️', w.concat(arrows));
-    if (a.length) NPC_SHOPS[town + '_armor'] = makeTownShop('防具商人', '🛡️', a);
+  const w = [], a = [];
+  for (const def of Object.values(TOWN_SHOP_RA)) {
+    def.weapon.forEach(n => { if (map[n]) w.push(map[n]); });
+    def.armor.forEach(n => { if (map[n]) a.push(map[n]); });
   }
+  NPC_SHOPS.hub_weapon = makeTownShop('武器商人', '⚔️', NPC_SHOPS.weapon.items.concat(w, arrows));
+  NPC_SHOPS.hub_armor = makeTownShop('防具商人', '🛡️', NPC_SHOPS.armor.items.concat(a));
 })();
 /* ---- 各城 NPC 外觀（使用者 2026-11-07：照官方預設，同城商人不重複）----
    來源：rAthena npc/merchants/shops.txt（各城第一個武器／防具／道具商人）、npc/kafras/kafras.txt、
@@ -110,28 +112,62 @@ const TOWN_NPC_SPRITE = {
 // 沒有分區資料時的通用商店（道具、寵物一律用這兩家）
 const GENERIC_TOWN_SHOPS = ['weapon', 'item', 'armor', 'pet'];
 
-/* ---- 城鎮分區：一進城是卡普拉，三區：商店街／精煉・附魔區／副本 ----
-   每座城都用同一個模板（WORLD.towns），只有商店內容依城而異。 */
+/* ---- 一般城鎮（T61 起）：只剩卡普拉（倉庫、傳送、前往主城）＋職業公會 ----
+   商店、精煉、附魔、副本全部搬到主城。 */
 const TOWN_TEMPLATE = {
   spawn: [0, 1.5],
   districts: [
     { id: 'gate', name: '卡普拉服務處', x: 0, y: 0 },
-    { id: 'shops', name: '商店街', x: 0, y: -14 },
-    { id: 'forge', name: '精煉・附魔區', x: 15, y: 0 },
-    { id: 'dungeon', name: '副本', x: -15, y: 0 },
   ],
   npcs: [
     { id: 'kafra', name: '卡普拉職員', role: 'kafra', district: 'gate', x: 1.8, y: -0.5 },
-    // 四家排在一列、間隔 2 格：站在最左那家也看得到最右那家（畫面一屏約 ±7 格）
-    { id: 'weapon', name: '武器商人', role: 'shop', shopKind: 'weapon', district: 'shops', x: -3, y: -15 },
-    { id: 'armor', name: '防具商人', role: 'shop', shopKind: 'armor', district: 'shops', x: -1, y: -15 },
-    { id: 'item', name: '道具商人', role: 'shop', shopKind: 'item', district: 'shops', x: 1, y: -15 },
-    { id: 'pet', name: '寵物商人', role: 'shop', shopKind: 'pet', district: 'shops', x: 3, y: -15 },
-    { id: 'refiner', name: '精煉師', role: 'refine', district: 'forge', x: 14, y: -1, spr: '4_m_03' },
-    { id: 'enchanter', name: '附魔師', role: 'enchant', district: 'forge', x: 16, y: -1, spr: '4_m_sage_a' },
-    { id: 'dungeon', name: '副本管理員', role: 'soon', district: 'dungeon', x: -15, y: -1, soon: '副本還沒開放。', spr: '4_m_knight_silver' },
   ],
 };
+
+/* ---- T61 獨立主城（使用者 2026-11-19）----
+   比照私服：主城不在世界地圖上，只能找各城卡普拉「前往主城」（免費）進來，
+   出去找主城傳送師（傳到各城，費用照原本）。
+   放攻城／副本／附魔／精煉／小遊戲／商人／活動／交易所。交易所要雲端（T12），小遊戲、活動還沒內容，先放佔位 NPC。 */
+const HUB_TOWN = 'hub';
+const HUB_NAME = '冒險者主城';
+if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === HUB_TOWN)) {
+  MAPS.push({ id: HUB_TOWN, imgId: 0, name: HUB_NAME, monsters: [], bg: 'map-city', lv: '', town: true, hub: true });
+}
+if (typeof WORLD !== 'undefined' && !WORLD.towns.some(t => t.id === HUB_TOWN)) {
+  WORLD.towns.unshift({ id: HUB_TOWN, name: HUB_NAME, lv: 1, cost: 0 });
+}
+if (typeof MAP_FLOOR_TOWN !== 'undefined') MAP_FLOOR_TOWN[HUB_TOWN] = MAP_FLOOR_TOWN.prontera;
+if (typeof MAP_BGM !== 'undefined') MAP_BGM[HUB_TOWN] = MAP_BGM.prontera;
+const HUB_LAYOUT = {
+  spawn: [0, 1.5],
+  districts: [
+    { id: 'gate', name: '中央廣場', x: 0, y: 0 },
+    { id: 'shops', name: '商店街', x: 0, y: -14 },
+    { id: 'forge', name: '精煉・附魔區', x: 15, y: 0 },
+    { id: 'dungeon', name: '副本區', x: -15, y: 0 },
+    { id: 'trade', name: '交易區', x: 0, y: 14 },
+    { id: 'fun', name: '遊樂區', x: 15, y: -14 },
+  ],
+  // 同一區的 NPC 排一列、間隔 2 格：站在最左那位也看得到最右那位（畫面一屏約 ±7 格）
+  npcs: [
+    { id: 'kafra', name: '卡普拉職員', role: 'kafra', district: 'gate', x: 1.8, y: -0.5, spr: '4_f_kafra6' },
+    { id: 'warper', name: '主城傳送師', role: 'warper', district: 'gate', x: -1.8, y: -0.5, spr: '4_m_teleporter' },
+    { id: 'event', name: '活動 NPC', role: 'soon', district: 'gate', x: 0, y: -2.5, spr: '4_f_jpn2', soon: '目前沒有舉辦中的活動。' },
+    { id: 'weapon', name: '武器商人', role: 'shop', shop: 'hub_weapon', district: 'shops', x: -3, y: -15, spr: '1_m_merchant' },
+    { id: 'armor', name: '防具商人', role: 'shop', shop: 'hub_armor', district: 'shops', x: -1, y: -15, spr: '1_f_merchant_01' },
+    { id: 'item', name: '道具商人', role: 'shop', shop: 'item', district: 'shops', x: 1, y: -15, spr: '1_m_innkeeper' },
+    { id: 'pet', name: '寵物商人', role: 'shop', shop: 'pet', district: 'shops', x: 3, y: -15, spr: '4_f_01' },
+    { id: 'refiner', name: '精煉師', role: 'refine', district: 'forge', x: 14, y: -1, spr: '4_m_03' },
+    { id: 'enchanter', name: '附魔師', role: 'enchant', district: 'forge', x: 16, y: -1, spr: '4_m_sage_a' },
+    { id: 'dojo', name: '道館館主', role: 'dojo', district: 'dungeon', x: -18, y: -1, spr: '2_m_swordmaster' },
+    { id: 'gvg', name: '攻城戰管理員', role: 'gvg', district: 'dungeon', x: -16, y: -1, spr: '1_m_knightmaster' },
+    { id: 'gmt', name: '吉芬魔法大賽報名處', role: 'gmt', district: 'dungeon', x: -14, y: -1, spr: '2_f_magicmaster' },
+    { id: 'gmt_shop', name: '大賽兌換員', role: 'gmtshop', district: 'dungeon', x: -12, y: -1, spr: '1_f_01' },
+    { id: 'exchange', name: '交易所', role: 'soon', district: 'trade', x: 0, y: 13, spr: '1_f_merchant_02', soon: '交易所要連線伺服器，還在準備中。' },
+    { id: 'minigame', name: '小遊戲管理員', role: 'soon', district: 'fun', x: 15, y: -15, spr: '4w_f_01', soon: '小遊戲還在準備中。' },
+  ],
+};
+function isHubTown(mapId) { return (mapId || (state && state.mapId)) === HUB_TOWN; }
 
 /* ---- T29 職業公會（使用者 2026-11-07：找 NPC 就能轉，不跑任務）----
    地點照官方（rAthena npc/re/jobs、npc/jobs），外觀照該 NPC 的 sprite。官方在室內／專屬地圖的，放到所屬城鎮。
@@ -208,38 +244,23 @@ function goToRebirth() { return goToJobGuildNpc(JOB_GUILDS.find(x => x.rebirth))
 const _townLayoutCache = {};
 function buildTownLayout(mapId) {
   if (_townLayoutCache[mapId]) return _townLayoutCache[mapId];
+  if (mapId === HUB_TOWN) {
+    return (_townLayoutCache[mapId] = { spawn: HUB_LAYOUT.spawn, districts: HUB_LAYOUT.districts, npcs: HUB_LAYOUT.npcs.map(n => Object.assign({}, n)) });
+  }
+  const look = TOWN_NPC_SPRITE[mapId] || TOWN_NPC_SPRITE.prontera;
   const L = {
     spawn: TOWN_TEMPLATE.spawn,
     districts: TOWN_TEMPLATE.districts,
-    npcs: TOWN_TEMPLATE.npcs.map(n => {
-      const o = Object.assign({}, n);
-      const look = TOWN_NPC_SPRITE[mapId] || TOWN_NPC_SPRITE.prontera;
-      if (!o.spr) o.spr = look[n.shopKind || n.role];
-      if (n.shopKind) {
-        const own = mapId + '_' + n.shopKind;
-        o.shop = (n.shopKind === 'weapon' || n.shopKind === 'armor') && NPC_SHOPS[own] ? own : n.shopKind;
-      }
-      return o;
-    }),
+    npcs: TOWN_TEMPLATE.npcs.map(n => Object.assign({ spr: look[n.role] }, n)),
   };
-  // 副本區（T51 第 6 期）：吉芬是吉芬魔法大賽報名處＋兌換員；其他城的副本管理員只說明大賽在吉芬
-  L.npcs = L.npcs.map(n => {
-    if (n.id !== 'dungeon') return n;
-    return mapId === 'geffen'
-      ? Object.assign({}, n, { name: '吉芬魔法大賽報名處', role: 'gmt' })
-      : Object.assign({}, n, { soon: '吉芬魔法大賽在吉芬舉行，其他副本還沒開放。' });
-  });
-  // 攻城戰（T55）：普隆德拉副本區
-  if (mapId === 'prontera') L.npcs.push({ id: 'dojo', name: '道館館主', role: 'dojo', district: 'dungeon', x: -11, y: -1, spr: '2_m_swordmaster' });
-  if (mapId === 'prontera') L.npcs.push({ id: 'gvg', name: '攻城戰管理員', role: 'gvg', district: 'dungeon', x: -13, y: -1, spr: '1_m_knightmaster' });
-  if (mapId === 'geffen') L.npcs.push({ id: 'gmt_shop', name: '大賽兌換員', role: 'gmtshop', district: 'dungeon', x: -13, y: -1, spr: '4_m_sage_a' });
-  // 有公會的城多一區「職業公會」，在城門口正下方；NPC 排一列、間隔 2 格
+  // 有公會的城多一區「職業公會」，在城門口正下方；NPC 排一列、間隔 2 格。
+  // 城裡只剩卡普拉跟公會，公會拉近到 8 格（還是要走一小段，但不用走一整屏）
   const guilds = JOB_GUILDS.filter(g => g.town === mapId);
   if (guilds.length) {
-    L.districts = L.districts.concat([{ id: 'guild', name: '職業公會', x: 0, y: 14 }]);
+    L.districts = L.districts.concat([{ id: 'guild', name: '職業公會', x: 0, y: 8 }]);
     guilds.forEach((g, i) => L.npcs.push({
       id: g.id, name: g.name, role: 'job', district: 'guild', spr: g.spr, guild: g,
-      x: (i - (guilds.length - 1) / 2) * 2, y: 13,
+      x: (i - (guilds.length - 1) / 2) * 2, y: 7,
     }));
   }
   return (_townLayoutCache[mapId] = L);
@@ -254,9 +275,14 @@ function townLayout(mapId) {
   if (!id || typeof WORLD === 'undefined' || !WORLD.towns.some(t => t.id === id)) return null;
   return buildTownLayout(id);
 }
+// 這座城的全部 NPC：主城再加上交易區的假人攤位（T63，每 2 小時換一批，所以不放進快取的 layout）
+function townNpcList(L) {
+  L = L || townLayout();
+  if (!L) return [];
+  return isHubTown() && typeof fakeHubNpcs === 'function' ? L.npcs.concat(fakeHubNpcs()) : L.npcs;
+}
 function townNpc(id) {
-  const L = townLayout();
-  return L ? L.npcs.find(n => n.id === id) || null : null;
+  return townNpcList().find(n => n.id === id) || null;
 }
 function townNpcDist(n) {
   return Math.hypot(n.x - (state.worldX || 0), n.y - (state.worldY || 0));

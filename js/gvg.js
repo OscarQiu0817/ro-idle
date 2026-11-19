@@ -14,7 +14,7 @@
    這個檔案在 actor_battle.js 之後載入。 */
 const GVG_CASTLE_NAME = '克利姆希爾德城';
 const GVG_MAP = 'gvg_castle_1';
-const GVG_TOWN = 'prontera';
+const GVG_TOWN = 'hub';   // T61 搬到冒險者主城（HUB_TOWN，towns.js 比這支晚載入）
 const GVG_OPEN_HOUR = 20;
 const GVG_CLOSE_HOUR = 22;
 const GVG_DMG_RATE = 0.3;   // 使用者 2026-11-13：0.6 時三人隊 5～6 秒分勝負，改 0.3
@@ -229,7 +229,7 @@ function gvgDownedTick() {
   tickActorBattle(now);
   if (typeof onTickUI === 'function') onTickUI();
 }
-// 讀檔：攻城中斷就放回普隆德拉
+// 讀檔：攻城中斷就放回主城
 function gvgOnLoad() {
   if (state.gvg) state.gvg = null;
   if (state.mapId === GVG_MAP) state.mapId = GVG_TOWN;

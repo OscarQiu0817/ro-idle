@@ -14,7 +14,7 @@
    主角倒下但隊友還站著就繼續打；撐過 15 秒，隊友用復活術或天地樹葉子把主角扶起來。
    這個檔案在 gvg.js 之後載入。 */
 const DOJO_MAP = 'dojo_arena';
-const DOJO_TOWN = 'prontera';
+const DOJO_TOWN = 'hub';   // T61 搬到冒險者主城（HUB_TOWN，towns.js 比這支晚載入）
 const DOJO_FLOORS = 5;
 const DOJO_REVIVE_WAIT_MS = 15000;   // 主角倒下後，隊友撐過這麼久才扶得起來
 const DOJO_TOKEN = 'dojo_token';
@@ -66,7 +66,7 @@ if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === DOJO_MAP)) {
 }
 if (typeof ITEMS !== 'undefined' && !ITEMS[DOJO_TOKEN]) {
   ITEMS[DOJO_TOKEN] = { id: DOJO_TOKEN, imgId: 6418, name: '道館代幣', type: 'material', icon: '🪙', weight: 0, sell: 0,
-    desc: '道館抽獎偶爾抽到的代幣。在普隆德拉的道館館主那裡兌換商城點數。' };
+    desc: '道館抽獎偶爾抽到的代幣。在冒險者主城的道館館主那裡兌換商城點數。' };
 }
 
 function dojoToday() { return typeof gmtToday === 'function' ? gmtToday() : new Date(gameNow()).toDateString(); }

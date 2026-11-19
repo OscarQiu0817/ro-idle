@@ -2835,3 +2835,39 @@ body.manual-log-off .combat-log { display: none; }
   body.manual-play .hud-act { padding: 2px 8px; }
 }
 
+
+/* 商店分類鈕（T61 主城武器商人） */
+.shop-cat-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 8px; }
+.shop-cat-chips .btn-chip small { opacity: .65; font-size: 10px; }
+/* T62 轉職考試 */
+.job-quiz { width: min(560px, 94vw); max-height: 88vh; display: flex; flex-direction: column; padding: 16px; }
+.job-quiz .modal-title small { display: block; font-size: 11px; font-weight: 400; color: var(--ink-dim); margin-top: 2px; }
+.job-quiz-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+.job-quiz-q { padding: 8px 0 10px; border-bottom: 1px solid var(--line); }
+.job-quiz-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; line-height: 1.45; }
+.job-quiz-opt { display: block; width: 100%; text-align: left; margin: 3px 0; padding: 6px 9px; border-radius: 6px; font-size: 12px; line-height: 1.4;
+  border: 1px solid var(--line); background: rgba(255,255,255,.04); color: inherit; cursor: pointer; }
+.job-quiz-opt:hover:not([disabled]) { border-color: var(--gold-soft, #e8c34b); }
+.job-quiz-opt.picked { border-color: #6fc8ff; background: rgba(111,200,255,.15); }
+.job-quiz-opt.right { border-color: #5fd17a; background: rgba(95,209,122,.18); }
+.job-quiz-opt.wrong { border-color: #e05a4f; background: rgba(224,90,79,.18); }
+.job-quiz-foot { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.job-quiz-score { margin-right: auto; font-size: 13px; color: #ffb4a8; }
+.job-quiz-score.pass { color: #8ff0a4; }
+/* T63 假人攤位 */
+.bf-fake-body { position: relative; width: 2px; }
+.bf-fake-body canvas { position: absolute; image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.bf-vend-sign { display: flex; align-items: center; gap: 3px; max-width: 104px; margin-bottom: 2px; padding: 0 5px 0 1px; border-radius: 3px;
+  border: 1px solid #8a6a3a; background: rgba(250,240,215,.92); color: #3a2a10; font-size: 10px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.bf-vend-sign img { width: 16px; height: 16px; image-rendering: pixelated; flex: none; }
+.bf-vend-sign.buy { background: rgba(222,238,255,.92); border-color: #4a6a9a; color: #102a4a; }
+.bf-vend-signs { position: absolute; inset: 0; pointer-events: none; z-index: 30; }
+.bf-vend-signs .bf-vend-sign { position: absolute; transform: translate(-50%, calc(-100% - var(--lift, 70px))); pointer-events: auto; cursor: pointer; }
+.bf-vend-sign:hover, .bf-vend-sign.target { border-color: #ffd479; }
+/* 野外路過的假人 */
+.bf-passer { position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 4; }
+.bf-passer em { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); font-style: normal; font-size: 10px; white-space: nowrap; color: #d8f0c8; text-shadow: 0 1px 2px #000; opacity: .85; }
+.bf-passer-mob { position: absolute; transform: translate(-50%, -100%); pointer-events: none; image-rendering: pixelated; transition: opacity .6s; }
+/* 世界頻道單機模擬（沒連線時）：進入聊天室鈕縮到右下角，不蓋住模擬訊息 */
+.world-chat-local .world-chat-join-overlay { inset: auto 6px 6px auto; flex-direction: row; gap: 6px; }
+.world-chat-local-head { color: var(--ink-dim); font-size: 11px; }

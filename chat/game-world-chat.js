@@ -110,14 +110,31 @@ function mountWorldChatLog(root, chat) {
     if (bar) bar.classList.toggle('hidden', msgStuck !== false);
   };
 
+  /* 單機模擬（T63，使用者 2026-11-19）：沒連上聊天室時，這裡顯示假人冒險者的喊話（js/fake_players.js 呼叫 pushLocalChat）。
+     連上之後只顯示伺服器的真訊息，模擬的不混進去 */
+  const localMsgs = [];
+  const isOnline = () => chat.status === 'connected';
+
   const paintMessages = (messages, scrollBottom) => {
     lastMessages = messages;
     const list = root.querySelector('.world-chat-msg-list');
     const scroller = root.querySelector('.world-chat-msgs');
     if (!list || !scroller) return;
     const nearBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= LOG_BOTTOM_SLACK;
-    list.replaceChildren(...messages.map(renderChatLine));
+    if (isOnline()) list.replaceChildren(...messages.map(renderChatLine));
+    else {
+      const head = document.createElement('div');
+      head.className = 'log-line world-chat-local-head';
+      head.textContent = '（單機模擬：還沒進入聊天室，下面是其他冒險者的交易喊話）';
+      list.replaceChildren(head, ...localMsgs.map(renderChatLine));
+    }
+    root.classList.toggle('world-chat-local', !isOnline());
     if (scrollBottom && (msgStuck !== false || nearBottom)) scroller.scrollTop = scroller.scrollHeight;
+  };
+  window.pushLocalChat = (name, text) => {
+    localMsgs.push({ timestamp: Date.now(), playerName: name, message: text });
+    if (localMsgs.length > 80) localMsgs.shift();
+    if (!isOnline() && msgStuck !== false) paintMessages(lastMessages, true);
   };
 
   root.innerHTML = `
@@ -210,6 +227,7 @@ function mountWorldChatLog(root, chat) {
   chat.on('status', (st) => {
     if (st === 'connected' || st === 'idle') phaseHint = '';
     syncPhaseOverlay(st);
+    paintMessages(lastMessages.length ? lastMessages : (chat.messages || []), true);   // 換成真訊息／單機模擬
     updateHudWorldOnline(chat);
   });
 
@@ -228,6 +246,7 @@ function mountWorldChatLog(root, chat) {
 
   syncPhaseOverlay(chat.status);
   updateHudWorldOnline(chat);
+  paintMessages([], false);
 
   window._worldChatOnTabShown = () => {};
 

@@ -13366,7 +13366,12 @@ function jobChangeBlockReason(targetId, ignorePlace) {
     return `還有 ${left} 點技能點沒用完${where}。${how}`;
   }
   // T29：條件都到了，最後看人在不在公會 NPC 旁邊（ignorePlace：職業樹用來決定顯示「前往公會」）
-  if (!ignorePlace && typeof jobGuildBlockReason === 'function') return jobGuildBlockReason(targetId);
+  if (!ignorePlace && typeof jobGuildBlockReason === 'function') {
+    const place = jobGuildBlockReason(targetId);
+    if (place) return place;
+  }
+  // T62：一轉→二轉要考試（公會 NPC 旁、其他條件都到了才問）
+  if (!ignorePlace && typeof jobQuizRequired === 'function' && jobQuizRequired(targetId)) return JOB_QUIZ_REASON;
   return null;
 }
 
@@ -13887,6 +13892,7 @@ function huntAbandon(idx) {
 }
 
 // NPC 商店開在地圖分頁裡（只有安全區的地圖才會有入口），不再有獨立的 NPC 分頁
+const npcShopCat = {};   // 各商店目前選的分類
 function openNpcShop(shopId) {
   const shop = NPC_SHOPS[shopId];
   if (!shop) return;
@@ -13937,7 +13943,15 @@ function openNpcShop(shopId) {
     </div>
     ${typeof townShopSwitchHtml === 'function' ? townShopSwitchHtml(shopId) : ''}`;
 
-  Object.keys(grouped).forEach(category => {
+  /* 分類多（主城武器商人約 15 類、上百件）就改成分類鈕，一次只列一類（T61，使用者 2026-11-19） */
+  let cats = Object.keys(grouped);
+  if (cats.length > 6) {
+    let sel = npcShopCat[shopId];
+    if (!grouped[sel]) sel = npcShopCat[shopId] = cats[0];
+    html += `<div class="shop-cat-chips">${cats.map(c => `<button class="btn-chip${c === sel ? ' active' : ''}" onclick="npcShopCat['${shopId}']='${c}';openNpcShop('${shopId}')">${c} <small>${grouped[c].length}</small></button>`).join('')}</div>`;
+    cats = [sel];
+  }
+  cats.forEach(category => {
     html += `<div class="shop-category">
       <h4 class="shop-category-title">${category}</h4>
       <div class="shop-items">`;
@@ -15941,7 +15955,7 @@ function npcWarp(townId) {
   const t = WORLD.towns.find(x => x.id === townId);
   cancelTravel(true);
   state.gold -= t.cost;
-  logMsg(`🌀 支付 ${t.cost.toLocaleString()}z，傳送 NPC 打開了通往「${t.name}」的傳送之陣。`);
+  logMsg(t.cost ? `🌀 支付 ${t.cost.toLocaleString()}z，傳送 NPC 打開了通往「${t.name}」的傳送之陣。` : `🌀 傳送 NPC 打開了通往「${t.name}」的傳送之陣。`);
   startWarpPortal(townId);
   return null;
 }
@@ -16117,7 +16131,7 @@ function loadGame() {
     state.vDuel = null;
     if (Array.isArray(state.monsters)) state.monsters = state.monsters.filter(m => m && MONSTERS[m.defId]);
     if (typeof gmtOnLoad === 'function') gmtOnLoad();   // 吉芬魔法大賽中斷：照打贏的輪數結算
-    if (typeof gvgOnLoad === 'function') gvgOnLoad();   // 攻城中斷：放回普隆德拉
+    if (typeof gvgOnLoad === 'function') gvgOnLoad();   // 攻城中斷：放回主城
     if (typeof dojoOnLoad === 'function') dojoOnLoad();   // 道館中斷：照打完的關數給代幣
     // 舊存檔沒有 DPS 統計，補一份空的（從讀檔當下開始算）
     if (!state.dpsTracker || typeof state.dpsTracker.damage !== 'number') {

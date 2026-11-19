@@ -3496,6 +3496,7 @@ function syncGroundUnits() {
   };
   syncTravelPortal(scene, at);
   syncTownNpcs(scene, at);
+  syncPassers(scene, at);
   /* T24：場地魔法（暴風雪、隕石術、十字驅魔…）的範圍圈，半徑照 fieldRadius；
      中心存在 activeFieldEffects[].center，玩家走動時 engine 會一起平移 */
   const fields = ownerFields(owners).filter(e => e.f.center && e.f.radius > 0 && Date.now() < e.f.endsAt);
@@ -4928,7 +4929,187 @@ function syncTownNpcs(scene, at) {
     place(el, n.x, n.y);
     el.classList.toggle('target', state.townTarget === n.id);
   });
+  syncFakeVendors(layer, place);
   syncTownNav(scene, L);
+}
+/* T63 主城交易區的假人攤位：紙娃娃＋頭上招牌（錢袋＝賣、收購圖示＝收）。每 2 小時換一批 */
+function syncFakeVendors(layer, place) {
+  const list = isHubTown() && typeof fakeHubNpcs === 'function' ? fakeHubNpcs() : [];
+  let box = layer.querySelector('.bf-fakes');
+  let signs = layer.querySelector('.bf-vend-signs');
+  const key = list.map(n => n.id + n.name).join('|');
+  if (!box || box._key !== key) {
+    if (box) box.remove();
+    if (signs) signs.remove();
+    box = document.createElement('div');
+    box.className = 'bf-fakes';
+    box._key = key;
+    box.innerHTML = list.map(n => `<div class="bf-npc bf-fake" data-fake="${n.id}" onclick="walkToTownNpc('${n.id}')" title="${shopEsc(n.name)}">
+        <div class="bf-fake-body" style="height:${ALLY_CHAR_H}px"><canvas></canvas></div><em>${shopEsc(n.name)}</em></div>`).join('');
+    layer.appendChild(box);
+    // RO 的招牌不會被角色擋住：獨立一層疊在所有角色上面
+    signs = document.createElement('div');
+    signs.className = 'bf-vend-signs';
+    signs.innerHTML = list.map(n => {
+      const v = n.fake;
+      const icon = v.kind === 'sell' ? 'shop' : 'buyingshop';
+      return `<div class="bf-vend-sign ${v.kind}" data-fake="${n.id}" style="--lift:${ALLY_CHAR_H + 4}px" onclick="walkToTownNpc('${n.id}')"><img src="images/ui/vending/${icon}.png" alt="">${shopEsc(fakeShopLabel(v))}</div>`;
+    }).join('');
+    layer.appendChild(signs);
+    box.querySelectorAll('.bf-fake').forEach(el => {
+      const n = list.find(x => x.id === el.dataset.fake);
+      el._look = n && n.fake.look;
+    });
+  }
+  box.querySelectorAll('.bf-fake').forEach(el => {
+    const n = list.find(x => x.id === el.dataset.fake);
+    if (!n) return;
+    place(el, n.x, n.y);
+    el.classList.toggle('target', state.townTarget === n.id);
+    const cv = el.querySelector('canvas');
+    if (cv && !cv._done) drawFakeDoll(cv, el._look, 'idle', 0, false);
+  });
+  signs.querySelectorAll('.bf-vend-sign').forEach(el => {
+    const n = list.find(x => x.id === el.dataset.fake);
+    if (n) { place(el, n.x, n.y); el.classList.toggle('target', state.townTarget === n.id); }
+  });
+}
+/* 假人的紙娃娃：畫一格；圖層還沒載完下次再畫。parts 拿不到（沒有這個職業的圖）就整個藏起來 */
+function drawFakeDoll(cv, look, act, frame, flip) {
+  if (!cv._parts) {
+    cv._parts = typeof paperdollPartsFor === 'function' && look ? paperdollPartsFor(look) : null;
+    if (!cv._parts) { cv.style.display = 'none'; cv._done = true; return; }
+    layoutPaperdoll(cv, cv._parts, ALLY_CHAR_H, 0);
+  }
+  const parts = cv._parts;
+  if (!paperdollFrameCount(parts[0], act)) act = 'idle';
+  const n = paperdollFrameCount(parts[0], act) || 1;
+  frame %= n;
+  if (cv._plAct === act && cv._plFrame === frame && cv._flip === flip) return;
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const res = drawPaperdollFrame(ctx, parts, act, frame, cv._ox || 0, cv._oy || 0);
+  if (res && res.ready) { cv._plAct = act; cv._plFrame = frame; cv._flip = flip; if (act === 'idle') cv._done = true; }
+  applyPaperTransform(cv, flip);
+}
+/* T63 野外路過的假人（純畫面效果，不碰 state）：
+   野外每隔一陣子從畫面一側走進來、走到另一側離開；約 4 成會在半路停下來打一隻自己的怪（那張圖的怪），
+   打幾下怪淡出再繼續走。座標用世界格（跟城鎮 NPC 同一套），玩家走動時跟著場景捲動。一次最多 1 位。 */
+const PASSER_WALK_CPS = 1.6;     // 每秒走幾格
+let _passer = null, _passerNext = 0;
+function syncPassers(scene, at) {
+  const now = performance.now();
+  const map = currentMap();
+  const field = map && (map.monsters || []).length && !map.arena && !state.dojo && !state.gmt && !state.bossChallenge;
+  if (!field) { if (_passer) { _passer.el.remove(); if (_passer.mobEl) _passer.mobEl.remove(); _passer = null; } _passerNext = now + 20000; return; }
+  if (!_passer) {
+    if (!_passerNext) _passerNext = now + 15000 + Math.random() * 30000;
+    if (now < _passerNext) return;
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const r = Math.random;
+    const look = typeof fakeLook === 'function' ? fakeLook(r) : null;
+    const el = document.createElement('div');
+    el.className = 'bf-passer';
+    const name = FAKE_NAMES[Math.floor(r() * FAKE_NAMES.length)];
+    el.innerHTML = `<div class="bf-fake-body" style="height:${ALLY_CHAR_H}px"><canvas></canvas></div><em>${shopEsc(name)}</em>`;
+    scene.appendChild(el);
+    const mobs = map.monsters.map(m => m.id).filter(id => MONSTERS[id] && !MONSTERS[id].isBoss);
+    _passer = { el, look, dir, x: (state.worldX || 0) - dir * 10, y: (state.worldY || 0) + (r() * 2 - 1) * 4,
+      t: now, fightAt: r() < 0.4 ? 3 + r() * 6 : -1, walked: 0, fight: 0, mob: mobs.length ? mobs[Math.floor(r() * mobs.length)] : null };
+  }
+  const p = _passer;
+  const dt = Math.min(0.1, (now - p.t) / 1000);
+  p.t = now;
+  let act = 'walk_s';
+  if (p.fight > 0) {
+    act = 'attack';
+    p.fight -= dt;
+    if (p.fight <= 0.7 && p.mobEl) p.mobEl.style.opacity = '0';
+    if (p.fight <= 0) { if (p.mobEl) p.mobEl.remove(); p.mobEl = null; p.fightAt = -1; }
+  } else if (p.fightAt >= 0 && p.walked >= p.fightAt && p.mob) {
+    p.fight = 3.5;
+    const img = document.createElement('img');
+    img.className = 'bf-passer-mob';
+    img.src = monsterImgSrc(p.mob);
+    img.onload = () => townNpcImgLoad(img);
+    if (p.dir < 0) img.style.transform = 'translate(-50%, -100%) scaleX(-1)';
+    scene.appendChild(img);
+    p.mobEl = img;
+  } else {
+    p.x += p.dir * PASSER_WALK_CPS * dt;
+    p.walked += PASSER_WALK_CPS * dt;
+  }
+  const place = (el, x, y) => {
+    const dx = x - (state.worldX || 0), dy = y - (state.worldY || 0);
+    const pt = at(Math.hypot(dx, dy), Math.atan2(dy, dx));
+    el.style.display = pt.off ? 'none' : '';
+    el.style.left = pt.x + '%';
+    el.style.top = pt.y + '%';
+  };
+  place(p.el, p.x, p.y);
+  if (p.mobEl) place(p.mobEl, p.x + p.dir * 1.6, p.y);
+  const cv = p.el.querySelector('canvas');
+  const n = cv._parts ? (paperdollFrameCount(cv._parts[0], act) || paperdollFrameCount(cv._parts[0], 'idle') || 1) : 1;
+  const delay = act === 'attack' ? 110 : 75;
+  drawFakeDoll(cv, p.look, act, Math.floor(now / delay) % n, facingFlip(act, p.dir > 0));
+  // 走出畫面（離玩家 12 格以上）就收掉，下一位 40～90 秒後
+  if (p.walked > 4 && Math.abs(p.x - (state.worldX || 0)) > 12) {
+    p.el.remove();
+    if (p.mobEl) p.mobEl.remove();
+    _passer = null;
+    _passerNext = now + 40000 + Math.random() * 50000;
+  }
+}
+/* 交易喊話：平均約 45 秒一句，只出現在世界頻道沒連線時的單機模擬視窗 */
+setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && Math.random() < 1 / 3 && typeof fakeShout === 'function') fakeShout(); }, 15000);
+
+/* 攤位面板（地圖分頁） */
+function fakeVendorPanelHtml(n, back) {
+  const v = n.fake;
+  if (v.kind === 'sell') {
+    const rows = v.items.map((x, i) => {
+      const it = ITEMS[x.item];
+      const out = x.qty <= 0;
+      return `<div class="shop-row${out || state.gold < x.price ? ' shop-cannot-afford' : ''}">
+        <div class="shop-item-info" onmouseenter="showShopItemTooltip(event,'${x.item}')" onmouseleave="hideEquipTooltip()">
+          <img class="shop-item-icon" src="${itemImgSrc(x.item)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+          <div class="shop-item-details"><span class="shop-item-name">${shopEsc(it.name)}</span></div></div>
+        <div class="shop-item-actions">
+          <span class="shop-item-price">${x.price.toLocaleString()} 💰</span>
+          <span class="shop-item-owned">剩 ${x.qty}</span>
+          <input type="number" class="shop-buy-qty" id="fv-qty-${i}" value="1" min="1" max="${Math.max(1, x.qty)}" style="width:52px;padding:2px 4px;">
+          <button class="btn-small" ${out ? 'disabled' : ''} onclick="fakeVendorBuyUi('${v.id}',${i})">${out ? '賣完' : '購買'}</button></div></div>`;
+    }).join('');
+    return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🛒 ${shopEsc(v.name)}的露天商店</h3></div>
+      <div class="town-npc-say">「${shopEsc(v.title)}」——數量有限，賣完就沒了。攤位每 2 小時換一批。</div>
+      <div class="shop-items">${rows}</div></div>`;
+  }
+  const it = ITEMS[v.item];
+  const have = getItemQty(v.item);
+  const deal = v.barter ? `每 ${v.barter.per} 個換 1 瓶${shopEsc(ITEMS[v.barter.item].name)}` : `一個 ${v.price.toLocaleString()}z（賣給 NPC 是 ${(it.sell || 0).toLocaleString()}z）`;
+  const can = v.want > 0 && have > 0 && (!v.barter || have >= v.barter.per);
+  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💰 ${shopEsc(v.name)}的收購攤</h3></div>
+    <div class="town-npc-say">「收 ${shopEsc(it.name)}！」還要收 <b>${v.want}</b> 個，${deal}。</div>
+    <div class="shop-row"><div class="shop-item-info"><img class="shop-item-icon" src="${itemImgSrc(v.item)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
+      <div class="shop-item-details"><span class="shop-item-name">${shopEsc(it.name)}</span></div></div>
+      <div class="shop-item-actions"><span class="shop-item-owned">你有 ${have}</span>
+        <input type="number" class="shop-buy-qty" id="fb-qty" value="${Math.min(have, v.want) || 1}" min="1" max="${Math.max(1, Math.min(have, v.want))}" style="width:52px;padding:2px 4px;">
+        <button class="btn-small" ${can ? '' : 'disabled'} onclick="fakeBuyerSellUi('${v.id}')">賣給他</button></div></div></div>`;
+}
+function fakeVendorBuyUi(id, i) {
+  const el = document.getElementById('fv-qty-' + i);
+  const why = fakeVendorBuy(id, i, el ? parseInt(el.value) || 1 : 1);
+  if (why) showToast(why);
+  openTownNpc(id);
+  renderAll();
+}
+function fakeBuyerSellUi(id) {
+  const el = document.getElementById('fb-qty');
+  const why = fakeBuyerSell(id, el ? parseInt(el.value) || 1 : 1);
+  if (why) showToast(why);
+  openTownNpc(id);
+  renderAll();
 }
 /* 區域移動按鈕（使用者 2026-11-06）：在入口時畫面邊緣顯示往三區的按鈕，在其他區顯示回卡普拉服務處。
    方向照兩區中心的相對位置擺在上／下／左／右邊緣 */
@@ -4975,7 +5156,7 @@ function scrollTabIntoView(tabId) {
 }
 function walkToTownKafra() {
   const L = townLayout();
-  const k = L && L.npcs.find(n => n.role === 'kafra');
+  const k = L && (L.npcs.find(n => n.role === 'warper') || L.npcs.find(n => n.role === 'kafra'));   // 主城找傳送師
   if (k) walkToTownNpc(k.id);
 }
 /* T29 公會 NPC：列出這裡能轉、而且在你路線上的職業；女武神另外辦轉生 */
@@ -4988,9 +5169,11 @@ function guildNpcPanelHtml(n, back) {
   const cards = here.map(j => {
     const jd = JOB_TREE[j];
     const why = jobChangeBlockReason(j);
-    return `<div class="town-npc-card${why ? ' locked' : ''}" ${why ? `title="${jobTreeAttr(why)}"` : `onclick="confirmJobChange('${j}')"`}>
+    // T62：只差考試 → 點了應考
+    const quiz = why === (typeof JOB_QUIZ_REASON !== 'undefined' && JOB_QUIZ_REASON);
+    return `<div class="town-npc-card${why && !quiz ? ' locked' : ''}" ${quiz ? `onclick="openJobQuiz('${j}')"` : why ? `title="${jobTreeAttr(why)}"` : `onclick="confirmJobChange('${j}')"`}>
       ${jobTreeIconHtml(j, jd)}<div class="town-npc-name">${shopEsc(jd.name)}</div>
-      <div class="town-npc-hint">${why ? shopEsc(why) : '可轉職'}</div></div>`;
+      <div class="town-npc-hint">${quiz ? `📝 轉職考試（${JOB_QUIZ_COUNT} 題答對 ${JOB_QUIZ_PASS} 題）` : why ? shopEsc(why) : '可轉職'}</div></div>`;
   }).join('');
   let say;
   if (here.length) say = '想成為我們的一員嗎？條件達到了就能轉職。';
@@ -5018,12 +5201,17 @@ function openTownNpc(id) {
   if (n.role === 'gvg') { el.innerHTML = gvgNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'dojo') { el.innerHTML = dojoNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'enchant') { el.innerHTML = enchantNpcPanelHtml(n, back); return; }
+  if (n.role === 'warper') { openTownWarp('warp'); return; }
+  if (n.role === 'vendor' || n.role === 'buyer') { el.innerHTML = fakeVendorPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'kafra') {
+    // T61：一般城鎮的卡普拉多「前往主城」（免費）；主城的卡普拉只管倉庫，傳送找傳送師
+    const hub = typeof isHubTown === 'function' && isHubTown();
     el.innerHTML = `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💁 ${shopEsc(n.name)}</h3></div>
       <div class="town-npc-say">歡迎光臨卡普拉服務，今天需要什麼服務呢？</div>
       <div class="town-npc-list">
         <div class="town-npc-card" onclick="openWarehouse()"><div class="town-npc-icon">📦</div><div class="town-npc-name">使用倉庫</div></div>
         <div class="town-npc-card" onclick="openTownWarp()"><div class="town-npc-icon">🌀</div><div class="town-npc-name">傳送服務</div></div>
+        ${hub ? '' : `<div class="town-npc-card" onclick="doTownWarp(HUB_TOWN)"><div class="town-npc-icon">🏰</div><div class="town-npc-name">前往主城</div><div class="town-npc-hint">免費</div></div>`}
       </div></div>`;
     return;
   }
@@ -5062,11 +5250,11 @@ function townNpcPanelHtml() {
   }
   const here = townDistrictHere();
   const icon = n => n.role === 'shop' ? ((NPC_SHOPS[n.shop] || {}).icon || '🏪')
-    : n.role === 'kafra' ? '💁' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : n.role === 'dojo' ? '🥋' : n.role === 'enchant' ? '💠' : '🧑';
+    : n.role === 'kafra' ? '💁' : n.role === 'warper' ? '🌀' : n.role === 'vendor' ? '🛒' : n.role === 'buyer' ? '💰' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : n.role === 'dojo' ? '🥋' : n.role === 'enchant' ? '💠' : '🧑';
   return `<div class="town-npcs">
     <h4 class="town-npc-title">🏙️ 城內　<span class="town-here">目前在：${here ? shopEsc(here.name) : '—'}</span></h4>
     ${L.districts.map(d => {
-      const list = L.npcs.filter(n => n.district === d.id);
+      const list = townNpcList(L).filter(n => n.district === d.id);
       return `<div class="town-district${here && here.id === d.id ? ' here' : ''}">
         <button class="btn-chip town-district-name" onclick="walkToTownDistrict('${d.id}')" title="走過去">📍 ${shopEsc(d.name)}</button>
         ${list.map(n => `<button class="btn-chip town-npc-chip${state.townTarget === n.id ? ' active' : ''}" onclick="walkToTownNpc('${n.id}')">${icon(n)} ${shopEsc(n.name)}</button>`).join('')}
@@ -8980,10 +9168,10 @@ function openTownWarp(tab) {
     const rows = WORLD.towns.filter(t => t.id !== state.mapId).sort((a, b) => a.lv - b.lv).map(t => {
       const lock = lv < t.lv;
       return `<button class="wm-floor${lock ? ' locked' : ''}" ${lock ? 'disabled' : ''} onclick="doTownWarp('${t.id}')">
-        <span>${shopEsc(t.name)}</span><small>${lock ? `Lv${t.lv} 開放` : t.cost.toLocaleString() + 'z'}</small></button>`;
+        <span>${t.id === HUB_TOWN ? '🏰 ' : ''}${shopEsc(t.name)}</span><small>${lock ? `Lv${t.lv} 開放` : t.cost ? t.cost.toLocaleString() + 'z' : '免費'}</small></button>`;
     }).join('');
     body = `<div class="wm-sheet-title">🌀 傳送 NPC <small>隊伍最高 Lv${lv}・持有 ${(state.gold || 0).toLocaleString()}z</small></div>
-      <div class="ab-info-text">主城 1,000z、其他城鎮 5,000z，一次收費。</div>
+      <div class="ab-info-text">冒險者主城免費，其他城鎮照右邊價格，一次收費。</div>
       ${partyFollowHtml()}
       <div class="wm-floors">${rows}</div>`;
   } else if (tab === 'portal') {
@@ -11073,7 +11261,7 @@ function gmtNpcPanelHtml(n, back) {
     <div class="town-npc-say">歡迎參加吉芬魔法大賽！一輪一場，連續打贏 13 輪就是冠軍。</div>
     <ul class="gmt-rules">
       <li>入場：基本等級 ${GMT_ENTRY_LV} 以上，每個角色每天 1 次</li>
-      <li>只能單人參加，隊友會留在吉芬等你</li>
+      <li>只能單人參加，隊友會留在主城等你</li>
       <li>對手比照官方：阿爾西、戴奧・阿奈默斯…準決賽（黛外或飛依・卡娜比昂）、決賽潘利爾，全部 1 對 1</li>
       <li>每關限時 3 分鐘（準決賽、決賽 5 分鐘），總時限 30 分鐘；第 3、6、9、12 關後治療師補滿；倒下或離開競技場就結束</li>
       <li>硬幣照官方：第 1 關 1 枚…第 10 關 10 枚、之後 15／20／20 枚（全破 110 枚）；第一次全破送 ${GMT_FIRST_CLEAR_POINTS} 商城點數</li>
@@ -11173,6 +11361,53 @@ function syncDojoHud() {
 }
 /* 挑戰前的王介紹：圖、種族／屬性／體型、HP、攻防、會的招式 */
 function closeDojoIntro() { const m = document.getElementById('dojo-intro'); if (m) m.remove(); }
+/* ---- T62 轉職考試視窗：10 題一次列出，交卷後標出正解；過了直接接轉職確認 ---- */
+let _jobQuiz = null;
+function openJobQuiz(jobId) {
+  _jobQuiz = { jobId, qs: buildJobQuiz(jobId), ans: [], done: null };
+  renderJobQuiz();
+}
+function closeJobQuiz() { const m = document.getElementById('job-quiz'); if (m) m.remove(); }
+function jobQuizPick(i, j) { if (_jobQuiz && !_jobQuiz.done) { _jobQuiz.ans[i] = j; renderJobQuiz(); } }
+function jobQuizSubmit() {
+  const z = _jobQuiz;
+  if (!z || z.done) return;
+  if (z.qs.some((q, i) => z.ans[i] == null)) { showToast('還有題目沒作答。'); return; }
+  z.done = submitJobQuiz(z.jobId, z.qs, z.ans);
+  renderJobQuiz();
+}
+function renderJobQuiz() {
+  const z = _jobQuiz;
+  if (!z) return;
+  let m = document.getElementById('job-quiz');
+  const keep = m ? (m.querySelector('.job-quiz-list') || {}).scrollTop || 0 : 0;
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'job-quiz';
+    m.className = 'modal-overlay';
+    document.body.appendChild(m);
+  }
+  const jd = JOB_TREE[z.jobId];
+  const done = z.done;
+  const list = z.qs.map((q, i) => `<div class="job-quiz-q">
+      <div class="job-quiz-title">${i + 1}. ${shopEsc(q.q)}</div>
+      ${q.options.map((o, j) => {
+        const cls = done ? (j === q.answer ? ' right' : z.ans[i] === j ? ' wrong' : '') : z.ans[i] === j ? ' picked' : '';
+        return `<button class="job-quiz-opt${cls}" ${done ? 'disabled' : `onclick="jobQuizPick(${i},${j})"`}>${shopEsc(o)}</button>`;
+      }).join('')}</div>`).join('');
+  const answered = z.ans.filter(x => x != null).length;
+  const foot = !done
+    ? `<button class="btn-small" onclick="closeJobQuiz()">先不考</button><button class="btn-small active" onclick="jobQuizSubmit()">交卷（${answered}／${z.qs.length}）</button>`
+    : done.pass
+      ? `<span class="job-quiz-score pass">答對 ${done.score} 題，通過！</span><button class="btn-small active" onclick="closeJobQuiz();confirmJobChange('${z.jobId}')">🎓 轉職成${shopEsc(jd.name)}</button>`
+      : `<span class="job-quiz-score">答對 ${done.score} 題，要 ${JOB_QUIZ_PASS} 題才過</span><button class="btn-small" onclick="closeJobQuiz()">關閉</button><button class="btn-small active" onclick="openJobQuiz('${z.jobId}')">重考（換一份）</button>`;
+  m.innerHTML = `<div class="modal-box job-quiz">
+    <h3 class="modal-title">📝 ${shopEsc(jd.name)}轉職考試 <small>${JOB_QUIZ_COUNT} 題答對 ${JOB_QUIZ_PASS} 題過關，沒過可以重考</small></h3>
+    <div class="job-quiz-list">${list}</div>
+    <div class="modal-confirm job-quiz-foot">${foot}</div></div>`;
+  m.querySelector('.job-quiz-list').scrollTop = done ? 0 : keep;
+}
+
 function openDojoIntro() {
   const id = typeof dojoNextMobId === 'function' && dojoNextMobId();
   const def = id && MONSTERS[id];
