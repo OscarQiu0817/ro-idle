@@ -2911,3 +2911,66 @@ body.manual-log-off .combat-log { display: none; }
 .bf-live .bf-live-line { position: absolute; left: 50%; transform: translateX(-50%); margin: 0; z-index: 2; }
 .bf-live-mount { display: block; image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); width: 150px; }
 .rent-row { display: flex; gap: 6px; justify-content: center; margin: 4px 0; }
+/* 頭部服飾 */
+.costume-box { margin: 6px 0; font-size: 12px; }
+.costume-box summary { cursor: pointer; padding: 4px 0; color: #f0d68a; }
+.costume-worn { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0; }
+.costume-search { width: 100%; margin: 4px 0; box-sizing: border-box; }
+.costume-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px; max-height: 260px; overflow: auto; }
+.costume-item { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border: 1px solid var(--line, #555); border-radius: 6px; }
+.costume-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.costume-item small { color: #aaa; }
+.costume-item.on { border-color: #ffd479; background: rgba(255,212,121,.08); }
+.equipwin-tabs { display: flex; gap: 2px; margin-bottom: 2px; }
+.equipwin-tabs button { flex: 1; padding: 3px 0; font-size: 12px; border: 1px solid #8a7a5a; background: #3a3326; color: #cbb; border-radius: 6px 6px 0 0; cursor: pointer; }
+.equipwin-tabs button.on { background: #f3ecd8; color: #333; font-weight: bold; }
+.equipwin-slot.sel { outline: 2px solid #ffd479; }
+.equipwin-name.costume span { color: #4a8a2a; }
+.costume-icon { font-size: 18px; line-height: 1; }
+/* ---- 裝備欄：比照 RO 原生視窗（使用者 2026-11-22）。標題列＋分頁＋左右兩欄，中間角色 ---- */
+.rowin { max-width: 400px; margin: 4px auto; border: 1px solid #6b85b3; border-radius: 6px; overflow: hidden; background: #f4f6fa; box-shadow: 0 2px 6px rgba(0,0,0,.35); color: #222; }
+.rowin-title { padding: 3px 8px; font-size: 12px; font-weight: bold; color: #fff; background: linear-gradient(#8fb0e3, #5d7fbf); text-shadow: 0 1px 1px rgba(0,0,0,.4); }
+.rowin-tabs { display: flex; gap: 2px; padding: 3px 4px 0; background: #dfe5ef; border-bottom: 1px solid #9aaccc; }
+.rowin-tabs button { flex: 0 1 auto; min-width: 74px; padding: 3px 10px; font-size: 12px; border: 1px solid #9aaccc; border-bottom: none; background: #c9d3e4; color: #445; border-radius: 5px 5px 0 0; cursor: pointer; }
+.rowin-tabs button.on { background: #fff; color: #222; font-weight: bold; position: relative; top: 1px; }
+.rowin-body { display: grid; grid-template-columns: 1fr 26% 1fr; background: #fff; }
+.rowin-col { display: flex; flex-direction: column; }
+.rowin-row { display: flex; align-items: center; gap: 4px; height: 36px; padding: 0 4px; border-bottom: 1px solid #e3e7ee; cursor: pointer; }
+.rowin-row:last-child { border-bottom: none; }
+.rowin-row.R { flex-direction: row-reverse; text-align: right; }
+.rowin-row:hover:not(.empty), .rowin-row.sel { background: #fff4cf; }
+.rowin-row.off { cursor: default; background: #fafbfc; }
+.rowin-row .equipwin-slot { position: relative; transform: none; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 4px; background: #edf0f5; box-shadow: inset 0 0 0 1px #d5dbe5; }
+.rowin-row.empty .equipwin-slot { background: #f1f3f7; }
+.rowin-row .equipwin-slot img { width: 24px; height: 24px; }
+.rowin-name { flex: 1; min-width: 0; font-size: 11px; line-height: 1.15; }
+.rowin-name span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-all; }
+.rowin-row.empty .rowin-name { color: #b3bccb; }
+.rowin-row.costume .rowin-name { color: #3f8a22; }
+.rowin-doll { position: relative; border-left: 1px solid #e3e7ee; border-right: 1px solid #e3e7ee;
+  background: repeating-linear-gradient(#f7f7f7 0 3px, #eeeeee 3px 6px); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; }
+.rowin-doll .equipwin-doll { position: static; transform: none; width: 100%; height: 150px; }
+.rowin-doll::after { content: ''; position: absolute; bottom: 4px; left: 50%; width: 46px; height: 12px; margin-left: -23px; border-radius: 50%; background: rgba(0,0,0,.18); }
+/* 裝備欄：放大的紙娃娃、off 鈕、底部列（箭矢、顯示服飾外觀） */
+.rowin-doll { overflow: visible; padding-bottom: 6px; }
+.rowin-doll .equipwin-doll { height: 172px; overflow: visible; display: flex; align-items: flex-end; justify-content: center; }
+.rowin-doll .equipwin-doll canvas { max-width: none; max-height: none; position: relative; z-index: 2; }
+.rowin-off { position: absolute; right: 2px; bottom: 26px; z-index: 3; padding: 1px 6px; font: bold 11px/1.2 Arial, sans-serif; color: #fff; background: #4a4a4a; border: 1px solid #222; border-radius: 9px; cursor: pointer; }
+.rowin-off:hover { background: #c33; }
+.rowin-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; padding: 3px 6px; background: #eef1f6; border-top: 1px solid #c9d2e2; font-size: 11px; color: #333; }
+.rowin-foot:empty { display: none; }
+.rowin-check { display: flex; align-items: center; gap: 3px; cursor: pointer; margin-left: auto; }
+.rowin-ammo { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.rowin-ammo .equipwin-slot { position: relative; transform: none; width: 26px; height: 26px; border-radius: 4px; background: #e3e8f0; box-shadow: inset 0 0 0 1px #c9d2e2; }
+.rowin-ammo .equipwin-slot img { width: 22px; height: 22px; }
+.rowin-ammo.warn span { color: #c33; font-weight: bold; }
+.rowin-ammo .btn-small { padding: 0 6px; font-size: 11px; }
+.rowin-body { overflow: hidden; }
+/* 世界頻道單機模擬：「進入聊天室」跟說明那行同一列（使用者 2026-11-22：手機版會蓋到訊息）。
+   說明列黏在最上面，按鈕疊在它右邊，捲動時兩個一起留著 */
+.world-chat-local .world-chat-join-overlay { inset: 2px 6px auto auto; }
+.world-chat-local .world-chat-join { padding: 1px 8px; font-size: 11px; }
+.world-chat-local-head { position: sticky; top: -4px; z-index: 1; min-height: 22px; display: flex; align-items: center; padding: 2px 92px 2px 0; background: #0c0e16; }
+/* 觀戰模式（放置的全畫面）：沒有搖桿與按鈕，增益圖示不用讓位給按鈕 */
+#bf-watch-toggle.hidden { display: none; }
+body.watch-play .battle-buffs { bottom: 12px; }

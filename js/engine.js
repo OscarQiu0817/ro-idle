@@ -7062,10 +7062,16 @@ function tickMonsterMovement(dtMs, now) {
   for (const mon of state.monsters.slice()) {   // 撞火牆可能打死怪（會從陣列移除），用副本迭代
     if (!Number.isFinite(mon.d) || mon.hp <= 0) continue;
     const mv = monMove(mon);
-    if (mon._lastHp != null && mon.hp < mon._lastHp) mon.flinchUntil = now + mv.damageMotion;
+    const gotHit = mon._lastHp != null && mon.hp < mon._lastHp;
+    if (gotHit) mon.flinchUntil = now + mv.damageMotion;
     mon._lastHp = mon.hp;
-    // T66 節慶怪：被靠近就往外逃（比玩家走得慢，追得到）
-    if (mon.flee) { if (mon.d < 5) mon.d = Math.min(7, mon.d + dtMs / 320); continue; }
+    /* T66 節慶怪：被打一下才慌張逃 1 秒，其他時間站著（使用者 2026-11-22：一直逃的話手操、放置都打不到——
+       走到射程一停下來牠又跑出去，攻擊計時被清掉）。逃得比玩家走路慢 */
+    if (mon.flee) {
+      if (gotHit) mon.fleeUntil = now + 1000;
+      if (now < (mon.fleeUntil || 0) && mon.d < 6) mon.d = Math.min(6, mon.d + dtMs / 400);
+      continue;
+    }
     if (mv.immobile || monInRange(mon) || mon._bossCast) continue;   // 打王：蓄力紅圈時不走
     if (!mv.aggressive && mon.hp >= mon.maxHp) continue;
     if ((mon.stunnedUntil && now < mon.stunnedUntil) || (mon.flinchUntil && now < mon.flinchUntil)) continue;

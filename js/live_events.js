@@ -114,7 +114,8 @@ function liveWalkerSetup(ev) {
 function liveStartRush(ev) {
   liveWalkerSetup(ev);
   ev.mount = rng() < 0.6;   // 騎大嘴鳥的騎士；不然是十字軍
-  ev.look = { job: ev.mount ? 'lordknight' : 'crusader', gender: rng() < 0.5 ? 'male' : 'female', hairStyle: 1 + Math.floor(rng() * 20), hairColor: Math.floor(rng() * 9), weaponCat: 'bare' };
+  const job = ev.mount ? 'lordknight' : 'crusader', gender = rng() < 0.5 ? 'male' : 'female';
+  ev.look = { job, gender, hairStyle: 1 + Math.floor(rng() * 20), hairColor: Math.floor(rng() * 9), weaponCat: fakeWeaponCat(job, gender, rng) };
   ev.name = livePick(FAKE_NAMES);
   ev.lines = ev.mount ? LIVE_RUSH_LINES.concat(LIVE_PECO_LINES) : LIVE_RUSH_LINES;
   ev.line = livePick(ev.lines); ev.lineAt = ev.start;
@@ -145,7 +146,8 @@ function liveStartSupport(ev) {
   const j = livePick(LIVE_SUPPORT_JOBS);
   ev.job = j;
   ev.skLv = Math.round(liveRand(j.lv[0], j.lv[1]));
-  ev.look = { job: j.job, gender: rng() < 0.5 ? 'male' : 'female', hairStyle: 1 + Math.floor(rng() * 20), hairColor: Math.floor(rng() * 9), weaponCat: 'bare' };
+  const gender = rng() < 0.5 ? 'male' : 'female';
+  ev.look = { job: j.job, gender, hairStyle: 1 + Math.floor(rng() * 20), hairColor: Math.floor(rng() * 9), weaponCat: fakeWeaponCat(j.job, gender, rng) };
   ev.name = livePick(FAKE_NAMES);
   ev.line = livePick(LIVE_SUPPORT_LINES); ev.lineAt = ev.start;
   ev.casted = false;

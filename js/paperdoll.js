@@ -98,6 +98,10 @@ function paperdollLookParts(who) {
       hatViews.push((it && pd.view[String(it.imgId)]) || 0);
     }
   }
+  if (typeof costumeApplyViews === 'function') {   // 隊友的頭部服飾
+    const v = costumeApplyViews(hatViews, who);
+    hatViews.length = 0; v.forEach(x => hatViews.push(x));
+  }
   let weaponCat = 'bare';
   try {
     const wid = equipRefItem(who, 'weapon');

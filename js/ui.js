@@ -3748,7 +3748,7 @@ function paperdollHeadViews() {
     const view = it && pd.view[String(it.imgId)];
     views.push(view || 0);
   }
-  return views;
+  return typeof costumeApplyViews === 'function' ? costumeApplyViews(views) : views;   // 頭部服飾蓋掉頭飾外觀
 }
 function paperdollParts(noMount) {
   const views = paperdollHeadViews();
@@ -4957,7 +4957,10 @@ function syncPassers(scene, at) {
   p.t = now;
   let act = 'walk_s';
   if (p.fight > 0) {
-    act = 'attack';
+    // 照手上的武器播攻擊動作（劍＝揮砍、槍＝刺），沒有武器圖層才用空手
+    const cvp = p.el.querySelector('canvas');
+    const wpart = cvp && cvp._parts && cvp._parts.find(x => x.indexOf('weapon/') === 0);
+    act = (wpart && window.PAPERDOLL.atk && window.PAPERDOLL.atk[wpart]) || 'attack';
     p.fight -= dt;
     if (p.fight <= 0.7 && p.mobEl) p.mobEl.style.opacity = '0';
     if (p.fight <= 0) { if (p.mobEl) p.mobEl.remove(); p.mobEl = null; p.fightAt = -1; }
@@ -4985,7 +4988,7 @@ function syncPassers(scene, at) {
   if (p.mobEl) place(p.mobEl, p.x + p.dir * 1.6, p.y);
   const cv = p.el.querySelector('canvas');
   const n = cv._parts ? (paperdollFrameCount(cv._parts[0], act) || paperdollFrameCount(cv._parts[0], 'idle') || 1) : 1;
-  const delay = act === 'attack' ? 110 : 75;
+  const delay = p.fight > 0 ? 110 : 75;
   drawFakeDoll(cv, p.look, act, Math.floor(now / delay) % n, facingFlip(act, p.dir > 0));
   // 走出畫面（離玩家 12 格以上）就收掉，下一位 40～90 秒後
   if (p.walked > 4 && Math.abs(p.x - (state.worldX || 0)) > 12) {
@@ -5067,8 +5070,10 @@ function syncLiveEvents(scene, at) {
   const n = parts ? (paperdollFrameCount(parts[0], use) || paperdollFrameCount(parts[0], 'idle') || 1) : 1;
   drawFakeDoll(cv, v.look, use, Math.floor(now / 80) % n, facingFlip(use, v.dir > 0));
 }
-/* 交易喊話：平均約 45 秒一句，只出現在世界頻道沒連線時的單機模擬視窗 */
-setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && Math.random() < 1 / 3 && typeof fakeShout === 'function') fakeShout(); }, 15000);
+/* 交易喊話：平均約 2.5 分鐘一句（使用者 2026-11-21：原本 45 秒太吵）；GM 小幫手小知識約 6 分鐘一則。
+   都只出現在世界頻道沒連線時的單機模擬視窗 */
+setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && Math.random() < 1 / 10 && typeof fakeShout === 'function') fakeShout(); }, 15000);
+setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && Math.random() < 1 / 24 && typeof fakeTip === 'function') fakeTip(); }, 15000);
 // 假人精煉 +10 以上公告：約 30 分鐘一則（使用者 2026-11-21）
 setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && !state.broadcastOff && Math.random() < 1 / 120 && typeof fakeRefineBroadcast === 'function') fakeRefineBroadcast(); }, 15000);
 
@@ -7372,7 +7377,7 @@ function itemTooltipHtml(itemId, opts) {
   if (!item) return '';
   const refLevel = opts.refine || 0;
   let html = `<div class="tt-name">${shopEsc(getItemDisplayName(itemId))}${refLevel > 0 ? ` <span class="tt-refine">+${refLevel}</span>` : ''}</div>`;
-  let type = ITEM_TYPE_LABELS[item.type] || '道具';
+  let type = item.type === 'costume' && typeof costumeSlotLabel === 'function' ? `服飾・${costumeSlotLabel(item.id)}（只換外觀）` : (ITEM_TYPE_LABELS[item.type] || '道具');
   if (item.element && item.element !== 'none' && ELEMENT_NAMES[item.element]) {
     type += ' · ' + (ELEMENT_ICONS[item.element] || '') + ELEMENT_NAMES[item.element];
   }
@@ -7503,6 +7508,7 @@ if (typeof document !== 'undefined' && !window.__bagTipDismiss) {
 const INV_CATEGORIES = [
   { key: 'weapon', name: '武器', icon: '⚔️' },
   { key: 'armor',  name: '防具', icon: '🛡️' },
+  { key: 'costume', name: '服飾', icon: '👒' },   // 頭部服飾（js/costume.js），只換外觀
   { key: 'card',   name: '卡片', icon: '🃏' },
   { key: 'item',   name: '道具', icon: '🎒' }
 ];
@@ -7568,6 +7574,7 @@ function invCategoryOf(itemId) {
   if (!d) return 'item';
   if (d.type === 'weapon') return 'weapon';
   if (d.type === 'armor') return 'armor';
+  if (d.type === 'costume') return 'costume';
   return 'item';
 }
 // 子分類的值與顯示名稱
@@ -7577,12 +7584,14 @@ function invSubOf(itemId) {
   if (cat === 'weapon') return d.weaponType || 'other';
   if (cat === 'armor') return d.armorType || 'other';
   if (cat === 'card') return (CARDS[itemId].slot || 'any');
+  if (cat === 'costume') return (d.costumeSlots || ['head_top'])[0];
   return itemUseOf(itemId);
 }
 function invSubLabel(cat, sub) {
   if (cat === 'weapon') return WEAPON_TYPE_LABELS[sub] || '其他';
   if (cat === 'armor') return ARMOR_TYPE_LABELS[sub] || '其他';
   if (cat === 'card') return CARD_SLOT_LABELS[sub] || sub;
+  if (cat === 'costume') return COSTUME_SLOT_NAME[sub] || sub;
   return ITEM_USE_LABELS[sub] || ITEM_SUBTYPE_LABELS[sub] || sub;
 }
 
@@ -7712,6 +7721,29 @@ function paintEquipDoll() {
   }
   /* 裝備欄用正面站姿（idle），不用備戰側面圖。 */
   paintDollStill(canvas, parts, paintEquipDoll);
+  /* 放大（使用者 2026-11-22：比照 RO）：頭頂（不含帽子）落在左欄第二格的中間。
+     用身體＋頭髮待機那格算頭頂離腳底多高，倍率固定，戴高帽子也不會讓人縮小 */
+  const plain = parts[0].replace('_mount/', '/');
+  const bodyPart = window.PAPERDOLL.clip[plain] ? plain : parts[0];
+  const body0 = paperdollFrame(bodyPart, 'idle', 0);
+  const headPart = parts.find(p => p.indexOf('head/') === 0);
+  const head0 = headPart && paperdollFrame(headPart, 'idle', 0);
+  let headAbove = body0 ? -body0[1] + 24 : 85;   // 腳底到頭頂的像素（拿不到頭髮圖時用估計值）
+  if (body0 && head0 && head0[2].length) {
+    const al = paperdollAlign(headPart, body0, head0);
+    const r = window.PAPERDOLL.img[headPart].f[head0[2][0]];
+    headAbove = -(al[1] + head0[2][2] - r[3] / 2);
+  }
+  headAbove = Math.max(40, headAbove);
+  const doll = host.closest('.rowin-doll');
+  const row2 = doll && doll.parentElement.querySelectorAll('.rowin-col')[0].querySelectorAll('.rowin-row')[1];
+  let k = 1.6;
+  if (row2 && host.clientHeight) {
+    const hb = host.getBoundingClientRect(), r2 = row2.getBoundingClientRect();
+    k = Math.max(1, (hb.bottom - 6 - (r2.top + r2.height / 2)) / headAbove);
+  }
+  canvas.style.width = Math.round(canvas.width * k) + 'px';
+  canvas.style.height = Math.round(canvas.height * k) + 'px';
 }
 function equipWinLabel(itemId) {
   return String(getItemDisplayName(itemId) || '')
@@ -7719,59 +7751,119 @@ function equipWinLabel(itemId) {
 }
 
 // RO 底圖版：把 10 格（＋箭矢格）用百分比疊在底圖上
-function buildEquipWinHtmlInner() {
+/* 裝備欄（使用者 2026-11-22：比照 RO 原生視窗）：標題列＋分頁＋左右兩欄「圖示＋名稱」，中間角色。
+   左欄：頭上、頭下、武器、披風、飾品1；右欄：頭中、身體、左手、鞋子、飾品2（同 EQUIPWIN_POS 的左右與上下順序） */
+const EQUIPWIN_COLS = (() => {
+  const keys = Object.keys(EQUIPWIN_POS).filter(k => k !== 'ammo');
+  const by = side => keys.filter(k => (EQUIPWIN_POS[k].x < 50) === (side === 'L')).sort((a, b) => EQUIPWIN_POS[a].y - EQUIPWIN_POS[b].y);
+  return { L: by('L'), R: by('R') };
+})();
+function equipWinRow(side, o) {
+  return `<div class="rowin-row ${side}${o.empty ? ' empty' : ''}${o.cls ? ' ' + o.cls : ''}" ${o.attrs || ''}>
+    <div class="equipwin-slot${o.slotCls ? ' ' + o.slotCls : ''}">${o.icon || ''}</div>
+    <div class="rowin-name"><span>${o.label}</span></div></div>`;
+}
+function equipWinFrame(tabsHtml, left, right, footHtml) {
+  // 騎乘／獵鷹：角色旁邊一顆 off（比照 RO），按了下鳥或放走獵鷹
+  const off = state.riding ? `<button class="rowin-off" title="下大嘴鳥" onclick="if(confirm('下大嘴鳥？要再騎得回主城飼育員那裡重新租。')){dismountPeco();renderAll()}">off</button>`
+    : state.falconRent ? `<button class="rowin-off" title="放走獵鷹" onclick="if(confirm('放走獵鷹？要再帶得回主城飼育員那裡重新租。')){returnFalcon();renderAll()}">off</button>` : '';
+  const showCos = typeof COSTUME_SLOTS !== 'undefined'
+    ? `<label class="rowin-check"><input type="checkbox" ${state.showCostume === false ? '' : 'checked'} onchange="state.showCostume=this.checked;saveGame();renderEquipTab()"> 顯示服飾外觀</label>` : '';
+  return `<div class="rowin">
+    <div class="rowin-title">裝備欄</div>${tabsHtml}
+    <div class="rowin-body">
+      <div class="rowin-col">${left.join('')}</div>
+      <div class="rowin-doll"><div class="equipwin-doll" id="equipwin-doll"></div>${off}</div>
+      <div class="rowin-col">${right.join('')}</div>
+    </div>
+    <div class="rowin-foot">${footHtml || ''}${showCos}</div></div>`;
+}
+/* 箭矢格（視窗底部）：拿弓或已經裝了箭才出現；點了選箭／卸下 */
+function equipWinAmmoHtml() {
+  const ammoId = getEquippedAmmoId();
+  const bow = needsAmmo();
+  if (!ammoId && !bow) return '';
+  const d = ammoId ? ITEMS[ammoId] : null;
+  const qty = getAmmoCount();
+  return `<div class="rowin-ammo${bow && qty <= 0 ? ' warn' : ''}" onclick="showAmmoSelect()" title="點一下選擇箭矢">
+    <div class="equipwin-slot">${d ? `<img src="${itemImgSrc(ammoId)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">` : ''}</div>
+    <span>${d ? `${shopEsc(d.name)} ×${qty}` : '箭矢：未裝備'}</span>
+    ${d ? `<button class="btn-small ghost" onclick="event.stopPropagation();unequipAmmo();renderEquipTab();renderTopBar();">卸下</button>` : ''}</div>`;
+}
+function buildEquipWinHtmlInner(tabsHtml) {
   const weaponId = getEquipBaseItemId('weapon');
   const twoHanded = isTwoHanded(weaponId);
-
-  let html = `<div class="equipwin">
-    <img class="equipwin-bg" src="images/ui/equipwin_bg.png" alt="">
-    <div class="equipwin-doll" id="equipwin-doll"></div>`;
-
-  Object.keys(EQUIPWIN_POS).forEach(key => {
+  const row = (key, side) => {
     const p = EQUIPWIN_POS[key];
-    // 左手被雙手武器佔住時，顯示同一把武器
-    const shadow = (key === 'shield' && twoHanded);
+    const shadow = (key === 'shield' && twoHanded);   // 左手被雙手武器佔住時，顯示同一把武器
     const srcSlot = shadow ? 'weapon' : key;
-    const itemId = key === 'ammo' ? getEquippedAmmoId() : getEquipBaseItemId(srcSlot);
-    const ref = key === 'ammo' ? 0 : getRefinementLevel(srcSlot);
-    const cards = key === 'ammo' ? [] : getEquippedCards(srcSlot);
-    const style = `left:${p.x}%;top:${p.y}%`;
-
-    if (!itemId) {
-      html += `<div class="equipwin-slot is-empty" style="${style}" title="${p.name}"></div>`;
-      return;
-    }
-    const qtyTag = key === 'ammo' ? `<span class="equipwin-qty">${getItemQty(itemId)}</span>` : '';
-    html += `<div class="equipwin-slot${shadow ? ' two-hand-shadow' : ''}" style="${style}"
-      title="${p.name}"
-      onmouseenter="showEquipTooltip(event,'${srcSlot}')" onmouseleave="hideEquipTooltip()"
-      onclick="openEquipSlotPanel(event,'${srcSlot}')">
-      <img src="${itemImgSrc(itemId)}" onerror="this.onerror=null;this.src='${placeholderImgSrc(key === 'ammo' ? 'item' : 'armor')}'">
-      ${cards.length ? `<span class="equipwin-card">🃏</span>` : ''}
-      ${qtyTag}
-    </div>`;
-    if (key !== 'ammo') {
-      const side = p.x < 50 ? 'left' : 'right';
-      const plus = ref > 0 ? `+${ref} ` : '';
-      html += `<div class="equipwin-name ${side}" style="top:${p.y}%"><span>${plus}${equipWinLabel(itemId)}</span></div>`;
-    }
-  });
-
-  html += `</div>`;
-  return html;
+    const itemId = getEquipBaseItemId(srcSlot);
+    if (!itemId) return equipWinRow(side, { empty: true, label: p.name });
+    const ref = getRefinementLevel(srcSlot);
+    const cards = getEquippedCards(srcSlot);
+    return equipWinRow(side, {
+      slotCls: shadow ? 'two-hand-shadow' : '',
+      attrs: `title="${p.name}" onmouseenter="showEquipTooltip(event,'${srcSlot}')" onmouseleave="hideEquipTooltip()" onclick="openEquipSlotPanel(event,'${srcSlot}')"`,
+      icon: `<img src="${itemImgSrc(itemId)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('armor')}'">${cards.length ? `<span class="equipwin-card">🃏</span>` : ''}`,
+      label: `${ref > 0 ? `+${ref} ` : ''}${equipWinLabel(itemId)}`,
+    });
+  };
+  return equipWinFrame(tabsHtml || '', EQUIPWIN_COLS.L.map(k => row(k, 'L')), EQUIPWIN_COLS.R.map(k => row(k, 'R')), equipWinAmmoHtml());
 }
 // 底圖版也要有箭矢的操作入口（中間那顆橢圓只是顯示，按鈕仍放在下方一列）
 function buildEquipWinHtml() {
-  return buildEquipWinHtmlInner() + buildAmmoRowHtml() + buildRentRowHtml();
+  // 比照 RO：一般裝備／特殊裝備（服飾）兩個分頁（使用者 2026-11-21）
+  const special = state.equipWinTab === 'special' && typeof COSTUMES !== 'undefined';
+  const tabs = typeof COSTUMES !== 'undefined' ? `<div class="rowin-tabs">
+    <button class="${special ? '' : 'on'}" onclick="state.equipWinTab='normal';renderEquipTab()">一般裝備</button>
+    <button class="${special ? 'on' : ''}" onclick="state.equipWinTab='special';renderEquipTab()">特殊裝備</button></div>` : '';
+  if (special) return buildCostumeWinHtml(tabs);
+  return buildEquipWinHtmlInner(tabs) + (needsAmmo() && getAmmoCount() <= 0 ? `<div class="ammo-warn">沒箭矢，弓無法攻擊！</div>` : '');
 }
-/* 租借中的大嘴鳥／獵鷹：比照 RO 在裝備欄解除（使用者 2026-11-21）。解除＝歸還，要再騎得回飼育員那裡租 */
-function buildRentRowHtml() {
-  const btns = [];
-  if (state.riding) btns.push(`<button type="button" class="btn-small" onclick="if(confirm('下大嘴鳥？要再騎得回主城飼育員那裡重新租。')){dismountPeco();renderAll()}">🐤 下大嘴鳥</button>`);
-  if (state.falconRent) btns.push(`<button type="button" class="btn-small" onclick="if(confirm('放走獵鷹？要再帶得回主城飼育員那裡重新租。')){returnFalcon();renderAll()}">🦅 放走獵鷹</button>`);
-  return btns.length ? `<div class="rent-row">${btns.join('')}</div>` : '';
+/* 特殊裝備分頁：同一張裝備欄底圖，頭上／頭中／頭下放服飾（影子裝備本作沒有） */
+function costumeIconHtml(itemId) {
+  return `<img src="${itemImgSrc(itemId)}" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'costume-icon',textContent:'👒'}))">`;
 }
-
+/* 特殊裝備分頁：服飾頭上（左一）、頭下（左二）、頭中（右一）；其他格是影子裝備／服飾披風，本作還沒有 */
+function buildCostumeWinHtml(tabsHtml) {
+  const row = (slot, side) => {
+    const id = slot && state.costume && state.costume[slot];
+    const d = id && costumeDef(id);
+    if (!slot) return equipWinRow(side, { empty: true, cls: 'off', label: '' });
+    const sel = equipPickCat === 'costume' && equipPickSub === slot ? 'sel' : '';
+    if (!d) return equipWinRow(side, { empty: true, cls: sel, label: '服飾' + COSTUME_SLOT_NAME[slot], attrs: `onclick="equipPickCat='costume';equipPickSub='${slot}';renderEquipTab()"` });
+    // 點一下：說明＋卸下（手機不用連點兩下，使用者 2026-11-22）
+    return equipWinRow(side, { cls: 'costume ' + sel, icon: costumeIconHtml(id), label: shopEsc(ITEMS[id].name),
+      attrs: `title="服飾 ${COSTUME_SLOT_NAME[slot]}" onclick="openCostumeSlotPanel(event,'${id}')"` });
+  };
+  const L = EQUIPWIN_COLS.L.map(k => row(COSTUME_SLOTS.includes(k) ? k : null, 'L'));
+  const R = EQUIPWIN_COLS.R.map(k => row(COSTUME_SLOTS.includes(k) ? k : null, 'R'));
+  return equipWinFrame(tabsHtml, L, R);
+}
+function openCostumeSlotPanel(event, id) {
+  if (event) { event.stopPropagation(); event.preventDefault(); }
+  const tt = document.getElementById('ro-equip-tooltip');
+  if (!tt || !ITEMS[id]) return;
+  equipSlotTipPinned = true;
+  bagTipPinned = false;
+  tt.innerHTML = itemTooltipHtml(id, {}) + `<div class="tt-actions">
+    <button type="button" class="btn-small" onclick="closeEquipSlotPanel();takeOffCostume('${id}');renderEquipTab()">卸下</button></div>`;
+  const slotEl = event && event.target && event.target.closest ? event.target.closest('.rowin-row') : null;
+  placeEquipTooltip(tt, slotEl || (event && event.currentTarget));
+  tt.classList.add('interactive');
+}
+function costumeWearUi(id) {
+  const why = wearCostume(id);
+  if (why) showToast(why);
+  renderEquipTab();
+}
+// 服飾頭飾圖層載入完：裝備欄的紙娃娃重畫（戰場那邊每拍會自己換）
+function onCostumeHatLoaded() {
+  if (typeof state !== 'undefined' && state && activeTab === 'equip') renderEquipTab();
+  // 選角畫面也要重畫（使用者 2026-11-22：穿著服飾的角色在選角畫面看不到）
+  const list = document.getElementById('slot-list');
+  if (list && list.offsetParent) renderSlotList();
+}
 /* 點裝備格：浮層顯示完整說明與卸下／插卡／精煉，不切換分頁。 */
 let equipSlotTipPinned = false;
 
@@ -7838,25 +7930,6 @@ function equipSlotActionRefine(slotKey) {
 }
 
 /* 箭矢狀態列：裝了哪種箭、剩幾支；拿弓卻沒箭時給明顯警告 */
-function buildAmmoRowHtml() {
-  const ammoId = getEquippedAmmoId();
-  const bow = needsAmmo();
-  if (!ammoId && !bow) return '';
-  const d = ammoId ? ITEMS[ammoId] : null;
-  const qty = getAmmoCount();
-  const warn = bow && qty <= 0;
-  return `<div class="ammo-row${warn ? ' warn' : ''}">
-    <span class="ammo-label">🏹 箭矢</span>
-    ${d
-      ? `<img class="ammo-icon" src="${itemImgSrc(ammoId)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
-         <span class="ammo-name">${d.name}${d.element && d.element !== 'none' ? ` ${ELEMENT_ICONS[d.element]}` : ''}　ATK+${d.atk || 0}</span>
-         <span class="ammo-qty${qty <= 0 ? ' zero' : ''}">×${qty}</span>
-         <button class="btn-small ghost" onclick="unequipAmmo();renderEquipTab();renderTopBar();">卸下</button>`
-      : `<span class="ammo-name">未裝備</span>`}
-    <button class="btn-small" onclick="showAmmoSelect()">選擇箭矢</button>
-    ${warn ? `<span class="ammo-warn">沒箭矢，弓無法攻擊！</span>` : ''}
-  </div>`;
-}
 
 // 選箭矢：只列背包裡真的有的箭
 function showAmmoSelect() {
@@ -7897,7 +7970,7 @@ function setEquipPickSub(s) { equipPickSub = s; renderEquipTab(); }
 function equipPickTabsHtml() {
   const btn = (key, label) => `<button class="btn-small ${equipPickCat === key ? 'active' : 'ghost'}"
     onclick="setEquipPickCat('${key}')">${label}</button>`;
-  return btn('weapon', '⚔️ 武器') + btn('armor', '🛡️ 防具');
+  return btn('weapon', '⚔️ 武器') + btn('armor', '🛡️ 防具') + (typeof COSTUME_SLOTS !== 'undefined' ? btn('costume', '👒 服飾') : '');
 }
 
 /* 裝備欄現在住在「裝備」分頁，但背包分頁也會顯示個體裝備列，
@@ -7982,7 +8055,7 @@ function renderEquipTab() {
   try {
     const wearable = state.inventory.filter(r => {
       const d = ITEMS[r.item];
-      return d && d.type === equipPickCat && canJobEquip(d);
+      return d && d.type === equipPickCat && (d.type === 'costume' || canJobEquip(d));
     });
     // 子分類（頭飾／鎧甲／盾牌…、單手劍／弓…）：只列真的有的，排序照背包 tab
     const subCount = {};
@@ -8018,11 +8091,12 @@ function renderEquipTab() {
       if (mdef) bits.push(`MDEF ${mdef}`);
       if (d.matk) bits.push(`MATK ${d.matk}`);
       if (d.element) bits.push(`${ELEMENT_ICONS[d.element]}${ELEMENT_NAMES[d.element]}`);
+      if (d.type === 'costume') bits.push(`服飾・${costumeSlotLabel(r.item)}（只換外觀）`);
       if (!r.instanceId && r.qty > 1) bits.push(`×${r.qty}`);
 
       // 這份清單來源是背包，穿在身上的裝備不在裡面，所以一律是「裝備」；
       // 要卸下請點上方裝備欄那一格（連點兩下）
-      const action = r.instanceId ? `equipInstance('${r.instanceId}')` : `equipItem('${r.item}')`;
+      const action = d.type === 'costume' ? `costumeWearUi('${r.item}')` : r.instanceId ? `equipInstance('${r.instanceId}')` : `equipItem('${r.item}')`;
       return `<div class="equip-pick-row">
         <img src="${itemImgSrc(r.item)}" onerror="this.onerror=null;this.src='${placeholderImgSrc(itemPlaceholderKind(d))}'">
         <div class="equip-pick-info">
@@ -8033,7 +8107,7 @@ function renderEquipTab() {
         </div>
         <button class="btn-small" onclick="${action};renderEquipTab();renderTopBar();">裝備</button>
       </div>`;
-    }).join('') : `<div class="equip-pick-empty">背包裡沒有${currentJob().name}穿得上的${equipPickCat === 'weapon' ? '武器' : '防具'}。</div>`;
+    }).join('') : `<div class="equip-pick-empty">${equipPickCat === 'costume' ? '背包裡沒有服飾。' : `背包裡沒有${currentJob().name}穿得上的${equipPickCat === 'weapon' ? '武器' : '防具'}。`}</div>`;
 
     /* 裝備欄與「武器／防具」切換鈕包在同一個 sticky 容器裡。
        以前只有 .equip-fixed 是 sticky，切換鈕會跟著清單一起捲走——
@@ -8041,6 +8115,15 @@ function renderEquipTab() {
     // 插卡模式：裝備窗不動，下半部換成卡片清單（2026-11-16：以前整頁換掉會閃）
     const cardSel = equipCardSlot && cardSelectParts(equipCardSlot);
     if (!cardSel) equipCardSlot = null;
+    /* 手機版的素質框（equip-stat-float.inline）住在這個分頁裡：先拿出來、換完再放回去。
+       不然每次換裝備它會先被清掉、下一拍才補回來，整頁跳一下（使用者 2026-11-22） */
+    // 捲動位置要在動 DOM 之前讀：先拿掉東西再讀會逼瀏覽器重排，頁面變短就被夾回去
+    const winY = window.scrollY;
+    const scroller = el.closest('.tab-content');
+    const scrollTop = scroller ? scroller.scrollTop : 0;
+    const keepStat = document.getElementById('equip-stat-float');
+    const keep = keepStat && keepStat.parentElement === el ? keepStat : null;
+    if (keep) keep.remove();
     el.innerHTML = `
       <div class="equip-sticky">
         <div class="equip-fixed">
@@ -8054,6 +8137,9 @@ function renderEquipTab() {
         ${subChips}`}</div>
       </div>
       <div id="equip-lower">${cardSel ? cardSel.body : listHtml}</div>`;
+    if (keep) { el.prepend(keep); keep.innerHTML = equipStatFloatHtml(); }
+    if (scroller && scroller.scrollTop !== scrollTop) scroller.scrollTop = scrollTop;
+    if (window.scrollY !== winY) window.scrollTo(window.scrollX, winY);
     paintEquipDoll();
   } catch (e) {
     el.innerHTML = `<div class="empty-hint">裝備分頁載入錯誤：${e.message}</div>`;
@@ -11093,8 +11179,8 @@ function bossStanceRowsHtml() {
     const scene = e.target && e.target.closest && e.target.closest('#battle-scene');
     if (!scene || e.target.closest('#bf-boss-hud, #manual-pad, .bf-manual-bar') || typeof manualMoveActive !== 'function' || !manualMoveActive()) return;
     // 手操點到怪：改打那隻
-    const slot = e.target.closest('.monster-slot');
-    if (slot && manualActive()) { manualAttack(+slot.id.replace('monster-slot-', '')); return; }
+    const slot = manualActive() && manualSlotAt(e.clientX, e.clientY);
+    if (slot) { manualAttack(+slot.id.replace('monster-slot-', '')); return; }
     const r = scene.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width * 100, py = (e.clientY - r.top) / r.height * 100;
     bossManualMoveTo({ x: (px - bfPlayer.x) / BF_CELL_X - bfWorldLag.x, y: (py - bfPlayer.y) / BF_CELL_Y - bfWorldLag.y });
@@ -11102,6 +11188,20 @@ function bossStanceRowsHtml() {
 })();
 
 
+/* 手操點怪（使用者 2026-11-22：指定不到想打的那隻）：怪常常貼在角色、隊友身上，最上層是他們的圖，
+   只看 e.target 會被當成點地面。改成往下翻這個點底下有沒有怪；都沒有就找 36px 內最近的一隻（手指點不準） */
+function manualSlotAt(x, y) {
+  const hit = document.elementsFromPoint(x, y).map(el => el.closest && el.closest('.monster-slot:not(.dying)')).find(Boolean);
+  if (hit) return hit;
+  let best = null, bd = 36;
+  document.querySelectorAll('#battle-scene .monster-slot:not(.dying)').forEach(s => {
+    const img = s.querySelector('img') || s;
+    const r = img.getBoundingClientRect();
+    const d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+    if (d < bd) { bd = d; best = s; }
+  });
+  return best;
+}
 /* ---------------- 手操介面（使用者 2026-11-17）----------------
    戰鬥畫面左上：🎮 手操／⏸ 放置切換，手操時多四顆分頁鈕（點了從旁邊／下方拉出抽屜）。
    手操時分頁收起、戰鬥畫面放大；右下大圈攻擊＋四顆技能（自動戰鬥 4 格），觸控裝置左下有搖桿。
@@ -11112,6 +11212,15 @@ function manualHudShouldShow() {
 function toggleManualPlay() {
   setManualPlay(!state.manualPlay);
   if (!state.manualPlay) closeManualDrawer();
+  syncManualHud();
+}
+/* 觀戰（使用者 2026-11-22）：放置模式也能像手操那樣把底部資料收起來，戰鬥畫面放大，只看角色自己打。
+   版面跟手操同一套（body.manual-play），只是沒有搖桿與按鈕；戰鬥訊息預設收起來，選單從上方的分頁鈕叫出來 */
+function toggleWatchMode() {
+  state.watchMode = !state.watchMode;
+  if (state.watchMode) state.manualLogOff = true;
+  else closeManualDrawer();
+  saveGame();
   syncManualHud();
 }
 function openManualDrawer(group) {
@@ -11240,6 +11349,7 @@ function ensureManualHud(scene) {
   const bar = document.createElement('div');
   bar.className = 'bf-manual-bar';
   bar.innerHTML = `<button class="bf-manual-btn" id="bf-manual-toggle" onclick="event.stopPropagation();toggleManualPlay()"></button>
+    <button class="bf-manual-btn" id="bf-watch-toggle" onclick="event.stopPropagation();toggleWatchMode()"></button>
     <span class="bf-manual-tabs">${[['fight', '打怪'], ['grow', '升級'], ['gear', '物品'], ['social', '收集']]
       .map(([g, n]) => `<button class="bf-manual-btn" onclick="event.stopPropagation();openManualDrawer('${g}')">${n}</button>`).join('')}
       <button class="bf-manual-btn" id="bf-manual-log" onclick="event.stopPropagation();toggleManualLog()" title="顯示／收起戰鬥訊息">💬</button></span>`;
@@ -11251,7 +11361,6 @@ function ensureManualHud(scene) {
   pad.innerHTML = `<div class="manual-stick-zone" id="manual-stick-zone"><div class="manual-stick" id="manual-stick"><div class="manual-stick-knob"></div></div></div>
     <div class="manual-actions">
       <button class="manual-atk" id="manual-atk" title="攻擊（空白鍵）">⚔️<small>Space</small></button>
-      <button class="manual-auto" id="manual-auto" title="自動普攻：停下來就自己打最近的怪">自動</button>
       ${KEY.map((k, i) => `<button class="manual-sk" data-i="${i}" title="技能欄第 ${i + 1} 格（${k}）"><span class="manual-sk-ico"></span><span class="manual-sk-cd"></span><small>${k}</small></button>`).join('')}
     </div>`;
   scene.appendChild(pad);
@@ -11259,7 +11368,6 @@ function ensureManualHud(scene) {
   pad.addEventListener('click', stop);
   pad.addEventListener('contextmenu', e => e.preventDefault());   // 長按不跳選單、不反白
   pad.querySelector('#manual-atk').addEventListener('pointerdown', e => { e.preventDefault(); manualAttack(); syncManualHud(); });
-  pad.querySelector('#manual-auto').addEventListener('pointerdown', e => { e.preventDefault(); setManualAutoAtk(!state.manualAutoAtk); syncManualHud(); });
   pad.querySelectorAll('.manual-sk').forEach(manualBindSkillBtn);
   manualBindStick(pad.querySelector('#manual-stick-zone'));
 }
@@ -11269,9 +11377,17 @@ function syncManualHud() {
   ensureManualHud(scene);
   const show = manualHudShouldShow();
   const on = show && typeof manualActive === 'function' && manualActive();
-  document.body.classList.toggle('manual-play', on);
-  document.body.classList.toggle('manual-log-off', on && !!state.manualLogOff);
-  if (!on) document.body.classList.remove('manual-drawer');
+  const watch = show && !on && !!state.watchMode;   // 觀戰：放置版的全畫面
+  document.body.classList.toggle('manual-play', on || watch);
+  document.body.classList.toggle('watch-play', watch);
+  document.body.classList.toggle('manual-log-off', (on || watch) && !!state.manualLogOff);
+  if (!on && !watch) document.body.classList.remove('manual-drawer');
+  const wt = document.getElementById('bf-watch-toggle');
+  if (wt) {
+    wt.classList.toggle('hidden', on);
+    const wl = watch ? '↩ 一般' : '📺 觀戰';
+    if (wt.textContent !== wl) { wt.textContent = wl; wt.title = watch ? '回到一般畫面' : '放置中把下方資料收起來，只看戰鬥'; }
+  }
   const bar = scene.querySelector('.bf-manual-bar');
   bar.classList.toggle('hidden', !show);
   const tg = document.getElementById('bf-manual-toggle');
@@ -11303,10 +11419,6 @@ function syncManualHud() {
     b.classList.toggle('queued', state._manualQueued === i);
   });
   document.getElementById('manual-atk').classList.toggle('on', !!state._manualChase && !!manualTarget());
-  const auto = document.getElementById('manual-auto');
-  auto.classList.toggle('on', !!state.manualAutoAtk);
-  const at = state.manualAutoAtk ? '自動 開' : '自動 關';
-  if (auto.textContent !== at) auto.textContent = at;
   document.getElementById('bf-manual-log').classList.toggle('on', !state.manualLogOff);
 }
 

@@ -4,7 +4,7 @@
    - 不自動追怪、不漫遊、不自動放攻擊技；輔助技、自動喝水照舊；隊友照舊 AI
    - 只在戰鬥地圖、沒趕路、不在攻城戰時生效；城鎮與趕路照放置跑
    - 離線結算走公式，跟手操無關
-   - 自動普攻開關（state.manualAutoAtk）：沒在走位就自己追打最近的怪
+   - 自動普攻開關拿掉了（使用者 2026-11-22：開了就等於放置）
    ====================================================================== */
 function manualActive() {
   return !!(state && state.manualPlay && !_allyActing && !state.travel && !state.gvg && !isInTown());
@@ -127,12 +127,6 @@ function tickManualPlay(dt) {
   const moving = tickManualMove(dt);
   if (moving) { state._manualChase = false; state._manualQueued = null; }
   state._manualMoving = moving;
-  // 自動普攻（使用者 2026-11-18）：停下來就自己鎖最近的怪追打，玩家只管走位、放技能
-  if (state.manualAutoAtk && !moving && !state._manualChase) manualAttack();
-}
-function setManualAutoAtk(on) {
-  state.manualAutoAtk = !!on;
-  saveGame();
 }
 /* 取代 playerCombatStep：只打鎖定的目標，按了攻擊才追、才普攻 */
 function manualCombatStep(moveDt) {

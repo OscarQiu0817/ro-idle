@@ -25,12 +25,31 @@ function fakeRand(seed) {
   return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 const fakePick = (a, r) => a[Math.floor(r() * a.length)];
+/* 假人拿的武器（使用者 2026-11-21：空手很奇怪）：照職業挑招牌武器，沒有這種武器圖層的跳過 */
+const FAKE_WEAPON_PREF = {
+  novice: ['dagger', 'sword1'], swordsman: ['sword1', 'sword2', 'spear1'], knight: ['spear1', 'spear2', 'sword2', 'sword1'],
+  lordknight: ['spear1', 'spear2', 'sword2'], crusader: ['spear1', 'sword1', 'mace'], paladin: ['spear1', 'sword1', 'mace'],
+  mage: ['rod1', 'rod2'], wizard: ['rod1', 'rod2'], highwizard: ['rod1', 'rod2'], sage: ['book', 'rod1'], professor: ['book', 'rod1'],
+  archer: ['bow'], hunter: ['bow'], sniper: ['bow'], bard: ['instrument', 'bow'], clown: ['instrument', 'bow'], dancer: ['whip', 'bow'], gypsy: ['whip', 'bow'],
+  acolyte: ['mace', 'rod1', 'book'], priest: ['mace', 'book', 'rod1'], highpriest: ['mace', 'book', 'rod1'], monk: ['knuckle', 'mace'], champion: ['knuckle', 'mace'],
+  merchant: ['axe1', 'axe2', 'mace'], blacksmith: ['axe1', 'axe2', 'mace'], whitesmith: ['axe1', 'axe2', 'mace'], alchemist: ['axe1', 'mace', 'sword1'], creator: ['axe1', 'mace'],
+  thief: ['dagger', 'sword1'], assassin: ['katar', 'dagger'], assassincross: ['katar', 'dagger'], rogue: ['dagger', 'bow', 'sword1'], stalker: ['dagger', 'bow', 'sword1'],
+};
+function fakeWeaponCat(job, gender, r) {
+  let list = FAKE_WEAPON_PREF[job] || ['dagger'];
+  if (typeof paperdollWeaponPartFor === 'function' && typeof window !== 'undefined' && window.PAPERDOLL) {
+    const ok = list.filter(c => paperdollWeaponPartFor(job, gender, c));
+    if (ok.length) list = ok;
+  }
+  return list[Math.floor(r() * list.length)];
+}
 function fakeLook(r) {
   const gender = r() < 0.5 ? 'male' : 'female';
   let job = fakePick(FAKE_JOBS, r);
   if (job === 'bard' && gender === 'female') job = 'dancer';
   if (job === 'dancer' && gender === 'male') job = 'bard';
-  return { job, gender, hairStyle: 1 + Math.floor(r() * 20), hairColor: Math.floor(r() * 9), weaponCat: 'bare' };
+  const hairStyle = 1 + Math.floor(r() * 20), hairColor = Math.floor(r() * 9);
+  return { job, gender, hairStyle, hairColor, weaponCat: fakeWeaponCat(job, gender, r) };
 }
 
 // 地圖上出得到、等級不超過 cap 的怪 → 掉落物與卡片
@@ -160,17 +179,80 @@ function fakeBuyerSell(id, qty) {
 }
 
 /* 交易喊話：收購攤喊真的在收的東西，露天商店喊架上的東西 */
+/* 喊話口吻（使用者 2026-11-21：不用報價、可以一次喊好幾樣，生活化一點） */
+const FAKE_SELL_FMT = [
+  (it, t) => `賣 ${it}，主城交易區「${t}」`,
+  (it) => `${it} 便宜出～交易區找我`,
+  (it) => `清背包！${it} 有要的來交易區`,
+  (it, t) => `「${t}」開張啦，${it} 都有`,
+  (it) => `${it} 帶不動了，路過交易區看看～`,
+];
+const FAKE_BUY_FMT = [
+  (it) => `收 ${it}，主城交易區找我`,
+  (it) => `有人有 ${it} 嗎？交易區收～`,
+  (it) => `高價收 ${it}，有的來交易區`,
+  (it) => `收 ${it}！打到的別賣 NPC 啦`,
+];
 function fakeShoutLine(r) {
   r = r || Math.random;
   const list = fakeHub().filter(v => (v.kind === 'buy' ? v.want > 0 : v.items.some(x => x.qty > 0)));
   if (!list.length) return null;
   const v = fakePick(list, r);
   if (v.kind === 'buy') {
-    const what = ITEMS[v.item].name;
-    return { name: v.name, text: `收 ${what}${v.barter ? `，${v.barter.per} 個換一瓶${ITEMS[v.barter.item].name}` : ` 一個 ${v.price}z`}，主城交易區找我` };
+    // 收購攤只收一樣：同名的其他收購攤一起喊，湊成「A / B」
+    const items = [...new Set([v].concat(list.filter(o => o.kind === 'buy' && o !== v && r() < 0.4)).map(o => ITEMS[o.item].name))].slice(0, 3);
+    return { name: v.name, text: fakePick(FAKE_BUY_FMT, r)(items.join(' / ')) };
   }
-  const x = fakePick(v.items.filter(i => i.qty > 0), r);
-  return { name: v.name, text: `賣 ${ITEMS[x.item].name} ${x.price.toLocaleString()}z，主城交易區「${v.title}」` };
+  const have = v.items.filter(i => i.qty > 0);
+  const n = Math.min(have.length, 1 + Math.floor(r() * 3));
+  const pick = have.slice().sort(() => r() - 0.5).slice(0, n).map(x => ITEMS[x.item].name);
+  return { name: v.name, text: fakePick(FAKE_SELL_FMT, r)(pick.join(' / '), v.title) };
+}
+/* GM 小幫手（使用者 2026-11-21）：像單機遊戲讀取畫面的小知識，口吻輕鬆；偶爾提醒休息。只出現在單機模擬聊天室 */
+const FAKE_GM_NAME = '📣 GM 小幫手';
+const FAKE_TIPS = [
+  '精煉 +4 以上就有機率失敗，貴的裝備記得先準備鐵匠的祝福再敲～',
+  '武器精煉用神之金屬、防具用鋁，別拿錯了喔',
+  '離線掛機最多算 12 小時，睡前開好掛機地圖，早上起來收成剛剛好',
+  '打怪現在不掉錢了，想賺錢就把東西賣給收購攤，比賣 NPC 划算',
+  '轉蛋碎片 10 片可以換一次轉蛋，MVP 掉得比較多',
+  '攻城戰每天 22:00 結算，那時城是誰的獎勵就是誰的',
+  '騎士、十字軍學了騎乘術，可以去主城租大嘴鳥，帥度直接 +100',
+  '自動戰鬥的技能可以設發動條件，例如「目標是首領才放」，省藍很有感',
+  '打不贏的王別硬上，先回去把裝備精煉一下再來',
+  '背包快滿了？自動販賣可以設定哪些東西直接賣掉',
+  '倉庫是全帳號共用的，換角色也拿得到',
+  '野外偶爾會有怪物爆走，記得留一點藍給範圍技',
+];
+function fakeMvpTip(r) {
+  if (typeof MVP_MAP_DATA === 'undefined' || typeof ELEMENT_CHART === 'undefined') return null;
+  const ids = [...new Set(Object.values(MVP_MAP_DATA).flat())].filter(id => MONSTERS[id] && MONSTERS[id].isMvp && MONSTERS[id].element && MONSTERS[id].element !== 'none');
+  if (!ids.length) return null;
+  const m = MONSTERS[fakePick(ids, r)];
+  let best = null, bm = 1;
+  Object.keys(ELEMENT_CHART).forEach(e => { const k = getElementMultiplier(e, m.element); if (k > bm) { bm = k; best = e; } });
+  if (!best) return null;
+  return `打 ${m.name} 的話，帶${ELEMENT_NAMES[best]}屬性會輕鬆很多（牠是${ELEMENT_NAMES[m.element]}屬性）`;
+}
+let _fakeRestAt = 0;
+function fakeTipLine(r, now) {
+  r = r || Math.random;
+  now = now || Date.now();
+  // 休息提醒：上線後每 60 分鐘最多一次
+  if (!_fakeRestAt) _fakeRestAt = now;
+  if (now - _fakeRestAt >= 60 * 60000) {
+    _fakeRestAt = now;
+    const d = new Date(now);
+    const hm = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const late = d.getHours() >= 23 || d.getHours() < 5;
+    return { name: FAKE_GM_NAME, text: late ? `已經 ${hm} 了，明天還要上班上課的早點睡吧，角色會自己掛機的～` : `現在 ${hm}，玩一陣子了，起來走走、喝口水再回來吧` };
+  }
+  const t = r() < 0.35 ? fakeMvpTip(r) : null;
+  return { name: FAKE_GM_NAME, text: t || fakePick(FAKE_TIPS, r) };
+}
+function fakeTip() {
+  const line = state && typeof window !== 'undefined' && typeof window.pushLocalChat === 'function' && fakeTipLine();
+  if (line) window.pushLocalChat(line.name, line.text);
 }
 function fakeShout() {
   const line = state && typeof window !== 'undefined' && typeof window.pushLocalChat === 'function' && fakeShoutLine();
