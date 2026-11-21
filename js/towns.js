@@ -150,23 +150,74 @@ const HUB_LAYOUT = {
   ],
   // 同一區的 NPC 排一列、間隔 2 格：站在最左那位也看得到最右那位（畫面一屏約 ±7 格）
   npcs: [
-    { id: 'kafra', name: '卡普拉職員', role: 'kafra', district: 'gate', x: 1.8, y: -0.5, spr: '4_f_kafra6' },
-    { id: 'warper', name: '主城傳送師', role: 'warper', district: 'gate', x: -1.8, y: -0.5, spr: '4_m_teleporter' },
-    { id: 'event', name: '活動 NPC', role: 'soon', district: 'gate', x: 0, y: -2.5, spr: '4_f_jpn2', soon: '目前沒有舉辦中的活動。' },
+    { id: 'kafra', name: '卡普拉職員', bubble: '倉庫・傳送', role: 'kafra', district: 'gate', x: 1.8, y: -0.5, spr: '4_f_kafra6' },
+    { id: 'warper', name: '主城傳送師', bubble: '傳送到各城', role: 'warper', district: 'gate', x: -1.8, y: -0.5, spr: '4_m_teleporter' },
+    { id: 'peco', name: '大嘴鳥・獵鷹飼育員', bubble: '大嘴鳥・獵鷹租借', role: 'peco', district: 'gate', x: 4, y: 1, spr: '4_m_knight_silver' },
+    { id: 'event', name: '活動 NPC', bubble: '活動', role: 'soon', district: 'gate', x: 0, y: -2.5, spr: '4_f_jpn2', soon: '目前沒有舉辦中的活動。' },
     { id: 'weapon', name: '武器商人', role: 'shop', shop: 'hub_weapon', district: 'shops', x: -3, y: -15, spr: '1_m_merchant' },
     { id: 'armor', name: '防具商人', role: 'shop', shop: 'hub_armor', district: 'shops', x: -1, y: -15, spr: '1_f_merchant_01' },
     { id: 'item', name: '道具商人', role: 'shop', shop: 'item', district: 'shops', x: 1, y: -15, spr: '1_m_innkeeper' },
     { id: 'pet', name: '寵物商人', role: 'shop', shop: 'pet', district: 'shops', x: 3, y: -15, spr: '4_f_01' },
-    { id: 'refiner', name: '精煉師', role: 'refine', district: 'forge', x: 14, y: -1, spr: '4_m_03' },
-    { id: 'enchanter', name: '附魔師', role: 'enchant', district: 'forge', x: 16, y: -1, spr: '4_m_sage_a' },
-    { id: 'dojo', name: '道館館主', role: 'dojo', district: 'dungeon', x: -18, y: -1, spr: '2_m_swordmaster' },
-    { id: 'gvg', name: '攻城戰管理員', role: 'gvg', district: 'dungeon', x: -16, y: -1, spr: '1_m_knightmaster' },
-    { id: 'gmt', name: '吉芬魔法大賽報名處', role: 'gmt', district: 'dungeon', x: -14, y: -1, spr: '2_f_magicmaster' },
-    { id: 'gmt_shop', name: '大賽兌換員', role: 'gmtshop', district: 'dungeon', x: -12, y: -1, spr: '1_f_01' },
-    { id: 'exchange', name: '交易所', role: 'soon', district: 'trade', x: 0, y: 13, spr: '1_f_merchant_02', soon: '交易所要連線伺服器，還在準備中。' },
-    { id: 'minigame', name: '小遊戲管理員', role: 'soon', district: 'fun', x: 15, y: -15, spr: '4w_f_01', soon: '小遊戲還在準備中。' },
+    { id: 'refiner', name: '精煉師', bubble: '精煉裝備', role: 'refine', district: 'forge', x: 14, y: -1, spr: '4_m_03' },
+    { id: 'enchanter', name: '附魔師', bubble: '裝備附魔', role: 'enchant', district: 'forge', x: 16.5, y: -1, spr: '4_m_sage_a' },
+    { id: 'dojo', name: '道館館主', bubble: '道館挑戰', role: 'dojo', district: 'dungeon', x: -19.5, y: -1, spr: '2_m_swordmaster' },
+    { id: 'gvg', name: '攻城戰管理員', bubble: '攻城戰', role: 'gvg', district: 'dungeon', x: -16.5, y: -2, spr: '1_m_knightmaster' },
+    { id: 'gmt', name: '吉芬魔法大賽報名處', bubble: '魔法大賽報名', role: 'gmt', district: 'dungeon', x: -13.5, y: -1, spr: '2_f_magicmaster' },
+    { id: 'gmt_shop', name: '大賽兌換員', bubble: '大賽硬幣兌換', role: 'gmtshop', district: 'dungeon', x: -10.5, y: -2, spr: '1_f_01' },
+    { id: 'exchange', name: '交易所', bubble: '交易所', role: 'soon', district: 'trade', x: 0, y: 13, spr: '1_f_merchant_02', soon: '交易所要連線伺服器，還在準備中。' },
+    { id: 'minigame', name: '小遊戲管理員', bubble: '小遊戲', role: 'soon', district: 'fun', x: 15, y: -15, spr: '4w_f_01', soon: '小遊戲還在準備中。' },
   ],
 };
+/* 大嘴鳥租借（使用者 2026-11-21）：學過騎乘術（騎士、十字軍與其進階）才能租；只換外觀，存在 state.riding */
+const PECO_RENT_COST = 1000;
+const PECO_JOBS = ['knight', 'crusader', 'lordknight', 'paladin'];
+function pecoRentReason() {
+  if (!PECO_JOBS.includes(state.jobId)) return '大嘴鳥只租給騎士、十字軍（含進階）。';
+  if (!(state.learnedSkills && state.learnedSkills.kn_riding)) return '要先學會騎乘術才能騎大嘴鳥。';
+  if (state.riding) return '你已經騎著大嘴鳥了。';
+  if ((state.gold || 0) < PECO_RENT_COST) return `租金 ${PECO_RENT_COST.toLocaleString()}z，錢不夠。`;
+  return null;
+}
+function rentPeco() {
+  const why = pecoRentReason();
+  if (why) return why;
+  state.gold -= PECO_RENT_COST;
+  state.riding = true;
+  logMsg(`🐤 租了一隻大嘴鳥（${PECO_RENT_COST.toLocaleString()}z）。`);
+  saveGame();
+  return null;
+}
+function dismountPeco() {
+  if (!state.riding) return;
+  state.riding = false;
+  logMsg('🐤 把大嘴鳥還給飼育員了。');
+  saveGame();
+}
+/* 獵鷹也用租的（使用者 2026-11-21）：學過馴鷹術的獵人、神射手；身邊有獵鷹才顯示（狙擊之王的獵鷹外觀不同） */
+const FALCON_RENT_COST = 1000;
+const FALCON_JOBS = ['hunter', 'sniper'];
+function falconRentReason() {
+  if (!FALCON_JOBS.includes(state.jobId)) return '獵鷹只租給獵人、神射手。';
+  if (!(state.learnedSkills && state.learnedSkills.ht_falcon)) return '要先學會馴鷹術才能帶獵鷹。';
+  if (state.falconRent) return '你已經帶著獵鷹了。';
+  if ((state.gold || 0) < FALCON_RENT_COST) return `租金 ${FALCON_RENT_COST.toLocaleString()}z，錢不夠。`;
+  return null;
+}
+function rentFalcon() {
+  const why = falconRentReason();
+  if (why) return why;
+  state.gold -= FALCON_RENT_COST;
+  state.falconRent = true;
+  logMsg(`🦅 租了一隻獵鷹（${FALCON_RENT_COST.toLocaleString()}z）。`);
+  saveGame();
+  return null;
+}
+function returnFalcon() {
+  if (!state.falconRent) return;
+  state.falconRent = false;
+  logMsg('🦅 把獵鷹還給飼育員了。');
+  saveGame();
+}
 function isHubTown(mapId) { return (mapId || (state && state.mapId)) === HUB_TOWN; }
 
 /* ---- T29 職業公會（使用者 2026-11-07：找 NPC 就能轉，不跑任務）----

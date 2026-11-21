@@ -3409,6 +3409,7 @@ function syncGroundUnits() {
   syncTravelPortal(scene, at);
   syncTownNpcs(scene, at);
   syncPassers(scene, at);
+  syncLiveEvents(scene, at);
   /* T24：場地魔法（暴風雪、隕石術、十字驅魔…）的範圍圈，半徑照 fieldRadius；
      中心存在 activeFieldEffects[].center，玩家走動時 engine 會一起平移 */
   const fields = ownerFields(owners).filter(e => e.f.center && e.f.radius > 0 && Date.now() < e.f.endsAt);
@@ -3709,9 +3710,11 @@ function faceBattlePlayer(faceRight) {
 const _pd = { act: '', t0: 0, frame: -1, once: 0, key: '', parts: null };
 let bfPaper = false;
 
-function paperdollJobGender() {
-  const job = (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[state.jobId]) || state.jobId || 'novice';
+function paperdollJobGender(noMount) {
+  let job = (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[state.jobId]) || state.jobId || 'novice';
   const gender = state.gender === 'female' ? 'female' : 'male';
+  // 租了大嘴鳥：換騎乘身體（js/paperdoll_mount.js），頭、頭飾、武器照常疊；裝備欄（noMount）不騎
+  if (!noMount && state.riding && window.PAPERDOLL && window.PAPERDOLL.clip['body/' + job + '_mount/' + gender]) job += '_mount';
   return { job: job, gender: gender };
 }
 function hairNow() {
@@ -3747,11 +3750,11 @@ function paperdollHeadViews() {
   }
   return views;
 }
-function paperdollParts() {
+function paperdollParts(noMount) {
   const views = paperdollHeadViews();
   const pd = window.PAPERDOLL;
   if (!views || !pd || !pd.clip || !state) return null;
-  const who = paperdollJobGender();
+  const who = paperdollJobGender(noMount);
   const body = 'body/' + who.job + '/' + who.gender;
   if (!pd.clip[body]) return null;
   const parts = [body];
@@ -3795,7 +3798,10 @@ function ensurePaperCanvas() {
 }
 function layoutPaperdoll(canvas, parts, charH, footLift) {
   const b = paperdollBounds(parts);
-  const k = (charH || BATTLE_CHAR_H) / b.idleH;
+  // 騎乘：照沒騎時的身高算比例，人不會因為多了一隻鳥而縮小
+  const plain = parts[0].replace('_mount/', '/');
+  const refH = plain !== parts[0] && window.PAPERDOLL.clip[plain] ? paperdollBounds([plain]).idleH : b.idleH;
+  const k = (charH || BATTLE_CHAR_H) / refH;
   canvas.width = b.width;
   canvas.height = b.height;
   canvas.style.width = Math.round(b.width * k) + 'px';
@@ -4836,7 +4842,7 @@ function syncTownNpcs(scene, at) {
     layer._map = state.mapId;
     layer.innerHTML = L.districts.map(d => `<div class="bf-sign" data-d="${d.id}">${shopEsc(d.name)}</div>`).join('')
       + L.npcs.map(n => `<div class="bf-npc" data-npc="${n.id}" onclick="walkToTownNpc('${n.id}')" title="${shopEsc(n.name)}">`
-        + `<img src="images/npc/${n.spr}.png" alt="" onload="townNpcImgLoad(this)"><em>${shopEsc(n.name)}</em></div>`).join('');
+        + `${n.bubble ? `<span class="bf-npc-bubble">${shopEsc(n.bubble)}</span>` : ''}<img src="images/npc/${n.spr}.png" alt="" onload="townNpcImgLoad(this)"><em>${shopEsc(n.name)}</em></div>`).join('');
     scene.appendChild(layer);
   }
   const wx = state.worldX || 0, wy = state.worldY || 0;
@@ -4988,6 +4994,78 @@ function syncPassers(scene, at) {
     _passer = null;
     _passerNext = now + 40000 + Math.random() * 50000;
   }
+}
+/* 大嘴鳥飼育員（使用者 2026-11-21）：學過騎乘術的騎士系、十字軍系可以租大嘴鳥，騎上去整套騎乘動畫 */
+function pecoNpcPanelHtml(n, back) {
+  const falconJob = FALCON_JOBS.includes(state.jobId);
+  let body;
+  if (falconJob) {
+    const why = falconRentReason();
+    body = state.falconRent
+      ? `<div class="town-npc-say">獵鷹在你肩上很安分呢。要還的話跟我說。</div>
+         <button class="btn-small" onclick="returnFalcon();renderAll();openTownNpc('peco')">🦅 歸還獵鷹</button>`
+      : `<div class="town-npc-say">${why ? shopEsc(why) : `帶一隻獵鷹嗎？${FALCON_RENT_COST.toLocaleString()}z，帶到你自己還為止。`}</div>
+         <button class="btn-small" ${why ? 'disabled' : ''} onclick="rentUi('falcon')">🦅 租借獵鷹（${FALCON_RENT_COST.toLocaleString()}z）</button>`;
+  } else {
+    const why = pecoRentReason();
+    body = state.riding
+      ? `<div class="town-npc-say">大嘴鳥今天也很有精神呢！要下來的話跟我說一聲。</div>
+         <button class="btn-small" onclick="dismountPeco();renderAll();openTownNpc('peco')">🐤 歸還大嘴鳥</button>`
+      : `<div class="town-npc-say">${why ? shopEsc(why) : `租一隻大嘴鳥嗎？${PECO_RENT_COST.toLocaleString()}z，騎到你自己下來為止。`}</div>
+         <button class="btn-small" ${why ? 'disabled' : ''} onclick="rentUi('peco')">🐤 租借大嘴鳥（${PECO_RENT_COST.toLocaleString()}z）</button>`;
+  }
+  return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">🐤 ${shopEsc(n.name)}</h3></div>${body}
+    <div class="town-npc-hint">大嘴鳥租給學過騎乘術的騎士、十字軍（含進階）；獵鷹租給學過馴鷹術的獵人、神射手。只換外觀，技能效果照舊。</div></div>`;
+}
+function rentUi(kind) {
+  const why = kind === 'falcon' ? rentFalcon() : rentPeco();
+  showToast(why || (kind === 'falcon' ? '獵鷹停到你肩上了！' : '騎上大嘴鳥了！'));
+  renderAll();
+  openTownNpc('peco');
+}
+/* T66 上線隨機事件的畫面（js/live_events.js 的 liveEventView）：路過的騎士／十字軍／服事、被圍住求救的假人。
+   頭上一顆對話泡泡（跟主城 NPC 同一種）；騎大嘴鳥的用 images/frames 的騎乘圖，其他用紙娃娃 */
+let _liveEl = null;
+function syncLiveEvents(scene, at) {
+  const v = typeof liveEventView === 'function' ? liveEventView() : null;
+  if (!v) { if (_liveEl) { _liveEl.remove(); _liveEl = null; } return; }
+  if (!_liveEl || _liveEl._id !== v.id) {
+    if (_liveEl) _liveEl.remove();
+    const el = document.createElement('div');
+    el.className = 'bf-passer bf-live';
+    el._id = v.id;
+    const body = v.mount
+      ? `<img class="bf-live-mount" src="images/frames/${v.look.job}_${v.look.gender}_mount/frame_000.png" alt="">`
+      : `<div class="bf-fake-body" style="height:${ALLY_CHAR_H}px"><canvas></canvas></div>`;
+    // 泡泡固定在頭頂上方（紙娃娃的頭會超出身體框，跟著框排會被頭蓋住）
+    const lift = v.mount ? 118 : ALLY_CHAR_H + 28;
+    el.innerHTML = `${body}<span class="bf-npc-bubble bf-live-line" style="bottom:${lift}px"></span><em>${shopEsc(v.name)}</em>`;
+    scene.appendChild(el);
+    _liveEl = el;
+  }
+  const el = _liveEl;
+  const line = el.querySelector('.bf-live-line');
+  if (line.textContent !== (v.line || '')) line.textContent = v.line || '';
+  line.style.display = v.line ? '' : 'none';
+  const dx = v.x - (state.worldX || 0), dy = v.y - (state.worldY || 0);
+  const pt = at(Math.hypot(dx, dy), Math.atan2(dy, dx));
+  el.style.display = pt.off ? 'none' : '';
+  el.style.left = pt.x + '%';
+  el.style.top = pt.y + '%';
+  el.style.opacity = v.fade ? String(1 - v.fade) : '';
+  const now = performance.now();
+  if (v.mount) {
+    const img = el.querySelector('.bf-live-mount');
+    // RO 騎乘圖預設朝左：往右跑就翻過來；跑步時上下顛
+    img.style.transform = `translateY(${Math.abs(Math.sin(now / 90)) * -4}px)${v.dir > 0 ? ' scaleX(-1)' : ''}`;
+    return;
+  }
+  const cv = el.querySelector('canvas');
+  const act = v.cast ? 'cast' : v.walking ? 'walk_s' : 'idle';
+  const parts = cv._parts;
+  const use = parts && !paperdollFrameCount(parts[0], act) ? (v.walking ? 'walk_s' : 'idle') : act;
+  const n = parts ? (paperdollFrameCount(parts[0], use) || paperdollFrameCount(parts[0], 'idle') || 1) : 1;
+  drawFakeDoll(cv, v.look, use, Math.floor(now / 80) % n, facingFlip(use, v.dir > 0));
 }
 /* 交易喊話：平均約 45 秒一句，只出現在世界頻道沒連線時的單機模擬視窗 */
 setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && Math.random() < 1 / 3 && typeof fakeShout === 'function') fakeShout(); }, 15000);
@@ -5145,6 +5223,7 @@ function openTownNpc(id) {
   if (n.role === 'dojo') { el.innerHTML = dojoNpcPanelHtml(n, back); scrollTabIntoView('tab-map'); return; }
   if (n.role === 'enchant') { el.innerHTML = enchantNpcPanelHtml(n, back); return; }
   if (n.role === 'warper') { openTownWarp('warp'); return; }
+  if (n.role === 'peco') { el.innerHTML = pecoNpcPanelHtml(n, back); return; }
   if (n.role === 'vendor' || n.role === 'buyer') { el.innerHTML = fakeVendorPanelHtml(n, back); return; }
   if (n.role === 'kafra') {
     // T61：一般城鎮的卡普拉多「前往主城」（免費）；主城的卡普拉只管倉庫，傳送找傳送師
@@ -5193,7 +5272,7 @@ function townNpcPanelHtml() {
   }
   const here = townDistrictHere();
   const icon = n => n.role === 'shop' ? ((NPC_SHOPS[n.shop] || {}).icon || '🏪')
-    : n.role === 'kafra' ? '💁' : n.role === 'warper' ? '🌀' : n.role === 'vendor' ? '🛒' : n.role === 'buyer' ? '💰' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : n.role === 'dojo' ? '🥋' : n.role === 'enchant' ? '💠' : '🧑';
+    : n.role === 'kafra' ? '💁' : n.role === 'warper' ? '🌀' : n.role === 'vendor' ? '🛒' : n.role === 'buyer' ? '💰' : n.role === 'refine' ? '🔨' : n.role === 'job' ? '🎓' : n.role === 'soon' ? '🔒' : n.role === 'gmt' ? '🏟️' : n.role === 'gmtshop' ? '🪙' : n.role === 'gvg' ? '🏰' : n.role === 'dojo' ? '🥋' : n.role === 'enchant' ? '💠' : n.role === 'peco' ? '🐤' : '🧑';
   return `<div class="town-npcs">
     <h4 class="town-npc-title">🏙️ 城內　<span class="town-here">目前在：${here ? shopEsc(here.name) : '—'}</span></h4>
     ${L.districts.map(d => {
@@ -7624,7 +7703,7 @@ function buildEquipPanelHtml() {
 function paintEquipDoll() {
   const host = document.getElementById('equipwin-doll');
   if (!host || !window.PAPERDOLL || typeof paperdollParts !== 'function') return;
-  const parts = paperdollParts();
+  const parts = paperdollParts(true);   // 裝備欄不畫大嘴鳥（使用者 2026-11-21）
   if (!parts) { host.replaceChildren(); return; }
   let canvas = host.querySelector('canvas');
   if (!canvas) {
@@ -7683,7 +7762,14 @@ function buildEquipWinHtmlInner() {
 }
 // 底圖版也要有箭矢的操作入口（中間那顆橢圓只是顯示，按鈕仍放在下方一列）
 function buildEquipWinHtml() {
-  return buildEquipWinHtmlInner() + buildAmmoRowHtml();
+  return buildEquipWinHtmlInner() + buildAmmoRowHtml() + buildRentRowHtml();
+}
+/* 租借中的大嘴鳥／獵鷹：比照 RO 在裝備欄解除（使用者 2026-11-21）。解除＝歸還，要再騎得回飼育員那裡租 */
+function buildRentRowHtml() {
+  const btns = [];
+  if (state.riding) btns.push(`<button type="button" class="btn-small" onclick="if(confirm('下大嘴鳥？要再騎得回主城飼育員那裡重新租。')){dismountPeco();renderAll()}">🐤 下大嘴鳥</button>`);
+  if (state.falconRent) btns.push(`<button type="button" class="btn-small" onclick="if(confirm('放走獵鷹？要再帶得回主城飼育員那裡重新租。')){returnFalcon();renderAll()}">🦅 放走獵鷹</button>`);
+  return btns.length ? `<div class="rent-row">${btns.join('')}</div>` : '';
 }
 
 /* 點裝備格：浮層顯示完整說明與卸下／插卡／精煉，不切換分頁。 */
@@ -11253,15 +11339,17 @@ function syncBossHud() {
    閃電衝擊（含普攻觸發）與獵鷹突擊時飛到目標身上、播攻擊動作再飛回。
    圖集 images/mob_anim/falcon.png（grf 的 몬스터/매.spr 方向 1＝朝左側面；待機 8 格＋俯衝 1 格），朝右時水平翻轉。 */
 const FALCON_STRIKE_MS = 700, FALCON_SCALE = 0.7, FALCON_HEAD_PX = 82;   // 角色腳底到頭頂約 82px
-function falconFrameStyle(act, t) {
-  const d = MOB_ANIM && MOB_ANIM.falcon;
+function falconFrameStyle(act, t, key) {
+  key = key || 'falcon';
+  const d = MOB_ANIM && (MOB_ANIM[key] || MOB_ANIM.falcon);
+  if (d && !MOB_ANIM[key]) key = 'falcon';
   if (!d) return null;
   mobAnimEnsureRows(d);
   const a = d.actions[act] || d.actions.idle;
   const f = a.start + Math.floor(t / (a.delay || 100)) % a.frames;
   const w = d.cell[0] * FALCON_SCALE, h = d.cell[1] * FALCON_SCALE;
   return { w, h, ax: d.anchor[0] * FALCON_SCALE, ay: d.anchor[1] * FALCON_SCALE,
-    bg: `url(${MOB_ANIM_DIR}falcon.png?v=${d.v}) ${-(f % d.cols) * w}px ${-Math.floor(f / d.cols) * h}px / ${d.cols * w}px ${d._rows * h}px no-repeat` };
+    bg: `url(${MOB_ANIM_DIR}${key}.png?v=${d.v}) ${-(f % d.cols) * w}px ${-Math.floor(f / d.cols) * h}px / ${d.cols * w}px ${d._rows * h}px no-repeat` };
 }
 function syncFalcons(faceRight) {
   const scene = document.getElementById('battle-scene');
@@ -11272,13 +11360,14 @@ function syncFalcons(faceRight) {
   (state.allies || []).forEach((a, i) => { if (a && !a._downed && allyOnThisMap(a) && bfAllyPos[i]) members.push({ k: 'a' + i, m: a, pos: bfAllyPos[i] }); });
   const keep = new Set();
   members.forEach(({ k, m, pos }) => {
-    if (!((m.learnedSkills || {}).ht_falcon > 0)) return;
+    if (!((m.learnedSkills || {}).ht_falcon > 0) || !m.falconRent) return;   // 獵鷹用租的（大嘴鳥・獵鷹飼育員）
+    const fkey = m.jobId === 'sniper' ? 'falcon2' : 'falcon';   // 狙擊之王的獵鷹外觀不同（매2）
     keep.add(k);
     let el = document.getElementById('bf-falcon-' + k);
     if (!el) { el = document.createElement('div'); el.id = 'bf-falcon-' + k; el.className = 'bf-falcon'; scene.appendChild(el); }
     const side = faceRight ? 1 : -1;
     /* 角色身後的上方（朝左時在右上角），整隻在頭頂以上不跟頭重疊：獵鷹圖的底緣＝頭頂（腳底往上 FALCON_HEAD_PX） */
-    const fsI = falconFrameStyle('idle', now);
+    const fsI = falconFrameStyle('idle', now, fkey);
     if (!fsI) return;
     const home = { x: pos.x / 100 * W - side * (10 + fsI.w / 2), y: pos.y / 100 * H - FALCON_HEAD_PX - (fsI.h - fsI.ay) + Math.sin(now / 260) * 2 };
     let at = home, act = 'idle', faceR = faceRight;
@@ -11292,7 +11381,7 @@ function syncFalcons(faceRight) {
       act = k2 >= 0.35 && k2 < 0.65 ? 'attack' : 'idle';
       faceR = k2 < 0.6 ? tgt.x >= home.x : tgt.x < home.x;   // 朝飛行方向
     }
-    const fs = falconFrameStyle(act, now);
+    const fs = falconFrameStyle(act, now, fkey);
     if (!fs) { el.style.display = 'none'; return; }
     el.style.display = '';
     el.style.width = fs.w + 'px'; el.style.height = fs.h + 'px';

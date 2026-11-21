@@ -2901,3 +2901,13 @@ body.manual-log-off .combat-log { display: none; }
 .gvg-log { font-size: 12px; max-height: 180px; overflow: auto; }
 .gvg-log-row { padding: 1px 0; }
 .gvg-settle { margin: 6px 0; font-size: 12px; color: #ffd479; }
+/* 主城 NPC 頭上的職責泡泡（使用者 2026-11-21，比照聊天泡泡） */
+.bf-npc-bubble { position: relative; margin-bottom: 6px; padding: 1px 7px; border-radius: 8px; background: rgba(255,255,255,.92); color: #222; font-size: 11px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.bf-npc-bubble::after { content: ''; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: rgba(255,255,255,.92); }
+.bf-npc:hover .bf-npc-bubble, .bf-npc.target .bf-npc-bubble { background: #ffe08a; }
+.bf-npc:hover .bf-npc-bubble::after, .bf-npc.target .bf-npc-bubble::after { border-top-color: #ffe08a; }
+/* T66 上線事件：路過的人頭上的話（泡泡沿用 .bf-npc-bubble） */
+.bf-live { display: flex; flex-direction: column; align-items: center; z-index: 6; transition: opacity .3s; }
+.bf-live .bf-live-line { position: absolute; left: 50%; transform: translateX(-50%); margin: 0; z-index: 2; }
+.bf-live-mount { display: block; image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); width: 150px; }
+.rent-row { display: flex; gap: 6px; justify-content: center; margin: 4px 0; }

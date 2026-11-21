@@ -5820,6 +5820,7 @@ function gameTick() {
     tickHuntBoard();
     tickAttendance();
     tickPetFeed();
+    if (typeof tickLiveEvents === 'function') tickLiveEvents(gameNow());   // T66 上線隨機事件（js/live_events.js）
     // 攻擊技能欄改到 gameTick 每拍檢查（見 tickCasting 之後），這裡只剩輔助技能
     // 輔助技能獨立控制，不受自動施放技能開關影響
     tryAutoCastSupportSkills();
@@ -6951,14 +6952,16 @@ function ensureNearestTarget() {
   for (const m of ms) if (m.hp > 0 && Number.isFinite(m.d) && (!state.travel || isTravelThreat(m)) && (!best || m.d < best.d)) best = m;
   /* 優先目標（使用者 2026-11-05）：場上有勾選的怪就先打牠，即使比較遠——
      不然主動怪一直靠過來，被動怪永遠輪不到。趕路時不看（只打擋路的） */
-  const pri = !state.travel && state.priorityMonsters;
-  if (pri) {
+  /* 事件怪（T66 節慶怪、求救任務的怪）也算優先目標：mon.eventPri */
+  const priSet = !state.travel && state.priorityMonsters;
+  const isPri = m => !!m && !state.travel && ((priSet && priSet[m.defId]) || m.eventPri);
+  if (!state.travel) {
     let pick = null;
-    for (const m of ms) if (pri[m.defId] && m.hp > 0 && Number.isFinite(m.d) && (!pick || m.d < pick.d)) pick = m;
+    for (const m of ms) if (isPri(m) && m.hp > 0 && Number.isFinite(m.d) && (!pick || m.d < pick.d)) pick = m;
     if (pick) best = pick;
   }
-  const curIsPri = !!(pri && cur && pri[cur.defId]);
-  if (best && best !== cur && !(locked && cur.hp > 0 && Number.isFinite(cur.d) && (cur.d - best.d < 1 || (curIsPri && !pri[best.defId])) && (!state.travel || isTravelThreat(cur)))) {
+  const curIsPri = isPri(cur);
+  if (best && best !== cur && !(locked && cur.hp > 0 && Number.isFinite(cur.d) && (cur.d - best.d < 1 || (curIsPri && !isPri(best))) && (!state.travel || isTravelThreat(cur)))) {
     ms.splice(ms.indexOf(best), 1);
     ms.unshift(best);
     state.monster = best;
@@ -7061,6 +7064,8 @@ function tickMonsterMovement(dtMs, now) {
     const mv = monMove(mon);
     if (mon._lastHp != null && mon.hp < mon._lastHp) mon.flinchUntil = now + mv.damageMotion;
     mon._lastHp = mon.hp;
+    // T66 節慶怪：被靠近就往外逃（比玩家走得慢，追得到）
+    if (mon.flee) { if (mon.d < 5) mon.d = Math.min(7, mon.d + dtMs / 320); continue; }
     if (mv.immobile || monInRange(mon) || mon._bossCast) continue;   // 打王：蓄力紅圈時不走
     if (!mv.aggressive && mon.hp >= mon.maxHp) continue;
     if ((mon.stunnedUntil && now < mon.stunnedUntil) || (mon.flinchUntil && now < mon.flinchUntil)) continue;

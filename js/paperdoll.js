@@ -103,7 +103,9 @@ function paperdollLookParts(who) {
     const wid = equipRefItem(who, 'weapon');
     weaponCat = (typeof aspdCategoryOf === 'function' && aspdCategoryOf(wid)) || 'bare';
   } catch (e) { weaponCat = 'bare'; }
-  return paperdollPartsFor({ job, gender: who.gender, hairStyle: who.hairStyle, hairColor: who.hairColor, hatViews, weaponCat });
+  const g = who.gender === 'female' ? 'female' : 'male';
+  const look = who.riding && pd.clip['body/' + job + '_mount/' + g] ? job + '_mount' : job;   // 隊友租了大嘴鳥
+  return paperdollPartsFor({ job: look, gender: who.gender, hairStyle: who.hairStyle, hairColor: who.hairColor, hatViews, weaponCat });
 }
 function paperdollAlign(part, body, fr) {
   // 通用武器檔沒有錨點，圖層座標已經跟身體同一個原點。
