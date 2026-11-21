@@ -2545,12 +2545,13 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 
 /* 城內區域移動按鈕、商店切換列 */
 #bf-town-nav { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
-.bf-nav-btn { position: absolute; pointer-events: auto; padding: 4px 12px; border-radius: 14px; border: 1px solid rgba(201,162,74,.8); background: rgba(20,16,11,.78); color: #f0d68a; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.bf-nav-grp { position: absolute; display: flex; gap: 6px; pointer-events: none; }
+.bf-nav-grp.up { top: 8px; left: 50%; transform: translateX(-50%); }
+.bf-nav-grp.down { bottom: 8px; left: 50%; transform: translateX(-50%); }
+.bf-nav-grp.left { left: 8px; top: 50%; transform: translateY(-50%); flex-direction: column; align-items: flex-start; }
+.bf-nav-grp.right { right: 8px; top: 50%; transform: translateY(-50%); flex-direction: column; align-items: flex-end; }
+.bf-nav-btn { pointer-events: auto; padding: 4px 12px; border-radius: 14px; border: 1px solid rgba(201,162,74,.8); background: rgba(20,16,11,.78); color: #f0d68a; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .bf-nav-btn:hover, .bf-nav-btn.active { background: rgba(58,47,24,.92); color: #fff3c4; }
-.bf-nav-btn.up { top: 8px; left: 50%; transform: translateX(-50%); }
-.bf-nav-btn.down { bottom: 8px; left: 50%; transform: translateX(-50%); }
-.bf-nav-btn.left { left: 8px; top: 50%; transform: translateY(-50%); }
-.bf-nav-btn.right { right: 8px; top: 50%; transform: translateY(-50%); }
 .town-shop-switch { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 8px; }
 
 /* T28 RO 式精煉視窗（座標照 262×301 原圖） */
@@ -2884,3 +2885,19 @@ body.manual-log-off .combat-log { display: none; }
 .quest-subs { margin-bottom: 8px; }
 .quest-sub-n { display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 8px; background: #e0533d; color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
 .acv-side .btn-small + .btn-small, .acv-side .acv-reward + .btn-small { margin-top: 4px; }
+/* 公告跑馬燈（RO 廣播） */
+#broadcast-bar { position: absolute; left: 0; right: 0; top: 0; height: 22px; overflow: hidden; z-index: 60; pointer-events: none; opacity: 0; transition: opacity .3s; background: linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,.55) 15%, rgba(0,0,0,.55) 85%, rgba(0,0,0,0)); }
+#broadcast-bar.on { opacity: 1; pointer-events: auto; cursor: pointer; }
+#broadcast-bar .bc-text { position: absolute; top: 2px; left: 100%; white-space: nowrap; font-size: 13px; font-weight: bold; color: #ffef5a; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; animation: bc-scroll linear forwards; }
+#broadcast-bar.gvg .bc-text { color: #ffb15a; }
+@keyframes bc-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-100% - 100vw)); } }
+/* 攻城戰單機版面板 */
+.gvg-castle { border: 1px solid var(--line, #555); border-radius: 6px; padding: 8px; margin: 6px 0; font-size: 12px; line-height: 1.6; }
+.gvg-castle.mine { border-color: #ffd479; background: rgba(255,212,121,.08); }
+.gvg-mine { background: #ffd479; color: #222; border-radius: 4px; padding: 0 4px; font-size: 11px; }
+.gvg-castle-btns { margin-top: 4px; }
+.gvg-guild { margin: 6px 0; font-size: 12px; }
+.gvg-guild input { width: 10em; }
+.gvg-log { font-size: 12px; max-height: 180px; overflow: auto; }
+.gvg-log-row { padding: 1px 0; }
+.gvg-settle { margin: 6px 0; font-size: 12px; color: #ffd479; }

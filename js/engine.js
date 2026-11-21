@@ -221,6 +221,10 @@ function withdrawGoldFromWarehouse(amount) {
   logMsg(`📦 從倉庫領出 ${amount} 鋅幣。`);
   return true;
 }
+/* 打怪不掉鋅幣（使用者 2026-11-21）：錢只能靠賣東西賺。要恢復就把 MOB_ZENY 改回 true。
+   偷錢（技能）、卡片的擊殺得錢效果照舊。 */
+const MOB_ZENY = false;
+function mobZeny(level) { return MOB_ZENY ? 3 + (level || 1) * 1.4 : 0; }
 const OFFLINE_CAP_MS = 12 * 60 * 60 * 1000; // 離線掛機最多累積 12 小時（使用者 2026-11-07：免得登入結算太久，日後接 server 也省）
 const OFFLINE_MIN_MS = 30 * 1000;            // 離線超過 30 秒才顯示結算
 
@@ -3153,7 +3157,7 @@ function estimateMapYield(mapObj) {
     const gapRate = levelGapExpRate(mon.level || 1, state.baseLevel || 1);
     exp += (mon.exp || 0) * share * gapRate;
     jobExp += (mon.jobExp || 0) * share * gapRate;
-    gold += Math.round(3 + (mon.level || 1) * 1.4) * share;
+    gold += Math.round(mobZeny(mon.level)) * share;
   });
 
   const dps = dmg / (state.attackInterval / 1000);
@@ -6743,6 +6747,7 @@ function placeTravelPortal() {
   state.roamDir = ang;      // 怪偏向前方出生（rollMonsterPos）
 }
 function startTravel(destId, opt) {
+  if (state.gvg) { logMsg('⚠️ 攻城中不能離開城堡，要按「離開」。'); return false; }
   const path = worldPath(state.mapId, destId);
   const dest = MAPS.find(m => m.id === destId);
   if (!dest) return false;
@@ -6758,6 +6763,7 @@ function startTravel(destId, opt) {
    走 tickTravel 同一套：path 只有兩站、不停下來打；同一張圖的隊友照 partyFollow 一起過去 */
 const WARP_PORTAL_CELLS = 2.5;
 function startWarpPortal(dest) {
+  if (state.gvg) { logMsg('⚠️ 攻城中不能離開城堡，要按「離開」。'); return false; }
   const ang = Number.isFinite(state._walkDir) ? state._walkDir : 0;
   state.travel = {
     dest, path: [state.mapId, dest], flee: true, warp: true,
@@ -8744,7 +8750,7 @@ function killMonster(def, monObj) {
   if (def.isMvp && !acting && typeof playEventSfx === 'function') playEventSfx('mvp');
   if (def.isMvp && typeof addMvpPoints === 'function') addMvpPoints(1, owner);
   if (typeof questCount === 'function') { questCount('kill', 1, owner); if (def.isMvp) questCount('mvp', 1, owner); }
-  const goldGain = Math.round((3 + def.level * 1.4) * buffMult('gold').mult * farmMult('gold'));
+  const goldGain = Math.round(mobZeny(def.level) * buffMult('gold').mult * farmMult('gold'));
   owner.gold += goldGain;
   if (owner.dpsTracker) {
     const t = owner.dpsTracker;
@@ -14765,6 +14771,7 @@ function refineItem(slotKey, materialType, useBless) {
     // 成功
     inst.refine = currentLevel + 1;
     logMsg(`🔨 精煉成功！${item.name} 提升至 +${currentLevel + 1}！`);
+    if (typeof broadcastRefine === 'function') broadcastRefine(state.name || '冒險者', item.name, currentLevel + 1);   // +10 以上全服公告
     if (typeof playEventSfx === 'function') playEventSfx('refine');
     recomputeDerived(false);
     saveGame();
@@ -16848,10 +16855,10 @@ function computeOfflineProgress(minMs, opts) {
   const allyQuotes = poured.allies;
   _sampleDmgBy = null;
   const goldFarm = farmMult('gold');
-  let goldGained = Math.round((3 + avgLevel * 1.4) * totalKills * goldFarm);
+  let goldGained = Math.round(mobZeny(avgLevel) * totalKills * goldFarm);
   lootBossList.forEach(b => {
     const bd = MONSTERS[b.id];
-    goldGained += Math.round((3 + ((bd && bd.level) || 0) * 1.4) * b.kills * goldFarm);
+    goldGained += Math.round((MOB_ZENY ? 3 + ((bd && bd.level) || 0) * 1.4 : 0) * b.kills * goldFarm);
   });
   // MVP 點數：離線擊殺一樣算，受每日上限
   if (typeof addMvpPoints === 'function') {

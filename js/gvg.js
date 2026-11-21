@@ -1,124 +1,388 @@
-/* 攻城戰（T55，使用者 2026-11-13）：非同步攻城，一座城。
-   每晚 20:00～22:00 開放（台灣時間，跟伺服器同一個鐘）。普隆德拉副本區的攻城戰管理員進城：
-     沒有城主 → 城裡是弓箭手監護人＋劍士監護人守著華麗金屬
-     有城主   → 先打城主的三人組快照（js/actor_battle.js，裝備技能照城主設定、走玩家戰鬥引擎），
-                打贏後華麗金屬出現
-   打破華麗金屬（HP 100，每下只扣 1）＝佔領：存下自己隊伍的快照，成為新城主。
-   城主每天領 10 商城點數。
-   傷害：雙方角色互打套 GVG_DMG_RATE（0.3）。
-   倒下就出局、沒有復活（原版倒下就離開地圖）；我方三人全倒才算輸，玩家先倒下時隊友繼續打。
-
-   城主資料存在雲端（world-chat `/castle/get`、`/castle/capture`，使用者 2026-11-13 確認）：
-     沒登入雲端帳號不能攻城；進城前下載城主快照，打破華麗金屬時上傳自己的快照（帶進城時的 version，
-     這中間有人先佔領就失敗）。勝負不做伺服器驗證（單機遊戲，先把外框建起來）。
+/* 攻城戰・單機版（T55，使用者 2026-11-21：先做單機，不上雲端）。規格見 docs/GUILD_WAR_PLAN.md「單機攻城」。
+   三座城各有一個 NPC 公會城主；守城隊伍＝用真的角色資料產生的三人組快照（js/actor_battle.js），走玩家戰鬥引擎。
+     攻城：主城「攻城戰管理員」選城 → 打守城三人組 → 華麗金屬出現 → 打破就佔領（存自己隊伍的快照）
+     反攻：每座城每 4 小時一輪（離線照算），別的 NPC 公會來打，用戰力算勝率，輸了易主；NPC 之間也會互搶
+     結算：每天 22:00（台灣時間），當下城是誰的，誰拿獎勵（守住不另外給，使用者 2026-11-21）
+     公告：易主時 broadcast（js/announce.js）「XX城被 XX 公會佔領了！」
+   傷害：雙方角色互打套 GVG_DMG_RATE（0.3）；倒下出局、沒有復活，我方三人全倒才算輸。
+   城的資料存在 state.gvgLocal（角色存檔）。雲端版在 commit 012d22df2 之前的這支檔案。
    這個檔案在 actor_battle.js 之後載入。 */
-const GVG_CASTLE_NAME = '克利姆希爾德城';
 const GVG_MAP = 'gvg_castle_1';
-const GVG_TOWN = 'hub';   // T61 搬到冒險者主城（HUB_TOWN，towns.js 比這支晚載入）
-const GVG_OPEN_HOUR = 20;
-const GVG_CLOSE_HOUR = 22;
+const GVG_TOWN = 'hub';   // 冒險者主城（HUB_TOWN，towns.js 比這支晚載入）
 const GVG_DMG_RATE = 0.3;   // 使用者 2026-11-13：0.6 時三人隊 5～6 秒分勝負，改 0.3
-const GVG_DAILY_POINTS = 10;
 const GVG_DEFENSE_LIMIT_MS = 5 * 60 * 1000;
-const GVG_CASTLE_ID = 'castle_1';
-const GVG_REFRESH_MS = 10 * 60 * 1000;   // 城主資料多久重抓一次（每日獎勵、NPC 面板用）
+const GVG_RAID_MS = 4 * 3600 * 1000;      // 每座城多久被打一次
+const GVG_RAID_CATCHUP = 12;              // 離線最多補幾輪
+const GVG_GRACE_MS = 2 * 3600 * 1000;     // 剛佔領的保護時間（下一輪反攻至少隔這麼久）
+const GVG_TICK_MS = 5000;
+const GVG_SETTLE_HOUR = 22;               // 每天結算時刻（台灣時間）
+const GVG_CATCHUP_MS = 2 * 24 * 3600 * 1000;   // 離線補算只算最近兩天
 const GVG_EMPERIUM_SRC = 'empelium';                      // 華麗金屬（怪物編號 1288）
-const GVG_GUARDIAN_SRC = ['bow_guardian', 'sword_guardian'];  // 弓箭手監護人、劍士監護人
+const GVG_CASTLES = [
+  { id: 'castle_1', name: '克利姆希爾德城', lv: 60, refine: 4, trans: false, points: 10, gold: 20000 },
+  { id: 'castle_2', name: '斯瓦希爾德城', lv: 85, refine: 7, trans: false, points: 15, gold: 50000 },
+  { id: 'castle_3', name: '菲德格里德城', lv: 99, refine: 9, trans: true, points: 20, gold: 100000 },
+];
+const GVG_NPC_GUILDS = ['烈焰之翼', '星辰騎士團', '月影', '白銀之盾', '風暴旅團', '暗夜同盟'];
+// 守城三人組：近戰／遠程／支援各一
+const GVG_NPC_ROLES = {
+  melee: { second: ['knight', 'crusader', 'assassin', 'monk', 'blacksmith', 'rogue'], trans: ['lordknight', 'paladin', 'assassincross', 'champion', 'whitesmith'] },
+  ranged: { second: ['wizard', 'sage', 'hunter'], trans: ['highwizard', 'professor', 'sniper'] },
+  support: { second: ['priest'], trans: ['highpriest'] },
+};
+// 素質分配比重（依職業）
+const GVG_STAT_WEIGHTS = {
+  melee: { str: 4, agi: 3, vit: 2, dex: 2 },
+  assassin: { agi: 4, str: 3, dex: 2, vit: 1 },
+  magic: { int: 5, dex: 3, vit: 2 },
+  bow: { dex: 5, agi: 3, vit: 1, luk: 1 },
+  priest: { int: 4, vit: 3, dex: 3 },
+};
+function gvgStatKind(job) {
+  if (['wizard', 'sage', 'highwizard', 'professor'].includes(job)) return 'magic';
+  if (['hunter', 'sniper'].includes(job)) return 'bow';
+  if (['priest', 'highpriest'].includes(job)) return 'priest';
+  if (['assassin', 'assassincross', 'rogue'].includes(job)) return 'assassin';
+  return 'melee';
+}
 
 if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === GVG_MAP)) {
-  MAPS.push({ id: GVG_MAP, imgId: 0, name: GVG_CASTLE_NAME, monsters: [], bg: 'map-city', lv: '', arena: true });
+  MAPS.push({ id: GVG_MAP, imgId: 0, name: GVG_CASTLES[0].name, monsters: [], bg: 'map-city', lv: '', arena: true });
 }
+function gvgCastleDef(id) { return GVG_CASTLES.find(c => c.id === id) || null; }
+function gvgHash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function gvgGuildLabel(name) { return /公會$/.test(name) ? name : name + ' 公會'; }
 
-/* ---- 城的資料（雲端） ----
-   _gvgCastle：最後一次 /castle/get 的結果 { castle, at }；castle＝null 是沒有城主。 */
-let _gvgCastle = null;
-let _gvgFetching = false;
-let _gvgFailAt = 0;   // 雲端讀取失敗時間；30 秒內不重抓
-function gvgToken() { const c = typeof cloudConf === 'function' ? cloudConf() : null; return c && c.token ? c.token : null; }
-function gvgCastle() { return _gvgCastle ? _gvgCastle.castle : null; }
-function gvgOwner() { const c = gvgCastle(); return c ? { name: c.name, slot: c.slot, since: c.since, snap: c.snap } : null; }
-function gvgIsOwner() {
-  const c = gvgCastle();
-  return !!(c && c.mine && state && String(c.slot) === String(currentSlot) && c.name === state.name);
+/* ---------------- NPC 守城隊伍 ----------------
+   用 createCharacter 造一個真的角色（換身、靜音），設好職業鏈、等級、素質、技能、裝備，再取快照。
+   同一個種子造出同一支隊伍；結果快取在記憶體（存檔只記城主是哪個公會＋第幾代）。 */
+const GVG_BUILD_MUTE = ['logMsg', 'saveGame', 'saveGameThrottled', 'spawnMonster', 'updatePlayerSprite', 'showToast', 'renderAll', 'playEventSfx'];
+function gvgJobChain(job) {
+  const out = [];
+  for (let j = job; j; j = (JOB_TREE[j] || {}).parent) out.unshift(j);
+  return out;
 }
-async function gvgRefresh() {
-  const token = gvgToken();
-  if (!token || _gvgFetching) return null;
-  _gvgFetching = true;
+function gvgAllocStats(level, kind, startPts) {
+  const st = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 };
+  let pts = startPts;
+  for (let l = 2; l <= level; l++) pts += statPointsAtLevel(l);
+  const w = GVG_STAT_WEIGHTS[kind];
+  for (let guard = 0; guard < 2000; guard++) {
+    // 比重下最落後的那項先加；加不起就停
+    const k = Object.keys(w).filter(x => st[x] < 99).sort((a, b) => st[a] / w[a] - st[b] / w[b])[0];
+    if (!k) break;
+    const c = statPointCost(st[k]);
+    if (c > pts) break;
+    pts -= c; st[k]++;
+  }
+  return st;
+}
+function gvgPickGear(level, kind) {
+  const info = typeof vfoeJobInfo === 'function' ? vfoeJobInfo(state.jobId) : null;
+  // 只挑主城商店買得到的（不然會挑到 MVP 裝備）；強弱靠等級、精煉、職業拉開
+  const shop = new Set([].concat((NPC_SHOPS.hub_weapon || NPC_SHOPS.weapon || {}).items || [], (NPC_SHOPS.hub_armor || NPC_SHOPS.armor || {}).items || []));
+  const ok = id => { const d = ITEMS[id]; return d && shop.has(id) && !(d.reqLevel > level) && !equipBlockReason(id); };
+  const wScore = d => kind === 'magic' || kind === 'priest' ? (d.matk || 0) * 2 + (d.int || 0) * 3 + (d.atk || 0) * 0.2 : (d.atk || 0) + (d.weaponLv || 0) * 5;
+  const weapons = Object.keys(ITEMS).filter(id => ITEMS[id].type === 'weapon' && ok(id));
+  const cat = info && info.weapon;
+  const pref = weapons.filter(id => typeof aspdCategoryOf === 'function' && aspdCategoryOf(id) === cat);
+  const pickBest = (list, score) => list.slice().sort((a, b) => score(ITEMS[b]) - score(ITEMS[a]))[0] || null;
+  const weapon = pickBest(pref.length ? pref : weapons, wScore);
+  const aScore = d => (d.def || 0) * 2 + (d.mdef || 0) * 2;
+  const gear = { weapon };
+  ['armor', 'garment', 'footgear', 'headgear', 'accessory'].forEach(t => {
+    gear[t] = pickBest(Object.keys(ITEMS).filter(id => ITEMS[id].type === 'armor' && ITEMS[id].armorType === t && ok(id)), aScore);
+  });
+  if (!(weapon && isTwoHanded(weapon))) gear.shield = pickBest(Object.keys(ITEMS).filter(id => ITEMS[id].type === 'armor' && ITEMS[id].armorType === 'shield' && ok(id)), aScore);
+  return gear;
+}
+function gvgBuildNpcActor(job, level, refine, r) {
+  const saved = state, sa = typeof _allyActing !== 'undefined' ? _allyActing : null;
+  const muted = {};
+  GVG_BUILD_MUTE.forEach(k => { if (typeof globalThis[k] === 'function') { muted[k] = globalThis[k]; globalThis[k] = () => {}; } });
   try {
-    const r = await cloudPost('/castle/get', { token, castleId: GVG_CASTLE_ID });
-    if (r.status !== 200) { _gvgFailAt = gameNow(); return null; }
-    _gvgFailAt = 0;
-    const c = r.data.castle;
-    if (c) { try { c.snap = JSON.parse(c.snapshot); } catch (e) { c.snap = null; } }
-    _gvgCastle = { castle: c || null, at: gameNow() };
-    return _gvgCastle;
-  } catch (e) {
-    _gvgFailAt = gameNow();
-    return null;
-  } finally { _gvgFetching = false; }
+    const gender = ['bard'].includes(job) ? 'male' : ['dancer'].includes(job) ? 'female' : (r() < 0.5 ? 'male' : 'female');
+    const names = (typeof VFOE_NAMES !== 'undefined' && VFOE_NAMES[gender]) || ['冒險者'];
+    createCharacter(names[Math.floor(r() * names.length)], {}, gender, { hairStyle: 1 + Math.floor(r() * 20), hairColor: Math.floor(r() * 9) });
+    const st = state;
+    const chain = gvgJobChain(job);
+    st.jobLevelHistory = {};
+    chain.slice(0, -1).forEach(j => { st.jobLevelHistory[j] = (JOB_TREE[j] || {}).jobLevelMax || 50; });
+    st.jobId = job;
+    st.baseLevel = level;
+    st.jobLevel = (JOB_TREE[job] || {}).jobLevelMax || 50;
+    const kind = gvgStatKind(job);
+    st.stats = gvgAllocStats(level, kind, 48);
+    st.statPoints = 0;
+    // 技能：整條職業鏈全點滿（未實裝的跳過）
+    st.learnedSkills = {};
+    chain.forEach(j => ((JOB_TREE[j] || {}).skills || []).forEach(s => {
+      const sk = SKILLS[s.id];
+      if (sk && sk.type !== 'unimplemented' && !sk.unimplemented) st.learnedSkills[s.id] = sk.maxLv || 1;
+    }));
+    if (typeof grantAutoSkills === 'function') grantAutoSkills(false);
+    st.inventory = [];
+    recomputeDerived(true);
+    // 裝備＋精煉（做成個體才帶得了精煉）
+    const gear = gvgPickGear(level, kind);
+    Object.keys(st.equip).forEach(k => { st.equip[k] = null; });
+    st.instances = {};
+    Object.entries(gear).forEach(([t, id], i) => {
+      if (!id) return;
+      const slot = resolveEquipSlotFor(id);
+      if (!slot || st.equip[slot]) return;
+      const iid = 'npc' + i;
+      st.instances[iid] = { item: id, refine: ITEMS[id].type === 'weapon' || ['armor', 'shield', 'garment', 'footgear', 'headgear'].includes(t) ? refine : 0, cards: [] };
+      st.equip[slot] = iid;
+    });
+    // 自動戰鬥：攻擊技挑後面職業、等級要求高的 4 招；輔助全勾
+    const atk = [], sup = {};
+    chain.slice().reverse().forEach(j => ((JOB_TREE[j] || {}).skills || []).forEach(s => {
+      const sk = SKILLS[s.id];
+      if (!sk || !st.learnedSkills[s.id]) return;
+      if (isAttackSkill(sk) && atk.length < AUTO_SKILL_SLOTS && !atk.includes(s.id)) atk.push(s.id);
+      else if (isAutoSupportSkill(sk) && sk.type !== 'resurrection') sup[s.id] = true;
+    }));
+    st.autoSkill = true; st.autoAttack = true;
+    st.autoSkillConfig = { slots: Array.from({ length: AUTO_SKILL_SLOTS }, (_, i) => Object.assign(emptyAutoSkillSlot(), { skillId: atk[i] || null, spThreshold: 0 })) };
+    st.autoSupportSkills = sup;
+    recomputeDerived(true);
+    st.hp = st.maxHp; st.sp = st.maxSp;
+    return snapshotOfActor(st);
+  } finally {
+    Object.entries(muted).forEach(([k, f]) => { globalThis[k] = f; });
+    state = saved;
+    if (typeof _allyActing !== 'undefined') _allyActing = sa;
+  }
+}
+const _gvgSnapCache = {};
+function gvgNpcSnap(castleId, guild, era) {
+  const key = castleId + '|' + guild + '|' + era;
+  if (_gvgSnapCache[key]) return _gvgSnapCache[key];
+  const c = gvgCastleDef(castleId);
+  const r = fakeRandSafe(gvgHash(key));
+  const pool = c.trans ? 'trans' : 'second';
+  const members = ['melee', 'ranged', 'support'].map(role => {
+    const list = GVG_NPC_ROLES[role][pool];
+    return gvgBuildNpcActor(list[Math.floor(r() * list.length)], c.lv, c.refine, r);
+  });
+  const mats = [['red_potion', 200], ['white_potion', 100], ['blue_potion', 100], ['blue_gemstone', 100], ['arrow', 2000], ['silver_arrow', 2000]]
+    .filter(([id]) => ITEMS[id]).map(([item, qty]) => ({ item, qty }));
+  return (_gvgSnapCache[key] = { v: PARTY_SNAPSHOT_VERSION, takenAt: 0, leader: members[0].name, guild, members, mats });
+}
+function fakeRandSafe(seed) {
+  if (typeof fakeRand === 'function') return fakeRand(seed);
+  return typeof vfoeRand === 'function' ? vfoeRand(seed) : Math.random;
 }
 
-function gvgOpenNow() {
-  const h = new Date(gameNow() + 8 * 3600000).getUTCHours();   // 台灣時間（UTC+8）
-  return h >= GVG_OPEN_HOUR && h < GVG_CLOSE_HOUR;
+/* ---------------- 戰力 ----------------
+   每人 √(有效血量 × 每秒輸出) 加總（還原成角色、照算好的數值）。只拿來比大小、算反攻勝率 */
+const _gvgPowerCache = new WeakMap();
+function gvgSnapPower(snap) {
+  if (!snap || !Array.isArray(snap.members)) return 0;
+  if (_gvgPowerCache.has(snap)) return _gvgPowerCache.get(snap);
+  let total = 0;
+  snap.members.forEach((m, i) => {
+    const a = buildAllySnapshot(m, 'pw' + i);
+    if (!a) return;
+    const ehp = (a.maxHp || 1) * (1 + (a.def || 0) / 100 + (a.mdef || 0) / 200);
+    const dps = Math.max(a.atk || 0, (a.matk || 0) * 1.2) / Math.max(0.2, (a.attackInterval || 1000) / 1000);
+    total += Math.sqrt(Math.max(1, ehp) * Math.max(1, dps));
+  });
+  total = Math.round(total);
+  _gvgPowerCache.set(snap, total);
+  return total;
 }
-function gvgBlockReason() {
-  if (!gvgToken()) return '攻城要先登入雲端帳號（標題畫面的雲端存檔）。';
-  if (!gvgOpenNow()) return `攻城時間是每晚 ${GVG_OPEN_HOUR}:00～${GVG_CLOSE_HOUR}:00。`;
+function gvgCastlePower(castleId) {
+  const c = gvgLocal().castles[castleId];
+  if (!c) return 0;
+  return c.owner.kind === 'player' ? gvgSnapPower(c.owner.snap) : gvgSnapPower(gvgNpcSnap(castleId, c.owner.guild, c.era));
+}
+// 防守方守住的機率：戰力比 r，r²／(1＋r²)（對等 50%、強一倍 80%）
+function gvgDefendChance(defPower, atkPower) {
+  const r = defPower / Math.max(1, atkPower);
+  return (r * r) / (1 + r * r);
+}
+
+/* ---------------- 城的資料 ---------------- */
+function gvgLocal() {
+  if (!state.gvgLocal) state.gvgLocal = { castles: {}, guildName: '', log: [] };
+  const L = state.gvgLocal;
+  const now = gameNow();
+  GVG_CASTLES.forEach((d, i) => {
+    if (L.castles[d.id]) return;
+    L.castles[d.id] = { owner: { kind: 'npc', guild: GVG_NPC_GUILDS[(i * 2 + Math.floor(rng() * 2)) % GVG_NPC_GUILDS.length] }, era: 0, since: now, nextRaidAt: now + GVG_RAID_MS * (0.5 + rng() * 0.5) };
+  });
+  if (!Array.isArray(L.log)) L.log = [];
+  return L;
+}
+function gvgGuildName() { return (state.gvgLocal && state.gvgLocal.guildName) || state.name || '冒險者'; }
+function setGvgGuildName(name) {
+  const n = String(name || '').trim().slice(0, 12);
+  if (!n) return '公會名不能空白。';
+  gvgLocal().guildName = n;
+  // 自己的城：城主名一起換
+  Object.values(gvgLocal().castles).forEach(c => { if (c.owner.kind === 'player') c.owner.guild = n; });
+  saveGame();
+  return null;
+}
+function gvgOwnerLabel(c) { return c.owner.kind === 'player' ? c.owner.guild : c.owner.guild; }
+function gvgIsMine(castleId) { const c = gvgLocal().castles[castleId]; return !!c && c.owner.kind === 'player'; }
+function gvgMyCastles() { return GVG_CASTLES.filter(d => gvgIsMine(d.id)); }
+function gvgLogPush(text) {
+  const L = gvgLocal();
+  L.log.unshift({ at: gameNow(), text });
+  if (L.log.length > 30) L.log.length = 30;
+}
+// 易主：存檔、戰報、公告（live＝現在發生的才跑馬燈；離線補算的只寫戰報）
+function gvgChangeOwner(castleId, owner, live) {
+  const c = gvgLocal().castles[castleId];
+  const d = gvgCastleDef(castleId);
+  c.owner = owner;
+  c.era = (c.era || 0) + 1;
+  c.since = gameNow();
+  const text = `${d.name}被 ${gvgGuildLabel(owner.guild)}佔領了！`;
+  gvgLogPush(text);
+  if (live && typeof broadcast === 'function') broadcast(text, 'gvg');
+  else logMsg(`🏰 ${text}`);
+}
+
+/* ---------------- 反攻（每 4 小時一輪，離線照算） ---------------- */
+function gvgResolveRaid(castleId, live) {
+  const L = gvgLocal();
+  const c = L.castles[castleId];
+  const d = gvgCastleDef(castleId);
+  const others = GVG_NPC_GUILDS.filter(g => g !== c.owner.guild);
+  const attacker = others[Math.floor(rng() * others.length)];
+  const base = gvgSnapPower(gvgNpcSnap(castleId, attacker, 0));
+  const atkPower = base * (0.8 + rng() * 0.4);
+  const mine = c.owner.kind === 'player';
+  if (!mine && rng() < 0.5) return;   // NPC 之間只有一半的輪次真的開打
+  const defPower = mine ? gvgSnapPower(c.owner.snap) : base * (0.8 + rng() * 0.4);
+  if (rng() < gvgDefendChance(defPower, atkPower)) {
+    if (mine) {
+      gvgLogPush(`🛡️ ${d.name}擋下了 ${gvgGuildLabel(attacker)}的進攻`);
+      if (live) logMsg(`🛡️ ${d.name}擋下了 ${gvgGuildLabel(attacker)}的進攻！`);
+    }
+    return;
+  }
+  gvgChangeOwner(castleId, { kind: 'npc', guild: attacker }, live);
+}
+/* 反攻與結算照時間先後一起補算：離線期間城換過手，結算時是誰的就算誰的 */
+function gvgRaidTick(now) {
+  const L = gvgLocal();
+  const from = now - GVG_CATCHUP_MS;   // 太久以前的不補
+  if (!L.nextSettleAt) L.nextSettleAt = gvgNextSettleAfter(now);
+  if (L.nextSettleAt < from) L.nextSettleAt = gvgNextSettleAfter(from);
+  const busy = state.gvg && state.gvg.castleId;   // 正在攻這座城：先不算它的反攻
+  const count = {};
+  GVG_CASTLES.forEach(d => {
+    const c = L.castles[d.id];
+    if (c.nextRaidAt < from) c.nextRaidAt = from + rng() * GVG_RAID_MS;
+    count[d.id] = 0;
+  });
+  let changed = false;
+  for (let guard = 0; guard < 200; guard++) {
+    let next = null;
+    GVG_CASTLES.forEach(d => {
+      const c = L.castles[d.id];
+      if (d.id === busy || count[d.id] >= GVG_RAID_CATCHUP || c.nextRaidAt > now) return;
+      if (!next || c.nextRaidAt < L.castles[next].nextRaidAt) next = d.id;
+    });
+    const raidAt = next ? L.castles[next].nextRaidAt : Infinity;
+    if (L.nextSettleAt <= now && L.nextSettleAt <= raidAt) {
+      gvgSettle(now - L.nextSettleAt < 60000);
+      L.nextSettleAt = gvgNextSettleAfter(L.nextSettleAt + 1000);
+      changed = true;
+      continue;
+    }
+    if (!next) break;
+    const c = L.castles[next];
+    gvgResolveRaid(next, now - c.nextRaidAt < 60000);
+    c.nextRaidAt += GVG_RAID_MS * (0.75 + rng() * 0.5);
+    count[next]++; changed = true;
+  }
+  GVG_CASTLES.forEach(d => {
+    const c = L.castles[d.id];
+    if (d.id !== busy && c.nextRaidAt <= now) c.nextRaidAt = now + GVG_RAID_MS * (0.5 + rng() * 0.5);
+  });
+  if (changed) saveGame();
+}
+
+/* ---------------- 每日結算 ---------------- */
+// t 之後（含）的下一個結算時刻
+function gvgNextSettleAfter(t) {
+  const tw = new Date(t + 8 * 3600000);
+  let at = Date.UTC(tw.getUTCFullYear(), tw.getUTCMonth(), tw.getUTCDate(), GVG_SETTLE_HOUR) - 8 * 3600000;
+  if (at < t) at += 24 * 3600000;
+  return at;
+}
+function gvgSettle(live) {
+  const L = gvgLocal();
+  const parts = [];
+  GVG_CASTLES.forEach(d => {
+    const c = L.castles[d.id];
+    parts.push(`${d.name}－${gvgGuildLabel(c.owner.guild)}`);
+    if (c.owner.kind !== 'player') return;
+    addCashPoints(d.points);
+    state.gold = (state.gold || 0) + d.gold;
+    gvgLogPush(`💰 結算：${d.name}是你的，獲得 ${d.points} 商城點數＋${d.gold.toLocaleString()} 鋅幣`);
+    logMsg(`🏰 攻城結算：${d.name}城主獎勵 ${d.points} 商城點數＋${d.gold.toLocaleString()} 鋅幣。`);
+  });
+  if (live && typeof broadcast === 'function') broadcast(`本日攻城結算：${parts.join('、')}`, 'gvg');
+}
+
+/* ---------------- 攻城 ---------------- */
+function gvgBlockReason(castleId) {
+  const d = gvgCastleDef(castleId);
+  if (!d) return '沒有這座城。';
+  if (gvgIsMine(castleId)) return '這座城已經是你的了。';
+  if (state.gvg) return '已經在攻城中。';
   if (state.gmt) return '正在參加吉芬魔法大賽。';
+  if (state.dojo) return '正在道館挑戰。';
   if (state.vDuel) return '已經在對戰中。';
   if (state.bossChallenge || state.bossHunt) return '正在挑戰或討伐首領。';
   if (!(state.hp > 0)) return '倒下時不能進城。';
-  if (gvgIsOwner()) return '你已經是城主了。';
   return null;
 }
-
-/* ---- 城裡的怪 ---- */
 function gvgSpawn(srcId, d, a, extra) {
   const src = MONSTERS[srcId];
   if (!src) return null;
   const id = 'gvg_' + srcId;
-  MONSTERS[id] = Object.assign({}, src, { id, exp: 0, jobExp: 0, drops: [], isVirtual: true }, extra || {});
-  if (typeof MOB_MOVE !== 'undefined') MOB_MOVE[id] = Object.assign({}, MOB_MOVE[srcId] || {}, extra && extra.passive ? { immobile: true, aggressive: false } : { aggressive: true });
+  if (!MONSTERS[id]) MONSTERS[id] = Object.assign({}, src, { id, exp: 0, jobExp: 0, drops: [], isBoss: false, isMvp: false });
+  if (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[srcId]) MOB_MOVE[id] = MOB_MOVE[srcId];
   state.monsterIdCounter = (state.monsterIdCounter || 0) + 1;
   const def = MONSTERS[id];
-  const mon = { defId: id, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: gameNow(), d, a };
+  const mon = Object.assign({ defId: id, hp: def.hp, maxHp: def.hp, id: state.monsterIdCounter, spawnedAt: gameNow(), d, a }, extra || {});
   state.monsters.push(mon);
-  if (!state.monster) state.monster = mon;
+  state.monster = state.monsters[0];
   return mon;
 }
 function gvgSpawnEmperium() {
-  const mon = gvgSpawn(GVG_EMPERIUM_SRC, 4, 0, { hp: 100, atk: 0, passive: true, isBoss: false, isMvp: false });
-  if (mon) setMonDamageRule(mon, { fixed: 1 });
-  state.gvg.phase = 'emperium';
-  state.gvg.empId = mon && mon.id;
-  logMsg('💎 華麗金屬出現了！打破它就能佔領城堡（每下只扣 1）。');
+  const g = state.gvg;
+  if (!g) return;
+  const mon = gvgSpawn(GVG_EMPERIUM_SRC, 4, 0, { hp: 100, maxHp: 100 });
+  if (!mon) { gvgCapture(); return; }
+  if (typeof setMonDamageRule === 'function') setMonDamageRule(mon, { fixed: 1 });
+  g.empId = mon.id;
+  g.phase = 'emperium';
+  logMsg('💎 守城隊伍倒下了，華麗金屬出現！把它打破！');
 }
-
-/* ---- 進城、離開 ----
-   進城前先跟雲端拿最新的城主資料（非同步），拿不到就不進城 */
-async function gvgEnter() {
-  let why = gvgBlockReason();
+function gvgEnter(castleId) {
+  const why = gvgBlockReason(castleId);
   if (why) { logMsg('⚠️ ' + why); return false; }
-  logMsg('🏰 讀取城主資料…');
-  if (!(await gvgRefresh())) { logMsg('⚠️ 連不上雲端，稍後再試。'); return false; }
-  why = gvgBlockReason();
-  if (why) { logMsg('⚠️ ' + why); return false; }
+  const d = gvgCastleDef(castleId);
+  const c = gvgLocal().castles[castleId];
+  const snap = gvgNpcSnap(castleId, c.owner.guild, c.era);
+  const m = MAPS.find(x => x.id === GVG_MAP);
+  if (m) m.name = d.name;
   if (!changeMap(GVG_MAP, { party: true })) return false;
   state.monsters = []; state.monster = null; state.bossCasts = [];
-  const owner = gvgOwner();
-  const castle = gvgCastle();
-  state.gvg = { phase: 'start', enteredAt: gameNow(), empId: null, baseVersion: castle ? castle.version : 0 };
-  if (owner && owner.snap) {
-    state.gvg.phase = 'defenders';
-    logMsg(`🏰 ${GVG_CASTLE_NAME}：城主 ${owner.name} 的隊伍守著城！`);
-    startActorBattle(owner.snap, { label: '攻城戰', dmgRate: GVG_DMG_RATE, limitMs: GVG_DEFENSE_LIMIT_MS, team: true, noRevive: true, onEnd: gvgDefendersEnd });
-  } else {
-    state.gvg.phase = 'guardians';
-    logMsg(`🏰 ${GVG_CASTLE_NAME} 還沒有城主，監護人守著華麗金屬。`);
-    GVG_GUARDIAN_SRC.forEach((id, i) => gvgSpawn(id, 7 + i, i ? 0.5 : -0.5));
-    gvgSpawnEmperium();
+  state.gvg = { castleId, phase: 'defenders', enteredAt: gameNow(), empId: null, era: c.era };
+  logMsg(`🏰 ${d.name}：${gvgGuildLabel(c.owner.guild)}的隊伍守著城！`);
+  if (!startActorBattle(snap, { label: '攻城戰', dmgRate: GVG_DMG_RATE, limitMs: GVG_DEFENSE_LIMIT_MS, team: true, noRevive: true, onEnd: gvgDefendersEnd })) {
+    gvgExit('進城失敗。');
+    return false;
   }
   saveGame();
   return true;
@@ -139,65 +403,43 @@ function gvgExit(why) {
   if (why) logMsg('🏰 ' + why);
   if (state.mapId === GVG_MAP) changeMap(GVG_TOWN, { party: true });
   saveGame();
+  if (typeof renderMapTab === 'function') renderMapTab();
 }
 function gvgLeave() { gvgExit('離開了城堡。'); }
-
-/* 打破華麗金屬：上傳自己的隊伍快照，成為城主（帶進城時的 version，這中間有人先佔領就失敗） */
-const GVG_CAPTURE_ERRORS = {
-  VERSION_CONFLICT: '有人比你先佔領了這座城。', CASTLE_CLOSED: '攻城時間已經結束。',
-  INVALID_SNAPSHOT: '隊伍資料超出範圍，佔領失敗。', INVALID_TOKEN: '雲端登入已失效，請重新登入。',
-};
+/* 打破華麗金屬：存下自己隊伍的快照，成為城主 */
 function gvgCapture() {
   const g = state.gvg;
-  if (!g || g.capturing) return;
-  g.capturing = true;
-  const token = gvgToken();
-  const snap = snapshotParty();
-  const name = state.name, slot = String(currentSlot);
-  logMsg('💎 打破了華麗金屬！上傳隊伍資料中…');
-  const done = msg => { if (state && state.gvg === g) gvgExit(msg); };
-  if (!token) return done('沒有登入雲端帳號，佔領失敗。');
-  cloudPost('/castle/capture', { token, castleId: GVG_CASTLE_ID, name, slot, snapshot: JSON.stringify(snap), baseVersion: g.baseVersion })
-    .then(r => {
-      if (r.status === 200) {
-        _gvgCastle = { castle: { name, slot, mine: true, snap, since: r.data.since, version: r.data.version }, at: gameNow() };
-        logMsg(`🎉 你成為 ${GVG_CASTLE_NAME} 的城主，你的隊伍會留下來守城。`);
-        return done(null);
-      }
-      done(GVG_CAPTURE_ERRORS[r.data.error] || cloudErr(r.data.error));
-    })
-    .catch(() => done('連不上雲端，佔領失敗。'));
+  if (!g || g.captured) return;
+  g.captured = true;
+  const c = gvgLocal().castles[g.castleId];
+  const d = gvgCastleDef(g.castleId);
+  gvgChangeOwner(g.castleId, { kind: 'player', guild: gvgGuildName(), name: state.name, snap: snapshotParty() }, true);
+  c.nextRaidAt = Math.max(c.nextRaidAt, gameNow() + GVG_GRACE_MS);
+  logMsg(`🎉 你成為 ${d.name} 的城主！你的隊伍會留下來守城；每天 ${GVG_SETTLE_HOUR}:00 結算時城還是你的，就拿 ${d.points} 商城點數＋${d.gold.toLocaleString()} 鋅幣。`);
+  gvgExit(null);
 }
-
-function gvgToday() {
-  const d = new Date(gameNow() + 8 * 3600000);   // 台灣時間
-  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
-}
-/* 城主每日獎勵：城主資料每 10 分鐘重抓一次；是城主（同帳號、同欄位、同名字）且今天還沒領就發。
-   領取紀錄存在角色自己的存檔（state.gvgRewardDay）。 */
-function gvgDailyReward() {
-  if (!gvgToken()) return;
-  if ((!_gvgCastle || gameNow() - _gvgCastle.at > GVG_REFRESH_MS) && !_gvgFetching) {
-    if (!_gvgCastle) _gvgCastle = { castle: null, at: gameNow() - GVG_REFRESH_MS + 30000 };   // 失敗時 30 秒後再試
-    gvgRefresh();
-    return;
-  }
-  const day = gvgToday();
-  if (state.gvgRewardDay === day || !gvgIsOwner()) return;
-  state.gvgRewardDay = day;
-  addCashPoints(GVG_DAILY_POINTS);
-  logMsg(`🏰 城主每日獎勵：${GVG_DAILY_POINTS} 商城點數。`);
+/* 守城隊伍換成目前的隊伍（要在主城） */
+function gvgUpdateDefense(castleId) {
+  if (!gvgIsMine(castleId)) return '這座城不是你的。';
+  if (state.mapId !== GVG_TOWN) return '要在主城才能更新守城隊伍。';
+  const c = gvgLocal().castles[castleId];
+  c.owner.snap = snapshotParty();
+  c.owner.name = state.name;
+  logMsg(`🛡️ ${gvgCastleDef(castleId).name}的守城隊伍換成了目前的隊伍。`);
   saveGame();
+  return null;
 }
 
 /* 每拍（tickBossFight 呼叫） */
 function tickGvg(now) {
-  if (!state) return;
-  gvgDailyReward();
+  if (!state || typeof _allyActing !== 'undefined' && _allyActing) return;
+  if (!state._gvgTickAt || now - state._gvgTickAt >= GVG_TICK_MS) {
+    state._gvgTickAt = now;
+    gvgRaidTick(now);
+  }
   const g = state.gvg;
   if (!g) return;
   if (state.mapId !== GVG_MAP) { state.gvg = null; return; }
-  if (!gvgOpenNow()) return gvgExit('攻城時間結束了。');
   if (g.phase === 'emperium' && !(state.monsters || []).some(m => m.id === g.empId && m.hp > 0)) gvgCapture();
 }
 /* 玩家倒下：留在城裡，隊友還站著就繼續；全倒才算輸。回傳 true＝已處理 */
@@ -229,8 +471,10 @@ function gvgDownedTick() {
   tickActorBattle(now);
   if (typeof onTickUI === 'function') onTickUI();
 }
-// 讀檔：攻城中斷就放回主城
+// 讀檔：攻城中斷就放回主城；舊的雲端欄位不用了
 function gvgOnLoad() {
   if (state.gvg) state.gvg = null;
   if (state.mapId === GVG_MAP) state.mapId = GVG_TOWN;
+  delete state.gvgRewardDay;
+  if (state.gvgLocal) Object.values(state.gvgLocal.castles || {}).forEach(c => { delete c.rewardDay; });
 }

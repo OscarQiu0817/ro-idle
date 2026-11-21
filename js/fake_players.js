@@ -1,6 +1,6 @@
 /* T63 假人（使用者 2026-11-19）：遊戲人少太空曠，放一些「別的冒險者」。
    1. 主城交易區露天商店：擺攤賣怪物掉落物、補品、偶爾卡片，價格比 NPC 高；數量有限、賣完就沒了
-   2. 收購攤：喊「收 ○○」，玩家身上有就能賣給他，比賣 NPC 多 20～50%；少數是以物易物
+   2. 收購攤：喊「收 ○○」，玩家身上有就能賣給他，比賣 NPC 多 20～50%，收多少都要；少數是以物易物
    3. 野外路過（畫面效果，ui.js）：走過去、偶爾停下來打自己的怪，不搶玩家的怪、不影響收益
    4. 交易喊話：只在「世界頻道」沒連線時的單機模擬視窗出現（chat/game-world-chat.js 的 pushLocalChat），
       連上真的聊天室後不混進去，免得讓人以為是真人
@@ -48,6 +48,16 @@ function fakeItemPool(cap) {
   return { drops: [...drops], cards };
 }
 const fakeUnitPrice = (id, mult) => Math.max(1, Math.round((ITEMS[id].sell || 1) * mult));
+/* 裝備定價（使用者 2026-11-21）：很多裝備回收價只有 5～10z，照回收價賣會出現 5z 的洞裝。
+   改照要求等級（沒有就看武器等級）× 洞數 × 武器等級算行情，回收價比較高就用回收價那套 */
+function fakeGearPrice(id, r) {
+  const it = ITEMS[id];
+  const lv = it.reqLevel || (it.weaponLv ? it.weaponLv * 15 : 10);
+  const base = 200 + lv * lv * 8;                                   // Lv1 約 200、Lv30 約 7 千、Lv60 約 3 萬、Lv99 約 8 萬
+  const mult = (1 + 0.5 * (it.slots || 0)) * (1 + 0.25 * Math.max(0, (it.weaponLv || 1) - 1));
+  const price = Math.max(fakeUnitPrice(id, 1.5 + r() * 1.5), base * mult * (0.8 + r() * 0.6));
+  return price >= 1000 ? Math.round(price / 100) * 100 : Math.round(price / 10) * 10;
+}
 
 /* 這一輪的攤位（不含已買賣的數量）。bucket＝第幾個 2 小時、cap＝等級門檻 */
 function fakeHubRoll(bucket, cap) {
@@ -74,7 +84,7 @@ function fakeHubRoll(bucket, cap) {
         id = fakePick(pool.drops, r);
         const gear = ITEMS[id].type === 'weapon' || ITEMS[id].type === 'armor';
         qty = gear ? 1 + Math.floor(r() * 2) : 1 + Math.floor(r() * 20);   // 裝備一攤最多 2 件
-        price = fakeUnitPrice(id, 1.5 + r() * 1.5);
+        price = gear ? fakeGearPrice(id, r) : fakeUnitPrice(id, 1.5 + r() * 1.5);
       }
       if (!items.some(x => x.item === id)) items.push({ item: id, price, qty });
     }
@@ -84,9 +94,9 @@ function fakeHubRoll(bucket, cap) {
   const mats = pool.drops.filter(id => ITEMS[id].type !== 'weapon' && ITEMS[id].type !== 'armor');
   for (let i = 0; i < FAKE_BUYER_N && mats.length; i++) {
     const id = fakePick(mats, r);
-    const want = 5 + Math.floor(r() * 26);
+    const want = Infinity;   // 收購不設上限（使用者 2026-11-21：量太少沒吸引力）
     // 約 1／4 以物易物：每收 per 個換 1 瓶藥水
-    const barter = potions.length && r() < 0.25 ? { item: fakePick(potions, r), per: Math.max(1, Math.ceil(want / 6)) } : null;
+    const barter = potions.length && r() < 0.25 ? { item: fakePick(potions, r), per: 2 + Math.floor(r() * 4) } : null;
     out.push({ id: 'fb' + i, kind: 'buy', name: takeName(), look: fakeLook(r), item: id, want,
       price: barter ? 0 : fakeUnitPrice(id, 1.2 + r() * 0.3), barter });
   }

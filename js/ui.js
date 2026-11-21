@@ -4991,6 +4991,8 @@ function syncPassers(scene, at) {
 }
 /* 交易喊話：平均約 45 秒一句，只出現在世界頻道沒連線時的單機模擬視窗 */
 setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && Math.random() < 1 / 3 && typeof fakeShout === 'function') fakeShout(); }, 15000);
+// 假人精煉 +10 以上公告：約 30 分鐘一則（使用者 2026-11-21）
+setInterval(() => { if (typeof state !== 'undefined' && state && state.hp != null && !state.broadcastOff && Math.random() < 1 / 120 && typeof fakeRefineBroadcast === 'function') fakeRefineBroadcast(); }, 15000);
 
 /* 攤位面板（地圖分頁） */
 /* 假人攤位：點了直接開（不走過去、不捲動畫面）。使用者 2026-11-20：手機上走過去會把畫面往下捲，
@@ -5025,7 +5027,7 @@ function fakeVendorPanelHtml(n, back) {
   const deal = v.barter ? `每 ${v.barter.per} 個換 1 瓶${shopEsc(ITEMS[v.barter.item].name)}` : `一個 ${v.price.toLocaleString()}z（賣給 NPC 是 ${(it.sell || 0).toLocaleString()}z）`;
   const can = v.want > 0 && have > 0 && (!v.barter || have >= v.barter.per);
   return `<div class="npc-shop"><div class="npc-shop-header">${back}<h3 class="panel-title">💰 ${shopEsc(v.name)}的收購攤</h3></div>
-    <div class="town-npc-say">「收 ${shopEsc(it.name)}！」還要收 <b>${v.want}</b> 個，${deal}。</div>
+    <div class="town-npc-say">「收 ${shopEsc(it.name)}！」${v.want === Infinity ? '有多少收多少' : `還要收 <b>${v.want}</b> 個`}，${deal}。</div>
     <div class="shop-row"><div class="shop-item-info"><img class="shop-item-icon" src="${itemImgSrc(v.item)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
       <div class="shop-item-details"><span class="shop-item-name">${shopEsc(it.name)}</span></div></div>
       <div class="shop-item-actions"><span class="shop-item-owned">你有 ${have}</span>
@@ -5062,11 +5064,17 @@ function syncTownNav(scene, L) {
   if (nav._key === key) return;
   nav._key = key;
   const targets = here && here.id === gate.id ? L.districts.slice(1) : [gate];
-  nav.innerHTML = targets.map(d => {
+  // 同一邊有好幾區就排在一起（左右邊上下疊、上下邊左右排，照實際方位排序），不會疊在一起
+  const groups = {};
+  targets.forEach(d => {
     const dx = d.x - (here ? here.x : 0), dy = d.y - (here ? here.y : 0);
     const side = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    (groups[side] = groups[side] || []).push({ d, k: side === 'left' || side === 'right' ? dy : dx });
+  });
+  nav.innerHTML = Object.entries(groups).map(([side, list]) => {
     const arrow = { up: '▲', down: '▼', left: '◀', right: '▶' }[side];
-    return `<button class="bf-nav-btn ${side}${walking === d.id ? ' active' : ''}" onclick="walkToTownDistrict('${d.id}')">${arrow} ${shopEsc(d.name)}</button>`;
+    return `<div class="bf-nav-grp ${side}">${list.sort((a, b) => a.k - b.k).map(({ d }) =>
+      `<button class="bf-nav-btn${walking === d.id ? ' active' : ''}" onclick="walkToTownDistrict('${d.id}')">${arrow} ${shopEsc(d.name)}</button>`).join('')}</div>`;
   }).join('');
 }
 /* 商店頁上方的切換列：同一區的其他 NPC，點了走過去（買完不用捲回上面找） */
@@ -5202,6 +5210,8 @@ function townNpcPanelHtml() {
 function renderMapTab() {
   const el = document.getElementById('tab-map');
   const currentMapObj = currentMap() || MAPS.find(x => x.id === 'prontera');
+  // 攻城地圖獨立（使用者 2026-11-21）：不顯示世界地圖、回城、城鎮 NPC，只能按離開
+  if (state.gvg && currentMapObj.id === GVG_MAP) { el.innerHTML = gvgMapPanelHtml(); return; }
   const isCity = currentMapObj.monsters.length === 0;
   const monsterPreview = isCity ? '' : renderMapMonsterChips(currentMapObj);
 
@@ -7188,6 +7198,42 @@ function formatCardBonus(k, v, all) {
   if (k.startsWith('monDmg_')) {
     const m = MONSTERS[k.slice(7)];
     return `對${m ? m.name : k.slice(7)}傷害 ${signed(v, 1)}`;
+  }
+  // 以下補上原本直接顯示程式名稱的效果（使用者 2026-11-21）
+  const eleN = e => ELEMENT_NAMES[e] || e;
+  const raceN = r => RACE_LABELS[r] || r;
+  const skN = id => { const sk = typeof findSkillAnywhere === 'function' ? findSkillAnywhere(id) : null; return sk ? sk.name.split(' ')[0] : id; };
+  if (k.startsWith('atkEle_')) return `普通攻擊變成${eleN(k.slice(7))}屬性`;
+  if (k.startsWith('magicTargetEleDmg_')) return `對${eleN(k.slice(18))}屬性目標魔法傷害 ${signed(v, 1)}`;
+  if (k === 'normalDefIgnorePct') return `無視一般魔物防禦力 ${v}%`;
+  if (k === 'bossDefIgnorePct') return `無視 BOSS 防禦力 ${v}%`;
+  if (k === 'normalMdefIgnorePct') return `無視一般魔物魔法防禦力 ${v}%`;
+  if (k.startsWith('mdefIgnoreRace_')) return `無視${raceN(k.slice(15))}魔法防禦力 ${v}%`;
+  if (k === 'meltdownAtkChance') return `攻擊時 ${v}% 機率讓對方攻擊力 -20%（10 秒）`;
+  if (k === 'meltdownDefChance') return `攻擊時 ${v}% 機率讓對方防禦力 -20%（10 秒）`;
+  if (k === 'defRatioAtk') return '對方防禦力越高，傷害越高（無視防禦）';
+  if (k === 'comaNormalPct') return `普通攻擊 ${v}% 機率讓一般魔物 HP 剩 1`;
+  if (k.startsWith('comaRace_')) return `普通攻擊 ${v}% 機率讓${raceN(k.slice(9))}一般魔物 HP 剩 1`;
+  if (k === 'hpOnMagicKill') return `魔法擊殺時回復 ${v} HP`;
+  if (k === 'spOnMagicKill') return `魔法擊殺時回復 ${v} SP`;
+  if (k === 'spOnRangedKill') return `遠距離物理擊殺時回復 ${v} SP`;
+  if (k.startsWith('spOnAttackRace_')) return `攻擊${raceN(k.slice(15))}時回復 ${v} SP`;
+  if (k === 'itemHealPct') return `回復道具回復量 ${signed(v, 1)}`;
+  if (k.startsWith('itemSpHeal_')) { const it = k.slice(11); return `使用${(ITEMS[it] || {}).name || it}時 SP 回復量 ${signed(v, 1)}`; }
+  if (k === 'healPct') return `治癒系技能回復量 ${signed(v, 1)}`;
+  if (k === 'magicImmunePct') return v >= 100 ? '魔法傷害無效' : `受魔法傷害 -${v}%`;
+  if (k === 'monSkillImmune') return '魔物技能無效';
+  if (k.startsWith('monEleDmgTaken_')) return `受${eleN(k.slice(15))}屬性魔物傷害 ${signed(v, 1)}`;
+  if (k.startsWith('monDmgTaken_')) { const m = MONSTERS[k.slice(12)]; return `受${m ? m.name : k.slice(12)}傷害 ${signed(v, 1)}`; }
+  if (k === 'regenTickHpPct') return `每 10 秒回復 ${v}% HP`;
+  if (k === 'regenTickSpPct') return `每 10 秒回復 ${v}% SP`;
+  if (k === 'dropRatePct') return `掉寶率 ${signed(v, 1)}`;
+  if (k.startsWith('skill_')) { const id = k.slice(6); return `可使用 ${skN({ doubleattack: 'tf_double' }[id] || id)} Lv${v}`; }
+  if (k.startsWith('spCost_')) return `${skN(k.slice(7))} SP 消耗 ${signed(v)}`;
+  const perSk = /^perSkill_(.+?)_(\d+)_(.+)$/.exec(k);
+  if (perSk) {
+    const inner = formatCardBonus(perSk[3], v, {});
+    return `${skN(perSk[1])} 每 ${perSk[2]} 級：${inner}`;
   }
   return `${k} ${signed(v)}`;
 }
@@ -11323,26 +11369,68 @@ function gmtNpcPanelHtml(n, back) {
     <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gmtEnter();renderMapTab()">報名參加</button>
     ${why ? `<div class="ab-info-text">${shopEsc(why)}</div>` : ''}</div>`;
 }
-/* 攻城戰管理員（T55）：城主、開放時間、進城 */
+/* 攻城戰管理員（T55 單機版）：三座城的城主、戰力、攻城、守城隊伍、戰報 */
 function gvgNpcPanelHtml(n, back) {
-  // 城主資料在雲端：太舊就重抓，抓完重畫這個面板
-  if (gvgToken() && !_gvgFetching && gameNow() - _gvgFailAt > 30000 && (!_gvgCastle || gameNow() - _gvgCastle.at > 60000)) gvgRefresh().then(() => { if (document.querySelector('.gvg-panel')) openTownNpc('gvg'); });
-  const owner = gvgOwner();
-  const why = gvgBlockReason();
-  const since = owner ? new Date(owner.since) : null;
-  const team = owner && owner.snap ? owner.snap.members.map(m => `${shopEsc(m.name || '')}（${shopEsc((JOB_TREE[m.jobId] || {}).name || m.jobId)} Lv${m.baseLevel}）`).join('、') : '';
+  const L = gvgLocal();
+  const myPower = gvgSnapPower(snapshotParty());
+  const fmtT = ms => { const d = new Date(ms); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const rows = GVG_CASTLES.map(d => {
+    const c = L.castles[d.id];
+    const mine = c.owner.kind === 'player';
+    const pw = gvgCastlePower(d.id);
+    const why = gvgBlockReason(d.id);
+    const team = mine && c.owner.snap ? c.owner.snap.members.map(m => `${shopEsc((JOB_TREE[m.jobId] || {}).name || m.jobId)} Lv${m.baseLevel}`).join('、') : '';
+    const odds = !mine ? Math.round(gvgDefendChance(myPower, pw) * 100) : 0;
+    return `<div class="gvg-castle${mine ? ' mine' : ''}">
+      <div class="gvg-castle-head"><b>🏰 ${d.name}</b>　<span class="dim">守方 Lv${d.lv}${d.trans ? ' 進階二轉' : ' 二轉'}・精煉 +${d.refine}・結算 💎${d.points}＋${(d.gold / 10000).toLocaleString()} 萬 z</span></div>
+      <div>城主：<b>${shopEsc(gvgGuildLabel(c.owner.guild))}</b>${mine ? ' <span class="gvg-mine">你的城</span>' : ''}　<span class="dim">${fmtT(c.since)} 起</span></div>
+      <div>守城戰力 <b>${pw.toLocaleString()}</b>${mine ? `　守城隊伍：${team}` : `　你的戰力 ${myPower.toLocaleString()}（${myPower >= pw ? '佔優' : '吃力'}）`}</div>
+      ${mine ? `<div class="dim">下一次有人來攻：約 ${fmtT(c.nextRaidAt)}（守住的機率照戰力算）</div>` : ''}
+      <div class="gvg-castle-btns">${mine
+        ? `<button class="btn-small" onclick="gvgUpdateDefenseUi('${d.id}')" title="把守城隊伍換成你現在的隊伍">更新守城隊伍</button>`
+        : `<button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gvgEnter('${d.id}');renderMapTab()">攻城</button>`}</div>
+    </div>`;
+  }).join('');
+  const log = L.log.slice(0, 8).map(e => `<div class="gvg-log-row"><span class="dim">${fmtT(e.at)}</span> ${shopEsc(e.text)}</div>`).join('') || '<div class="dim">還沒有戰報。</div>';
   return `<div class="npc-shop gvg-panel"><div class="npc-shop-header">${back}<h3 class="panel-title">🏰 ${shopEsc(n.name)}</h3></div>
-    <div class="town-npc-say">${GVG_CASTLE_NAME}的攻城戰每晚 ${GVG_OPEN_HOUR}:00～${GVG_CLOSE_HOUR}:00 開放（台灣時間）。要先登入雲端帳號，城主的隊伍存在雲端。</div>
+    <div class="town-npc-say">三座城都在 NPC 公會手上。打倒守城隊伍、打破華麗金屬，城就是你的。之後每 4 小時會有公會來攻，你的隊伍會留下來守（離線也照算）。</div>
+    <div class="gvg-settle">⏰ 每天 ${GVG_SETTLE_HOUR}:00 結算：那時城是誰的，誰拿獎勵。下次結算 <b>${fmtT(L.nextSettleAt || gvgNextSettleAfter(gameNow()))}</b></div>
+    <div class="gvg-guild">你的公會名：<input id="gvg-guild-name" maxlength="12" value="${shopEsc(gvgGuildName())}">
+      <button class="btn-small" onclick="gvgRenameUi()">改名</button></div>
+    ${rows}
     <ul class="gmt-rules">
-      <li>沒有城主時：打倒弓箭手監護人與劍士監護人守著的華麗金屬</li>
-      <li>有城主時：先打城主的三人組（裝備、技能照城主的設定），打贏後華麗金屬出現</li>
-      <li>華麗金屬 HP 100，每下只扣 1；打破就成為城主，你的隊伍會留下來守城</li>
-      <li>角色互打的傷害 ×${GVG_DMG_RATE}；倒下就出局、沒有復活，三人全倒或時間到才算失敗</li>
-      <li>城主每天領 ${GVG_DAILY_POINTS} 商城點數</li>
+      <li>先打城主的三人組（裝備、技能照城主的設定），打贏後華麗金屬出現；華麗金屬 HP 100，每下只扣 1</li>
+      <li>角色互打的傷害 ×${GVG_DMG_RATE}；倒下就出局、沒有復活，三人全倒或 ${GVG_DEFENSE_LIMIT_MS / 60000} 分鐘到才算失敗</li>
+      <li>戰力＝每人「有效血量 × 每秒輸出」開根號加總，只拿來估勝率</li>
     </ul>
-    <div class="gmt-stat">${!gvgToken() ? '登入雲端帳號後才看得到城主。' : !_gvgCastle ? (_gvgFailAt ? '讀取城主資料失敗，請稍後再試。' : '讀取城主資料中…') : owner ? `城主：<b>${shopEsc(owner.name)}</b>（${since.getMonth() + 1}/${since.getDate()} 起）${gvgIsOwner() ? '　（就是你）' : ''}<br>守城隊伍：${team}` : '目前沒有城主。'}</div>
-    <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="gvgEnter().then(renderMapTab)">進城</button>
-    ${why ? `<div class="ab-info-text">${shopEsc(why)}</div>` : ''}</div>`;
+    <h4 class="town-npc-title">📜 戰報</h4><div class="gvg-log">${log}</div>
+    <label class="auto-toggle"><input type="checkbox" ${state.broadcastOff ? '' : 'checked'} onchange="state.broadcastOff=!this.checked;saveGame()"> 畫面上方顯示公告跑馬燈</label>
+  </div>`;
+}
+/* 地圖分頁（人在城堡裡）：城主、目前進度、離開 */
+function gvgMapPanelHtml() {
+  const g = state.gvg;
+  const d = gvgCastleDef(g.castleId) || {};
+  const c = gvgLocal().castles[g.castleId];
+  const phase = g.phase === 'defenders' ? '打倒守城隊伍' : g.phase === 'emperium' ? '打破華麗金屬（HP 100，每下扣 1）' : '';
+  return `<h3 class="panel-title">🏰 ${shopEsc(d.name || '城堡')} <span class="map-here-lv">（攻城中）</span></h3>
+    <div class="gvg-castle">
+      <div>城主：<b>${shopEsc(gvgGuildLabel(c.owner.guild))}</b></div>
+      <div>目前：<b>${phase}</b></div>
+      <div class="dim">城堡是獨立的地圖，不能用世界地圖或傳送離開；倒下不會復活，三人全倒或時間到就被送回主城。</div>
+      <div class="gvg-castle-btns"><button class="btn-small" onclick="if(confirm('確定離開城堡？這次攻城就算放棄。'))gvgLeave()">🚪 離開城堡</button></div>
+    </div>`;
+}
+function gvgRenameUi() {
+  const el = document.getElementById('gvg-guild-name');
+  const why = setGvgGuildName(el ? el.value : '');
+  showToast(why || '公會名已更新');
+  openTownNpc('gvg');
+}
+function gvgUpdateDefenseUi(id) {
+  const why = gvgUpdateDefense(id);
+  showToast(why || '守城隊伍已更新');
+  openTownNpc('gvg');
 }
 /* 道館館主（T53）：難度、報名、代幣兌換 */
 /* 附魔師（D7，使用者 2026-11-14）：每件裝備最多 2 個附魔孔；有附魔石直接裝，沒有就隨機 */
@@ -11511,8 +11599,8 @@ function syncGvgHud() {
   if (!el) { el = document.createElement('div'); el.id = 'bf-gvg-hud'; el.className = 'bf-gmt-hud'; bfTopStack(scene).appendChild(el); }
   const v = state.vDuel;
   const phase = g.phase === 'defenders' ? `打倒城主隊伍${v ? '　剩 ' + fmtMs(Math.max(0, v.startAt + v.limitMs - Date.now())) : ''}`
-    : g.phase === 'guardians' ? '打倒監護人與華麗金屬' : g.phase === 'emperium' ? '打破華麗金屬' : '';
-  const html = `🏰 ${GVG_CASTLE_NAME}　${phase}
+    : g.phase === 'emperium' ? '打破華麗金屬' : '';
+  const html = `🏰 ${(gvgCastleDef(g.castleId) || {}).name || '攻城戰'}　${phase}
     <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定離開城堡？'))gvgLeave()">離開</button>`;
   if (el._html !== html) { el.innerHTML = html; el._html = html; }
 }
@@ -11529,4 +11617,33 @@ function syncGmtHud() {
   const html = `🏟️ 吉芬魔法大賽　第 ${Math.max(1, g.round)}／${GMT_ROUNDS} 輪　剩 ${fmtMs(left)}${wait}
     <button class="bf-hud-btn" onclick="event.stopPropagation();if(confirm('確定放棄？會照已打贏的輪數給硬幣。'))gmtAbandon()">放棄</button>`;
   if (el._html !== html) { el.innerHTML = html; el._html = html; }
+}
+
+/* ---------------- 公告跑馬燈（js/announce.js 的 broadcast() 呼叫） ----------------
+   戰鬥畫面最上方一條黃字由右往左跑（RO 廣播），一次一則，排隊播。點一下跳過 */
+const _bcQueue = [];
+let _bcPlaying = false;
+function showBroadcast(text, kind) {
+  _bcQueue.push({ text, kind });
+  if (_bcQueue.length > 5) _bcQueue.shift();
+  if (!_bcPlaying) playNextBroadcast();
+}
+function playNextBroadcast() {
+  const host = document.getElementById('battle-scene') || document.body;
+  let bar = document.getElementById('broadcast-bar');
+  const next = _bcQueue.shift();
+  if (!next) { _bcPlaying = false; if (bar) bar.classList.remove('on'); return; }
+  _bcPlaying = true;
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'broadcast-bar';
+    bar.onclick = () => { clearTimeout(bar._t); playNextBroadcast(); };
+    host.appendChild(bar);
+  }
+  bar.className = 'on ' + (next.kind || 'info');
+  bar.innerHTML = `<span class="bc-text">📢 ${shopEsc(next.text)}</span>`;
+  const sec = Math.max(7, Math.min(14, next.text.length * 0.28));
+  bar.firstChild.style.animationDuration = sec + 's';
+  clearTimeout(bar._t);
+  bar._t = setTimeout(playNextBroadcast, sec * 1000);
 }
