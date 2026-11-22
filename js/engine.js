@@ -96,7 +96,18 @@ function buildFullBackup() {
   };
   const ledgerRaw = localStorage.getItem(MERC_LEDGER_KEY);
   if (ledgerRaw) { try { out.mercLedger = JSON.parse(ledgerRaw); } catch (e) { /* 損壞就略過 */ } }
+  // 全帳號公會（使用者 2026-11-22：公會放進備份跟雲端）；沒公會存 null，套用時才知道要清掉
+  try { out.guild = JSON.parse(localStorage.getItem('ro_idle_guild') || 'null'); } catch (e) { out.guild = null; }
   return out;
+}
+/* 備份裡的公會寫回本機。舊備份沒有 guild 欄位就不動本機的公會 */
+function applyBackupGuild(obj) {
+  if (!obj || !('guild' in obj)) return;
+  try {
+    if (obj.guild && typeof obj.guild === 'object') localStorage.setItem('ro_idle_guild', JSON.stringify(obj.guild));
+    else localStorage.removeItem('ro_idle_guild');
+  } catch (e) { /* 略過 */ }
+  if (typeof guildReload === 'function') guildReload();
 }
 function importFullBackup(obj) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
@@ -122,6 +133,7 @@ function importFullBackup(obj) {
   if (obj.mercLedger && typeof obj.mercLedger === 'object') {
     try { localStorage.setItem(MERC_LEDGER_KEY, JSON.stringify(obj.mercLedger)); } catch (e) { /* 略過 */ }
   }
+  applyBackupGuild(obj);
   return { ok: true, wrote: wrote };
 }
 function depositToWarehouse(itemId, qty) {
@@ -6837,6 +6849,14 @@ function tickTravel(dt) {
   }
   // T15：已刪除的道具（js/item_prune.js）從掉落表拿掉，不然會掉出不存在的東西
   for (const m of Object.values(MONSTERS)) if (m.drops) m.drops = m.drops.filter(d => ITEMS[d.item]);
+  /* 卡片只走 MONSTER_CARD_DROPS 抽一次（使用者 2026-11-22）：以前掉落表也有同一張卡，打死時抽兩次、實際掉率變兩倍，
+     圖鑑也列兩行。掉寶加成改乘在卡片那一抽上。 */
+  if (typeof MONSTER_CARD_DROPS !== 'undefined') {
+    for (const [k, m] of Object.entries(MONSTERS)) {
+      const cd = MONSTER_CARD_DROPS[k];
+      if (cd && m.drops) m.drops = m.drops.filter(d => d.item !== cd.card);
+    }
+  }
 })();
 function monMove(mon) {
   return (typeof MOB_MOVE !== 'undefined' && MOB_MOVE[mon.defId]) || MOB_MOVE_DEFAULT;
@@ -8855,7 +8875,7 @@ function killMonster(def, monObj) {
   tryCardKillDrops(def);
   // 卡片掉落
   const cardDrop = MONSTER_CARD_DROPS[monKey];
-  if (cardDrop && rng() < cardDrop.chance) {
+  if (cardDrop && rng() < Math.min(1, cardDrop.chance * dropMult)) {
     addItem(cardDrop.card, 1);
     const card = CARDS[cardDrop.card];
     logMsg(`🃏 ${def.name} 掉落了稀有的 ${card.name}！（掉寶率 ${dropRateText(cardDrop.chance)}）`, 'loot');
@@ -16943,7 +16963,7 @@ function computeOfflineProgress(minMs, opts) {
     });
     // 一般怪的卡片：線上走 MONSTER_CARD_DROPS，離線以前整條漏掉
     const cd = (typeof MONSTER_CARD_DROPS !== 'undefined') ? MONSTER_CARD_DROPS[m.id] : null;
-    if (cd && cd.card) addExp2(cd.card, cd.chance * spawnShare);
+    if (cd && cd.card) addExp2(cd.card, Math.min(1, cd.chance * dropMult) * spawnShare);
     // 偷竊／貪婪：各自機率發動一次，發動後照掉落率加權抽一件
     if (stealRate || greedRate) {
       const share = {};

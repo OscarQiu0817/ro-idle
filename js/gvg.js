@@ -91,10 +91,71 @@ function gvgPickGear(level, kind) {
   const aScore = d => (d.def || 0) * 2 + (d.mdef || 0) * 2;
   const gear = { weapon };
   ['armor', 'garment', 'footgear', 'headgear', 'accessory'].forEach(t => {
-    gear[t] = pickBest(Object.keys(ITEMS).filter(id => ITEMS[id].type === 'armor' && ITEMS[id].armorType === t && ok(id)), aScore);
+    const at = t === 'armor' ? 'leather' : t;   // 鎧甲在道具表的 armorType 是 leather（以前寫 armor，NPC 一直沒穿鎧甲）
+    gear[t] = pickBest(Object.keys(ITEMS).filter(id => ITEMS[id].type === 'armor' && ITEMS[id].armorType === at && ok(id)), aScore);
   });
   if (!(weapon && isTwoHanded(weapon))) gear.shield = pickBest(Object.keys(ITEMS).filter(id => ITEMS[id].type === 'armor' && ITEMS[id].armorType === 'shield' && ok(id)), aScore);
   return gear;
+}
+/* 攻城 NPC 的對人配裝（使用者 2026-11-22 指定「不切裝」對人套裝，網路攻略）。
+   每格 [道具, [卡片…]]；穿不上（等級、職業、遊戲沒這件）就留原本的商店裝。
+   二轉 NPC 用對應進階二轉的那套（等級不夠的格子自然退回商店裝）。
+   攻略裡遊戲沒有的：紅蓮劍、貝克斧、慈悲魔杖、裂空拳套、魔王的戒指 → 退回商店武器、虎爪拳套、戰鬥短劍、歐羅萊昂的手套。 */
+const GVG_PVP_BASE = {
+  head_top: ['feather_beret_', ['nightmare_card']], head_mid: ['scuba_mask_k', ['marduk_card']], head_bottom: ['pirate_dagger'],
+  armor: ['valkyrie_armor', ['marc_card']], shield: ['item_2115', ['thara_frog_card']], garment: ['piece_of_angent_skin', ['daydric_card']],
+  footgear: ['variant_shoes'], accessory1: ['orleans_glove', ['phen_card']], accessory2: ['orleans_glove', ['yoyo_card']],
+};
+const GVG_PVP_CASTER = { armor: ['orleans_gown', ['marc_card']], accessory1: ['orleans_glove', ['zerom_card']], accessory2: ['orleans_glove', ['zerom_card']] };
+const GVG_PVP_JOB = {
+  lordknight: { weapon: ['hunting_spear', ['hydra_card']], accessory2: ['orleans_glove', ['mantis_card']] },
+  paladin: { weapon: ['combat_knife'], armor: ['valkyrie_armor', ['pecopeco_card']] },
+  highwizard: Object.assign({ weapon: ['mighty_staff'] }, GVG_PVP_CASTER),
+  professor: Object.assign({ weapon: ['combat_knife'] }, GVG_PVP_CASTER),
+  sniper: { weapon: ['bow_of_rudra'], head_top: ['corsair_'], garment: ['piece_of_angent_skin', ['baphomet_card']], shield: null },
+  clown: Object.assign({ weapon: ['electronic_guitar'], shield: null }, GVG_PVP_CASTER),
+  gypsy: Object.assign({ weapon: ['queens_whip'], shield: null }, GVG_PVP_CASTER),
+  // 紅蓮劍遊戲裡沒有：右手改笨拙短劍 [3]，左手笨拙短劍 [4]（雙持放 shield 格）
+  assassincross: { weapon: ['main_gauche', ['hydra_card', 'hydra_card', 'hydra_card']], shield: ['main_gauche_', ['hydra_card', 'hydra_card', 'skel_worker_card', 'skel_worker_card']], accessory2: ['orleans_glove', ['mantis_card']] },
+  stalker: { weapon: ['combat_knife'], accessory2: ['orleans_glove', ['zerom_card']] },
+  highpriest: Object.assign({ weapon: ['combat_knife'] }, GVG_PVP_CASTER),
+  champion: { weapon: ['waghnakh_', ['hydra_card', 'hydra_card', 'skel_worker_card']], accessory2: ['orleans_glove', ['mantis_card']] },
+  whitesmith: { accessory2: ['orleans_glove', ['mantis_card']] },
+  creator: { accessory2: ['orleans_glove', ['zerom_card']] },
+};
+const GVG_PVP_OF_SECOND = { knight: 'lordknight', crusader: 'paladin', wizard: 'highwizard', sage: 'professor', hunter: 'sniper', bard: 'clown', dancer: 'gypsy',
+  assassin: 'assassincross', rogue: 'stalker', priest: 'highpriest', monk: 'champion', blacksmith: 'whitesmith', alchemist: 'creator' };
+function gvgPvpGearFor(job) {
+  const own = GVG_PVP_JOB[job] || GVG_PVP_JOB[GVG_PVP_OF_SECOND[job]] || {};
+  return Object.assign({}, GVG_PVP_BASE, own);
+}
+/* 照對人配裝換上（state 已是 NPC 本人）；refine 照城的精煉，回傳換上的格數 */
+function gvgApplyPvpGear(st, job, refine) {
+  const plan = gvgPvpGearFor(job);
+  const REFINE_SLOTS = ['weapon', 'armor', 'shield', 'garment', 'footgear', 'head_top'];
+  let n = 0;
+  const put = (slot, id, cards) => {
+    if (!ITEMS[id] || equipBlockReason(id)) return false;
+    // 頭飾的位置寫在說明裡、部分被截斷，指定配裝直接照格子放；副手武器（雙持）放 shield 格
+    const fam = /^head_/.test(slot) ? (ITEMS[id].armorType === 'headgear' ? slot : null) : resolveEquipSlotFor(id);
+    if (!fam || (fam.replace(/\d$/, '') !== slot.replace(/\d$/, ''))) return false;
+    const max = ITEMS[id].slots || 0;
+    const cs = (cards || []).filter(c => CARDS[c] && cardFitsSlot(CARDS[c], ITEMS[id].type === 'weapon' ? 'weapon' : slot)).slice(0, max);
+    const iid = 'pvp_' + slot;
+    st.instances[iid] = { item: id, refine: REFINE_SLOTS.includes(slot) ? refine : 0, cards: cs };
+    st.equip[slot] = iid;
+    n++;
+    return true;
+  };
+  if (plan.weapon) put('weapon', plan.weapon[0], plan.weapon[1]);
+  const w = st.equip.weapon && (st.instances[st.equip.weapon] || {}).item;
+  const twoHand = w && typeof isTwoHanded === 'function' && isTwoHanded(w);
+  Object.entries(plan).forEach(([slot, v]) => {
+    if (slot === 'weapon') return;
+    if (slot === 'shield' && (v === null || twoHand)) { if (v === null) st.equip.shield = null; return; }
+    if (v) put(slot, v[0], v[1]);
+  });
+  return n;
 }
 function gvgBuildNpcActor(job, level, refine, r) {
   const saved = state, sa = typeof _allyActing !== 'undefined' ? _allyActing : null;
@@ -109,6 +170,7 @@ function gvgBuildNpcActor(job, level, refine, r) {
     st.jobLevelHistory = {};
     chain.slice(0, -1).forEach(j => { st.jobLevelHistory[j] = (JOB_TREE[j] || {}).jobLevelMax || 50; });
     st.jobId = job;
+    if ((JOB_TREE[job] || {}).tier >= 2.5) st.rebirthCount = 1;   // 進階二轉＝轉生過（限轉生的裝備才穿得上）
     st.baseLevel = level;
     st.jobLevel = (JOB_TREE[job] || {}).jobLevelMax || 50;
     const kind = gvgStatKind(job);
@@ -135,6 +197,7 @@ function gvgBuildNpcActor(job, level, refine, r) {
       st.instances[iid] = { item: id, refine: ITEMS[id].type === 'weapon' || ['armor', 'shield', 'garment', 'footgear', 'headgear'].includes(t) ? refine : 0, cards: [] };
       st.equip[slot] = iid;
     });
+    gvgApplyPvpGear(st, job, refine);   // 對人配裝蓋在商店裝上（穿不上的格子留商店裝）
     // 自動戰鬥：攻擊技挑後面職業、等級要求高的 4 招；輔助全勾
     const atk = [], sup = {};
     chain.slice().reverse().forEach(j => ((JOB_TREE[j] || {}).skills || []).forEach(s => {

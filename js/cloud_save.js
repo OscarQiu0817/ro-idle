@@ -60,7 +60,7 @@ function cloudLocalHasData() {
   for (let i = 0; i < MAX_SLOTS; i++) if (localStorage.getItem(getSlotKey(i))) return true;
   return false;
 }
-/* 套用雲端存檔：整個取代本機（角色欄位、倉庫、傭兵帳本）。
+/* 套用雲端存檔：整個取代本機（角色欄位、倉庫、傭兵帳本、公會）。
    跟「匯入全部」不同：倉庫是整個換掉，不是併進去。 */
 function cloudApply(save) {
   let obj;
@@ -74,6 +74,7 @@ function cloudApply(save) {
   localStorage.setItem(WAREHOUSE_KEY, JSON.stringify(obj.warehouse || { items: [], gold: 0 }));
   if (obj.mercLedger) localStorage.setItem(MERC_LEDGER_KEY, JSON.stringify(obj.mercLedger));
   else localStorage.removeItem(MERC_LEDGER_KEY);
+  applyBackupGuild(obj);
   const c = cloudConf();
   if (c) { c.version = save.version; c.lastSyncAt = Date.now(); c.lastHash = cloudHash(save.data); cloudSetConf(c); }
   return true;
