@@ -406,7 +406,7 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 }
 /* GM 測試面板：疊在靜音鈕下面，只有安全區才出現 */
 .gm-panel {
-  position: absolute; top: 10px; right: 12px; z-index: 2;
+  position: absolute; top: 10px; right: 12px; z-index: 40;
   display: flex; flex-direction: column; gap: 4px; width: 116px;
   padding: 6px; border-radius: 8px;
   background: rgba(18,20,28,0.78); border: 1px solid var(--gold);
@@ -449,8 +449,8 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
    標題跟著內容一起捲走，加了自動戰鬥設定之後內容變長，往下捲就找不到關閉鈕。
    改成外層不捲、只有 body 捲——跟倉庫／鍛造那兩個浮動視窗同一個結構。 */
 .ally-panel {
-  position: absolute; top: 52px; right: 12px; z-index: 6;
-  width: 380px; max-height: calc(100% - 76px);
+  position: absolute; top: 52px; right: 12px; z-index: 40;   /* 蓋過手操按鈕（.manual-pad 30） */
+  width: 380px; max-width: calc(100% - 24px); max-height: calc(100% - 76px);
   display: flex; flex-direction: column; overflow: hidden;
   padding: 10px 12px; border-radius: 10px;
   background: rgba(18,20,28,0.94); border: 1px solid var(--gold);
@@ -2362,7 +2362,7 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 }
 /* 外層不捲、只有 body 捲：跟隊友面板同一個理由（標題與勾選要釘住） */
 .idle-report-panel {
-  position: absolute; top: 52px; right: 12px; z-index: 6;
+  position: absolute; top: 52px; right: 12px; z-index: 40;   /* 蓋過手操按鈕（.manual-pad 30） */
   width: 320px; max-height: calc(100% - 76px);
   display: flex; flex-direction: column; overflow: hidden;
   padding: 10px 12px; border-radius: 10px;
@@ -2878,7 +2878,11 @@ body.manual-log-off .combat-log { display: none; }
 .ab-who-btn small { margin-left: 4px; opacity: .7; }
 .ab-who-btn.sel { border-color: #ffd479; background: rgba(255,212,121,.16); font-weight: bold; }
 .ab-slot-cond { font-size: 10px; color: #ffd479; line-height: 1.2; }
-.ab-num { width: 4em; }
+.ab-num { width: 4.5em; min-height: 38px; padding: 8px 8px; background: var(--bg-panel); border-color: var(--gold); text-align: center; }
+/* 沒有自己樣式的輸入框統一套主題（:where 不加權重，個別 class 照樣蓋過） */
+:where(input[type="number"], input[type="text"], input[type="search"], input[type="password"], input:not([type])) { background: var(--bg-panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; font-family: var(--font-body); font-size: 13px; box-sizing: border-box; }
+:where(input[type="number"], input[type="text"], input[type="search"], input[type="password"], input:not([type])):focus { outline: none; border-color: var(--gold); }
+:where(select:not([class])) { background: var(--bg-panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-family: var(--font-body); font-size: 13px; }
 .ab-select.ab-select-sm { flex: 0 0 auto; width: auto; }
 .ally-ab-links { display: flex; flex-wrap: wrap; gap: 6px; }
 /* 任務分頁子分頁（2026-11-20） */
@@ -2974,3 +2978,49 @@ body.manual-log-off .combat-log { display: none; }
 /* 觀戰模式（放置的全畫面）：沒有搖桿與按鈕，增益圖示不用讓位給按鈕 */
 #bf-watch-toggle.hidden { display: none; }
 body.watch-play .battle-buffs { bottom: 12px; }
+/* 公會分頁（T55） */
+.guild-intro { font-size: 13px; color: var(--ink-dim); line-height: 1.7; margin-bottom: 10px; }
+.guild-create { display: flex; gap: 8px; align-items: center; }
+.guild-create input { flex: 1; max-width: 220px; }
+.guild-head { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+.guild-emblem { width: 52px; height: 52px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 30px; border: 1px solid var(--gold); border-radius: 8px; background: var(--bg-panel-2); }
+.guild-head-main { flex: 1; min-width: 0; }
+.guild-name { font-size: 16px; color: var(--gold-soft); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.guild-name span { font-size: 12px; color: var(--ink-dim); font-weight: 400; }
+.guild-exp { position: relative; height: 16px; margin: 6px 0 4px; border-radius: 8px; background: var(--bg-panel-2); border: 1px solid var(--line); overflow: hidden; }
+.guild-exp-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #6a4b12, var(--gold)); }
+.guild-exp span { position: relative; display: block; text-align: center; font-size: 11px; line-height: 14px; color: #fff; text-shadow: 0 1px 2px #000; }
+.guild-sub { font-size: 12px; color: var(--ink-dim); }
+.guild-emblems { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.guild-emblems button { width: 32px; height: 32px; font-size: 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-panel-2); cursor: pointer; }
+.guild-emblems button.on { border-color: var(--gold); box-shadow: 0 0 6px rgba(240,192,64,.5); }
+.guild-tax-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+.guild-mems, .guild-rcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 8px; }
+.guild-rc { position: relative; }
+.guild-mem, .guild-rc { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-panel-2); font-size: 12px; }
+.guild-mem.me { border-color: var(--gold); }
+.guild-mem span, .guild-rc span { color: var(--ink-dim); }
+.guild-tax { font-size: 11px; }
+.guild-rc-star, .guild-draw-row { color: #ffd479; }
+.guild-star-off { color: rgba(255,255,255,.18); }
+.guild-none { font-size: 12px; color: var(--ink-dim); padding: 4px 0; }
+.guild-recruit-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.guild-draw { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; margin-bottom: 8px; border: 1px dashed var(--gold); border-radius: 6px; font-size: 12px; max-height: 160px; overflow-y: auto; }
+.guild-draw-row { color: var(--ink-dim); }
+.guild-draw-row.new { color: #9fe39f; }
+.guild-draw-row.up { color: #ffd479; }
+.guild-syns { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+.guild-syn { display: grid; grid-template-columns: 5em 3.5em 1fr auto; gap: 8px; font-size: 12px; padding: 4px 8px; border-radius: 5px; background: var(--bg-panel-2); color: var(--ink-dim); }
+.guild-syn.on { color: var(--ink); border-left: 3px solid var(--gold); }
+.guild-syn-next { font-size: 11px; }
+.guild-sks { display: flex; flex-direction: column; gap: 4px; }
+.guild-sk { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-panel-2); }
+.guild-sk.on { border-color: rgba(240,192,64,.55); }
+.guild-sk-main { flex: 1; min-width: 0; font-size: 13px; }
+.guild-sk-lv { font-size: 11px; color: var(--ink-dim); }
+.guild-sk-desc { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+.guild-sk-req { display: block; font-size: 11px; color: #c9a86a; }
+.guild-kick { position: absolute; top: 4px; right: 4px; padding: 1px 6px; font-size: 11px; border: 1px solid rgba(255,120,120,.5); border-radius: 4px; background: transparent; color: #f2a0a0; cursor: pointer; }
+.guild-kick:hover { background: rgba(255,90,90,.15); }
+.guild-danger { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--line); text-align: right; }
+.guild-danger .btn-small { color: #f2a0a0; border-color: rgba(255,120,120,.5); }

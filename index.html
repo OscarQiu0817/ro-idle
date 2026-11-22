@@ -211,10 +211,12 @@
         <!-- 資訊欄三塊：一般戰鬥／技能（雙方）／隊友 -->
         <div class="combat-log">
           <div class="log-tabs">
-            <button type="button" class="log-tab active" data-lane="world" onclick="switchLogTab('world')">世界頻道</button>
-            <button type="button" class="log-tab" data-lane="main" onclick="switchLogTab('main')">戰鬥訊息</button>
-            <button type="button" class="log-tab" data-lane="skill" onclick="switchLogTab('skill')">技能訊息</button>
-            <button type="button" class="log-tab" data-lane="ally" onclick="switchLogTab('ally')">隊友訊息</button>
+            <button type="button" class="log-tab active" data-lane="world" onclick="switchLogTab('world')">世界</button>
+            <button type="button" class="log-tab" data-lane="main" onclick="switchLogTab('main')">戰鬥</button>
+            <button type="button" class="log-tab" data-lane="skill" onclick="switchLogTab('skill')">技能</button>
+            <button type="button" class="log-tab" data-lane="exp" onclick="switchLogTab('exp')">經驗值</button>
+            <button type="button" class="log-tab" data-lane="loot" onclick="switchLogTab('loot')">掉寶</button>
+            <button type="button" class="log-tab" data-lane="ally" onclick="switchLogTab('ally')">隊友</button>
           </div>
           <div class="log-pane-stack">
           <div class="log-pane active" data-lane="world">
@@ -223,6 +225,8 @@
           </div>
           <div class="log-pane" data-lane="main"><button type="button" id="log-paused-main" class="log-paused-bar hidden" onclick="resumeLogLane('main')">⏸ 暫停更新 — 點此返回</button><div id="log-main" class="log-pane-body"></div></div>
           <div class="log-pane" data-lane="skill"><button type="button" id="log-paused-skill" class="log-paused-bar hidden" onclick="resumeLogLane('skill')">⏸ 暫停更新 — 點此返回</button><div id="log-skill" class="log-pane-body"></div></div>
+          <div class="log-pane" data-lane="exp"><button type="button" id="log-paused-exp" class="log-paused-bar hidden" onclick="resumeLogLane('exp')">⏸ 暫停更新 — 點此返回</button><div id="log-exp" class="log-pane-body"></div></div>
+          <div class="log-pane" data-lane="loot"><button type="button" id="log-paused-loot" class="log-paused-bar hidden" onclick="resumeLogLane('loot')">⏸ 暫停更新 — 點此返回</button><div id="log-loot" class="log-pane-body"></div></div>
           <div class="log-pane" data-lane="ally"><button type="button" id="log-paused-ally" class="log-paused-bar hidden" onclick="resumeLogLane('ally')">⏸ 暫停更新 — 點此返回</button><div id="log-ally" class="log-pane-body"></div></div>
           </div>
         </div>
@@ -249,6 +253,7 @@
           <button class="tab-btn" id="tab-btn-forge" data-group="gear" onclick="openForge()" disabled title="需先學會鍛造相關技能">🔨 鍛造</button>
           <button class="tab-btn" data-tab="codex" data-group="social" onclick="switchTab('codex')">📕 圖鑑</button>
           <button class="tab-btn" data-tab="pets" data-group="social" onclick="switchTab('pets')">🐾 寵物</button>
+          <button class="tab-btn" data-tab="guild" data-group="social" onclick="switchTab('guild')">🏰 公會</button>
         </nav>
         <div class="tab-content">
           <div id="tab-map" class="tab-panel active"></div>
@@ -262,6 +267,7 @@
           <div id="tab-attendance" class="tab-panel"></div>
           <div id="tab-quests" class="tab-panel"></div>
           <div id="tab-pets" class="tab-panel"></div>
+          <div id="tab-guild" class="tab-panel"></div>
         </div>
       </section>
     </div>
@@ -385,6 +391,7 @@
 <script src="js/announce.js"></script>
 <script src="js/live_events.js"></script>
 <script src="js/cash_shop.js"></script>
+<script src="js/guild.js"></script>
 <script src="js/daily_quests.js"></script>
 <script src="js/main_quest.js"></script>
 <script src="js/mob_anim_index.js"></script>

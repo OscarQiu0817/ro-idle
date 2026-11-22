@@ -216,7 +216,10 @@ function gvgLocal() {
   if (!Array.isArray(L.log)) L.log = [];
   return L;
 }
-function gvgGuildName() { return (state.gvgLocal && state.gvgLocal.guildName) || state.name || '冒險者'; }
+function gvgGuildName() {
+  const g = typeof guildData === 'function' && guildData();   // 有公會就用公會名
+  return (g && g.name) || (state.gvgLocal && state.gvgLocal.guildName) || state.name || '冒險者';
+}
 function setGvgGuildName(name) {
   const n = String(name || '').trim().slice(0, 12);
   if (!n) return '公會名不能空白。';
@@ -258,7 +261,8 @@ function gvgResolveRaid(castleId, live) {
   const atkPower = base * (0.8 + rng() * 0.4);
   const mine = c.owner.kind === 'player';
   if (!mine && rng() < 0.5) return;   // NPC 之間只有一半的輪次真的開打
-  const defPower = mine ? gvgSnapPower(c.owner.snap) : base * (0.8 + rng() * 0.4);
+  // 自己的城：公會的正式公會認證／守護者研究／強化守護者提高守城戰力（js/guild.js）
+  const defPower = mine ? gvgSnapPower(c.owner.snap) * (typeof guildGuardMult === 'function' ? guildGuardMult() : 1) : base * (0.8 + rng() * 0.4);
   if (rng() < gvgDefendChance(defPower, atkPower)) {
     if (mine) {
       gvgLogPush(`🛡️ ${d.name}擋下了 ${gvgGuildLabel(attacker)}的進攻`);

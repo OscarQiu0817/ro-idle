@@ -24,7 +24,8 @@ class Reader:
         return b
 
 
-def read_spr(path):
+def read_spr(path, pal_override=None):
+    """pal_override：.pal 檔內容（1024 bytes），頭髮換色用"""
     r = Reader(open(path, 'rb').read())
     assert r.bytes(2) == b'SP'
     minor, major = r.take('B'), r.take('B')
@@ -52,7 +53,7 @@ def read_spr(path):
     for _ in range(n_rgba):
         w, h = r.take('H'), r.take('H')
         rgba.append((w, h, r.bytes(w * h * 4)))
-    pal = r.d[-1024:]
+    pal = pal_override if pal_override else r.d[-1024:]
     images = []
     for w, h, px in raw:
         im = Image.frombytes('P', (w, h), px)

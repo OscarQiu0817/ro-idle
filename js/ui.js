@@ -361,10 +361,13 @@ function paintDollStill(canvas, parts, retry) {
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const ox = -minX, oy = -minY;
-  let pending = !drawPaperdollLayers(ctx, parts[0], body, ox, oy);
-  layers.forEach(layer => {
-    if (!drawPaperdollLayers(ctx, layer[0], layer[1], ox + layer[2], oy + layer[3])) pending = true;
-  });
+  // 披肩服飾畫在身體後面（跟 drawPaperdollFrame 同一條規則）
+  const behind = l => l[0].indexOf('robe/') === 0;
+  const drawL = layer => { if (!drawPaperdollLayers(ctx, layer[0], layer[1], ox + layer[2], oy + layer[3])) pending = true; };
+  let pending = false;
+  layers.filter(behind).forEach(drawL);
+  if (!drawPaperdollLayers(ctx, parts[0], body, ox, oy)) pending = true;
+  layers.filter(l => !behind(l)).forEach(drawL);
   if (pending && retry) {
     parts.forEach(part => {
       const im = paperdollImage(part);
@@ -790,8 +793,7 @@ function syncAllyDoll(i, ally, fig) {
   // 玩家在走（追怪、漫遊）時隊友跟著播走路
   // 跟玩家一樣用側面走路（walk_s），面向由 layoutAllySprites 翻轉
   const walking = !ally._downed && bfPlayerWalking();
-  if (walking && paperdollFrameCount(parts[0], 'walk_s')) doll.rest = 'walk_s';
-  else if (walking && paperdollFrameCount(parts[0], 'walk')) doll.rest = 'walk';
+  if (walking && (paperdollFrameCount(parts[0], 'walk_s') || paperdollFrameCount(parts[0], 'walk'))) doll.rest = walkActFor(parts, state._walkDir);   // 跟玩家同方向（朝下＝正面）
   else if (fieldSide && paperdollFrameCount(parts[0], 'ready_s')) doll.rest = 'ready_s';
   else if (fieldSide && paperdollFrameCount(parts[0], 'idle_s')) doll.rest = 'idle_s';
   else doll.rest = 'idle';
@@ -1533,7 +1535,7 @@ const TAB_GROUP = {
   map: 'fight', autobattle: 'fight', quests: 'fight',
   character: 'grow', skills: 'grow', jobtree: 'grow',
   inventory: 'gear', equip: 'gear',
-  codex: 'social', pets: 'social'
+  codex: 'social', pets: 'social', guild: 'social'
 };
 const TAB_GROUP_FIRST = { fight: 'map', grow: 'character', gear: 'inventory', social: 'codex' };
 function setTabGroup(g) {
@@ -1579,6 +1581,7 @@ function switchTab(name) {
   if (name === 'attendance') renderAttendanceTab();
   if (name === 'quests') renderQuestsTab();
   if (name === 'pets') renderPetsTab();
+  if (name === 'guild') renderGuildTab();
   if (name !== 'equip') syncEquipStatFloat();
 }
 
@@ -3264,6 +3267,19 @@ const bfBg = { x: 0, y: 0 };
 function bfPlayerWalking() {
   return !!state && Date.now() - (state._walkAt || 0) < 250;
 }
+/* 朝下走（使用者 2026-11-22）：往下（畫面 y 增加）為主就播正面走路 walk，其餘照舊側面 walk_s。朝上之後再做 */
+function walkFacesDown(ang) {
+  return Number.isFinite(ang) && Math.sin(ang) > Math.abs(Math.cos(ang));
+}
+// 朝上走（背面）：每層都有朝上的圖才播，還在載入或缺圖就先用側面
+function walkFacesUp(ang) {
+  return Number.isFinite(ang) && -Math.sin(ang) > Math.abs(Math.cos(ang));
+}
+function walkActFor(parts, ang) {
+  if (walkFacesDown(ang) && paperdollFrameCount(parts[0], 'walk')) return 'walk';
+  if (walkFacesUp(ang) && typeof paperdollNorthReady === 'function' && paperdollNorthReady(parts)) return 'walk_n';
+  return paperdollFrameCount(parts[0], 'walk_s') ? 'walk_s' : 'walk';
+}
 /* 走路補間：引擎每 100ms（TICK_MS）才更新一次位置，畫面直接套會一頓一頓。
    畫面在兩次更新之間線性補間（落後一拍換連續移動，跟官方客戶端自己算中間位置同概念）。
    目標點一變就從「目前畫出來的位置」起跑，補間長度＝兩次更新的實際間隔 ×1.2（tick 晚到也不會停頓）；一次跳超過 snap（換圖、讀檔）直接跳 */
@@ -3673,8 +3689,8 @@ function layoutBattlefieldInner() {
   });
 }
 function facingFlip(act, faceRight) {
-  // 待機原圖就用，不因朝右再翻一次。
-  if (act === 'idle') return false;
+  // 待機、朝下走路是正面原圖，不因朝右再翻一次。
+  if (act === 'idle' || act === 'walk' || /_n$/.test(act || '')) return false;
   const side = /_s$/.test(act || '');
   return side ? !faceRight : !!faceRight;
 }
@@ -3768,6 +3784,8 @@ function paperdollParts(noMount) {
   }
   const weapon = paperdollWeaponPart(who.job, who.gender);
   if (weapon) parts.push(weapon);
+  const robe = typeof costumeRobePart === 'function' ? costumeRobePart(state, who.job, who.gender) : null;
+  if (robe) parts.push(robe);   // 披肩服飾
   return parts;
 }
 function paperdollActName(kind) {
@@ -3856,7 +3874,8 @@ function syncPaperdoll(img, parts, moving) {
   const fighting = state.monsters && state.monsters.length;
   const side = fighting || moving;
   let act = moving ? 'walk' : 'idle';
-  if (!moving && fighting && paperdollFrameCount(parts[0], 'ready_s')) act = 'ready_s';
+  if (moving) act = walkActFor(parts, state._walkDir);
+  else if (fighting && paperdollFrameCount(parts[0], 'ready_s')) act = 'ready_s';
   else if (side && paperdollFrameCount(parts[0], act + '_s')) act += '_s';
   if (_pd.act !== act) {
     _pd.act = act;
@@ -4089,7 +4108,7 @@ function triggerMonsterDie() {
 
 /* 三塊資訊欄各自畫自己的那條分流（分流規則見 engine.js 的 pushCombatLog）。
    一律只取最後 30 則，畫完捲到底。 */
-const LOG_PANES = { main: 'log-main', skill: 'log-skill', ally: 'log-ally' };
+const LOG_PANES = { main: 'log-main', skill: 'log-skill', exp: 'log-exp', loot: 'log-loot', ally: 'log-ally' };
 /* ---------------- 戰鬥日誌（#117 效能）----------------
    以前 `logMsg()` 每寫一行就整個重畫三格日誌：3 格 × 30 列的 innerHTML
    再加一次 `scrollHeight`（強制 layout）＝**每則訊息 1.87ms**。
@@ -4484,6 +4503,129 @@ function doEvolvePet(id) {
   if (!confirm(msg)) return;
   evolvePet(id);
   setTimeout(renderPetsTab, 350);
+}
+/* ---------------- 公會分頁（T55，js/guild.js） ---------------- */
+let _guildLastDraw = null;
+function guildMemberRows() {
+  const rows = [];
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    let st = null;
+    if (i === currentSlot) st = state;
+    else { try { st = JSON.parse(localStorage.getItem(getSlotKey(i)) || 'null'); } catch (e) { st = null; } }
+    if (!st || !st.name) continue;
+    rows.push({ name: st.name, job: (JOB_TREE[st.jobId] && JOB_TREE[st.jobId].name) || st.jobId, lv: st.baseLevel || 1, tax: guildTaxPct(st), me: i === currentSlot });
+  }
+  return rows;
+}
+function guildCreateUi() {
+  const el = document.getElementById('guild-name-input');
+  const why = guildCreate(el ? el.value : '');
+  if (why) { alert(why); return; }
+  renderGuildTab();
+}
+function guildRenameUi() {
+  const g = guildData();
+  const n = prompt('新的公會名（12 字內）', g ? g.name : '');
+  if (n == null) return;
+  const why = guildRename(n);
+  if (why) alert(why);
+  renderGuildTab();
+}
+function guildDisbandUi() {
+  const g = guildData();
+  if (!g || !confirm(`確定解散「${g.name}」？等級、技能、招募成員全部消失，華麗金屬不會退回。`)) return;
+  if (prompt('輸入公會名確認解散', '') !== g.name) { alert('公會名不符，沒有解散。'); return; }
+  guildDisband();
+  _guildLastDraw = null;
+  renderGuildTab();
+}
+function guildKickUi(job) {
+  const r = guildData() && guildData().recruits[job];
+  if (!r || !confirm(`把 ${r.name}（${JOB_TREE[job].name} ${r.star}★）踢出公會？星數不會保留，也沒有補償。`)) return;
+  guildKick(job);
+  renderGuildTab();
+}
+function guildLearnUi(id) {
+  const why = guildLearn(id);
+  if (why) alert(why);
+  renderGuildTab();
+}
+function guildRecruitUi(n) {
+  const r = guildRecruit(n);
+  if (r.err) { alert(r.err); return; }
+  _guildLastDraw = r.got;
+  renderTopBar();
+  renderGuildTab();
+}
+function guildStars(n) { return '★'.repeat(n) + '<span class="guild-star-off">' + '★'.repeat(Math.max(0, GUILD_RECRUIT_MAX_STAR - n)) + '</span>'; }
+function renderGuildTab() {
+  const el = document.getElementById('tab-guild');
+  if (!el || !state) return;
+  const g = guildData();
+  if (!g) {
+    const have = getItemQty('emperium');
+    el.innerHTML = `<h3 class="panel-title">🏰 公會</h3>
+      <div class="guild-intro">用 <b>1 個華麗金屬</b>創建公會（巴風特、黃金蟲等魔物掉落；目前持有 ${have}）。<br>
+        公會全帳號共用：你所有角色自動入會。成員打怪的經驗可以上繳給公會升級，升級拿公會技能點；
+        也能用商城點數招募 NPC 冒險者，同職業抽到就升星，同系成員的星數給全公會加成。</div>
+      <div class="guild-create"><input id="guild-name-input" maxlength="12" placeholder="公會名（12 字內）" value="${shopEsc((state.gvgLocal && state.gvgLocal.guildName) || '')}">
+        <button class="btn-small${have ? ' active' : ''}" ${have ? '' : 'disabled'} onclick="guildCreateUi()">創建公會</button></div>`;
+    return;
+  }
+  const need = guildExpNeed(g.lv);
+  const maxed = g.lv >= GUILD_MAX_LV;
+  const pts = guildSkillPointsLeft();
+  const castles = typeof gvgMyCastles === 'function' ? gvgMyCastles().map(d => d.name) : [];
+  const emblemPick = guildSkillLv('gd_gloryguild')
+    ? `<div class="guild-emblems">${GUILD_EMBLEMS.map((e, i) => `<button class="${i === (g.emblem || 0) ? 'on' : ''}" onclick="guildSetEmblem(${i});renderGuildTab()">${e}</button>`).join('')}</div>` : '';
+  const taxOpts = Array.from({ length: GUILD_TAX_MAX / 5 + 1 }, (_, i) => i * 5)
+    .map(v => `<option value="${v}" ${guildTaxPct(state) === v ? 'selected' : ''}>${v}%</option>`).join('');
+  const members = guildMemberRows().map(m => `<div class="guild-mem${m.me ? ' me' : ''}"><b>${shopEsc(m.name)}</b><span>${shopEsc(m.job)} Lv${m.lv}</span><span class="guild-tax">上繳 ${m.tax}%</span></div>`).join('');
+  const recruits = guildRecruitList().sort((a, b) => b.star - a.star).map(r => {
+    const line = GUILD_LINES[guildJobLine(r.job)];
+    return `<div class="guild-rc"><button class="guild-kick" title="踢出公會" onclick="guildKickUi('${r.job}')">踢除</button><div class="guild-rc-star">${guildStars(r.star)}</div><b>${shopEsc(r.name)}</b><span>${shopEsc(JOB_TREE[r.job].name)}・${line ? line.name : ''}</span></div>`;
+  }).join('') || '<div class="guild-none">還沒有招募成員。</div>';
+  const syn = guildSynergy();
+  const synRows = Object.entries(GUILD_LINES).map(([l, d]) => {
+    const o = syn[l];
+    return `<div class="guild-syn${o.pct ? ' on' : ''}"><span>${d.name}</span><span>${o.stars}★</span><span>${d.label} +${o.pct}%</span><span class="guild-syn-next">${o.next ? `${o.next}★ 升一階` : '最高階'}</span></div>`;
+  }).join('');
+  const draw = _guildLastDraw ? `<div class="guild-draw">${_guildLastDraw.map(x => {
+    const jn = JOB_TREE[x.job].name;
+    if (x.kind === 'new') return `<div class="guild-draw-row new">🆕 ${shopEsc(x.name)}（${shopEsc(jn)}）${guildStars(x.star)}</div>`;
+    if (x.kind === 'up') return `<div class="guild-draw-row up">⬆️ ${shopEsc(x.name)}（${shopEsc(jn)}）升到 ${x.now}★${x.exp ? `，多的換 ${x.exp.toLocaleString()} 公會經驗` : ''}</div>`;
+    return `<div class="guild-draw-row">${shopEsc(jn)} ${x.star}★ → ${x.exp.toLocaleString()} 公會經驗（${x.name ? '已滿星' : '成員已滿'}）</div>`;
+  }).join('')}</div>` : '';
+  const skills = GUILD_SKILLS.map(sk => {
+    const lv = guildSkillLv(sk.id);
+    const why = guildLearnReason(sk.id);
+    const req = Object.entries(sk.req || {}).map(([r, n]) => `${GUILD_SKILLS.find(s => s.id === r).name} Lv${n}`).join('、');
+    return `<div class="guild-sk${lv ? ' on' : ''}"><div class="guild-sk-main"><b>${sk.name}</b> <span class="guild-sk-lv">Lv ${lv}／${sk.max}</span>
+      <div class="guild-sk-desc">${sk.desc(Math.max(1, lv))}${req ? `<span class="guild-sk-req">前置：${req}</span>` : ''}</div></div>
+      <button class="btn-small" ${why ? `disabled title="${shopEsc(why)}"` : ''} onclick="guildLearnUi('${sk.id}')">＋</button></div>`;
+  }).join('');
+  el.innerHTML = `<h3 class="panel-title">🏰 公會</h3>
+    <div class="guild-head"><div class="guild-emblem">${guildEmblem()}</div>
+      <div class="guild-head-main"><div class="guild-name">${shopEsc(g.name)} <span>Lv ${g.lv}</span> <button class="btn-small ghost" onclick="guildRenameUi()">改名</button></div>
+        <div class="guild-exp"><div class="guild-exp-fill" style="width:${maxed ? 100 : Math.min(100, g.exp / need * 100).toFixed(1)}%"></div>
+          <span>${maxed ? '滿級' : `${g.exp.toLocaleString()}／${need.toLocaleString()}`}</span></div>
+        <div class="guild-sub">招募成員每分鐘帶 ${guildPassivePerMin().toLocaleString()} 經驗${castles.length ? `・持有城堡：${castles.map(shopEsc).join('、')}` : ''}</div></div></div>
+    ${emblemPick}
+    <div class="ally-sec">成員<span class="codex-sec-hint">你所有角色都在公會裡</span></div>
+    <div class="guild-tax-row">這個角色上繳經驗 <select class="ab-select ab-select-sm" onchange="setGuildTax(+this.value);renderGuildTab()">${taxOpts}</select>
+      <span class="codex-sec-hint">打怪的基礎經驗照比例分給公會（官方最多 50%）</span></div>
+    <div class="guild-mems">${members}</div>
+    <div class="ally-sec">招募成員 ${guildRecruitList().length}／${guildRecruitCap()}<span class="codex-sec-hint">同職業再抽到就升星（最多 ★${GUILD_RECRUIT_MAX_STAR}）；滿星或滿額換公會經驗</span></div>
+    <div class="guild-recruit-btns"><button class="btn-small active" onclick="guildRecruitUi(1)">招募 ×1（${GUILD_RECRUIT_COST} ${CASH_POINT_NAME}）</button>
+      <button class="btn-small active" onclick="guildRecruitUi(10)">招募 ×10（${GUILD_RECRUIT_COST * 10}）</button>
+      <span class="codex-sec-hint">持有 ${cashPoints().toLocaleString()}；★1／★2／★3＝${GUILD_RECRUIT_STAR_W.join('／')}%</span></div>
+    ${draw}
+    <div class="guild-rcs">${recruits}</div>
+    <div class="ally-sec">同系加成<span class="codex-sec-hint">同系招募成員的星數加總，加成給你所有角色</span></div>
+    <div class="guild-syns">${synRows}</div>
+    <div class="ally-sec">公會技能<span class="codex-sec-hint">剩 ${pts} 點（每升一級 1 點）</span></div>
+    <div class="guild-sks">${skills}</div>
+    <div class="guild-danger"><button class="btn-small ghost" onclick="guildDisbandUi()">解散公會</button></div>`;
 }
 function renderPetsTab() {
   const el = document.getElementById('tab-pets');

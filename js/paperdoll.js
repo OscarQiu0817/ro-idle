@@ -15,12 +15,40 @@ function paperdollImage(id) {
   _pdImg[id] = im;
   return im;
 }
+/* 朝上（背面）動作 idle_n／walk_n：圖層在 n/<原 key>（scripts/gen_paperdoll_north.py），用到才載入 */
+function pdKey(part, act) {
+  return act && act.slice(-2) === '_n' && part.indexOf('n/') !== 0 ? 'n/' + part : part;
+}
+const _pdNorthPending = {};
+function paperdollNorthLoadFile(name) {
+  if ((window.PAPERDOLL_N && window.PAPERDOLL_N[name]) || _pdNorthPending[name] || typeof document === 'undefined') return;
+  _pdNorthPending[name] = 1;
+  const s = document.createElement('script');
+  s.src = (window.PAPERDOLL_BASE || '') + 'js/paperdoll_n/' + name + '.js';
+  s.onerror = () => { (window.PAPERDOLL_N = window.PAPERDOLL_N || {})[name] = 'fail'; };
+  document.head.appendChild(s);
+}
+// 這組圖層每一層都有朝上的圖才回 true；缺的先去載（披肩跟著披肩檔一起來）
+function paperdollNorthReady(parts) {
+  const pd = window.PAPERDOLL;
+  if (!pd || !parts) return false;
+  let ok = true;
+  for (const p of parts) {
+    if (pd.clip['n/' + p]) continue;
+    ok = false;
+    if (p.indexOf('hat/') === 0) paperdollNorthLoadFile('hat_' + p.split('/')[1]);
+    else if (p.indexOf('robe/') !== 0) paperdollNorthLoadFile('core');
+  }
+  return ok;
+}
 function paperdollFrame(part, act, fi) {
+  part = pdKey(part, act);
   const seq = window.PAPERDOLL.clip[part] && window.PAPERDOLL.clip[part][act];
   if (!seq || !seq.length) return null;
   return seq[Math.min(fi, seq.length - 1)];
 }
 function paperdollFrameCount(part, act) {
+  part = pdKey(part, act);
   const seq = window.PAPERDOLL.clip[part] && window.PAPERDOLL.clip[part][act];
   return seq ? seq.length : 0;
 }
@@ -83,6 +111,7 @@ function paperdollPartsFor(look) {
   }
   const weapon = paperdollWeaponPartFor(look.job, gender, look.weaponCat);
   if (weapon) parts.push(weapon);
+  if (look.robe && pd.clip[look.robe]) parts.push(look.robe);   // 披肩服飾（畫在身體後面，見 drawPaperdollFrame）
   return parts;
 }
 /* 隊友等「別人」的外觀：who 帶 jobId／gender／hairStyle／hairColor／equip（可含 instances）。 */
@@ -109,11 +138,13 @@ function paperdollLookParts(who) {
   } catch (e) { weaponCat = 'bare'; }
   const g = who.gender === 'female' ? 'female' : 'male';
   const look = who.riding && pd.clip['body/' + job + '_mount/' + g] ? job + '_mount' : job;   // 隊友租了大嘴鳥
-  return paperdollPartsFor({ job: look, gender: who.gender, hairStyle: who.hairStyle, hairColor: who.hairColor, hatViews, weaponCat });
+  const robe = typeof costumeRobePart === 'function' ? costumeRobePart(who, look, g) : null;
+  return paperdollPartsFor({ job: look, gender: who.gender, hairStyle: who.hairStyle, hairColor: who.hairColor, hatViews, weaponCat, robe });
 }
 function paperdollAlign(part, body, fr) {
   // 通用武器檔沒有錨點，圖層座標已經跟身體同一個原點。
-  if (part.indexOf('weapon/') === 0 && !fr[0] && !fr[1]) return [0, 0];
+  const k = part.indexOf('n/') === 0 ? part.slice(2) : part;
+  if ((k.indexOf('weapon/') === 0 || k.indexOf('robe/') === 0) && !fr[0] && !fr[1]) return [0, 0];
   return [body[0] - fr[0], body[1] - fr[1]];
 }
 function paperdollExpand(part, fr, ox, oy, box) {
@@ -185,6 +216,8 @@ function drawPaperdollLayers(ctx, part, fr, ox, oy) {
 /* 畫一整格（身體＋各圖層）。(ox, oy) 是身體錨點在畫布上的位置。
    回傳 null＝這個動作沒有這格；否則 { ready }，ready=false 代表有圖層還沒載完。 */
 function drawPaperdollFrame(ctx, parts, act, n, ox, oy) {
+  const north = act && act.slice(-2) === '_n';
+  if (north) parts = parts.map(p => pdKey(p, act));
   const body = paperdollFrame(parts[0], act, n);
   if (!body) return null;
   let ready = true;
@@ -192,13 +225,19 @@ function drawPaperdollFrame(ctx, parts, act, n, ox, oy) {
     const im = paperdollImage(parts[p]);
     if (!im.complete || !im.naturalWidth) ready = false;
   }
-  if (!drawPaperdollLayers(ctx, parts[0], body, ox, oy)) return { ready: false };
-  for (let p = 1; p < parts.length; p++) {
+  const layer = p => {
     const fr = paperdollFrame(parts[p], act, n);
-    if (!fr) continue;
+    if (!fr) return;
     const aligned = paperdollAlign(parts[p], body, fr);
     drawPaperdollLayers(ctx, parts[p], fr, ox + aligned[0], oy + aligned[1]);
-  }
+  };
+  // 披肩：正面、側面在身體後面；朝上（背面）在身體前面
+  const behind = p => !north && parts[p].indexOf('robe/') === 0;
+  const im0 = paperdollImage(parts[0]);
+  if (!im0.complete || !im0.naturalWidth) return { ready: false };
+  for (let p = 1; p < parts.length; p++) if (behind(p)) layer(p);
+  drawPaperdollLayers(ctx, parts[0], body, ox, oy);
+  for (let p = 1; p < parts.length; p++) if (!behind(p)) layer(p);
   return { ready };
 }
 /* 攻速比整段動作快時，把揮擊壓進這一次的攻擊間隔。

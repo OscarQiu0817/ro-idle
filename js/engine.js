@@ -260,7 +260,9 @@ let combatLogBuf = [];
        monsterCastSkill、場域效果都是），這是最穩的特徵
      · 開頭是「  → 」的續行 → 跟著上一則走，不然技能的傷害明細會被拆到別欄
    三個緩衝各留 40 則。`combatLogBuf` 照舊保留全部，既有呼叫端不受影響。 */
-const combatLogLanes = { main: [], skill: [], ally: [] };
+/* 2026-11-22 使用者：再細分經驗值、掉寶兩欄；技能造成的傷害統一進戰鬥欄（技能欄只留詠唱、施放、效果） */
+const combatLogLanes = { main: [], skill: [], exp: [], loot: [], ally: [] };
+const LOG_DMG_RE = /\d[\d,]*\s*點[^，。！、\s]{0,6}傷害/;
 let _lastLogLane = 'main';
 /* 技能欄靠**呼叫端明確標記**，不靠猜。
    第一版用「訊息帶「」括號就是技能」來認，結果轉職訊息（恭喜你轉職成為「騎士」）
@@ -274,8 +276,8 @@ function withLogLane(lane, fn) {
 function logLaneOf(text, lane) {
   if (lane) return lane;
   if (_allyActing) return 'ally';
-  if (/^\s*→/.test(text)) return _lastLogLane;
-  return _logLaneOverride || 'main';
+  const ln = /^\s*→/.test(text) ? _lastLogLane : (_logLaneOverride || 'main');
+  return ln === 'skill' && LOG_DMG_RE.test(text) ? 'main' : ln;
 }
 function pushCombatLog(text, lane) {
   const ln = logLaneOf(text, lane);
@@ -290,6 +292,15 @@ function pushCombatLog(text, lane) {
   const buf = combatLogLanes[ln];
   buf.push(text);
   if (buf.length > 40) buf.shift();
+  // 技能傷害改進戰鬥欄後，技能欄仍留一行「施放「X」」，看得到放了什麼
+  if (ln === 'main' && !lane && _logLaneOverride === 'skill' && typeof text === 'string') {
+    const m = text.match(/「[^」]+」(Lv\d+)?/);
+    if (m && !/^\s*→/.test(text)) {
+      const sb = combatLogLanes.skill;
+      sb.push('施放' + m[0]);
+      if (sb.length > 40) sb.shift();
+    }
+  }
 }
 
 /* ---------------- 建立新角色 ---------------- */
@@ -992,6 +1003,11 @@ function recomputeDerivedInner(fullHeal) {
     // 素質料理（官方 SC_STRFOOD…）：單一素質 +N
     if (b.type === 'foodstat') addSrc(buffSrc, buffFlat, b.stat, b.flatBonus || 0, label);
   });
+  // 公會技能：偉大的統率力 STR、光榮的傷痕 VIT、冷靜的心 AGI、銳利的目光 DEX（js/guild.js）
+  if (typeof guildStatBonus === 'function') {
+    const gb = guildStatBonus(state);
+    Object.keys(gb).forEach(k => addSrc(buffSrc, buffFlat, k, gb[k], '公會技能'));
+  }
 
   const passiveStrBonus = skillFlat.str + buffFlat.str;
   const passiveIntBonus = skillFlat.int + buffFlat.int;
@@ -5820,7 +5836,8 @@ function gameTick() {
     tickHuntBoard();
     tickAttendance();
     tickPetFeed();
-    if (typeof tickLiveEvents === 'function') tickLiveEvents(gameNow());   // T66 上線隨機事件（js/live_events.js）
+    if (typeof tickLiveEvents === 'function') tickLiveEvents(gameNow());
+    if (typeof tickGuild === 'function') tickGuild(Date.now());   // 公會招募成員的經驗（js/guild.js，照真實時間）   // T66 上線隨機事件（js/live_events.js）
     // 攻擊技能欄改到 gameTick 每拍檢查（見 tickCasting 之後），這裡只剩輔助技能
     // 輔助技能獨立控制，不受自動施放技能開關影響
     tryAutoCastSupportSkills();
@@ -7160,8 +7177,6 @@ function spawnMonster() {
     if (def.isBoss) {
       logMsg(`⚠️ ${def.icon} ${def.name}（${def.isMvp ? 'MVP' : '迷你王'}）${def.isMvp ? '降臨了' : '出現了'}！`);
       summonBossSlaves(def, state.monsters[state.monsters.length - 1]);
-    } else {
-      logMsg(`一隻 ${def.icon} ${def.name} 出現了！`);
     }
   }
   state.monster = state.monsters[0];
@@ -8500,7 +8515,7 @@ function rollEtherDrop(monDef) {
   ['hd_bradium', 'hd_carnium'].forEach(id => {
     if (rng() < chance) {
       addItem(id, 1);
-      logMsg(`✨ MVP 掉落！獲得了 ${ITEMS[id].name}！`);
+      logMsg(`✨ MVP 掉落！獲得了 ${ITEMS[id].name}！`, 'loot');
     }
   });
 }
@@ -8668,9 +8683,11 @@ function grantQuotedExp(member, owner, quoted) {
   }
   if (!(q.base > 0) && !(q.job > 0)) return q;
   let got;
-  if (member === owner) got = withOwner(() => gainExp(q.base, q.job));
+  // 公會上繳：先從基礎經驗扣給公會（js/guild.js）
+  const tax = b => (typeof guildTaxExp === 'function' ? guildTaxExp(b) : b);
+  if (member === owner) got = withOwner(() => gainExp(tax(q.base), q.job));
   else {
-    got = withAlly(member, () => gainExp(q.base, q.job));
+    got = withAlly(member, () => gainExp(tax(q.base), q.job));
     if (member.hp > member.maxHp) member.hp = member.maxHp;
     if (member.sp > member.maxSp) member.sp = member.maxSp;
     writeAllyProgress(member);
@@ -8753,8 +8770,7 @@ function killMonster(def, monObj) {
   /* 擊殺與經驗一律走**戰鬥欄**（#100）。不指定的話會跟著當下的來源跑——
      主動技能打死的進技能欄、被動追擊打死的也進技能欄，同一批經驗訊息散在兩格裡。
      那是戰果不是技能說明，集中在左邊才看得出這一趟賺了多少。 */
-  logMsg(`擊敗了 ${def.name}！獲得 ${gotExp} 經驗與 ${gotJobExp} 職業經驗。`,
-    _allyActing ? 'ally' : 'main');   // 隊友補的刀還是留在隊友欄
+  logMsg(`擊敗了 ${def.name}！獲得 ${gotExp} 經驗與 ${gotJobExp} 職業經驗。`, 'exp');
   codexRecordKill(monKey);
   /* 打贏 MVP 的音效（#146）。只認正牌 MVP，迷你王不放——
      迷你王在 #147 之後是獨立的一類，出現頻率高得多，每隻都放會變成背景音。 */
@@ -8802,7 +8818,7 @@ function killMonster(def, monObj) {
     * (1 + (owner.passiveDropPct || 0) / 100)                                              // 馴鷹術
     * (monObj && monObj._trapKill ? 1 + (owner.trapLootPct || 0) / 100 : 1);              // 陷阱探查
   (def.drops || []).forEach(d => {
-    if (rng() < Math.min(1, d.chance * dropMult)) addItem(d.item, 1);
+    if (rng() < Math.min(1, d.chance * dropMult)) { addItem(d.item, 1); logDrop(def, d.item, d.chance); }
   });
   rollEtherDrop(def);
   // 脅持：擊殺 5%~25% 立刻生下一隻（跳過生怪等待）
@@ -8816,7 +8832,7 @@ function killMonster(def, monObj) {
     if (stolen) {
       addItem(stolen.item, 1);
       const stolenName = ITEMS[stolen.item] ? ITEMS[stolen.item].name : stolen.item;
-      logMsg(`🗡️ 偷竊發動！額外獲得了 ${stolenName}！`);
+      logMsg(`🗡️ 偷竊發動！額外獲得了 ${stolenName}！`, 'loot');
     }
   }
   // 尋找礦石被動：擊敗怪物時機率額外獲得隨機屬性礦石（供屬性石製造使用）
@@ -8824,7 +8840,7 @@ function killMonster(def, monObj) {
     const orePool = ['boody_red', 'crystal_blue', 'wind_of_verdure', 'yellow_live'];
     const ore = orePool[Math.floor(rng() * orePool.length)];
     addItem(ore, 1);
-    logMsg(`⛏️ 尋找礦石發動！額外獲得了 ${ITEMS[ore].name}！`);
+    logMsg(`⛏️ 尋找礦石發動！額外獲得了 ${ITEMS[ore].name}！`, 'loot');
   }
   // 貪婪被動：擊敗怪物時機率多獲得一份戰利品（跟偷竊同一套加權）
   if (state.hasGreedProc && def.drops && def.drops.length > 0 && rng() * 100 < state.greedChance) {
@@ -8832,7 +8848,7 @@ function killMonster(def, monObj) {
     if (bonus) {
       addItem(bonus.item, 1);
       const bonusName = ITEMS[bonus.item] ? ITEMS[bonus.item].name : bonus.item;
-      logMsg(`💰 貪婪發動！額外獲得了 ${bonusName}！`);
+      logMsg(`💰 貪婪發動！額外獲得了 ${bonusName}！`, 'loot');
     }
   }
   // 卡片附加掉落（箱子、料理、精煉素材那一批）
@@ -8842,10 +8858,20 @@ function killMonster(def, monObj) {
   if (cardDrop && rng() < cardDrop.chance) {
     addItem(cardDrop.card, 1);
     const card = CARDS[cardDrop.card];
-    logMsg(`🃏 掉落了稀有的 ${card.name}！`);
+    logMsg(`🃏 ${def.name} 掉落了稀有的 ${card.name}！（掉寶率 ${dropRateText(cardDrop.chance)}）`, 'loot');
   }
   if (typeof rollGachaShard === 'function') rollGachaShard(def);   // 轉蛋碎片（js/cash_shop.js）
   removeKilledFromField(monObj);
+}
+
+// 掉寶欄：掉了什麼＋官方掉寶率（不含加成）
+function dropRateText(ch) {
+  const p = ch * 100;
+  return (p >= 1 ? +p.toFixed(2) : +p.toPrecision(2)) + '%';
+}
+function logDrop(def, itemId, chance) {
+  const it = ITEMS[itemId];
+  logMsg(`📦 ${def.name} 掉落了 ${it ? it.name : itemId}（掉寶率 ${dropRateText(chance)}）`, 'loot');
 }
 
 /* 從怪物列表中移除
@@ -9000,7 +9026,7 @@ function gainExp(baseExp, jobExp) {
     state.baseLevel++;
     const gained = statPointsAtLevel(state.baseLevel);
     state.statPoints += gained;
-    logMsg(`🎉 基礎等級提升到 ${state.baseLevel}！獲得 ${gained} 點屬性點。`);
+    logMsg(`🎉 基礎等級提升到 ${state.baseLevel}！獲得 ${gained} 點屬性點。`, 'exp');
     need = expToNextBaseLevel(state.baseLevel);
   }
 
@@ -9017,7 +9043,7 @@ function gainExp(baseExp, jobExp) {
       if (!state.jobSkillPoints[state.jobId]) state.jobSkillPoints[state.jobId] = 0;
       state.jobSkillPoints[state.jobId]++;
       state.skillPoints = Object.values(state.jobSkillPoints).reduce((a, b) => a + b, 0);
-      logMsg(`✨ 職業等級提升到 ${state.jobLevel}！獲得 1 點技能點（${currentJob().name}）。`);
+      logMsg(`✨ 職業等級提升到 ${state.jobLevel}！獲得 1 點技能點（${currentJob().name}）。`, 'exp');
       leveled = true;
       jneed = expToNextJobLevel(state.jobLevel, job.tier);
     }
@@ -15570,6 +15596,7 @@ function getCardBonusRaw(stat) {
     const lv = (state.learnedSkills && state.learnedSkills[skillId]) || 0;
     total += Math.floor(lv / (+per || 1)) * all[k];
   }
+  if (typeof guildGearBonus === 'function') total += guildGearBonus(stat);   // 公會：同系招募成員加成、再生（js/guild.js）
   if (!BASE_STAT_KEYS.includes(stat)) return total;
   // All State+N（古埃及王卡片）：六項素質一起加
   if (all.allStat) total += all.allStat;
@@ -17025,7 +17052,8 @@ function computeOfflineProgress(minMs, opts) {
 
   const beforeBaseLv = state.baseLevel;
   const beforeJobLv = state.jobLevel;
-  const gotExp = gainExp(expGained, jobExpGained);   // 回報乘完經驗書的實得量
+  const taxed = !expOnly && typeof guildTaxExp === 'function' ? guildTaxExp(expGained) : expGained;   // 公會上繳
+  const gotExp = gainExp(taxed, jobExpGained);   // 回報乘完經驗書的實得量
   expGained = gotExp.base;
   jobExpGained = gotExp.job;
   /* expOnly 是替別人的存檔提前發經驗，buffs 不寫回，不扣時間（他自己上線結算時扣） */

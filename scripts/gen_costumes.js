@@ -3,6 +3,8 @@
    規則：rAthena item_db 裡部位是 Costume_Head_*、有 View 的服飾；
      名稱用台服 itemInfo（沒有中文名的不收）；
      外觀：紙娃娃已經有這個 View 的頭飾圖層就直接用，否則 grf_ex/sprite/악세사리 男女都有圖才轉；都沒有＝不收。
+   2026-11-22 加披肩服飾（Costume_Garment）：View 對 spriterobeid／spriterobename 找 grf_ex/sprite/로브 資料夾，
+     有資料夾才收；圖層由 scripts/gen_costume_robes.py 轉（清單寫在 scripts/out/costume_robes.json），一律 lazy。
    node scripts/gen_costumes.js */
 const fs = require('fs');
 const path = require('path');
@@ -29,10 +31,32 @@ const layers = fs.readFileSync(path.join(ROOT, 'js/paperdoll_layers.js'), 'utf8'
 const hatViews = new Set([...layers.matchAll(/"hat\/(\d+)\/male"/g)].map(m => Number(m[1])));
 const sprExists = (g, n) => fs.existsSync(path.join(ROOT, 'grf_ex/sprite/악세사리', g, g + n + '.spr'));
 
-const out = {}, convert = {};
+const RN = readLubKr('grf_ex/spriterobename.lub');
+const RI = readLubKr('grf_ex/spriterobeid.lub').SPRITE_ROBE_IDs;
+const robeKey = {};
+for (const [k, v] of Object.entries(RI)) robeKey[v] = k;
+const robeDirs = new Map(fs.readdirSync(path.join(ROOT, 'grf_ex/sprite/로브')).map(d => [d.toLowerCase(), d]));
+function robeFolder(it) {
+  const k = robeKey[it.View], kk = 'SPRITE_ROBE_IDs.' + k;
+  const cands = [it.AegisName, k && k.replace(/^ROBE_/, ''), RN.RobeNameTable_Eng[kk], RN.RobeNameTable[kk]];
+  return cands.filter(Boolean).map(c => robeDirs.get(String(c).toLowerCase())).find(Boolean) || null;
+}
+
+const out = {}, convert = {}, robes = {};
 const stat = { costume: 0, noName: 0, noSprite: 0, ready: 0, lazy: 0 };
 for (const it of db.values()) {
   const loc = it.Locations || {};
+  if (loc.Costume_Garment && it.View) {
+    const tw = info.get(it.Id);
+    const name = tw && tw.name && tw.name.replace(/\\/g, '').replace(/^\s*[（(]服飾[)）]\s*/, '').trim();
+    const folder = name && /[一-鿿]/.test(name) && robeFolder(it);
+    if (folder) {
+      robes[folder] = 1;
+      stat.robe = (stat.robe || 0) + 1;
+      out['cos_' + it.Id] = { id: 'cos_' + it.Id, raId: it.Id, name, slots: ['garment'], robe: folder, lazy: true };
+    }
+    continue;
+  }
   const slots = Object.keys(SLOT).filter(k => loc[k]).map(k => SLOT[k]);
   if (!slots.length || !it.View) continue;
   stat.costume++;
@@ -50,9 +74,10 @@ for (const it of db.values()) {
   lazy ? stat.lazy++ : stat.ready++;
   out['cos_' + it.Id] = { id: 'cos_' + it.Id, raId: it.Id, name, slots, view: it.View, lazy: lazy || undefined };
 }
-const js = '/* 由 scripts/gen_costumes.js 產生，不要手改。頭部服飾：只換外觀。lazy＝頭飾圖層在 js/costume_hats/<view>.js，穿上或預覽時才載入 */\n'
+const js = '/* 由 scripts/gen_costumes.js 產生，不要手改。頭部＋披肩服飾：只換外觀。lazy＝圖層在 js/costume_hats/<view>.js、js/costume_robes/<robe>.js，穿上或預覽時才載入 */\n'
   + 'const COSTUMES = ' + JSON.stringify(out) + ';\n';
 fs.writeFileSync(path.join(ROOT, 'js/costumes.js'), js);
 fs.mkdirSync(path.join(ROOT, 'scripts/out'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'scripts/out/costume_hats.json'), JSON.stringify(convert));
+fs.writeFileSync(path.join(ROOT, 'scripts/out/costume_robes.json'), JSON.stringify(Object.keys(robes)));
 console.log(stat, 'views to convert', Object.keys(convert).length, 'js', js.length, 'bytes');

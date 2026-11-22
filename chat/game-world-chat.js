@@ -152,6 +152,7 @@ function mountWorldChatLog(root, chat) {
     <form class="world-chat-form chat-input-row" hidden>
       <input type="text" class="world-chat-input" maxlength="200" placeholder="輸入訊息…" autocomplete="off">
       <button type="submit" class="btn-small">送出</button>
+      <button type="button" class="btn-small ghost world-chat-leave" title="離開聊天室">退出</button>
     </form>
   `;
 
@@ -179,6 +180,8 @@ function mountWorldChatLog(root, chat) {
     chat.start(getPlayerName());
     syncPhaseOverlay(chat.status);
   };
+
+  root.querySelector('.world-chat-leave').onclick = () => { chat.stop(); syncPhaseOverlay(chat.status); };
 
   form.onsubmit = (e) => {
     e.preventDefault();

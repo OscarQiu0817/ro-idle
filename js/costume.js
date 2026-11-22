@@ -4,9 +4,11 @@
    state.costume＝{ head_top, head_mid, head_bottom } 穿著的道具 id。一件佔多個部位時每個部位都記同一個 id，畫面只畫一次（最上面那格）。
    有穿服飾的部位蓋掉原本頭飾的外觀；裝備數值照舊。
    lazy 的服飾頭飾圖層在 js/costume_hats/<view>.js，第一次要畫時才載入（使用者：用到再載入）。
+   2026-11-22 加披肩服飾（garment）：圖層是每件一個 js/costume_robes/<robe>.js（各職業各一份），畫在身體後面。
+   同日加服飾轉蛋：頭部服飾轉蛋、披肩服飾轉蛋（商城點數），只開有圖的服飾、均勻抽。
    這個檔案在 costumes.js 之後載入。 */
-const COSTUME_SLOTS = ['head_top', 'head_mid', 'head_bottom'];
-const COSTUME_SLOT_NAME = { head_top: '頭上', head_mid: '頭中', head_bottom: '頭下' };
+const COSTUME_SLOTS = ['head_top', 'head_mid', 'head_bottom', 'garment'];
+const COSTUME_SLOT_NAME = { head_top: '頭上', head_mid: '頭中', head_bottom: '頭下', garment: '披肩' };
 const _costumeByItem = {};
 
 (function registerCostumes() {
@@ -68,20 +70,55 @@ function costumeApplyViews(views, who) {
 function costumeHatReady(view) {
   return !!(typeof window !== 'undefined' && window.PAPERDOLL && window.PAPERDOLL.clip['hat/' + view + '/male']);
 }
-const _costumeHatPending = {};
-function costumeHatLoad(view, cb) {
-  if (costumeHatReady(view)) { if (cb) cb(); return; }
+function costumeRobeReady(robe) {
+  return !!(typeof window !== 'undefined' && window.COSTUME_ROBE_LOADED && window.COSTUME_ROBE_LOADED[robe]);
+}
+const _costumeLazyPending = {};
+function costumeLazyLoad(src, cb) {
   if (typeof document === 'undefined' || !document.head || !document.createElement) return;
-  if (_costumeHatPending[view]) { if (cb) _costumeHatPending[view].push(cb); return; }
-  _costumeHatPending[view] = cb ? [cb] : [];
+  if (_costumeLazyPending[src]) { if (cb) _costumeLazyPending[src].push(cb); return; }
+  _costumeLazyPending[src] = cb ? [cb] : [];
   const s = document.createElement('script');
-  s.src = 'js/costume_hats/' + view + '.js';
+  s.src = src;
   s.onload = () => {
-    const cbs = _costumeHatPending[view] || [];
-    delete _costumeHatPending[view];
+    const cbs = _costumeLazyPending[src] || [];
+    delete _costumeLazyPending[src];
     cbs.forEach(f => f());
-    if (typeof onCostumeHatLoaded === 'function') onCostumeHatLoaded(view);
+    if (typeof onCostumeHatLoaded === 'function') onCostumeHatLoaded();
   };
-  s.onerror = () => { delete _costumeHatPending[view]; };
+  s.onerror = () => { delete _costumeLazyPending[src]; };
   document.head.appendChild(s);
 }
+function costumeHatLoad(view, cb) {
+  if (costumeHatReady(view)) { if (cb) cb(); return; }
+  costumeLazyLoad('js/costume_hats/' + view + '.js', cb);
+}
+function costumeRobeLoad(robe, cb) {
+  if (costumeRobeReady(robe)) { if (cb) cb(); return; }
+  costumeLazyLoad('js/costume_robes/' + robe + '.js', cb);
+}
+/* 紙娃娃：披肩服飾圖層 key（job 是紙娃娃職業名，含 _mount）；沒穿、沒勾顯示、還沒載入或這職業沒圖＝null */
+function costumeRobePart(who, job, gender) {
+  who = who || state;
+  const id = who && who.costume && who.costume.garment;
+  const d = id && costumeDef(id);
+  if (!d || !d.robe || who.showCostume === false) return null;
+  if (!costumeRobeReady(d.robe)) { costumeRobeLoad(d.robe); return null; }
+  const key = 'robe/' + d.robe + '/' + job + '/' + (gender === 'female' ? 'female' : 'male');
+  return window.PAPERDOLL.clip[key] ? key : null;
+}
+
+/* 服飾轉蛋：只開有圖的服飾，均勻抽 */
+const COSTUME_GACHA = [
+  ['gacha_costume_head', '頭部服飾轉蛋', 12947, 30, d => d.slots[0] !== 'garment'],
+  ['gacha_costume_robe', '披肩服飾轉蛋', 617, 30, d => d.slots[0] === 'garment'],
+];
+if (typeof BOX_POOLS !== 'undefined') COSTUME_GACHA.forEach(([id, name, img, , pick]) => {
+  ITEMS[id] = {
+    id, imgId: img, name, type: 'consumable', icon: '🎁', weight: 1, sell: 0, boxOpen: 'costume_' + id,
+    desc: `打開後隨機獲得一件${name.replace('轉蛋', '')}（只換外觀，不加能力）。`,
+  };
+  BOX_POOLS['costume_' + id] = { build: () => costumeList().filter(k => pick(costumeDef(k))) };
+  const cat = typeof CASH_SHOP !== 'undefined' && CASH_SHOP.find(c => c.cat === '轉蛋');
+  if (cat) cat.items.push([id, COSTUME_GACHA.find(g => g[0] === id)[3]]);
+});
