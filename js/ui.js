@@ -2805,7 +2805,7 @@ function showDamageFloatAt(monsterInstanceId, dmg, type, element) {
   const slot = document.getElementById('monster-slot-' + monsterInstanceId);
   if (slot) rememberMonSlot(monsterInstanceId, slot);
   else if (!monSlotAnchor(monsterInstanceId)) return;
-  if (slot && type !== 'heal' && type !== 'miss') playMonsterHit(monsterInstanceId);
+  if (slot && type !== 'heal' && type !== 'miss' && type !== 'miss-red') playMonsterHit(monsterInstanceId);
   const prev = pendingFloatTargetId;
   pendingFloatTargetId = monsterInstanceId;
   try { showDamageFloat(dmg, type, element); }
@@ -2824,7 +2824,8 @@ function showPlayerFloat(dmg, type) {
   else if (type === 'element-bad') el.classList.add('element-bad');
   // 角色被打（含 MISS）一律紅字，比照官方（使用者 2026-11-14）；補 HP 綠字、補 SP 藍字
   const recover = type === 'heal' || type === 'sp';
-  if (!recover) el.classList.add('taken');
+  // 自己打怪落空的 MISS 是白字（使用者 2026-11-23）；GUARD／免傷／詠唱中斷這類被打時的字維持紅字
+  if (!recover && !(type === 'miss' && dmg === 'MISS')) el.classList.add('taken');
   el.textContent = dmg;
 
   // 換身中（隊友被打、隊友自己的 MISS）飄在那位隊友頭上
@@ -2838,12 +2839,13 @@ function showPlayerFloat(dmg, type) {
   if (!playerEl) playerEl = document.getElementById('player-sprite');
   if (playerEl) {
     /* 回復量打在角色身上、比頭低一點（使用者 2026-11-14，比照官方）：用紙娃娃 canvas 的範圍定位 */
-    const paper = recover ? playerEl.querySelector('canvas') : null;
+    /* 一律用紙娃娃 canvas 定位：角色外框比人高很多（手機版頭頂上還空 70px），貼外框頂端會飄到戰場最上面（使用者 2026-11-23） */
+    const paper = playerEl.querySelector('canvas');
     const host = paper && paper.offsetWidth ? paper : playerEl;
     const rect = host.getBoundingClientRect();
     el.style.position = 'fixed';
-    el.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * (recover ? 8 : 20)) + 'px';
-    el.style.top = (recover && host === paper ? rect.top + rect.height * 0.4 : rect.top - 10) + 'px';
+    el.style.left = (rect.left + rect.width / 2 + (type === 'miss' ? 0 : (Math.random() - 0.5) * (recover ? 8 : 20))) + 'px';   // MISS 正中往上飄
+    el.style.top = (recover && host === paper ? rect.top + rect.height * 0.4 : rect.top - (host === paper ? 4 : 10)) + 'px';
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1500);
   }
@@ -2930,6 +2932,7 @@ function showDamageFloat(dmg, type, element) {
   if (type === 'crit') el.classList.add('crit');
   else if (type === 'heal') el.classList.add('heal');
   else if (type === 'miss') el.classList.add('miss');
+  else if (type === 'miss-red') el.classList.add('miss', 'taken');   // 怪打角色落空：怪頭上紅字
   else if (type === 'element-good') el.classList.add('element-good');
   else if (type === 'element-bad') el.classList.add('element-bad');
   else if (type === 'element-immune') el.classList.add('element-immune');
@@ -2946,9 +2949,15 @@ function showDamageFloat(dmg, type, element) {
     // 每次呼叫自動遞增偏移，讓連續傷害數字錯開
     const offsetX = (Math.random() - 0.5) * 8;
     el.style.position = 'fixed';
-    el.style.left = (rect.left + rect.width * 0.55 + offsetX) + 'px';
-    el.style.top = (rect.top + rect.height * 0.28) + 'px';
-    _lastFloatAnchor = { left: parseFloat(el.style.left), top: parseFloat(el.style.top), at: Date.now() };
+    if (type === 'miss' || type === 'miss-red') {
+      // MISS 比照正版：在怪物頭頂正上方往上飄（使用者 2026-11-23），不參與傷害數字的錯開
+      el.style.left = (rect.left + rect.width / 2) + 'px';
+      el.style.top = rect.top + 'px';
+    } else {
+      el.style.left = (rect.left + rect.width * 0.55 + offsetX) + 'px';
+      el.style.top = (rect.top + rect.height * 0.28) + 'px';
+      _lastFloatAnchor = { left: parseFloat(el.style.left), top: parseFloat(el.style.top), at: Date.now() };
+    }
     appendFloatLater(el, _floatDelayMs % 5);
     _floatDelayMs++;
     // 快速重置：200ms 後歸零（一次攻擊間隔）
@@ -3631,6 +3640,7 @@ function layoutBattlefieldInner() {
   syncDojoHud();
   layoutAllySprites(faceRight);
   syncFalcons(faceRight);
+  syncPet(faceRight, walking);
   syncPlayerBattleAnim(walking || (stepped.moved && !town));
   pinComboTotal();
   faceBattlePlayer(faceRight);
@@ -4266,11 +4276,12 @@ function renderMapYieldBox() {
         ${actRows}
       </div>
       <div class="yield-col">
-        <div class="yield-col-title">離線預估${off && off.full ? ` · 依最近 ${fmtDur(off.sec)}` : ''}</div>
+        <div class="yield-col-title">離線預估${off && off.full ? ` · 依最近 ${fmtDur(off.sec)}` : ''}
+          <button class="yield-reset-btn" title="清掉這張圖的實測重新計算（換裝後用）；未滿 1 分鐘前離線數字 ×0.1" onclick="resetLiveRate();renderMapTab();">↺ 重新計算</button></div>
         ${offRows}
       </div>
     </div>
-    <div class="map-yield-hint">隊伍傷害占比＝從上次重置到現在，每個人造成的傷害（含技能、反彈、出血）。離線預估＝現在離線的話，每 10 分鐘會拿到多少：依這張圖最近一段（最多 10 分鐘）的實際打怪表現推算，已含走路、挨打、喝水、等怪的時間，離線時照這個速度結算。這張圖的實測未滿 1 分鐘時，離線預估與離線結算 ×0.1。兩欄每 10 秒更新。</div>
+    <div class="map-yield-hint">隊伍傷害占比＝從上次重置到現在，每個人造成的傷害（含技能、反彈、出血）。離線預估＝現在離線的話，每 10 分鐘會拿到多少：依這張圖最近一段（最多 10 分鐘）的實際打怪表現推算，已含走路、挨打、喝水、等怪的時間，離線時照這個速度結算。這張圖的實測未滿 1 分鐘時，離線預估與離線結算 ×0.1。換了裝備想馬上照新速度算，按「↺ 重新計算」。兩欄每 10 秒更新。</div>
   </div>`;
 }
 // 每 10 秒換掉表格（只換這一塊，不重畫整個地圖分頁）
@@ -7789,7 +7800,7 @@ function compareEquip(itemId, newRefine) {
    武器 ATK 要經過精煉曲線、卡片與條件式加成（#19）、素質衍生的 ATK 也會跟著動。
    現在走 engine.js 的 previewEquipDelta()——暫時穿上去重算一次再還原，數字保證跟實戰一致。
    穿不上的（職業／等級擋住）沒辦法模擬，退回舊的「只比裝備本身數值」並標明原因。 */
-function renderCompareBadge(itemId, newRefine, instanceId) {
+function renderCompareBadge(itemId, newRefine, instanceId, compact) {
   const slot = targetSlotOf(itemId);
   if (!slot) return '';
   const curId = getEquipBaseItemId(slot);
@@ -7798,10 +7809,17 @@ function renderCompareBadge(itemId, newRefine, instanceId) {
 
   const prev = typeof previewEquipDelta === 'function' ? previewEquipDelta(itemId, instanceId) : null;
   if (prev) {
-    if (!prev.changes.length) return `<div class="inv-compare same">對比 ${curName}：角色數值沒有變化</div>`;
+    if (!prev.changes.length) return compact
+      ? `<div class="inv-compare same" title="對比 ${shopEsc(curName)}：角色數值沒有變化">＝ 數值不變</div>`
+      : `<div class="inv-compare same">對比 ${curName}：角色數值沒有變化</div>`;
     const parts = prev.changes.map(c =>
       `<span class="cmp-${c.delta > 0 ? 'up' : 'down'}">${c.label} ${c.delta > 0 ? '▲+' : '▼'}${c.delta}</span>`
     );
+    /* 卡片版（使用者 2026-11-23：換裝清單改兩欄）只列前 3 項，完整的放滑鼠提示 */
+    if (compact) {
+      const full = prev.changes.map(c => `${c.label} ${c.delta > 0 ? '+' : ''}${c.delta}`).join('、');
+      return `<div class="inv-compare" title="對比 ${shopEsc(curName)}：${shopEsc(full)}">${parts.slice(0, 3).join('')}${parts.length > 3 ? '…' : ''}</div>`;
+    }
     return `<div class="inv-compare">對比 ${curName}：${parts.join('')}</div>`;
   }
 
@@ -8241,15 +8259,16 @@ function renderEquipTab() {
       // 這份清單來源是背包，穿在身上的裝備不在裡面，所以一律是「裝備」；
       // 要卸下請點上方裝備欄那一格（連點兩下）
       const action = d.type === 'costume' ? `costumeWearUi('${r.item}')` : r.instanceId ? `equipInstance('${r.instanceId}')` : `equipItem('${r.item}')`;
-      return `<div class="equip-pick-row">
+      // 整張卡片點了就穿（ⓘ 與按鈕擋掉冒泡，免得點說明也穿上去）
+      return `<div class="equip-pick-row" onclick="${action};renderEquipTab();renderTopBar();">
         <img src="${itemImgSrc(r.item)}" onerror="this.onerror=null;this.src='${placeholderImgSrc(itemPlaceholderKind(d))}'">
         <div class="equip-pick-info">
-          <div class="equip-pick-name"><button type="button" class="wh-info-btn" aria-label="看完整說明" onclick="showBagInfo(event,'${r.item}','${r.instanceId || ''}')">ⓘ</button>${refine > 0 ? `<span class="slot-refine">+${refine}</span> ` : ''}${getItemDisplayName(r.item)}${d.slots ? ` <span class="inv-slots">[${d.slots}]</span>` : ''}</div>
+          <div class="equip-pick-name"><button type="button" class="wh-info-btn" aria-label="看完整說明" onclick="event.stopPropagation();showBagInfo(event,'${r.item}','${r.instanceId || ''}')">ⓘ</button>${refine > 0 ? `<span class="slot-refine">+${refine}</span> ` : ''}${getItemDisplayName(r.item)}${d.slots ? ` <span class="inv-slots">[${d.slots}]</span>` : ''}</div>
           <div class="equip-pick-stats">${bits.join('　')}</div>
           ${cards.length ? `<div class="equip-pick-cards">${socketedCardsHtml(cards)}</div>` : ''}
-          ${renderCompareBadge(r.item, refine, r.instanceId)}
+          ${renderCompareBadge(r.item, refine, r.instanceId, true)}
         </div>
-        <button class="btn-small" onclick="${action};renderEquipTab();renderTopBar();">裝備</button>
+        <button class="btn-small" onclick="event.stopPropagation();${action};renderEquipTab();renderTopBar();">裝備</button>
       </div>`;
     }).join('') : `<div class="equip-pick-empty">${equipPickCat === 'costume' ? '背包裡沒有服飾。' : `背包裡沒有${currentJob().name}穿得上的${equipPickCat === 'weapon' ? '武器' : '防具'}。`}</div>`;
 
@@ -8280,7 +8299,7 @@ function renderEquipTab() {
         </div>
         ${subChips}`}</div>
       </div>
-      <div id="equip-lower">${cardSel ? cardSel.body : listHtml}</div>`;
+      <div id="equip-lower">${cardSel ? cardSel.body : rows.length ? `<div class="equip-pick-grid">${listHtml}</div>` : listHtml}</div>`;
     if (keep) { el.prepend(keep); keep.innerHTML = equipStatFloatHtml(); }
     if (scroller && scroller.scrollTop !== scrollTop) scroller.scrollTop = scrollTop;
     if (window.scrollY !== winY) window.scrollTo(window.scrollX, winY);
@@ -11648,6 +11667,66 @@ function syncFalcons(faceRight) {
     el.style.top = (at.y - fs.ay) + 'px';
   });
   scene.querySelectorAll('.bf-falcon').forEach(el => { if (!keep.has(el.id.replace('bf-falcon-', ''))) el.remove(); });
+}
+
+/* 寵物跟隨（使用者 2026-11-23：比照正版 RO，出戰的寵物實際跟在身邊）。
+   只是外觀：不參戰、怪不打牠。用怪物的動畫圖集（images/mob_anim），站在角色身後稍低處；
+   角色在走（背景在捲）或換邊時播走路，其餘待機。圖集是朝左的側面，朝右就水平翻轉。
+   放在 .player-area 裡（z-index 1），排在玩家後面。 */
+const PET_BACK = 9, PET_DOWN = 3;   // 身後幾 %、往下幾 %（場景座標）
+const PET_MAX_H = 60;               // 大隻的寵物（七彩大嘴鳥…）封頂高度（px）
+const bfPet = { pos: null, last: 0, act: '', t0: 0, faceR: true };
+function syncPet(faceRight, playerWalking) {
+  const area = document.querySelector('#battle-scene .player-area');
+  if (!area || !state) return;
+  let el = document.getElementById('bf-pet');
+  const ps = state.pets;
+  const def = ps && ps.active && MONSTERS[ps.active];
+  const d = def && MOB_ANIM && MOB_ANIM[String(def.imgId)];
+  if (!d || !d.actions || state.hp <= 0) { if (el) el.remove(); bfPet.pos = null; return; }
+  mobAnimEnsureRows(d);
+  if (!el) {
+    el = document.createElement('div'); el.id = 'bf-pet'; el.className = 'bf-pet';
+    el.innerHTML = '<div class="bf-pet-img"></div><div class="bf-pet-name"></div>';   // 名字跟正版一樣標在腳下，免得跟同種的怪搞混
+    area.appendChild(el);
+  }
+  const rec = ps.list.find(x => x.id === ps.active);
+  const pname = (rec && rec.name) || ((typeof PETS_BY_ID !== 'undefined' && PETS_BY_ID[ps.active]) || def).name;
+  const nameEl = el.lastChild;
+  if (nameEl.textContent !== pname) nameEl.textContent = pname;
+  const now = Date.now();
+  const dt = bfPet.last ? Math.min(0.12, (now - bfPet.last) / 1000) : 0;
+  bfPet.last = now;
+  const side = faceRight ? 1 : -1;
+  const goal = { x: bfClamp(bfPlayer.x - side * PET_BACK, 3, 97), y: bfClamp(bfPlayer.y + PET_DOWN, 8, 97) };
+  if (!bfPet.pos || Math.hypot(goal.x - bfPet.pos.x, goal.y - bfPet.pos.y) > 40) bfPet.pos = goal;
+  const st = dt ? bfStep(bfPet.pos, goal, dt) : { x: bfPet.pos.x, y: bfPet.pos.y, moved: false };
+  const dx = st.x - bfPet.pos.x;
+  bfPet.pos = { x: st.x, y: st.y };
+  const act = (playerWalking || st.moved) && d.actions.walk ? 'walk' : mobLoopAct(d);
+  if (act !== bfPet.act) { bfPet.act = act; bfPet.t0 = now; }
+  bfPet.faceR = st.moved && Math.abs(dx) > 0.01 ? dx > 0 : faceRight;
+  const a = d.actions[act];
+  const delay = (a.delay || 100) * (act === 'walk' ? 2.4 : 1);   // 跟戰場上的怪同一個走路節奏
+  const f = a.start + Math.floor((now - bfPet.t0) / delay) % a.frames;
+  const k = Math.min(MOB_PX_SCALE, PET_MAX_H / d.fit[1]);
+  const w = d.cell[0] * k, h = d.cell[1] * k;
+  const key = def.imgId + ':' + k.toFixed(3) + ':' + f;
+  const img = el.firstChild;
+  if (el._k !== key) {
+    el._k = key;
+    el.style.width = w.toFixed(1) + 'px'; el.style.height = h.toFixed(1) + 'px';
+    img.style.background = `url(${MOB_ANIM_DIR}${def.imgId}.png?v=${d.v}) ${(-(f % d.cols) * w).toFixed(1)}px ${(-Math.floor(f / d.cols) * h).toFixed(1)}px / ${(d.cols * w).toFixed(1)}px ${(d._rows * h).toFixed(1)}px no-repeat`;
+  }
+  const local = sceneToLocal(area, bfPet.pos.x, bfPet.pos.y);
+  if (!local) return;
+  const ax = d.anchor[0] * k, ay = d.anchor[1] * k;
+  img.style.transform = bfPet.faceR ? 'scaleX(-1)' : '';
+  const left = local.x - (bfPet.faceR ? w - ax : ax);
+  el.style.left = left.toFixed(1) + 'px';
+  el.style.top = (local.y - ay).toFixed(1) + 'px';
+  nameEl.style.left = (local.x - left).toFixed(1) + 'px';   // 名字置中在腳底（錨點），翻面也不跟著鏡像
+  nameEl.style.top = (ay + 2).toFixed(1) + 'px';
 }
 
 

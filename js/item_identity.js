@@ -9293,7 +9293,6 @@ const ITEM_IDENTITY = {
   "refine_ore_box4": {"type":"consumable","name":"精煉用礦石箱Ⅳ"},
   "refine_ore_box4_set10": {"type":"consumable","name":"精煉用礦石箱Ⅳ 10組"},
   "refine_ore_box4_set20": {"type":"consumable","name":"精煉用礦石箱Ⅳ 20組"},
-  "refine_stone": {"name":"強化武器金屬-級數一"},
   "refined_holy_water": {"type":"consumable"},
   "reform_4th_skill_shadow": {"type":"consumable","name":"四轉次上位影子附加能力箱","desc":"賦予四轉職業群影子技能附加能力的箱子。 重量：0"},
   "refresh_shoes": {"reqJobs":null,"reqUpper":null,"reqGender":null,"slots":0,"reqLevel":null},

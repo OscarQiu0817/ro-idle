@@ -292,6 +292,15 @@ function logLaneOf(text, lane) {
   const ln = /^\s*→/.test(text) ? _lastLogLane : (_logLaneOverride || 'main');
   return ln === 'skill' && LOG_DMG_RE.test(text) ? 'main' : ln;
 }
+/* MISS 飄字（使用者 2026-11-23）：打在「落空的那一方」頭上。
+   玩家（或換身中的隊友）打怪落空＝自己頭上白字；怪打角色落空＝那隻怪頭上紅字 */
+function floatMissOn(target) {
+  if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+}
+function floatMonsterMiss(mon) {
+  if (mon && mon.id != null && typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, 'MISS', 'miss-red');
+  else if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+}
 function pushCombatLog(text, lane) {
   const ln = logLaneOf(text, lane);
   _lastLogLane = ln;
@@ -3132,6 +3141,12 @@ function offlineYieldPer10m() {
   if (!est) return null;
   const m = OFFLINE_SHORT_DATA_MULT;
   return { full: false, sec: live ? live.sec : 0, killsPer10m: est.killsPer10m * m, expPer10m: est.expPer10m * m, jobExpPer10m: est.jobExpPer10m * m, goldPer10m: est.goldPer10m * m };
+}
+/* 離線預估重新計算（使用者 2026-11-23：換了好裝備，不想讓前面打得慢的那段拉低速度）。
+   清掉這張圖的實測，重新累計；未滿 1 分鐘前離線預估與離線結算照規則 ×0.1 */
+function resetLiveRate() {
+  state.liveRate = { mapId: state.mapId, buckets: [], cur: liveEmptyBucket() };
+  saveGame();
 }
 function resetDpsTracker() {
   state.dpsTracker = { since: gameNow(), damage: 0, exp: 0, jobExp: 0, gold: 0, kills: 0 };
@@ -7520,8 +7535,8 @@ function playerAttackInner() {
       logMsg(`你的攻擊被 ${monDef.name} 閃避了！`);
       // 揮空音效
       if (typeof playAttackSound === 'function') playAttackSound();
-      // 攻擊 MISS 飄字（玩家頭上）
-      if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+      // 攻擊 MISS 飄字：比照正版打在被打的怪頭上（使用者 2026-11-23）
+      floatMissOn(target);
       return;
     }
   }
@@ -7915,7 +7930,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
   if (!sk.magic) {
     if (rng() * 100 < state.perfectDodge) {
       logMsg(`你完全迴避了 ${nameOf()}！`);
-      if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+      floatMonsterMiss(mon);
       return;
     }
     // 自動防禦（#22）：物理技能也擋，魔法不擋（官方自動防禦只擋物理）
@@ -7942,7 +7957,7 @@ function monsterCastSkillInner(mon, monDef, sk) {
       dodgePct = Math.max(0, dodgePct + playerAilPct('fleePct'));   // 黑暗讓玩家更難閃
       if (rng() * 100 < dodgePct) {
         logMsg(`你迴避了 ${nameOf()}！`);
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+        floatMonsterMiss(mon);
         return;
       }
     }
@@ -8127,7 +8142,7 @@ function monsterAttackSingle(mon) {
 
   if (rng() * 100 < state.perfectDodge) {
     logMsg(`你完全迴避了 ${monDef.name} 的攻擊！`);
-    if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+    floatMonsterMiss(mon);
     return;
   }
   // 自動防禦（#22）：機率完全擋下。跟完全迴避分開顯示——一個是躲掉、一個是擋掉
@@ -8159,14 +8174,14 @@ function monsterAttackSingle(mon) {
   const dodgePct = dodgeChancePctFromMonster(effectiveFleeWithBuff(), monDef, hitDebuff);
   if (rng() * 100 < dodgePct) {
     logMsg(`你迴避了 ${monDef.name} 的攻擊！`);
-    if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+    floatMonsterMiss(mon);
     return;
   }
 
   // 後退迴避被動：被攻擊時機率完全免傷
   if (state.hasBackslideDodge && rng() * 100 < state.backslideDodgeChance) {
     logMsg(`💨 後退迴避發動！完全免疫了 ${monDef.name} 的攻擊！`);
-    if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+    floatMonsterMiss(mon);
     return;
   }
 
@@ -11398,7 +11413,7 @@ function castSkillInner(skillId, opts) {
       if (sk.type !== 'magic' && !skillHits(sk, lv, def, target)) {
         logMsg(`「${sk.name}」被 ${def.name} 閃避了！`);
         if (typeof playAttackSound === 'function') playAttackSound();   // 物理技能揮空
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+        floatMissOn(target);
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
@@ -12280,7 +12295,7 @@ function castSkillInner(skillId, opts) {
       const dotHitPct = hitChancePctVsMonster(effectiveHitWithBuff(), def, target);
       if (rng() * 100 > dotHitPct) {
         logMsg(`「${sk.name}」被 ${def.name} 閃避了！`);
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+        floatMissOn(target);
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
@@ -12298,7 +12313,7 @@ function castSkillInner(skillId, opts) {
       const def = MONSTERS[target.defId];
       if (!skillHits(sk, lv, def, target)) {
         logMsg(`「${sk.name}」被 ${def.name} 閃避了！`);
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+        floatMissOn(target);
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
@@ -12703,7 +12718,7 @@ function castSkillInner(skillId, opts) {
       // 命中判定：整招視為一次判定，miss 時兩段都不生效
       if (!skillHits(sk, lv, def, target)) {
         logMsg(`「${sk.name}」被 ${def.name} 閃避了！`);
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+        floatMissOn(target);
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
@@ -12751,7 +12766,7 @@ function castSkillInner(skillId, opts) {
       // 命中判定：整招視為一次判定
       if (!skillHits(sk, lv, def, target)) {
         logMsg(`「${sk.name}」被 ${def.name} 閃避了！`);
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+        floatMissOn(target);
         break;
       }
       const elemMult = getElementMultiplierVsMonster(skElement, def, target);
@@ -12787,7 +12802,7 @@ function castSkillInner(skillId, opts) {
         if (target.hp <= 0) killMonster(def, target);
       } else {
         logMsg(`「${sk.name}」被 ${def.name} 閃避了！`);
-        if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+        floatMissOn(target);
       }
       // 立即生成新怪（不取代現有怪物）
       if (state.monsters && state.monsters.length < 5) {
@@ -13648,7 +13663,7 @@ const NPC_SHOPS = {
     // 補HP藥水、精煉材料、攻速藥水；SP 只賣藍水（1000z），其餘回SP道具靠打怪掉
     items: ['red_potion', 'orange_potion', 'yellow_potion', 'white_potion',
             'blue_potion',
-            'refine_stone',
+            'phracon', 'emveretarcon',   // 武器 Lv1／Lv2 精煉（官方強化武器金屬）
             // 技能觸媒：魔力礦石（藍／紅／黃）、陷阱道具（官方 NPC 有賣）
             'blue_gemstone', 'red_gemstone', 'yellow_gemstone', 'booby_trap',
             'center_potion', 'awakening_potion', 'berserk_potion',

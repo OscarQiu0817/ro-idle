@@ -1370,9 +1370,15 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
   font-size: 20px;
 }
 .damage-float.miss {
-  color: #aaa;
+  color: #fff;
   font-size: 16px;
   font-style: italic;
+  animation: missRise 1s ease-out forwards;   /* 比照正版直直往上飄，不像傷害數字往旁邊掉 */
+}
+@keyframes missRise {
+  0%   { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) translateY(-30px); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translateY(-42px); }
 }
 .damage-float.element-good {
   color: #2ecc71;
@@ -1831,6 +1837,14 @@ img.shop-item-icon { object-fit: contain; image-rendering: pixelated; }
 .equip-pick-name { font-size: 12px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .equip-pick-stats { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
 .equip-pick-cards { font-size: 10px; color: var(--gold-soft); margin-top: 2px; }
+/* 換裝清單：卡片格狀（使用者 2026-11-23：PC 一次只看得到一件）。夠寬就兩三欄，手機一欄 */
+.equip-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+.equip-pick-grid .equip-pick-row { margin: 0; padding: 6px 8px; cursor: pointer; align-items: flex-start; }
+.equip-pick-grid .equip-pick-row:hover { border-color: var(--gold-soft, #c9a85a); }
+.equip-pick-grid .equip-pick-row img { margin-top: 2px; }
+.equip-pick-grid .equip-pick-stats { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.equip-pick-grid .inv-compare { font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.equip-pick-grid .btn-small { padding: 2px 8px; font-size: 11px; min-height: 0; align-self: center; }
 .socket-card { margin-top: 4px; }
 .socket-card-name { font-weight: 600; }
 .socket-card-fx { color: var(--ink); font-size: 11px; line-height: 1.45; margin-top: 1px; }
@@ -2682,6 +2696,10 @@ details.map-preview-box:not([open]) > summary.map-preview-title::after { content
 
 /* T52 獵鷹（戰鬥畫面） */
 .bf-falcon { position: absolute; z-index: 12; pointer-events: none; image-rendering: pixelated; }
+/* 寵物跟隨：在 .player-area 裡排在玩家後面 */
+.bf-pet { position: absolute; z-index: 1; pointer-events: none; }
+.bf-pet-img { position: absolute; inset: 0; image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+.bf-pet-name { position: absolute; transform: translateX(-50%); white-space: nowrap; font-size: 11px; color: #cfe8ff; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
 
 /* 吉芬魔法大賽（T51 第 6 期） */
 .bf-dojo-npc { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 31; display: flex; align-items: flex-end; gap: 8px; max-width: 92%; }
