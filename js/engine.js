@@ -9017,19 +9017,20 @@ function onPlayerDown() {
    基礎等級上限與素質上限（#110／#111）。**轉了三轉才解鎖**——三轉本身是純外觀
    （沒有自己的技能，見 js/jobs.js 的 tier 3 區塊），它存在的意義就是這兩道門：
 
-     基礎等級 99 → 200
+     基礎等級 99 → 175（官方）
      單項素質   99 → 130
 
    99 之後的每一級都要靠打寶模式才走得動——曲線就是照那個前提配的，
    見 data.js 的 expToNextBaseLevel()。 */
-const BASE_LEVEL_CAP = 250;
-const BASE_LEVEL_CAP_ADVANCED = 250;
+// 三轉照官方 175（使用者 2026-11-23；原本 250）
+const BASE_LEVEL_CAP = 175;
+const BASE_LEVEL_CAP_ADVANCED = 175;
 const STAT_CAP = 99;
 const STAT_CAP_ADVANCED = 130;
-/* 轉生過的角色（使用者 2026-11-17）：到過 Lv99 了，上限再開一段——等級 200、單項素質 120。
+/* 轉生過的角色：2026-11-17 曾開到等級 200、素質 120；2026-11-23 使用者改回官方（都 99，三轉才突破）。
    99 以後的經驗走三轉那張表（轉生表只到 99），見 data.js 的 expToNextBaseLevel() */
-const BASE_LEVEL_CAP_REBORN = 200;
-const STAT_CAP_REBORN = 120;
+const BASE_LEVEL_CAP_REBORN = 99;   // 使用者 2026-11-23：照官方，轉生後要轉三轉才突破 99（原本 200，三轉改 175 後會比三轉還高）
+const STAT_CAP_REBORN = 99;   // 使用者 2026-11-23：照官方（原本 120），三轉才開到 130
 function isRebornChar(who) { const c = who || state; return !!(c && c.rebirthCount > 0); }
 function isTier3(jobId) {
   const jd = JOB_TREE[jobId || (state && state.jobId)];
@@ -9039,7 +9040,7 @@ function isTier3(jobId) {
 function baseLevelCapOf(jobId, who) {
   const jd = JOB_TREE[jobId || (state && state.jobId)];
   const tier = jd?.tier ?? 0;
-  if (tier >= 3) return BASE_LEVEL_CAP_ADVANCED;  // 3轉 250
+  if (tier >= 3) return BASE_LEVEL_CAP_ADVANCED;  // 3轉 175
   if (isRebornChar(who)) return BASE_LEVEL_CAP_REBORN;   // 轉生過 200
   return 99;  // 其餘 99
 }
