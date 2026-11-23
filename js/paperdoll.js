@@ -4,6 +4,61 @@
    跟目前角色狀態有關的（paperdollParts、syncPaperdoll…）留在 ui.js。 */
 
 const PAPERDOLL_HEAD_SLOTS = ['head_bottom', 'head_mid', 'head_top'];
+
+/* 官方圖檔缺格補圖（使用者 2026-11-23）：女刺客拿短劍揮擊（slash）前 4 格起手，官方 act 標 -1 沒畫短劍，
+   第 5 格短劍才突然出現。補上第 5 格那把短劍（圖集第 1 張），握在右拳、刀身橫在身前；
+   位置由 8 方向裡有畫的那幾格（act 82）跟身體錨點的相對距離推出來，逐格看過。
+   格式：{ 圖層 key: { 動作: { 第幾格: [圖集序號, x, y, 翻面] } } }，只補原本是空的格子 */
+const PAPERDOLL_FILL = {
+  'weapon/assassin/female/dagger': { slash: { 0: [1, 8, -35, 0], 1: [1, 13, -37, 0], 2: [1, 17, -38, 0], 3: [1, 7, -36, 0] } },
+};
+/* 整格改寫（使用者 2026-11-23）：女刺客拿斧頭、單手劍揮擊的起手 4 格，官方畫的是頭右邊一塊 9×8 的小碎片、離手很遠，
+   看起來像飄在空中。改成跟短劍一樣把第 5 格那把武器（圖集第 2 張）握在右拳 */
+const PAPERDOLL_SET = {
+  'weapon/assassin/female/axe1': { slash: { 0: [2, 8, -35, 0], 1: [2, 13, -37, 0], 2: [2, 17, -38, 0], 3: [2, 7, -36, 0] } },
+  'weapon/assassin/female/sword1': { slash: { 0: [2, 8, -35, 0], 1: [2, 13, -37, 0], 2: [2, 17, -38, 0], 3: [2, 7, -36, 0] } },
+  /* 十字斬首者（女）起手是右手舉在頭右邊（姿勢跟女刺客不同）：短劍（官方空的）、斧頭（官方一小塊）握在舉起的拳頭；單手劍官方本來就對 */
+  'weapon/guillotinecross/female/dagger': { slash: { 0: [1, 23, -60, 0], 1: [1, 29, -65, 0], 2: [1, 32, -65, 0], 3: [1, 18, -62, 0] } },
+  'weapon/guillotinecross/female/axe1': { slash: { 0: [2, 29, -66, 0], 1: [2, 35, -71, 0], 2: [2, 38, -71, 0], 3: [2, 24, -68, 0] } },
+};
+(function applyPaperdollFill(P) {
+  if (!P || !P.clip) return;
+  /* 刀光改成獨立圖層「<武器 key>/glow」（js/paperdoll_glow.js，官方 _검광 整段）：
+     舊轉檔把刀光第一張接在武器圖層後面（有的座標還錯），照 glowTrim（武器本身每格圖層數）切掉 */
+  Object.entries(P.glowTrim || {}).forEach(([key, acts]) => {
+    const c = P.clip[key];
+    if (!c) return;
+    Object.entries(acts).forEach(([act, counts]) => {
+      (c[act] || []).forEach((f, i) => { if (f[2] && counts[i] != null && f[2].length > counts[i] * 4) f[2] = f[2].slice(0, counts[i] * 4); });
+    });
+  });
+  const apply = (table, force) => Object.entries(table).forEach(([key, acts]) => {
+    const c = P.clip[key];
+    if (!c) return;
+    Object.entries(acts).forEach(([act, frames]) => {
+      const list = c[act];
+      if (!list) return;
+      Object.entries(frames).forEach(([i, layer]) => {
+        const f = list[i];
+        if (f && (force || !f[2] || !f[2].length)) f[2] = layer.slice();
+      });
+    });
+  });
+  apply(PAPERDOLL_FILL, false);
+  apply(PAPERDOLL_SET, true);
+})(typeof window !== 'undefined' ? window.PAPERDOLL : null);
+/* 有刀光的武器，緊接在武器後面多畫一層刀光 */
+function pdWithGlow(parts) {
+  const clip = window.PAPERDOLL && window.PAPERDOLL.clip;
+  if (!clip || !parts) return parts;
+  let out = null;
+  for (let i = 0; i < parts.length; i++) {
+    if (out) out.push(parts[i]);
+    const g = parts[i] && parts[i].indexOf('weapon/') === 0 && clip[parts[i] + '/glow'] ? parts[i] + '/glow' : null;
+    if (g && parts[i + 1] !== g) { if (!out) out = parts.slice(0, i + 1); out.push(g); }
+  }
+  return out || parts;
+}
 const _pdImg = {};
 
 function paperdollImage(id) {
@@ -163,6 +218,7 @@ function paperdollExpand(part, fr, ox, oy, box) {
 /* 掃過所有動作的所有格，算出畫布大小與腳底位置（原點＝身體錨點）。
    回傳 { minX, minY, width, height, idleH（身體待機高）, feet（腳底到畫布頂） } */
 function paperdollBounds(parts) {
+  parts = pdWithGlow(parts);
   const empty = () => ({ minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
   const all = empty();
   const idle = empty();
@@ -218,6 +274,7 @@ function drawPaperdollLayers(ctx, part, fr, ox, oy) {
 function drawPaperdollFrame(ctx, parts, act, n, ox, oy) {
   const north = act && act.slice(-2) === '_n';
   if (north) parts = parts.map(p => pdKey(p, act));
+  else parts = pdWithGlow(parts);   // 朝上沒有刀光圖層
   const body = paperdollFrame(parts[0], act, n);
   if (!body) return null;
   let ready = true;
