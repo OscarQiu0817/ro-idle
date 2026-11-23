@@ -280,6 +280,7 @@ let _lastLogLane = 'main';
    第一版用「訊息帶「」括號就是技能」來認，結果轉職訊息（恭喜你轉職成為「騎士」）
    跟換地圖（前往「新手訓練場」）全跑進技能欄——「」在這份資料裡到處都是。 */
 let _logLaneOverride = null;
+let _logCasterName = null;   // 怪物施放技能時的名字（pushCombatLog 補技能欄那行用）
 function withLogLane(lane, fn) {
   const prev = _logLaneOverride;
   _logLaneOverride = lane;
@@ -309,7 +310,7 @@ function pushCombatLog(text, lane) {
     const m = text.match(/「[^」]+」(Lv\d+)?/);
     if (m && !/^\s*→/.test(text)) {
       const sb = combatLogLanes.skill;
-      sb.push('施放' + m[0]);
+      sb.push((_logCasterName ? _logCasterName + ' ' : '') + '施放' + m[0]);
       if (sb.length > 40) sb.shift();
     }
   }
@@ -342,7 +343,7 @@ function createCharacter(name, statAlloc, gender, look) {
     instances: {},     // { instanceId: {item, refine, cards:[cardId,...]} } 精煉或插卡過的裝備會變成獨立個體，跟著那一件走
     inventory: [],        // [{item:'jellopy', qty:3}]
     gold: 50,
-    mapId: 'prontera',
+    mapId: 'hub',   // 新角色出生在冒險者主城（使用者 2026-11-23）；新手傳送免費，見 npcWarpCost
     monster: null,        // {defId, hp, maxHp} - 保留相容性
     monsters: [],         // [{defId, hp, maxHp, id}] 多怪物系統
     monsterIdCounter: 0,  // 怪物唯一ID計數器
@@ -7839,7 +7840,10 @@ function monsterCastSkill(mon, monDef, sk, ally) {
   if (ally && !sk.buff && !sk.heal) {
     return withAlly(ally, () => withLogLane('ally', () => monsterCastSkillInner(mon, monDef, sk)));
   }
-  return withLogLane('skill', () => monsterCastSkillInner(mon, monDef, sk));
+  // 記下施放者：技能欄補「施放「X」」時寫成「土波利 施放「火屬性攻擊」」，不會看起來像玩家放的（使用者 2026-11-23）
+  const prevCaster = _logCasterName;
+  _logCasterName = monDef.name;
+  try { return withLogLane('skill', () => monsterCastSkillInner(mon, monDef, sk)); } finally { _logCasterName = prevCaster; }
 }
 function monsterCastSkillInner(mon, monDef, sk) {
   const nameOf = () => `${monDef.name} 的「${MOB_SKILL_NAMES[sk.s] || sk.s}」`;
@@ -16068,13 +16072,19 @@ function warpLevelOf(c) {
 function partyTopLevel() {
   return Math.max(warpLevelOf(state), ...allyList().map(warpLevelOf));
 }
+/* 傳送費：還沒一轉的新手免費（使用者 2026-11-23：出生在主城，新手只有 50z，不然出不去） */
+function npcWarpIsNoviceFree() { return !((JOB_TREE[state.jobId] || {}).tier); }
+function npcWarpCost(townId) {
+  const t = WORLD.towns.find(x => x.id === townId);
+  return !t || npcWarpIsNoviceFree() ? 0 : t.cost;
+}
 function npcWarpBlockReason(townId) {
   const t = WORLD.towns.find(x => x.id === townId);
   if (!t) return '沒有這個傳送目的地。';
   if (!(currentMap() || {}).town) return '要在城鎮找傳送 NPC。';
   if (townId === state.mapId) return '你已經在這裡了。';
   if (partyTopLevel() < t.lv) return `${t.name}要 Lv${t.lv} 才開放。`;
-  if ((state.gold || 0) < t.cost) return `鋅幣不足（需要 ${t.cost.toLocaleString()}z）。`;
+  if ((state.gold || 0) < npcWarpCost(townId)) return `鋅幣不足（需要 ${npcWarpCost(townId).toLocaleString()}z）。`;
   return null;
 }
 function npcWarp(townId) {
@@ -16082,8 +16092,9 @@ function npcWarp(townId) {
   if (why) { logMsg('⚠️ ' + why); return why; }
   const t = WORLD.towns.find(x => x.id === townId);
   cancelTravel(true);
-  state.gold -= t.cost;
-  logMsg(t.cost ? `🌀 支付 ${t.cost.toLocaleString()}z，傳送 NPC 打開了通往「${t.name}」的傳送之陣。` : `🌀 傳送 NPC 打開了通往「${t.name}」的傳送之陣。`);
+  const cost = npcWarpCost(townId);
+  state.gold -= cost;
+  logMsg(cost ? `🌀 支付 ${cost.toLocaleString()}z，傳送 NPC 打開了通往「${t.name}」的傳送之陣。` : `🌀 傳送 NPC 打開了通往「${t.name}」的傳送之陣。`);
   startWarpPortal(townId);
   return null;
 }

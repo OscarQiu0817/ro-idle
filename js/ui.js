@@ -5263,15 +5263,17 @@ function fakeVendorBuyUi(id, i) {
   const el = document.getElementById('fv-qty-' + i);
   const why = fakeVendorBuy(id, i, el ? parseInt(el.value) || 1 : 1);
   if (why) showToast(why);
+  // 只更新鋅幣列與訊息；renderAll 會重畫地圖分頁，把攤位面板關掉（使用者 2026-11-23：買完還想繼續逛）
+  renderTopBar(); renderLog();
   openTownNpc(id);
-  renderAll();
 }
 function fakeBuyerSellUi(id) {
   const el = document.getElementById('fb-qty');
   const why = fakeBuyerSell(id, el ? parseInt(el.value) || 1 : 1);
   if (why) showToast(why);
+  // 只更新鋅幣列與訊息；renderAll 會重畫地圖分頁，把攤位面板關掉（使用者 2026-11-23：買完還想繼續逛）
+  renderTopBar(); renderLog();
   openTownNpc(id);
-  renderAll();
 }
 /* 區域移動按鈕（使用者 2026-11-06）：在入口時畫面邊緣顯示往三區的按鈕，在其他區顯示回卡普拉服務處。
    方向照兩區中心的相對位置擺在上／下／左／右邊緣 */
@@ -9581,10 +9583,10 @@ function openTownWarp(tab) {
     const rows = WORLD.towns.filter(t => t.id !== state.mapId).sort((a, b) => a.lv - b.lv).map(t => {
       const lock = lv < t.lv;
       return `<button class="wm-floor${lock ? ' locked' : ''}" ${lock ? 'disabled' : ''} onclick="doTownWarp('${t.id}')">
-        <span>${t.id === HUB_TOWN ? '🏰 ' : ''}${shopEsc(t.name)}</span><small>${lock ? `Lv${t.lv} 開放` : t.cost ? t.cost.toLocaleString() + 'z' : '免費'}</small></button>`;
+        <span>${t.id === HUB_TOWN ? '🏰 ' : ''}${shopEsc(t.name)}</span><small>${lock ? `Lv${t.lv} 開放` : npcWarpCost(t.id) ? npcWarpCost(t.id).toLocaleString() + 'z' : '免費'}</small></button>`;
     }).join('');
     body = `<div class="wm-sheet-title">🌀 傳送 NPC <small>隊伍最高 Lv${lv}・持有 ${(state.gold || 0).toLocaleString()}z</small></div>
-      <div class="ab-info-text">冒險者主城免費，其他城鎮照右邊價格，一次收費。</div>
+      <div class="ab-info-text">${npcWarpIsNoviceFree() ? '還沒一轉的新手全部免費。' : '冒險者主城免費，其他城鎮照右邊價格，一次收費。'}</div>
       ${partyFollowHtml()}
       <div class="wm-floors">${rows}</div>`;
   } else if (tab === 'portal') {
@@ -11985,7 +11987,8 @@ function playNextBroadcast() {
   }
   bar.className = 'on ' + (next.kind || 'info');
   bar.innerHTML = `<span class="bc-text">📢 ${shopEsc(next.text)}</span>`;
-  const sec = Math.max(7, Math.min(14, next.text.length * 0.28));
+  // 使用者 2026-11-23：速度放慢到原本一半（秒數 ×2）
+  const sec = Math.max(14, Math.min(28, next.text.length * 0.56));
   bar.firstChild.style.animationDuration = sec + 's';
   clearTimeout(bar._t);
   bar._t = setTimeout(playNextBroadcast, sec * 1000);

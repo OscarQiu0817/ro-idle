@@ -15,7 +15,7 @@ const mqFlag = k => (state.mainQuest && state.mainQuest.flags && state.mainQuest
 
 const MAIN_QUEST = [
   // ---- 第一章：踏上冒險 ----
-  { ch: 1, title: '第一場戰鬥', desc: '在普隆德拉原野打倒 10 隻魔物。角色會自己找怪打，自動戰鬥分頁可以設定吃藥時機。',
+  { ch: 1, title: '第一場戰鬥', desc: '找主城的傳送師到普隆德拉（新手免費），出城到普隆德拉原野打倒 10 隻魔物。角色會自己找怪打，自動戰鬥分頁可以設定吃藥時機。',
     check: () => [Math.min(10, acvTotalKills()), 10], go: 'map',
     reward: { points: 10, zeny: 500, items: [['red_potion', 10]] } },
   { ch: 1, title: '變強的第一步', desc: '升級會拿到素質點。到角色分頁把點數加到想強化的素質上。',
@@ -24,7 +24,7 @@ const MAIN_QUEST = [
   { ch: 1, title: '整裝待發', desc: '打怪掉的裝備在背包裡，點一下就能穿上。',
     check: () => [mqFlag('equip'), 1], go: 'inventory',
     reward: { points: 10, zeny: 1000 } },
-  { ch: 1, title: '城裡的商店', desc: '找城鎮的卡普拉職員「前往主城」，到主城商店街跟商人買一樣東西。',
+  { ch: 1, title: '城裡的商店', desc: '回到主城（各城鎮的卡普拉職員「前往主城」免費），到主城商店街跟商人買一樣東西。',
     check: () => [mqFlag('buy'), 1], go: 'map',
     reward: { points: 10, items: [['wing_of_fly', 5]] } },
   { ch: 1, title: '卡普拉服務', desc: '每座城鎮（含主城）的卡普拉職員都可以保管道具，存一樣東西到倉庫試試。',
