@@ -128,6 +128,27 @@ const TOWN_TEMPLATE = {
    比照私服：主城不在世界地圖上，只能找各城卡普拉「前往主城」（免費）進來，
    出去找主城傳送師（傳到各城，費用照原本）。
    放攻城／副本／附魔／精煉／小遊戲／商人／活動／交易所。交易所要雲端（T12），小遊戲、活動還沒內容，先放佔位 NPC。 */
+/* 特殊地區傳送（使用者 2026-11-24）：副本、夢魘版、任務地圖沒有傳送點連得到，放進城鎮傳送 NPC 的「特殊地區」分頁。
+   town＝在那邊倒下或回城回哪個城；lv＝隊伍最高等級要到多少才開放（地圖怪物平均等級 −10）。
+   名字是 id 的四張客戶端沒有中文名，這裡先給暫定名稱 */
+const SPECIAL_WARPS = [
+  { id: 'treasure_n1', town: 'alberta', lv: 1 },
+  { id: 'treasure_n2', town: 'alberta', lv: 5 },
+  { id: 'pay_d03_i', town: 'payon', lv: 25 },
+  { id: 'gl_cas02_', town: 'geffen', lv: 55, name: '古城 2樓（夢魘）' },
+  { id: 'teg_dun01', town: 'lighthalzen', lv: 90, name: '闇之試煉 1樓（暫定名）' },
+  { id: 'teg_dun02', town: 'lighthalzen', lv: 90, name: '闇之試煉 2樓（暫定名）' },
+  { id: 'nyd_dun01', town: 'splendide', lv: 100 },
+  { id: 'moc_prydn1', town: 'morocc', lv: 105 },
+  { id: 'gl_chyard_', town: 'geffen', lv: 110, name: '古城墓地（夢魘）' },
+  { id: 'prt_q', town: 'prontera', lv: 120 },
+  { id: 'moc_prydn2', town: 'morocc', lv: 120 },
+  { id: 'c_tower2_', town: 'aldebaran', lv: 145 },
+  { id: 'c_tower3_', town: 'aldebaran', lv: 150 },
+  { id: 'lhz_dun_n', town: 'lighthalzen', lv: 165 },
+];
+const SPECIAL_WARP_COST = 5000;
+if (typeof MAPS !== 'undefined') SPECIAL_WARPS.forEach(s => { const m = MAPS.find(x => x.id === s.id); if (m && s.name && (!m.name || m.name === m.id)) m.name = s.name; });
 const HUB_TOWN = 'hub';
 const HUB_NAME = '冒險者主城';
 if (typeof MAPS !== 'undefined' && !MAPS.some(m => m.id === HUB_TOWN)) {

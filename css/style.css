@@ -827,8 +827,38 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 /* 分頁列是三欄的格子。鍛造一直占一格，沒學會技能時按鈕停用。
    下緣的線交給每一顆自己畫（最後一列的線就是分頁列的下緣），
    不要用 `:nth-child(n+7)` 去猜哪一列是最後一列——顆數一變就會漏一條線或多一條。 */
-.tab-groups { display: none; }
-.tab-nav { display: grid; grid-template-columns: repeat(3, 1fr); }
+/* PC 也跟手機一樣：上排四個大分類、下排該分類的分頁（使用者 2026-11-24：原本 PC 是 12 格占掉一大塊，內容被擠到下面） */
+.tab-groups {
+  display: flex; background: transparent;
+  border-bottom: none;
+}
+.tab-group-btn {
+  flex: 1; padding: 10px 2px; background: transparent; color: var(--ink-dim);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  border: none; border-bottom: 2px solid var(--line);
+}
+.tab-group-btn.active {
+  color: var(--gold-soft); background: var(--bg-panel-2);
+  border-bottom-color: var(--bg-panel-2);
+}
+.tab-nav {
+  display: flex; background: var(--bg-panel-2);
+  border-bottom: 1px solid var(--line);
+}
+.tab-nav .tab-btn {
+  display: none; flex: 1;
+  border: none; background: transparent;
+  box-shadow: none;
+}
+.tab-nav .tab-btn.active {
+  color: var(--gold-soft); background: transparent;
+  box-shadow: inset 0 -2px 0 var(--gold);
+}
+.tab-nav.group-fight .tab-btn[data-group="fight"],
+.tab-nav.group-grow .tab-btn[data-group="grow"],
+.tab-nav.group-gear .tab-btn[data-group="gear"],
+.tab-nav.group-social .tab-btn[data-group="social"] { display: block; }
+.tab-nav .tab-btn.hidden { display: none !important; }
 .tab-btn {
   padding: 10px 4px; background: transparent; color: var(--ink-dim);
   font-size: 12px; cursor: pointer; white-space: nowrap;
@@ -1198,37 +1228,6 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
   .combat-log { height: 145px; }
 
   .side-panel { max-width: none; min-width: 0; flex: 1 1 auto; }
-  .tab-groups {
-    display: flex; background: transparent;
-    border-bottom: none;
-  }
-  .tab-group-btn {
-    flex: 1; padding: 10px 2px; background: transparent; color: var(--ink-dim);
-    font-size: 13px; font-weight: 700; cursor: pointer;
-    border: none; border-bottom: 2px solid var(--line);
-  }
-  .tab-group-btn.active {
-    color: var(--gold-soft); background: var(--bg-panel-2);
-    border-bottom-color: var(--bg-panel-2);
-  }
-  .tab-nav {
-    display: flex; background: var(--bg-panel-2);
-    border-bottom: 1px solid var(--line);
-  }
-  .tab-nav .tab-btn {
-    display: none; flex: 1;
-    border: none; background: transparent;
-    box-shadow: none;
-  }
-  .tab-nav .tab-btn.active {
-    color: var(--gold-soft); background: transparent;
-    box-shadow: inset 0 -2px 0 var(--gold);
-  }
-  .tab-nav.group-fight .tab-btn[data-group="fight"],
-  .tab-nav.group-grow .tab-btn[data-group="grow"],
-  .tab-nav.group-gear .tab-btn[data-group="gear"],
-  .tab-nav.group-social .tab-btn[data-group="social"] { display: block; }
-  .tab-nav .tab-btn.hidden { display: none !important; }
   html, body { height: auto; }
   .tab-content { max-height: none; overflow: visible; }
   .side-panel { overflow: visible; }

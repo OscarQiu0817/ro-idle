@@ -346,7 +346,8 @@ function createCharacter(name, statAlloc, gender, look) {
     rebirthCount: 0,     // 轉生次數。**上限 1，每隻角色只能轉生一次**（見 doRebirth）
     rebirthPath: null,   // 轉生前走過的職業鏈，例 ['swordsman','knight']。轉生後只能照這條路重走
     learnedSkills: {},   // {skillId: level}
-    equip: { head_top: null, head_mid: null, head_bottom: null, weapon: null, armor: null, shield: null, garment: null, footgear: null, accessory1: null, accessory2: null, ammo: null },
+    equip: { head_top: null, head_mid: null, head_bottom: null, weapon: null, armor: null, shield: null, garment: null, footgear: null, accessory1: null, accessory2: null, ammo: null,
+      shadow_weapon: null, shadow_armor: null, shadow_shield: null, shadow_shoes: null, shadow_earring: null, shadow_pendant: null },
     refinement: {},   // 舊版精煉資料（按itemId），僅供遷移讀取，新邏輯一律用 instances
     equippedCards: {}, // 舊版插卡資料（按欄位），僅供遷移讀取，新邏輯一律用 instances
     instances: {},     // { instanceId: {item, refine, cards:[cardId,...]} } 精煉或插卡過的裝備會變成獨立個體，跟著那一件走
@@ -652,7 +653,9 @@ function equippedDef() {
 }
 // 裝備本體（武器/防具/飾品）自帶的加成數值加總：許多防具本身就有寫str/agi/vit/int/dex/luk/atk/flee/hit/critRate/perfectDodge/hp/sp等欄位，
 // 但過去只有equippedDef()把def讀出來，其餘欄位全部沒有實際套用，等於裝了也沒效果（純UI顯示用），這裡統一補上
-const EQUIP_SLOTS_ALL = ['weapon', 'head_top', 'head_mid', 'head_bottom', 'armor', 'shield', 'garment', 'footgear', 'accessory1', 'accessory2'];
+// 影子裝備 6 格（使用者 2026-11-24 開放，js/shadow_gear.js）：效果、精煉、套裝都走一般裝備同一套
+const SHADOW_SLOTS = ['shadow_weapon', 'shadow_armor', 'shadow_shield', 'shadow_shoes', 'shadow_earring', 'shadow_pendant'];
+const EQUIP_SLOTS_ALL = ['weapon', 'head_top', 'head_mid', 'head_bottom', 'armor', 'shield', 'garment', 'footgear', 'accessory1', 'accessory2', ...SHADOW_SLOTS];
 // atk/matk已由equippedAtk()/equippedMatk()從武器欄位讀取（含精煉加成），這裡加總其餘欄位時排除武器欄，避免武器ATK被重複計算兩次
 const EQUIP_SLOTS_NO_WEAPON = EQUIP_SLOTS_ALL.filter(s => s !== 'weapon');
 function equippedStatBonus(stat) {
@@ -14476,6 +14479,7 @@ function useItem(itemId) {
 function resolveEquipSlotFor(itemId) {
   const def = ITEMS[itemId];
   if (!def) return null;
+  if (def.type === 'shadow') return def.shadowSlot || null;   // 影子裝備：資料直接寫部位
 
   let slot;
   if (def.type === 'weapon') {
@@ -14565,6 +14569,7 @@ function itemJobBlock(d) {
     if (!getAllLearnedJobs().some(j => d.reqJob.includes(j))) return `${currentJob().name}無法裝備這件道具。`;
   }
   if (d.reqUpper && !((state.rebirthCount || 0) > 0)) return '轉生後才能裝備。';
+  if (d.reqThird && !isTier3()) return '三轉後才能裝備。';
   if (d.reqGender && d.reqGender !== (state.gender === 'female' ? 'Female' : 'Male')) {
     return d.reqGender === 'Male' ? '限男性角色裝備。' : '限女性角色裝備。';
   }
@@ -14789,7 +14794,8 @@ function refineItem(slotKey, materialType, useBless) {
   }
 
   const item = ITEMS[itemId];
-  const isArmor = item.type === 'armor';
+  // 影子裝備照防具精煉（鋁、防具成功率）；官方影子精煉表到手再改（2026-11-24）
+  const isArmor = item.type === 'armor' || item.type === 'shadow';
   const weaponLv = isArmor ? 0 : getRefineWeaponLv(item);
 
   // 檢查材料是否適用
@@ -16101,6 +16107,28 @@ function npcWarpBlockReason(townId) {
   if (townId === state.mapId) return '你已經在這裡了。';
   if (partyTopLevel() < t.lv) return `${t.name}要 Lv${t.lv} 才開放。`;
   if ((state.gold || 0) < npcWarpCost(townId)) return `鋅幣不足（需要 ${npcWarpCost(townId).toLocaleString()}z）。`;
+  return null;
+}
+/* 特殊地區傳送（js/towns.js SPECIAL_WARPS）：要在城鎮、等級夠、付錢（新手免費），走傳送之陣過去 */
+function specialWarpBlockReason(id) {
+  const s = typeof SPECIAL_WARPS !== 'undefined' && SPECIAL_WARPS.find(x => x.id === id);
+  if (!s || !MAPS.some(m => m.id === id)) return '沒有這個傳送目的地。';
+  if (!(currentMap() || {}).town) return '要在城鎮找傳送 NPC。';
+  if (state.mapId === id) return '你已經在這裡了。';
+  if (partyTopLevel() < s.lv) return `要 Lv${s.lv} 才開放。`;
+  const cost = npcWarpIsNoviceFree() ? 0 : SPECIAL_WARP_COST;
+  if ((state.gold || 0) < cost) return `鋅幣不足（需要 ${cost.toLocaleString()}z）。`;
+  return null;
+}
+function specialWarp(id) {
+  const why = specialWarpBlockReason(id);
+  if (why) { logMsg('⚠️ ' + why); return why; }
+  cancelTravel(true);
+  const cost = npcWarpIsNoviceFree() ? 0 : SPECIAL_WARP_COST;
+  state.gold -= cost;
+  const name = (MAPS.find(m => m.id === id) || {}).name || id;
+  logMsg(cost ? `🌀 支付 ${cost.toLocaleString()}z，傳送 NPC 打開了通往「${name}」的傳送之陣。` : `🌀 傳送 NPC 打開了通往「${name}」的傳送之陣。`);
+  startWarpPortal(id);
   return null;
 }
 function npcWarp(townId) {

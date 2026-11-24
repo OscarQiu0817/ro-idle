@@ -5247,7 +5247,7 @@ function fakeVendorPanelHtml(n, back) {
       return `<div class="shop-row${out || state.gold < x.price ? ' shop-cannot-afford' : ''}">
         <div class="shop-item-info" onmouseenter="showShopItemTooltip(event,'${x.item}')" onmouseleave="hideEquipTooltip()">
           <img class="shop-item-icon" src="${itemImgSrc(x.item)}" alt="" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'">
-          <div class="shop-item-details"><span class="shop-item-name">${shopEsc(it.name)}</span></div></div>
+          <div class="shop-item-details"><span class="shop-item-name"><button type="button" class="wh-info-btn" aria-label="看完整說明" onclick="showBagInfo(event,'${x.item}','')">ⓘ</button>${shopEsc(it.name)}</span></div></div>
         <div class="shop-item-actions">
           <span class="shop-item-price">${x.price.toLocaleString()} 💰</span>
           <span class="shop-item-owned">剩 ${x.qty}</span>
@@ -7532,13 +7532,15 @@ function itemTooltipHtml(itemId, opts) {
   if (!item) return '';
   const refLevel = opts.refine || 0;
   let html = `<div class="tt-name">${shopEsc(getItemDisplayName(itemId))}${refLevel > 0 ? ` <span class="tt-refine">+${refLevel}</span>` : ''}</div>`;
-  let type = item.type === 'costume' && typeof costumeSlotLabel === 'function' ? `服飾・${costumeSlotLabel(item.id)}（只換外觀）` : (ITEM_TYPE_LABELS[item.type] || '道具');
+  let type = item.type === 'costume' && typeof costumeSlotLabel === 'function' ? `服飾・${costumeSlotLabel(item.id)}（只換外觀）`
+    : item.type === 'shadow' ? `影子裝備・${(SHADOW_SLOT_LABELS[item.shadowSlot] || '').replace('影子', '')}${item.reqLevel ? `・需求 Lv${item.reqLevel}` : ''}`
+    : (ITEM_TYPE_LABELS[item.type] || '道具');
   if (item.element && item.element !== 'none' && ELEMENT_NAMES[item.element]) {
     type += ' · ' + (ELEMENT_ICONS[item.element] || '') + ELEMENT_NAMES[item.element];
   }
   html += `<div class="tt-type">${type}</div>`;
   /* 裝備的實際效果由資料產生（5d：效果以 rAthena 為準），原文說明放在下面當參考 */
-  const fx = opts.descHtml == null && (item.type === 'weapon' || item.type === 'armor') ? describeCardBonus(item) : [];
+  const fx = opts.descHtml == null && (item.type === 'weapon' || item.type === 'armor' || item.type === 'shadow') ? describeCardBonus(item) : [];
   if (fx.length) html += `<div class="tt-fx">${fx.map(l => `<div>${shopEsc(l)}</div>`).join('')}</div>`;
   html += opts.descHtml != null ? opts.descHtml : tooltipDescHtml(item.desc, fx.length > 0);
   const stats = [];
@@ -7596,7 +7598,7 @@ function showShopItemTooltip(event, itemId) {
   const item = ITEMS[itemId];
   const tt = document.getElementById('ro-equip-tooltip');
   if (!item || !tt) return;
-  const gear = item.type === 'weapon' || item.type === 'armor';
+  const gear = item.type === 'weapon' || item.type === 'armor' || item.type === 'shadow';
   tt.innerHTML = itemTooltipHtml(itemId, { maxSlots: item.slots || 0, compare: gear });
   placeEquipTooltip(tt, event.currentTarget || event.target);
 }
@@ -7619,7 +7621,7 @@ function showBagTooltip(event, itemId, instanceId) {
     refine: inst ? (inst.refine || 0) : 0,
     cards: inst && inst.cards ? inst.cards : [],
     maxSlots: item.slots || 0,
-    compare: item.type === 'weapon' || item.type === 'armor',
+    compare: item.type === 'weapon' || item.type === 'armor' || item.type === 'shadow',
   };
   if (card) {
     const bits = describeCardBonus(card);
@@ -7664,6 +7666,7 @@ const INV_CATEGORIES = [
   { key: 'weapon', name: '武器', icon: '⚔️' },
   { key: 'armor',  name: '防具', icon: '🛡️' },
   { key: 'costume', name: '服飾', icon: '👒' },   // 頭部服飾（js/costume.js），只換外觀
+  { key: 'shadow', name: '影子', icon: '🌑' },    // 影子裝備（js/shadow_gear.js，使用者 2026-11-24）
   { key: 'card',   name: '卡片', icon: '🃏' },
   { key: 'item',   name: '道具', icon: '🎒' }
 ];
@@ -7730,8 +7733,10 @@ function invCategoryOf(itemId) {
   if (d.type === 'weapon') return 'weapon';
   if (d.type === 'armor') return 'armor';
   if (d.type === 'costume') return 'costume';
+  if (d.type === 'shadow') return 'shadow';
   return 'item';
 }
+const SHADOW_SLOT_LABELS = { shadow_weapon: '影子武器', shadow_armor: '影子鎧甲', shadow_shield: '影子盾牌', shadow_shoes: '影子鞋子', shadow_earring: '影子耳環', shadow_pendant: '影子墜子' };
 // 子分類的值與顯示名稱
 function invSubOf(itemId) {
   const cat = invCategoryOf(itemId);
@@ -7740,6 +7745,7 @@ function invSubOf(itemId) {
   if (cat === 'armor') return d.armorType || 'other';
   if (cat === 'card') return (CARDS[itemId].slot || 'any');
   if (cat === 'costume') return (d.costumeSlots || ['head_top'])[0];
+  if (cat === 'shadow') return d.shadowSlot || 'other';
   return itemUseOf(itemId);
 }
 function invSubLabel(cat, sub) {
@@ -7747,6 +7753,7 @@ function invSubLabel(cat, sub) {
   if (cat === 'armor') return ARMOR_TYPE_LABELS[sub] || '其他';
   if (cat === 'card') return CARD_SLOT_LABELS[sub] || sub;
   if (cat === 'costume') return COSTUME_SLOT_NAME[sub] || sub;
+  if (cat === 'shadow') return SHADOW_SLOT_LABELS[sub] || sub;
   return ITEM_USE_LABELS[sub] || ITEM_SUBTYPE_LABELS[sub] || sub;
 }
 
@@ -7982,11 +7989,35 @@ function buildEquipWinHtml() {
   if (special) return buildCostumeWinHtml(tabs);
   return buildEquipWinHtmlInner(tabs) + (needsAmmo() && getAmmoCount() <= 0 ? `<div class="ammo-warn">沒箭矢，弓無法攻擊！</div>` : '');
 }
-/* 特殊裝備分頁：同一張裝備欄底圖，頭上／頭中／頭下放服飾（影子裝備本作沒有） */
+/* 特殊裝備分頁：同一張裝備欄底圖，放服飾與影子裝備 */
 function costumeIconHtml(itemId) {
   return `<img src="${itemImgSrc(itemId)}" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'costume-icon',textContent:'👒'}))">`;
 }
-/* 特殊裝備分頁：服飾頭上（左一）、頭下（左二）、頭中（右一）；其他格是影子裝備／服飾披風，本作還沒有 */
+/* 特殊裝備分頁：服飾頭上（左一）、頭下（左二）、頭中（右一）、服飾披肩；
+   影子裝備放在一般裝備對應的位置（武器→影子武器、鎧甲→影子鎧甲、盾→影子盾牌、鞋→影子鞋子、飾品→影子耳環／墜子），比照官方 */
+const SHADOW_OF_NORMAL = { weapon: 'shadow_weapon', armor: 'shadow_armor', shield: 'shadow_shield', footgear: 'shadow_shoes', accessory1: 'shadow_earring', accessory2: 'shadow_pendant' };
+function shadowWinRow(slot, side) {
+  const id = getEquipBaseItemId(slot);
+  const sel = equipPickCat === 'shadow' && equipPickSub === slot ? 'sel' : '';
+  if (!id || !ITEMS[id]) return equipWinRow(side, { empty: true, cls: sel, label: SHADOW_SLOT_LABELS[slot], attrs: `onclick="equipPickCat='shadow';equipPickSub='${slot}';renderEquipTab()"` });
+  const ref = getRefinementLevel(slot);
+  return equipWinRow(side, { cls: 'shadow ' + sel, icon: `<img src="${itemImgSrc(id)}" onerror="this.onerror=null;this.src='${placeholderImgSrc('armor')}'">`,
+    label: (ref > 0 ? '+' + ref + ' ' : '') + shopEsc(ITEMS[id].name), attrs: `title="${SHADOW_SLOT_LABELS[slot]}" onclick="openShadowSlotPanel(event,'${slot}')"` });
+}
+function openShadowSlotPanel(event, slot) {
+  if (event) { event.stopPropagation(); event.preventDefault(); }
+  const tt = document.getElementById('ro-equip-tooltip');
+  const id = getEquipBaseItemId(slot);
+  if (!tt || !id || !ITEMS[id]) return;
+  equipSlotTipPinned = true;
+  bagTipPinned = false;
+  const inst = getEquipInstance(slot);
+  tt.innerHTML = itemTooltipHtml(id, { refine: inst ? inst.refine || 0 : 0 }) + `<div class="tt-actions">
+    <button type="button" class="btn-small" onclick="closeEquipSlotPanel();unequipItem('${slot}');renderEquipTab();renderTopBar()">卸下</button></div>`;
+  const slotEl = event && event.target && event.target.closest ? event.target.closest('.rowin-row') : null;
+  placeEquipTooltip(tt, slotEl || (event && event.currentTarget));
+  tt.classList.add('interactive');
+}
 function buildCostumeWinHtml(tabsHtml) {
   const row = (slot, side) => {
     const id = slot && state.costume && state.costume[slot];
@@ -7998,8 +8029,9 @@ function buildCostumeWinHtml(tabsHtml) {
     return equipWinRow(side, { cls: 'costume ' + sel, icon: costumeIconHtml(id), label: shopEsc(ITEMS[id].name),
       attrs: `title="服飾 ${COSTUME_SLOT_NAME[slot]}" onclick="openCostumeSlotPanel(event,'${id}')"` });
   };
-  const L = EQUIPWIN_COLS.L.map(k => row(COSTUME_SLOTS.includes(k) ? k : null, 'L'));
-  const R = EQUIPWIN_COLS.R.map(k => row(COSTUME_SLOTS.includes(k) ? k : null, 'R'));
+  const cell = (k, side) => SHADOW_OF_NORMAL[k] ? shadowWinRow(SHADOW_OF_NORMAL[k], side) : row(COSTUME_SLOTS.includes(k) ? k : null, side);
+  const L = EQUIPWIN_COLS.L.map(k => cell(k, 'L'));
+  const R = EQUIPWIN_COLS.R.map(k => cell(k, 'R'));
   return equipWinFrame(tabsHtml, L, R);
 }
 function openCostumeSlotPanel(event, id) {
@@ -8132,7 +8164,8 @@ function setEquipPickSub(s) { equipPickSub = s; renderEquipTab(); }
 function equipPickTabsHtml() {
   const btn = (key, label) => `<button class="btn-small ${equipPickCat === key ? 'active' : 'ghost'}"
     onclick="setEquipPickCat('${key}')">${label}</button>`;
-  return btn('weapon', '⚔️ 武器') + btn('armor', '🛡️ 防具') + (typeof COSTUME_SLOTS !== 'undefined' ? btn('costume', '👒 服飾') : '');
+  return btn('weapon', '⚔️ 武器') + btn('armor', '🛡️ 防具') + (typeof COSTUME_SLOTS !== 'undefined' ? btn('costume', '👒 服飾') : '')
+    + (typeof SHADOW_SLOTS !== 'undefined' ? btn('shadow', '🌑 影子') : '');
 }
 
 /* 裝備欄現在住在「裝備」分頁，但背包分頁也會顯示個體裝備列，
@@ -8270,7 +8303,7 @@ function renderEquipTab() {
         </div>
         <button class="btn-small" onclick="event.stopPropagation();${action};renderEquipTab();renderTopBar();">裝備</button>
       </div>`;
-    }).join('') : `<div class="equip-pick-empty">${equipPickCat === 'costume' ? '背包裡沒有服飾。' : `背包裡沒有${currentJob().name}穿得上的${equipPickCat === 'weapon' ? '武器' : '防具'}。`}</div>`;
+    }).join('') : `<div class="equip-pick-empty">${equipPickCat === 'costume' ? '背包裡沒有服飾。' : equipPickCat === 'shadow' ? `背包裡沒有${currentJob().name}穿得上的影子裝備（商城轉蛋可以抽）。` : `背包裡沒有${currentJob().name}穿得上的${equipPickCat === 'weapon' ? '武器' : '防具'}。`}</div>`;
 
     /* 裝備欄與「武器／防具」切換鈕包在同一個 sticky 容器裡。
        以前只有 .equip-fixed 是 sticky，切換鈕會跟著清單一起捲走——
@@ -9590,7 +9623,7 @@ function openTownWarp(tab) {
   const town = (currentMap() || {}).town;
   const ferries = ferriesFrom(state.mapId);
   const portal = !!skillLv('al_warp');
-  const tabs = [town && ['warp', '🌀 傳送'], ferries.length && ['ferry', '⛵ 坐船'], portal && ['portal', '✨ 傳送之陣']].filter(Boolean);
+  const tabs = [town && ['warp', '🌀 傳送'], town && typeof SPECIAL_WARPS !== 'undefined' && ['special', '🗝️ 特殊地區'], ferries.length && ['ferry', '⛵ 坐船'], portal && ['portal', '✨ 傳送之陣']].filter(Boolean);
   if (!tabs.some(t => t[0] === tab)) tab = tabs.length ? tabs[0][0] : 'warp';
   const lv = partyTopLevel();
   const head = tabs.length > 1
@@ -9606,6 +9639,19 @@ function openTownWarp(tab) {
     }).join('');
     body = `<div class="wm-sheet-title">🌀 傳送 NPC <small>隊伍最高 Lv${lv}・持有 ${(state.gold || 0).toLocaleString()}z</small></div>
       <div class="ab-info-text">${npcWarpIsNoviceFree() ? '還沒一轉的新手全部免費。' : '冒險者主城免費，其他城鎮照右邊價格，一次收費。'}</div>
+      ${partyFollowHtml()}
+      <div class="wm-floors">${rows}</div>`;
+  } else if (tab === 'special') {
+    // 副本、夢魘版、任務地圖：沒有路走過去，直接傳（使用者 2026-11-24）
+    const rows = SPECIAL_WARPS.filter(s => MAPS.some(m => m.id === s.id) && s.id !== state.mapId).map(s => {
+      const lock = lv < s.lv;
+      const cost = npcWarpIsNoviceFree() ? 0 : SPECIAL_WARP_COST;
+      const name = (MAPS.find(m => m.id === s.id) || {}).name || s.id;
+      return `<button class="wm-floor${lock ? ' locked' : ''}" ${lock ? 'disabled' : ''} onclick="doSpecialWarp('${s.id}')">
+        <span>${shopEsc(name)}</span><small>${lock ? `Lv${s.lv} 開放` : cost ? cost.toLocaleString() + 'z' : '免費'}</small></button>`;
+    }).join('');
+    body = `<div class="wm-sheet-title">🗝️ 特殊地區 <small>隊伍最高 Lv${lv}・持有 ${(state.gold || 0).toLocaleString()}z</small></div>
+      <div class="ab-info-text">副本、夢魘版與任務地圖，沒有路走得到，從這裡直接傳過去。一次 ${SPECIAL_WARP_COST.toLocaleString()}z，在裡面倒下會回附近的城鎮。</div>
       ${partyFollowHtml()}
       <div class="wm-floors">${rows}</div>`;
   } else if (tab === 'portal') {
@@ -9637,6 +9683,12 @@ function showTownWarpModal(html) {
   el.classList.remove('hidden');
 }
 function closeTownWarp() { const el = document.getElementById('town-warp-modal'); if (el) el.classList.add('hidden'); }
+function doSpecialWarp(id) {
+  const why = specialWarp(id);
+  if (why) { showToast(why); return; }
+  closeTownWarp();
+  renderAll();
+}
 function doTownWarp(id) {
   const why = npcWarp(id);
   if (why) { showToast(why); return; }
@@ -9925,7 +9977,7 @@ function refineContext(slotKey) {
   const itemId = getEquipBaseItemId(slotKey);
   if (!itemId) return null;
   const item = ITEMS[itemId];
-  const isArmor = item.type === 'armor';
+  const isArmor = item.type === 'armor' || item.type === 'shadow';   // 影子裝備照防具精煉
   const weaponLv = isArmor ? 0 : getRefineWeaponLv(item);
   const level = getRefinementLevel(slotKey);
   // 這件裝備「用得上」的材料（不管身上有沒有），讓玩家知道該去湊什麼

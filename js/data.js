@@ -25123,6 +25123,11 @@ function nearestTownId(mapId) {
       q.push(y);
     }
   }
+  // 特殊地區（副本、夢魘版）沒有連到城鎮：回它設定的城（js/towns.js SPECIAL_WARPS）
+  if (typeof SPECIAL_WARPS !== 'undefined') {
+    const sp = SPECIAL_WARPS.find(s => seen.has(s.id));
+    if (sp) return sp.town;
+  }
   return 'prontera';
 }
 
