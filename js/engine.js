@@ -1050,19 +1050,22 @@ function recomputeDerivedInner(fullHeal) {
     pctSrc.push({ name: buffSourceLabel(b), v: b.mult });
   });
   state._buffStatPct = buffStatPct;
+  // 全素質 %（烈火戰車 +20%）
+  const allPct = buffMult('allstatpct').flatBonus / 100;
+  buffStatPct += allPct;
 
   // ATK：官方有兩套 StatusATK 公式，弓／樂器／鞭以 DEX 為主屬性、STR 退為副屬性
   //   一般武器：STR + (STR/10)² + DEX/5 + LUK/5
   //   弓系武器：DEX + (DEX/10)² + STR/5 + LUK/5
   // （含職業加成與卡片加成）
-  const cStr = s.str + jobBonus.str + getCardBonus('str') + equippedStatBonus('str') + passiveStrBonus;
+  const cStr = Math.round((s.str + jobBonus.str + getCardBonus('str') + equippedStatBonus('str') + passiveStrBonus) * (1 + allPct));
   const cDex = Math.round((s.dex + jobBonus.dex + getCardBonus('dex') + equippedStatBonus('dex') + passiveDexBonus) * (1 + buffStatPct));
-  const cLuk = s.luk + jobBonus.luk + getCardBonus('luk') + equippedStatBonus('luk') + buffLukBonus;
+  const cLuk = Math.round((s.luk + jobBonus.luk + getCardBonus('luk') + equippedStatBonus('luk') + buffLukBonus) * (1 + allPct));
   const cAgi = Math.round((s.agi + jobBonus.agi + getCardBonus('agi') + equippedStatBonus('agi') + buffAgiBonus) * (1 + buffStatPct));
   /* VIT 以前**完全沒有接 buff 的固定加成**——因為在 #61 之前沒有任何 buff 加 VIT
      （blessing 是 STR/INT/DEX、agiflat/lukflat 各管一個）。狙殺瞄準的全素質 +5 一來就露餡了。 */
-  const cVit = s.vit + jobBonus.vit + getCardBonus('vit') + equippedStatBonus('vit') + buffFlat.vit;
-  const cInt = s.int + jobBonus.int + getCardBonus('int') + equippedStatBonus('int') + passiveIntBonus;
+  const cVit = Math.round((s.vit + jobBonus.vit + getCardBonus('vit') + equippedStatBonus('vit') + buffFlat.vit) * (1 + allPct));
+  const cInt = Math.round((s.int + jobBonus.int + getCardBonus('int') + equippedStatBonus('int') + passiveIntBonus) * (1 + allPct));
   /* 角色分頁要用的素質明細：base / 職業 / 裝備卡片 / 技能 / buff 各佔多少，
      以及百分比 buff 最後實際加了幾點（四捨五入後的差額，跟戰鬥用的數字一致）。 */
   const STAT_TOTALS = { str: cStr, agi: cAgi, vit: cVit, int: cInt, dex: cDex, luk: cLuk };
@@ -2303,9 +2306,10 @@ function recomputeDerivedInner(fullHeal) {
   const gearAtk = getCardBonus('atk') + equippedStatBonus('atk');
   state.atk += gearAtk;
   state._atkWeapon += gearAtk;
-  state.matk += getCardBonus('matk') + equippedStatBonus('matk');
-  state.matkMin += getCardBonus('matk') + equippedStatBonus('matk');
-  state.matkMax += getCardBonus('matk') + equippedStatBonus('matk');
+  const matkBuffFlat = buffMult('matkflat').flatBonus;   // 盾咒、靈感（三轉）
+  state.matk += getCardBonus('matk') + equippedStatBonus('matk') + matkBuffFlat;
+  state.matkMin += getCardBonus('matk') + equippedStatBonus('matk') + matkBuffFlat;
+  state.matkMax += getCardBonus('matk') + equippedStatBonus('matk') + matkBuffFlat;
   // 卡片的 DEF+N 是裝備類加成，歸到硬防
   state.defHard += getCardBonus('def');
   /* 戰鼓震天（#68）：ATK 與 DEF 的固定值。ATK 進**熟練度那一桶**——
@@ -2652,6 +2656,7 @@ function recomputeDerivedInner(fullHeal) {
      修羅（三轉）同樣 7 顆（使用者 2026-08-22 指定）——三轉借的是母職整份技能，
      蓄氣上限照樣吃得到。 */
   if (state.spiritsMax > 0 && (state.jobId === 'champion' || state.jobId === 'sura')) state.spiritsMax = CHAMPION_SPIRITS_MAX;
+  if (state.spiritsMax > 0) state.spiritsMax = Math.max(state.spiritsMax, thirdSpiritsMax());
   if (state._pitcherPct) state.hpItemEffectBonusPct += state._pitcherPct;
   {
     const base = state._alchemyZenyMult == null ? 1 : state._alchemyZenyMult;
@@ -2695,7 +2700,8 @@ function recomputeDerivedInner(fullHeal) {
         });
       }
       // 緩毒術（#95）：指定狀態的抗性直接拉到 100＝免疫，applyPlayerAilment() 那邊就擋掉了
-      if (b.type === 'ailimmune' && b.ailType) state.ailResist[b.ailType] = 100;
+      if (b.type === 'ailimmune' && b.ailType === 'all') Object.keys(PLAYER_AILMENTS).forEach(t => { state.ailResist[t] = 100; });
+      else if (b.type === 'ailimmune' && b.ailType) state.ailResist[b.ailType] = 100;
     });
   }
 
@@ -2820,7 +2826,7 @@ function defOf(mon, scale, magic, inst) {
   if (magic) {
     const ig = (state.cardMdefIgnorePct || 0) + (mon.isBoss ? (state.cardBossMdefIgnorePct || 0) : 0)
       + (mon.race ? getCardBonus('mdefIgnoreRace_' + mon.race) : 0)
-      + (!mon.isBoss ? getCardBonus('normalMdefIgnorePct') : 0);
+      + (!mon.isBoss ? getCardBonus('normalMdefIgnorePct') : 0) + buffMult('defignore').flatBonus;
     const ms = s * Math.max(0, 1 - ig / 100) * monDebuffMdef(inst);
     return [(mon.mdef || 0) * ms, (mon.mdefSoft || 0) * ms];
   }
@@ -2843,7 +2849,7 @@ function physDefIgnorePct(mon) {
   // 無視首領防禦（rAthena bIgnoreDefClass,Class_Boss：爾休披斯槍、鋼爪拳套）
   const boss = mon && mon.isBoss ? getCardBonus('bossDefIgnorePct') : 0;
   const normal = mon && !mon.isBoss ? getCardBonus('normalDefIgnorePct') : 0;
-  return Math.min(100, all + byRace + boss + normal);
+  return Math.min(100, all + byRace + boss + normal + buffMult('defignore').flatBonus);   // 贖罪（大主教）
 }
 
 /* 卡片的「從某個魔物家族受到的傷害 +N%」（妖道：從殭屍受到的傷害 +100%）。
@@ -3993,6 +3999,7 @@ function monsterAbsorb(mon, dmg, isMelee) {
 /* 反射盾把傷害彈回玩家身上。走玩家的硬防／軟防，但**不會把玩家打死**——
    反射是自己打出去換來的，站著被自己的輸出反殺體驗太差（跟持續傷害同一個原則）。 */
 function takeReflectDamage(monDef, amount) {
+  amount *= Math.max(0, 1 - buffMult('reflectcut').flatBonus / 100);   // 聖冕加護
   const dmg = mitigatePlayerIncoming(amount, ...debuffedDef(state.defHard, state.defSoft));
   state.hp = Math.max(1, state.hp - dmg);
   logMsg(`🔁 ${monDef.name} 的反射盾彈回了 ${dmg} 點傷害！`);
@@ -4615,7 +4622,8 @@ const MONK_BALKYOUNG_HP_FLOOR = 0.25;
 // 武術宗師（#79）：氣球體上限從 5 提高到 7，讓新增的兩招不會擠掉阿修羅的 5 顆
 const CHAMPION_SPIRITS_MAX = 7;
 function monkExplosionActive() {
-  return state.buffs.some(b => b.skillId === 'mo_explosionspirits');
+  // 潛龍昇天（修羅）期間維持爆氣狀態
+  return state.buffs.some(b => b.skillId === 'mo_explosionspirits' || b.skillId === 'sr_raisingdragon');
 }
 // 這一擊有沒有落在真劍百破道開的視窗裡（浸透勁與彈指神通的發動條件）
 function monkBladeStopActive() {
@@ -5816,8 +5824,11 @@ function playerCombatStep(moveDt) {
     else if (tgt && Number.isFinite(tgt.d) && tgt.d > engage + DIST_EPS) {
       // 走向目標：玩家真的移動（其他怪、場地物件一起平移），目標距離剛好縮短 step
       // 打王手動操控（T51 第 4 期）：玩家正在自己移動、或紅圈還在地上時，不自動走回去
-      const manualHold = state._manualMoving || (state.bossManual && (state.bossCasts || []).length > 0);
-      if (!playerImmobile() && !manualHold) playerMoveBy(Math.min(tgt.d - engage, moveDt / PLAYER_WALK_MS), tgt.a || 0);
+      const manualHold = state._manualMoving || (typeof manualActive === 'function' && manualActive() && (state.bossCasts || []).length > 0);
+      const walkStep = Math.min(tgt.d - engage, moveDt / PLAYER_WALK_MS);
+      // 紅圈還在：走過去會踩進預警範圍就停著（不然閃出去又走回來，來回抖）
+      const castHold = typeof bossWalkBlocked === 'function' && bossWalkBlocked(walkStep, tgt.a || 0);
+      if (!playerImmobile() && !manualHold && !castHold) playerMoveBy(walkStep, tgt.a || 0);
       state.attackAccumulator = 0;
     } else if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
       state.attackAccumulator = 0;   // 站在技能射程上，普攻打不到
@@ -5911,6 +5922,7 @@ function gameTick() {
     tickCartBoost();
     // 武僧的氣球體（#70）：補球、滿球自動爆氣、爆氣中滿球自動金剛不壞
     tickSpirits();
+    tickThirdJob();
     // 賢者的肯貝特武器附魔（#71）：面板選定屬性後自動維持
     tickConverter();
     // 投擲長矛：敵人數≥2時定時隨機攻擊
@@ -6103,7 +6115,7 @@ const REGEN_SP_TICK_SEC = 8;
    `passiveRegen()` 與角色分頁讀同一支，不會再有「顯示跟實際對不上」。 */
 function regenPerSecond() {
   // 卡片的「HP/SP恢復力+N%」加成
-  const regenMult = (state.hpRegenMult || 1) * (1 + (state.cardHpRegenPct || 0) / 100);
+  const regenMult = (state.hpRegenMult || 1) * (1 + (state.cardHpRegenPct || 0) / 100) * (1 + buffMult('hpregenpct').flatBonus / 100);
   /* 運氣調息（#70）：官方是「坐著時每 10 秒回復 N + N% MaxHP」。本作沒有坐下的動作，
      使用者指定改成常駐——併進每 tick 的量（跟禪心同一個位置），不另開回血心跳。 */
   const mr = state.monkRegen;
@@ -7596,6 +7608,7 @@ function playerAttackInner() {
   raw *= elementDmgMult(atkElement);
   // 異常狀態：睡眠中的目標受到的傷害增加（官方規則）
   raw *= ailDmgTakenMult(target);
+  raw *= thirdNextAttackMult();   // 強化衝擊（皇家禁衛隊）：下一次普攻
 
   // Apply monster debuff (provoke reduces defense)
   // 異常狀態對防禦的修正（石化 +25%、中毒 −25%）跟破防 debuff 疊乘
@@ -7658,6 +7671,7 @@ function playerAttackInner() {
     tryRogueProcs(target, monDef);       // 流氓（#69）：偷錢、卸除四連、潛擊、脅持、緊密的約束
     tryMonkProcs(target, monDef);        // 武僧（#70）：吸氣、真劍百破道、浸透勁、彈指神通、發勁
     tryMonkCombo(target, monDef);        // 武僧（#70）：六合拳 → 連環全身掌 → 猛龍誇強 → 阿修羅霸凰拳
+    trySuraProcs(target, monDef);        // 修羅：雙龍腳 → 大纏崩墜、點穴-球
     trySageProcs(target, monDef);        // 賢者（#71）：自動念咒、念咒拆除、魔法效果解除、隨機技能、元素更換
     tryPaladinProcs(target, monDef);     // 聖殿十字軍（#74）：捨命攻擊的自傷追擊
     tryProfessorProcs(target, monDef);   // 智者（#76）：薄霧牆、心神互換、精神耗弱術、精神撼動
@@ -7972,6 +7986,12 @@ function monsterCastSkillInner(mon, monDef, sk) {
     /* 魔法反射（#17，蟻后卡片）：官方是把法術原樣彈回施法者，**玩家完全不受傷**。
        擲在傷害計算之前——反射掉的法術根本沒打到玩家，不該扣血也不該打斷睡眠。
        只擋魔法，物理走下面的 applyPlayerReflect（那個是「照比例彈一部分」，兩回事）。 */
+    // 威信（皇家禁衛隊）：機率完全迴避魔法
+    if (sk.magic && thirdMagicEvade()) {
+      logMsg(`✨ 威信：迴避了 ${nameOf()} 的魔法！`);
+      if (typeof showPlayerFloat === 'function') showPlayerFloat('MISS', 'miss');
+      return;
+    }
     if (sk.magic && state.cardMagicReflectChance > 0
         && rng() * 100 < state.cardMagicReflectChance) {
       const back = Math.max(1, Math.round(monsterBaseMatk(monDef, mon) * sk.mult
@@ -8218,6 +8238,8 @@ function monsterAttackSingle(mon) {
     }
   }
 
+  // 修羅：閃電步（遠程攻擊無效）
+  if (trySuraDodge(mon, monDef)) return;
   let raw = monsterBaseAtk(monDef, undefined, mon);
   // 詛咒：怪物 ATK 下降
   raw *= ailAtkMult(mon);
@@ -8308,6 +8330,9 @@ function monsterAttackSingle(mon) {
   tryOnHitStunProc2(mon, monDef);
   // 長矛刺擊：被攻擊時機率反擊
   trySpearCounterProc(mon, monDef);
+  // 修羅：破碎柱反擊、點穴-球
+  trySuraOnHit(mon, monDef, dmg);
+  if (mon.hp <= 0) return;
   // 狂怒之槍：被攻擊時機率進入狂怒（#58）
   tryFrenzyProc();
   // 卡片的受擊反擊型異常狀態（惡魔女僕那一大類「受到物理傷害時讓敵人得到XX」）
@@ -8984,6 +9009,11 @@ function offlineDownToTown() {
   state.monsters = [];
   state.hp = state.maxHp; state.sp = state.maxSp;
 }
+/* 主城副本區報名的場地：沒有連到任何城鎮，倒下一律回主城 */
+function instanceArena(mapId) {
+  return [typeof GMT_ARENA !== 'undefined' && GMT_ARENA, typeof DOJO_MAP !== 'undefined' && DOJO_MAP,
+    typeof GVG_MAP !== 'undefined' && GVG_MAP].includes(mapId);
+}
 function onPlayerDown() {
   if (state.gvg && typeof gvgOnPlayerDown === 'function' && gvgOnPlayerDown()) return;   // 攻城中：留在城裡，隊友繼續
   if (state.dojo && typeof dojoOnPlayerDown === 'function' && dojoOnPlayerDown()) return;   // 道館：隊友還站著就繼續
@@ -8993,7 +9023,8 @@ function onPlayerDown() {
   state.monsters = [];
   cancelTravel(true);
   // 抬回沿傳送點最近的城鎮（D1b），走不到城鎮就回普隆德拉
-  const safeMap = nearestTownId(state.mapId);
+  // 主城報名的副本（魔法大賽、道館、攻城）倒下回主城（使用者 2026-11-25）
+  const safeMap = instanceArena(state.mapId) ? HUB_TOWN : nearestTownId(state.mapId);
   const downMap = state.mapId;
   state.mapId = safeMap;
   if (typeof townEnter === 'function') townEnter(safeMap);
@@ -11162,7 +11193,7 @@ function skillCastBreakdown(sk, lv) {
   const vct = memo * Math.max(0, baseVct + varMs) * st.factor * Math.max(0, 1 + (varPct - buffCut) / 100);
   const baseFct = castLv(row.fixedCastTime, lv);
   const fixedMs = getCardBonus('castFixedMs') + getCardBonus('castFixedMs_' + sk.id);
-  const fixedPct = getCardBonus('castFixedPct');
+  const fixedPct = getCardBonus('castFixedPct') - buffMult('fixedcastcut').flatBonus;   // 聖典（大主教）
   const fct = Math.max(0, baseFct + fixedMs) * Math.max(0, 1 + fixedPct / 100);
   return { baseVct, varMs, statFactor: st.factor, varPct, buffCut, memo, vct, baseFct, fixedMs, fixedPct, fct, total: Math.round(vct + fct) };
 }
@@ -11326,9 +11357,12 @@ function castSkillInner(skillId, opts) {
     hpCost += hpPctCost;
   }
 
+  // 三轉：氣球體消耗、爆氣限定（js/engine_third.js）
+  if (!free && !thirdSkillUsable(sk, lv, true)) return false;
+
   const isHeal = sk.type === 'heal' || sk.type === 'heal_over_time';
   const isBuff = ['buff_atk', 'buff_auraflat', 'buff_meltdown', 'buff_windwalk', 'buff_sight', 'buff_matk', 'buff_basilica', 'buff_assumptio', 'buff_reflect', 'buff_providence', 'buff_spearquicken', 'buff_song', 'buff_ensemble', 'encore', 'debuff_aspd_aoe', 'debuff_def_aoe', 'buff_block', 'buff_def', 'buff_aspd', 'buff_flee', 'buff_gold', 'buff_crit', 'buff_maxroll', 'buff_blessing', 'buff_shield', 'buff_sprate', 'buff_lukflat', 'buff_holyweapon', 'buff_elearmor', 'buff_ailimmune', 'buff_angelus', 'buff_elementweapon', 'buff_elementfield', 'buff_chemical', 'debuff_def', 'debuff'].includes(sk.type);
-  const needsMonster = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi', 'debuff_def', 'debuff', 'debuff_single', 'special_charge', 'poison_proc', 'stun_field', 'multi_dot_stun', 'debuff_web'].includes(sk.type);
+  const needsMonster = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi', 'debuff_def', 'debuff', 'debuff_single', 'special_charge', 'poison_proc', 'stun_field', 'multi_dot_stun', 'debuff_web', 'third_special'].includes(sk.type);
   if (needsMonster && (!state.monsters || state.monsters.length === 0)) return false;
   /* 易燃之網對 BOSS 無效（官方）。**要擋在扣 SP 之前**——寫在 case 裡用 break
      只是跳出 switch，SP 已經扣掉了而且函式還是回傳 true。 */
@@ -11347,6 +11381,7 @@ function castSkillInner(skillId, opts) {
 
   state.sp -= spCost;
   if (hpCost > 0) state.hp -= hpCost;
+  if (!free) thirdSkillPay(sk, lv);
   if (sk.consumeAmmo) for (let i = 0; i < sk.consumeAmmo; i++) consumeAmmo();
   if (zenyCost > 0) state.gold -= zenyCost;
   // 自動念咒不寫冷卻：那是玩家自己那份資源，不該被卡片的觸發吃掉
@@ -11429,8 +11464,8 @@ function castSkillInner(skillId, opts) {
       }
       // 卡片屬性傷害加成
       const skEleDmgBonus = cardTargetDmgMult(def, useMag) - 1;
-      let skillMult = mult;
-      let faExtraFlat = 0;   // 獵鷹突擊：鋼製喙那份固定傷害，加在防禦之後
+      let skillMult = mult * thirdSkillFactor(sk, lv, target, def);
+      let faExtraFlat = thirdSkillFlat(sk, lv, target, def);   // 獵鷹突擊：鋼製喙那份固定傷害，加在防禦之後
       // 超音速投擲被動：音速投擲傷害+90%
       if (sk.id === 'as_sonicblow' && state.hasSonicblowBoost) {
         skillMult *= 1.9;
@@ -11504,8 +11539,9 @@ function castSkillInner(skillId, opts) {
       const dmg = mitigateDamage(
         skillBaseDamage(useMag || !!sk.matkVsDef, def, elemMult, sk) * skillMult * (1 + skEleDmgBonus)
           * elementDmgMult(skElement) * critFactor * ailDmgTakenMult(target),
-        ...defOf(def, 1, useMag, target)) + raceFlatBonus(def) + faExtraFlat;
+        ...defOf(def, sk.ignoreDef ? 0 : 1, useMag, target)) + raceFlatBonus(def) + faExtraFlat;
       target.hp -= dmg;
+      thirdSkillOnHit(sk, lv, target, def);   // 三轉：致命爪痕的傷口…
       // 單體技能以前完全不飄字（logMsg 的飄字規則只認「你…造成N點傷害」那種普攻句型）
       const visHits = (sk.id === 'ac_double') ? 2
         : (sk.id === 'mg_firebolt' || sk.id === 'mg_coldbolt' || sk.id === 'mg_lightningbolt') ? lv : 1;
@@ -11535,7 +11571,7 @@ function castSkillInner(skillId, opts) {
          `type` 可以寫成 'stun+blind+curse+bleed' 代表隨機挑一種，
          跟卡片的 `ailment` 是同一套寫法與同一支 applyAilment()。 */
       if (sk.inflict && target.hp > 0) {
-        const ic = Array.isArray(sk.inflict.chance) ? sk.inflict.chance[lv - 1] : sk.inflict.chance;
+        const ic = lvArr(sk.inflict.chance, lv) + thirdInflictBonus(sk, lv);
         if (rng() * 100 < ic) {
           const pool = String(sk.inflict.type).split('+');
           const isec = lvArr(sk.inflict.sec, lv);   // 有寫秒數就照寫（冰凍術 3~30 秒）
@@ -11577,7 +11613,7 @@ function castSkillInner(skillId, opts) {
         const monElemMult = getElementMultiplierVsMonster(skElement, monDef, mon);
         const monEleDmgBonus = cardTargetDmgMult(monDef, useMag) - 1;
         // 負重量上升：加成手推車攻擊傷害
-        let aoeMult = mult;
+        let aoeMult = mult * thirdSkillFactor(sk, lv, mon, monDef);
         if (sk.id === 'mc_cartrevolution' && state.cartDmgBonusMult) aoeMult *= (1 + state.cartDmgBonusMult);
         // 騎乘攻擊：依STR增加傷害（STR120封頂）
         if (sk.id === 'kn_brandishspear') {
@@ -11608,9 +11644,11 @@ function castSkillInner(skillId, opts) {
           const cdm = (typeof sk.critDmgMult === 'number') ? sk.critDmgMult : 1;
           aoeMult *= 1 + (0.5 + (state.cardCritDmgPct || 0) / 100) * cdm;
         }
-        let dmg = mitigateDamage(skillBaseDamage(useMag, monDef, monElemMult) * aoeMult * (1 + monEleDmgBonus) * ailDmgTakenMult(mon), ...defOf(monDef, 1, useMag, mon)) + raceFlatBonus(monDef);
+        let dmg = mitigateDamage(skillBaseDamage(useMag, monDef, monElemMult) * aoeMult * (1 + monEleDmgBonus) * ailDmgTakenMult(mon), ...defOf(monDef, sk.ignoreDef ? 0 : 1, useMag, mon)) + raceFlatBonus(monDef);
         // 鋼製喙：閃電衝擊額外固定傷害（不受倍率影響）
         if (sk.id === 'ht_blitzbeat' && state.falconFlatBonus) dmg += state.falconFlatBonus;
+        dmg += thirdSkillFlat(sk, lv, mon, monDef);
+        thirdSkillOnHit(sk, lv, mon, monDef);
         if (dmg > aoeTopDmg) aoeTopDmg = dmg;
         noteMonsterDamage(mon, dmg);
         mon.hp -= dmg;
@@ -11629,7 +11667,7 @@ function castSkillInner(skillId, opts) {
         }
         // 技能附帶的異常狀態（#58 的 inflict，範圍分支以前沒接，#61 補上）
         if (sk.inflict && mon.hp > 0) {
-          const ic = Array.isArray(sk.inflict.chance) ? sk.inflict.chance[lv - 1] : sk.inflict.chance;
+          const ic = lvArr(sk.inflict.chance, lv) + thirdInflictBonus(sk, lv);
           if (rng() * 100 < ic) {
             const pool = String(sk.inflict.type).split('+');
             const isec = lvArr(sk.inflict.sec, lv);
@@ -11718,6 +11756,15 @@ function castSkillInner(skillId, opts) {
         }
         target.charmUntil = gameNow() + dur * 1000;
         logMsg(`💗 ${def.name} 被迷惑了，${dur} 秒內不會攻擊你（受到傷害會解除）。`);
+      } else if (sk.effect === 'oratio') {
+        // 祈禱文（大主教）：畫面內的怪各自擲成功率，聖屬性耐性 −2×Lv%
+        let n = 0;
+        state.monsters.forEach(m => {
+          if (m !== target && rng() * 100 >= lvArr(sk.successChance, lv)) return;
+          m.eleCut = m.eleCut || {};
+          m.eleCut[sk.cutElement] = { pct: lvArr(sk.eleCutPct, lv), end: Date.now() + dur * 1000 }; n++;
+        });
+        logMsg(`🙏 「${sk.name}」：${n} 隻敵人的${ELEMENT_NAMES[sk.cutElement] || sk.cutElement}屬性耐性 −${lvArr(sk.eleCutPct, lv)}%（${dur} 秒）。`);
       } else if (sk.effect === 'dispel') {
         const n = monBuffList(target).length;
         target.mbuff = {};
@@ -11756,7 +11803,7 @@ function castSkillInner(skillId, opts) {
         if (area && !inAoeArea(area, m)) return;
         if (rng() * 100 >= chance) return;
         // applyAilment 自己會處理免疫（冰凍對水屬性與不死族無效那類）
-        if (applyAilment(m, MONSTERS[m.defId], sk.ailment)) hitCount++;
+        if (applyAilment(m, MONSTERS[m.defId], sk.ailment, sk.ailmentSec ? { sec: lvArr(sk.ailmentSec, lv) } : undefined)) hitCount++;
       });
       logMsg(`❄️ 「${sk.name}」Lv${lv} 發動！${hitCount > 0 ? `${hitCount} 隻敵人中招` : '沒有敵人中招'}。`);
       break;
@@ -12336,8 +12383,11 @@ function castSkillInner(skillId, opts) {
       let tgt = state._healTarget || state;
       state._healTarget = null;
       if (tgt !== state && (tgt._downed || !(tgt.hp > 0))) tgt = state;   // 詠唱期間倒了就補自己
-      const amt = Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult() * healRecvMult(tgt));
+      const t3 = thirdHealAmount(sk, lv, tgt);   // 點穴-快（engine_third.js）
+      const amt = t3 != null ? t3 : Math.round((state.stats.int + state.baseLevel) * mult * healOutputMult() * healRecvMult(tgt));
       tgt.hp = Math.min(tgt.maxHp, tgt.hp + amt);
+      if (sk.cureTypes && tgt === state) thirdCureSelf(sk);
+      if (sk.healParty) thirdHealParty(sk, lv, tgt);   // 燦爛聖光：全隊
       const who = tgt === state ? '' : `${tgt === allyOwnerState() ? '玩家' : (tgt._allyName || '隊友')} `;
       logMsg(`💚 「${sk.name}」Lv${lv} 為${who || '自己'}恢復了 ${amt} 點HP。`);
       if (tgt === allyOwnerState() && tgt !== state && typeof showPlayerFloat === 'function') {
@@ -12426,6 +12476,9 @@ function castSkillInner(skillId, opts) {
       logMsg(`🛡️ 「${sk.name}」Lv${lv} 發動，防禦力上升！`);
       break;
     }
+    // 三轉（js/engine_third.js）：一次推多個 buff／特殊招式
+    case 'buff_list': thirdBuffList(sk, lv); break;
+    case 'third_special': if (THIRD_SPECIAL[sk.id]) THIRD_SPECIAL[sk.id](sk, lv); break;
     case 'buff_atk': {
       let dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
       // 武器保有：凶砍持續時間+10%
@@ -12894,6 +12947,7 @@ function castSkillInner(skillId, opts) {
   /* 雙倍投擲（#76）：整招都結算完了才複製，不然複製出來的那一發會插在
      傷害與擊殺判定中間。放在 saveGame 之前，複製那一發自己也會存一次。 */
   tryDoubleCast(sk, lv);
+  thirdSkillAfter(sk, lv);
   /* 元素之劍那類的「魔法連鎖」（on:'chain'）：這招施放成功後觸發下一招。
      放在 saveGame 前面，連鎖那一發自己也會存一次。 */
   tryChainSpells(sk.id, lv);
@@ -12955,7 +13009,7 @@ function wastesResourceInTown(sk, lv) {
    單體減益照類型算攻擊技；個別技能可寫 autoSlot:'support' 改歸輔助清單（魔法師系全面盤查，使用者 2026-11-12）。 */
 const SKILL_ATTACK_TYPES = ['damage', 'magic', 'dot', 'damage_multihit', 'damage_multi',
   'damage_aoe', 'magic_aoe', 'poison_proc', 'bomb_random', 'ground_wall', 'ground_trap', 'ground_zone', 'ground_icewall', 'debuff_single',
-  'field_aoe_magic', 'field_phys_aoe'];
+  'field_aoe_magic', 'field_phys_aoe', 'third_special'];
 /* 場上沒怪就放不出效果的類型。castSkill() 是**先扣 SP／鋅幣再進 switch**，
    氣泡蟲召喚那種「沒怪就 return false」的 case 會白白吃掉 5,000 鋅幣，
    所以擋在自動施放這一層。 */
@@ -13018,6 +13072,7 @@ function tryAutoCastSkill(skipSupport) {
     const lv = sk && autoSlotLv(sl, sk);
     if (!lv || !skillReady(sk.id) || !weaponReqMet(sk.requiresWeapon) || !equipReqMet(sk.requiresEquip)) continue;
     if (state.sp < skillSpCost(sk, lv) || spPct < (sl.spThreshold || 0) || wastesResourceInTown(sk, lv)) continue;
+    if (!thirdSkillUsable(sk, lv)) continue;
     const isAttack = skillNeedsMonster(sk);
     if (isAttack && monsterCount < Math.max(1, sl.minMobs || 1)) continue;
     if (!autoSlotCondOk(sl, sk)) continue;
@@ -13109,6 +13164,7 @@ function monsterDebuffStillUp(sk) {
     const t = ms[0];
     if (sk.effect === 'mindbreaker') return (t.debuffMdefEnd || 0) > now;
     if (sk.effect === 'dispel') return monBuffList(t).length === 0;
+    if (sk.effect === 'oratio') return ((t.eleCut && t.eleCut[sk.cutElement]) || {}).end > Date.now();
     if (sk.effect === 'ailment') return ailActive(t, sk.ailment);
     if (sk.effect === 'elementChange') return autoSkillWasted(sk);
     if (sk.effect === 'strip') return (sk.strips || []).every(st => { const x = t.strip && t.strip[st.key || sk.id]; return x && x.end > now; });
@@ -13134,6 +13190,7 @@ function tryAutoCastSupportSkills() {
 
       const spCost = skillSpCost(sk, lv);
       if (state.sp < spCost) continue;
+      if (!thirdSkillUsable(sk, lv)) continue;
 
       /* 效果還在身上就不重放（等它消失後自動補）。以前這裡是一份 40 種類型的白名單，
          漏掉一種就會變成「每次冷卻好就重放一次」——生命體召喚持續 30 分鐘、冷卻 10 秒、
@@ -15171,7 +15228,7 @@ function healTargetBelow(ratio) {
 }
 function healOutputMult() {
   // 裝備的治癒量加成（bHealPower，5d）跟冥想相加
-  return 1 + ((state.healBonusPct || 0) + getCardBonus('healPower')) / 100;
+  return 1 + ((state.healBonusPct || 0) + getCardBonus('healPower') + buffMult('healpower').flatBonus) / 100;   // 安希拉、奉獻頌
 }
 /* 受到的治癒量（T41，2026-11-11）：收治療那個人身上的加成——裝備 bHealPower2（healRecvPct）
    與聖母之祈福（buff 'healrecv'）。以前聖母之祈福算在施術者那邊，等於「誰身上有就讓自己補別人更多」。 */

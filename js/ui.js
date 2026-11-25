@@ -5861,13 +5861,10 @@ function renderAutoBattleTab() {
       <div class="ab-info-text">${(() => { const ids = matsInUseParty(); return ids.length ? '目前會用到：' + ids.map(id => `${ITEMS[id].name} ×${getItemQty(id)}`).join('、') : '目前沒有會用到耗材的技能。'; })()}</div>
     </div>
 
-    <!-- 打王站姿與手動操控（T51 第 4 期，使用者 2026-11-12） -->
+    <!-- 打王站姿（T51 第 4 期）；手動操控 2026-11-25 拿掉，改用手操 -->
     <div class="ab-section">
       <h4 class="ab-section-title">👑 打王</h4>
-      <div class="ab-info-text">各隊員要閃避還是硬扛，在「隊伍」面板設定。</div>
-      <div class="potion-toggles">
-        <label class="auto-toggle"><input type="checkbox" ${state.bossManual ? 'checked' : ''} onchange="setBossManual(this.checked);renderAutoBattleTab&&renderAutoBattleTab()"> 手動操控：打王時自己移動（方向鍵／WASD，或點戰鬥畫面的地面），不自動閃避</label>
-      </div>
+      <div class="ab-info-text">各隊員要閃避還是硬扛，在「隊伍」面板設定。想自己走位閃招，開手操。</div>
     </div>
 
     <div class="ab-section">
@@ -8935,6 +8932,13 @@ function jobTreeIconHtml(jobId, jd) {
   const key = (typeof SPRITE_ALIAS !== 'undefined' && SPRITE_ALIAS[jobId]) || jobId;
   const g = jd.genderLock || ((state && state.gender === 'female') ? 'female' : 'male');
   const alt = g === 'female' ? 'male' : 'female';
+  /* 有紙娃娃身體圖層的職業直接畫紙娃娃（使用者 2026-11-24：舊立繪 images/frames 跟實際外觀對不上，例：騎士領主男是紅袍）。
+     髮型髮色用玩家自己的；沒有身體圖層才退回舊立繪 */
+  if (window.PAPERDOLL && window.PAPERDOLL.clip['body/' + key + '/' + g]) {
+    setTimeout(paintTreeDolls, 0);
+    return `<span class="tree-icon"><canvas class="tree-icon-img tree-doll" data-job="${key}" data-g="${g}" aria-label="${jd.name}"></canvas>
+        <span class="tree-icon-emoji" hidden>${jd.icon}</span></span>`;
+  }
   return `<span class="tree-icon">
         <img class="tree-icon-img" alt="${jd.name}"
              src="images/frames/${key}_${g}/frame_000.png"
@@ -8942,6 +8946,15 @@ function jobTreeIconHtml(jobId, jd) {
              onerror="jobTreeIconErr(this)">
         <span class="tree-icon-emoji" hidden>${jd.icon}</span>
       </span>`;
+}
+function paintTreeDolls() {
+  document.querySelectorAll('canvas.tree-doll:not([data-done])').forEach(cv => {
+    const parts = paperdollPartsFor({ job: cv.dataset.job, gender: cv.dataset.g, hairStyle: state && state.hairStyle, hairColor: state && state.hairColor });
+    if (!parts) { cv.style.display = 'none'; const em = cv.parentNode.querySelector('.tree-icon-emoji'); if (em) em.hidden = false; return; }
+    cv.dataset.done = '1';
+    const paint = () => paintDollStill(cv, parts, paint);
+    paint();
+  });
 }
 function jobTreeIconErr(img) {
   const fb = img.getAttribute('data-fb');
@@ -11656,8 +11669,7 @@ function syncBossHud() {
     return `<button class="bf-hud-btn ${tank ? 'tank' : ''}" onclick="event.stopPropagation();setBossStance('${who}','${tank ? 'dodge' : 'tank'}');syncBossHud()" title="點一下切換閃避／硬扛">${tank ? '🛡️' : '🏃'} ${name}</button>`;
   };
   const allies = (state.allies || []).filter(a => a && !a._downed && allyOnThisMap(a));
-  const html = btn('p', state.name || '你', state) + allies.map(a => btn(a._slot, a._allyName || '隊友', a)).join('')
-    + `<button class="bf-hud-btn manual ${state.bossManual ? 'on' : ''}" onclick="event.stopPropagation();setBossManual(${!state.bossManual});syncBossHud()" title="打王時自己移動（方向鍵／WASD，或點地面）">🎮 手動${state.bossManual ? '中' : ''}</button>`;
+  const html = btn('p', state.name || '你', state) + allies.map(a => btn(a._slot, a._allyName || '隊友', a)).join('');
   if (hud._html !== html) { hud.innerHTML = html; hud._html = html; }
 }
 

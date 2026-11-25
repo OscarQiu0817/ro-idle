@@ -1158,6 +1158,7 @@ html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); co
 }
 .tree-node-locked { border-color: #3a3f5c; }
 .tree-icon { display: flex; align-items: flex-end; justify-content: center; height: 72px; }
+.tree-icon canvas.tree-doll { height: 64px; width: auto; image-rendering: pixelated; }   /* 紙娃娃立繪：照原圖等比放到 64px 高 */
 .tree-icon-img {
   max-width: 84px; max-height: 68px;
   object-fit: contain; object-position: center bottom;

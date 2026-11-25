@@ -677,7 +677,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['paladin'],
     next: [], nextLocked: [],
     bonusLevels: { str:[2,10,18,26,33,40,48,55,64], agi:[3,8,16,24,37,52,60,70], vit:[1,9,15,21,30,42,49,53,63,69], int:[7,14,29,43,54,61,65], dex:[6,12,17,23,36,45,57,68], luk:[39,59,67] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.royalguard,
     desc: '站在王座前面的那一個。他不倒，後面就沒事。'
   },
   warlock: {
@@ -717,7 +717,7 @@ const JOB_TREE = {
     desc: '箭離弦的那一刻，獵物才知道自己一直在陷阱裡。'
   },
   minstrel: {
-    id: 'minstrel', name: '宮廷樂師', tier: 3, icon: '🎻', parent: 'clown',
+    id: 'minstrel', name: '宮廷樂師', tier: 3, icon: '🎻', parent: 'clown', genderLock: 'male',   // 2026-11-24 補：跟詩人系一致
     baseLevelReq: 99, jobLevelReq: 70, jobLevelMax: 70,
     atkMod: 1.65, matkMod: 0.9,
     hpSpFrom: 'clown', aspdFrom: 'clown',
@@ -729,7 +729,7 @@ const JOB_TREE = {
     desc: '一個人就是一整支樂隊，安可是必須的。'
   },
   wanderer: {
-    id: 'wanderer', name: '浪姬舞者', tier: 3, icon: '💃', parent: 'gypsy',
+    id: 'wanderer', name: '浪姬舞者', tier: 3, icon: '💃', parent: 'gypsy', genderLock: 'female',   // 2026-11-24 補：跟舞孃系一致
     baseLevelReq: 99, jobLevelReq: 70, jobLevelMax: 70,
     atkMod: 1.65, matkMod: 0.9,
     hpSpFrom: 'gypsy', aspdFrom: 'gypsy',
@@ -773,7 +773,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['assassincross'],
     next: [], nextLocked: [],
     bonusLevels: { str:[2,7,12,21,29,38,50,54,66], agi:[1,4,5,15,20,24,25,31,32,33,42,46,51,56,62], vit:[9,47,69], int:[], dex:[10,23,37,39,43,53,57,61,64,70], luk:[3,8,16,18,26,34,48,65] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.guillotinecross,
     desc: '影子裡的影子。你連他來過都不會知道。'
   },
   shadowchaser: {
@@ -797,7 +797,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['highpriest'],
     next: [], nextLocked: [],
     bonusLevels: { str:[5,12,21,31,38,45,60], agi:[3,8,19,29,42,55,65,68], vit:[4,22,30,50,51,58,67], int:[1,7,11,20,23,24,34,47,57,61,66,70], dex:[13,16,26,28,37,43,46,56,62], luk:[40,49] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.archbishop,
     desc: '神的話由他轉述，所以他說的就是。'
   },
   sura: {
@@ -809,7 +809,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['champion'],
     next: [], nextLocked: [],
     bonusLevels: { str:[1,9,17,27,37,48,59,65,66], agi:[4,12,20,21,29,45,52,62,70], vit:[3,15,24,39,42,58,68], int:[2,11,33,47,56,64,69], dex:[6,16,22,30,38,44,50,53,60,67], luk:[13,34,46] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.sura,
     desc: '拳頭之後不需要解釋。'
   }
 };

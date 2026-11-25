@@ -234,9 +234,9 @@ function setBossStance(who, stance) {
   saveGame();
   return true;
 }
-/* 手動操控（第 4 期）：開啟後玩家自己移動（方向鍵／WASD 或點地面），不自動閃避；隊友照舊 */
-function setBossManual(on) { state.bossManual = !!on; state._manualTo = null; saveGame(); }
-function bossManualActive() { return !!(state && state.bossManual && bossFightActive() && !state.travel); }
+/* 打王手動操控（第 4 期）已由手操取代（使用者 2026-11-25：有手操了，打王手動模式拿掉）。
+   下面兩支輸入函式留著：手操（manual_play.js）共用同一組方向／點地面輸入。 */
+function bossManualActive() { return false; }
 // 介面送來的移動：dir＝{x,y} 單位向量（按住方向鍵）；to＝{x,y} 世界座標（點地面）
 function bossManualSetDir(dir) { if (state) state._manualDir = dir && (dir.x || dir.y) ? dir : null; }
 function bossManualMoveTo(to) { if (state) state._manualTo = to || null; }
@@ -296,7 +296,7 @@ function bossSafeSpot(p) {
 }
 function bossDodgeTick(m, dt, now) {
   const isOwner = m === allyOwnerState();
-  if (bossStance(m) === 'tank' || (isOwner && (state.bossManual || (typeof manualActive === 'function' && manualActive())))) { m._dodgeTo = null; return; }
+  if (bossStance(m) === 'tank' || (isOwner && typeof manualActive === 'function' && manualActive())) { m._dodgeTo = null; return; }
   const p = bossMemberXY(m);
   // 分攤圈：自動閃避的人往圈裡站（全場技閃不掉，不用動）
   const shareC = (state.bossCasts || []).find(c => c.share && !castHas(c, p, -0.3));
@@ -333,11 +333,20 @@ function bossDodgeTick(m, dt, now) {
     }
     return;
   }
-  // 沒有威脅：隊友慢慢回到站位位置
+  // 沒有威脅：隊友慢慢回到站位位置（回位那一步會踩進紅圈就先停著，免得來回抖）
   if (!isOwner && m._dodgeOff && !threat) {
     const o = m._dodgeOff, d = Math.hypot(o.x, o.y), back = dt / DODGE_RETURN_MS;
-    m._dodgeOff = d <= back ? null : { x: o.x - o.x / d * back, y: o.y - o.y / d * back };
+    const next = d <= back ? null : { x: o.x - o.x / d * back, y: o.y - o.y / d * back };
+    const q = { x: p.x - o.x + (next ? next.x : 0), y: p.y - o.y + (next ? next.y : 0) };
+    if (!(state.bossCasts || []).some(c => !c.share && !c.nova && castHas(c, q, DODGE_SEE_MARGIN))) m._dodgeOff = next;
   }
+}
+/* 走這一步會踩進紅圈（含預警邊距）就先別走（使用者 2026-11-25：閃王招一直抖）。
+   閃到安全點後，自動走回目標會先踩進 0.4 格的預警邊距，又觸發閃避，來回抖。 */
+function bossWalkBlocked(step, ang) {
+  if (!bossFightActive() || !(state.bossCasts || []).length) return false;
+  const q = { x: Math.cos(ang) * step, y: Math.sin(ang) * step };
+  return state.bossCasts.some(c => !c.share && !c.nova && castHas(c, q, DODGE_SEE_MARGIN));
 }
 /* 閃避中：不普攻、不放技能（engine 的攻擊迴圈與 alliesTick 會問） */
 function bossDodging(m) { return !!(m && m._dodgeTo); }
