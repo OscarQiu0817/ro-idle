@@ -536,6 +536,8 @@ function getSizeMultiplier(monDef) {
      兩個來源：海盜之王卡片，以及鐵匠的無視體型攻擊（#131，官方的武器完全定義）。 */
   if (state.cardIgnoreSizePenalty) return Math.max(1, mult);
   if (state.buffs && state.buffs.some(b => b.type === 'ignoresize')) return Math.max(1, mult);
+  // 龍駕馭（盧恩騎士，飛龍當作一直都在）：拿矛打任何體型都是 100%
+  if (skillLv('rk_dragontraining') && weaponReqMet('spear')) return Math.max(1, mult);
   return mult;
 }
 // 種族固定傷害加成，不受DEF削減：動物殺手（動物/昆蟲）、天使之擊（惡魔/不死）
@@ -547,6 +549,7 @@ function getSizeMultiplier(monDef) {
 function raceFlatBonus(monDef) {
   let bonus = state.auraBladeFlat || 0;   // 靈氣劍：不限種族，只要 buff 在身上就加
   if (!monDef || !monDef.race) return bonus;
+  bonus += thirdRaceFlat(monDef);   // 遊俠主意（遊俠）
   if ((monDef.race === 'brute' || monDef.race === 'insect') && state.animalDamageFlat) {
     bonus += state.animalDamageFlat;
   }
@@ -2657,6 +2660,7 @@ function recomputeDerivedInner(fullHeal) {
      蓄氣上限照樣吃得到。 */
   if (state.spiritsMax > 0 && (state.jobId === 'champion' || state.jobId === 'sura')) state.spiritsMax = CHAMPION_SPIRITS_MAX;
   if (state.spiritsMax > 0) state.spiritsMax = Math.max(state.spiritsMax, thirdSpiritsMax());
+  thirdRecompute();   // 三轉被動（遊俠主意的減傷、陷阱研究的 MaxSP）
   if (state._pitcherPct) state.hpItemEffectBonusPct += state._pitcherPct;
   {
     const base = state._alchemyZenyMult == null ? 1 : state._alchemyZenyMult;
@@ -7436,7 +7440,10 @@ function skillBaseDamage(useMag, monDef, elemMult, sk) {
     const size = monDef && monDef.size ? getCardBonus('magicSizeDmg_' + monDef.size) : 0;
     // 對目標屬性的魔法增傷（rAthena bMagicAddEle，magicTargetEleDmg_<怪的屬性>）
     const tEle = getCardBonus('magicTargetEleDmg_' + ((monDef && monDef.element) || 'none'));
-    return state.matk * elemMult * (1 + dragon / 100) * (1 + race / 100) * (1 + size / 100) * (1 + tEle / 100);
+    // 魔法省悟（咒術士）：魔法傷害一律取最大值
+    const matk = state.buffs.some(b => b.type === 'matkmax') ? (state.matkMax || state.matk) : state.matk;
+    // 無限哼唱聲（宮廷樂師／浪姬舞者）：所有屬性魔法傷害 +%
+    return matk * elemMult * (1 + dragon / 100) * (1 + race / 100) * (1 + size / 100) * (1 + tEle / 100) * buffMult('magicdmg').mult;
   }
   return weaponChainDamage(monDef, elemMult, state.buffs.some(b => b.type === 'maxroll'), sk);
 }
@@ -7609,6 +7616,7 @@ function playerAttackInner() {
   // 異常狀態：睡眠中的目標受到的傷害增加（官方規則）
   raw *= ailDmgTakenMult(target);
   raw *= thirdNextAttackMult();   // 強化衝擊（皇家禁衛隊）：下一次普攻
+  raw *= thirdFearBreezeHits();   // 微風恐懼（遊俠）：弓普攻多打幾下
 
   // Apply monster debuff (provoke reduces defense)
   // 異常狀態對防禦的修正（石化 +25%、中毒 −25%）跟破防 debuff 疊乘
@@ -7627,7 +7635,8 @@ function playerAttackInner() {
 
   // 官方暴擊無視 DEF（也無視閃避）。以前暴擊照常吃減傷，等於只剩 1.5 倍那半邊效果，
   // 對高 DEF 的怪打起來跟普通攻擊差不了多少
-  let dmg = (isCrit ? Math.max(1, Math.round(raw)) : mitigateDamage(raw, monDefVal, monSoftVal)) + raceFlatBonus(monDef);
+  let dmg = (isCrit ? Math.max(1, Math.round(raw)) : mitigateDamage(raw, monDefVal, monSoftVal)) + raceFlatBonus(monDef)
+    + thirdNormalFlat(monDef);   // 魔力劍（盧恩騎士）
   if (isCrit) noteDealtDamage(dmg);
 
   /* 怪物身上的增益（#36）：自動防禦擋下整下、防禦型增益減傷、反射盾把傷害彈回來。
@@ -7640,6 +7649,7 @@ function playerAttackInner() {
   }
   dmg = absorb.dmg;
   target.hp -= dmg;
+  state._lastNormalDmg = dmg;   // 吸血植物（基因學者）用
   logMsg(`你對 ${monDef.name} 造成 ${dmg} 點傷害${isCrit ? '（暴擊！無視閃避與防禦）' : ''}`);
   if (absorb.reflect > 0) takeReflectDamage(monDef, absorb.reflect);
   applyCardLeech(dmg);
@@ -7672,6 +7682,7 @@ function playerAttackInner() {
     tryMonkProcs(target, monDef);        // 武僧（#70）：吸氣、真劍百破道、浸透勁、彈指神通、發勁
     tryMonkCombo(target, monDef);        // 武僧（#70）：六合拳 → 連環全身掌 → 猛龍誇強 → 阿修羅霸凰拳
     trySuraProcs(target, monDef);        // 修羅：雙龍腳 → 大纏崩墜、點穴-球
+    thirdAttackProcs(target, monDef);    // 三轉（不限近戰）：座狼自動狼突擊
     trySageProcs(target, monDef);        // 賢者（#71）：自動念咒、念咒拆除、魔法效果解除、隨機技能、元素更換
     tryPaladinProcs(target, monDef);     // 聖殿十字軍（#74）：捨命攻擊的自傷追擊
     tryProfessorProcs(target, monDef);   // 智者（#76）：薄霧牆、心神互換、精神耗弱術、精神撼動
@@ -11193,7 +11204,8 @@ function skillCastBreakdown(sk, lv) {
   const vct = memo * Math.max(0, baseVct + varMs) * st.factor * Math.max(0, 1 + (varPct - buffCut) / 100);
   const baseFct = castLv(row.fixedCastTime, lv);
   const fixedMs = getCardBonus('castFixedMs') + getCardBonus('castFixedMs_' + sk.id);
-  const fixedPct = getCardBonus('castFixedPct') - buffMult('fixedcastcut').flatBonus;   // 聖典（大主教）
+  const fixedPct = getCardBonus('castFixedPct') - buffMult('fixedcastcut').flatBonus   // 聖典（大主教）
+    - thirdFixedCastCut(sk);   // 半徑擴大（咒術士）
   const fct = Math.max(0, baseFct + fixedMs) * Math.max(0, 1 + fixedPct / 100);
   return { baseVct, varMs, statFactor: st.factor, varPct, buffCut, memo, vct, baseFct, fixedMs, fixedPct, fct, total: Math.round(vct + fct) };
 }
@@ -11644,7 +11656,7 @@ function castSkillInner(skillId, opts) {
           const cdm = (typeof sk.critDmgMult === 'number') ? sk.critDmgMult : 1;
           aoeMult *= 1 + (0.5 + (state.cardCritDmgPct || 0) / 100) * cdm;
         }
-        let dmg = mitigateDamage(skillBaseDamage(useMag, monDef, monElemMult) * aoeMult * (1 + monEleDmgBonus) * ailDmgTakenMult(mon), ...defOf(monDef, sk.ignoreDef ? 0 : 1, useMag, mon)) + raceFlatBonus(monDef);
+        let dmg = mitigateDamage(skillBaseDamage(useMag, monDef, monElemMult) * aoeMult * (1 + monEleDmgBonus) * elementDmgMult(skElement) * ailDmgTakenMult(mon), ...defOf(monDef, sk.ignoreDef ? 0 : 1, useMag, mon)) + raceFlatBonus(monDef);
         // 鋼製喙：閃電衝擊額外固定傷害（不受倍率影響）
         if (sk.id === 'ht_blitzbeat' && state.falconFlatBonus) dmg += state.falconFlatBonus;
         dmg += thirdSkillFlat(sk, lv, mon, monDef);

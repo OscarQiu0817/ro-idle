@@ -665,7 +665,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['lordknight'],
     next: [], nextLocked: [],
     bonusLevels: { str:[1,6,7,8,19,25,33,41,46,47,52,56,57,64,70], agi:[2,10,14,17,37,53,60,65], vit:[5,12,22,29,40,43,58,68], int:[13,67], dex:[4,11,16,28,31,36,44,49,62], luk:[3,27,38] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.runeknight,
     desc: '龍與符文的繼承者。劍上刻著看不懂的字，但敵人看得懂。'
   },
   royalguard: {
@@ -689,7 +689,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['highwizard'],
     next: [], nextLocked: [],
     bonusLevels: { str:[20,40,60], agi:[8,18,26,34,50,56,65,69], vit:[3,29,47,53,66], int:[1,5,10,14,19,24,28,32,37,38,39,46,49,55,59,62,70], dex:[2,9,17,22,23,31,43,61,67], luk:[12,41,57] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.warlock,
     desc: '把咒文寫成公式的人。世界照著他的算式崩塌。'
   },
   sorcerer: {
@@ -701,7 +701,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['professor'],
     next: [], nextLocked: [],
     bonusLevels: { str:[5,18,27,36,45,56], agi:[3,12,23,32,43,50,54,60,69], vit:[7,24,39,63], int:[1,2,11,14,22,30,38,41,49,57,64,68,70], dex:[8,16,20,26,29,34,37,46,52,55,62], luk:[21,66] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.sorcerer,
     desc: '四大元素在他手上不是力量，是同事。'
   },
   ranger: {
@@ -713,7 +713,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['sniper'],
     next: [], nextLocked: [],
     bonusLevels: { str:[8,24,45,61], agi:[2,6,10,11,21,28,33,38,43,48,58], vit:[12,32,55], int:[5,20,42,54,65], dex:[1,3,4,16,17,22,26,30,35,40,46,51,60,69], luk:[14,25,31,36,50,57,62,70] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.ranger,
     desc: '箭離弦的那一刻，獵物才知道自己一直在陷阱裡。'
   },
   minstrel: {
@@ -725,7 +725,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['clown'],
     next: [], nextLocked: [],
     bonusLevels: { str:[5,10,19,33,45,54,62,70], agi:[1,4,9,13,24,32,36,49,53,58,65,68], vit:[16,59], int:[8,21,28,41,69], dex:[2,7,15,23,30,39,40,43,50,56,57,61,63,66], luk:[11,18,26,47] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.minstrel,
     desc: '一個人就是一整支樂隊，安可是必須的。'
   },
   wanderer: {
@@ -737,7 +737,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['gypsy'],
     next: [], nextLocked: [],
     bonusLevels: { str:[2,6,20,35,50,66], agi:[4,11,12,13,25,31,38,47,52,57,61,62,67,70], vit:[17,54], int:[8,26,39,53,60], dex:[1,9,14,15,18,22,23,28,33,41,43,45,49,58,65,69], luk:[27,63] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.wanderer,
     desc: '舞步走到哪，戰場的節奏就改到哪。'
   },
   mechanic: {
@@ -749,7 +749,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['whitesmith'],
     next: [], nextLocked: [],
     bonusLevels: { str:[2,3,17,26,33,52], agi:[7,19,20,31,36,58,64], vit:[9,13,29,48,60,65], int:[4,15,22,34,50,61], dex:[1,6,12,23,32,38,41,47,55,56,62,70], luk:[8,16,28,39,44,45,66,67] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.mechanic,
     desc: '鐵鎚換成了扳手，敲的東西變大台了。'
   },
   geneticist: {
@@ -761,7 +761,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['creator'],
     next: [], nextLocked: [],
     bonusLevels: { str:[6,31,53,66], agi:[5,18,27,38,54,67], vit:[9,33,61], int:[7,13,22,30,46,59,68], dex:[1,10,15,23,35,41,42,43,47,49,56,57,63,70], luk:[3,8,20,25,34,45,51,52,60,64,69] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.geneticist,
     desc: '已經不滿足於製藥，開始改寫配方本身。'
   },
   guillotinecross: {
@@ -785,7 +785,7 @@ const JOB_TREE = {
     borrowSkillsFrom: ['stalker'],
     next: [], nextLocked: [],
     bonusLevels: { str:[1,11,22,32,43,47,53,62,67], agi:[2,9,12,21,27,34,41,45,58,64,70], vit:[6,15,42,63], int:[5,44,57], dex:[10,16,17,26,29,37,38,49,52,56,60,66], luk:[4,20,24,31,50,59] },
-    skills: [],
+    skills: THIRD_JOB_SKILLS.shadowchaser,
     desc: '偷來的不只是技能，還有你的名字。'
   },
   archbishop: {

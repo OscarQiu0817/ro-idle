@@ -25896,6 +25896,8 @@ const WEAPON_REQ_CATEGORIES = {
   knuckle: ['knuckle'],
   book:    ['book'],
   dagger_katar: ['dagger', 'katar'],   // 劇毒武器（十字斬首者）
+  blade_spear: ['dagger', 'sword1', 'sword2', 'spear1', 'spear2'],   // 風壓飛刃、致命爆裂（盧恩騎士）
+  bow_instrument_whip: ['bow', 'instrument', 'whip'],   // 大暴雨（宮廷樂師／浪姬舞者）
   // #70 武僧的鐵沙掌：官方寫的是「空手或拳套」，所以 bare 也算一種合格的「武器」
   barefist: ['bare', 'knuckle'],
   // #72 鍊金術士的熟練度官方寫「斧頭或單手劍」——跟商人系的 axemace（斧或鈍器）不是同一組
@@ -25906,7 +25908,7 @@ const WEAPON_REQ_CATEGORIES = {
 const WEAPON_REQ_NAMES = {
   sword: '單手劍或短劍', sword2: '雙手劍', dagger: '短劍', katar: '拳刃',
   mace: '鈍器', axe: '斧頭', axemace: '斧頭或鈍器',   spear: '矛類武器', spear_sword2: '矛類或雙手劍', bow: '弓', rod: '法杖',
-  instrument: '樂器', whip: '鞭子', knuckle: '拳套', book: '書本', dagger_katar: '短劍或拳刃',
+  instrument: '樂器', whip: '鞭子', knuckle: '拳套', book: '書本', dagger_katar: '短劍或拳刃', blade_spear: '短劍、劍或矛', bow_instrument_whip: '弓、樂器或鞭子',
   barefist: '空手或拳套', axesword: '斧頭或單手劍',
   bow_instrument_whip: '弓、樂器或鞭子', book_mace: '書本或鈍器',
 };
