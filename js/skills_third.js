@@ -1123,17 +1123,19 @@ const THIRD_SKILLS = {
     desc: '毒屬性魔法打目標與周圍：MATK (1000+300×Lv + INT)%×BaseLv/100；雲毒中的目標再 +200×Lv%。',
   },
   so_psychic_wave: {
-    id: 'so_psychic_wave', name: '超自然波 Psychic Wave', maxLv: 5, type: 'magic_aoe', element: 'neutral',
+    id: 'so_psychic_wave', name: '超自然波 Psychic Wave', maxLv: 5, type: 'field_aoe_magic', element: 'neutral',
+    fieldRadius: 3, fieldTickIntervalSec: 1, duration: [3, 4, 5, 6, 7],
     spCost: [48, 56, 64, 70, 78], cooldown: [5],
-    mult: [2.1, 5.6, 10.5, 16.8, 24.5], statLvPre: { int: 3 }, lvDiv: 100,
-    desc: '無屬性魔法打範圍內敵人 Lv+2 次，每次 MATK (70×Lv + INT×3)%×BaseLv/100（本作合成一次結算）。（官方拿杖或書每次打兩下，本作不做）',
+    mult: [0.7, 1.4, 2.1, 2.8, 3.5], statPre: { int: 3 }, lvDiv: 100,
+    desc: '在目標位置放出能量波（7×7）Lv+2 秒，每秒對範圍內敵人 MATK (70×Lv + INT×3)%×BaseLv/100。（官方拿杖或書每次打兩下，本作不做）',
   },
   so_cloud_kill: {
-    id: 'so_cloud_kill', name: '雲殺 Cloud Kill', maxLv: 5, type: 'magic_aoe', element: 'poison',
+    id: 'so_cloud_kill', name: '雲殺 Cloud Kill', maxLv: 5, type: 'field_aoe_magic', element: 'poison',
+    fieldRadius: 3, fieldTickIntervalSec: 1, duration: [1, 2, 3, 4, 5],
     spCost: [48, 56, 64, 70, 78], cooldown: [5],
-    mult: [0.4, 1.6, 3.6, 6.4, 10], statLvPre: { int: 3 }, lvDiv: 100, markKey: 'cloudPoisonUntil', markSec: 5,
-    desc: '毒雲持續 Lv 秒，每秒 MATK (40×Lv + INT×3)%×BaseLv/100（本作合成一次結算），中的怪 5 秒內陷入雲毒（劇毒猛擊變痛）。'
-        + '（雲毒降毒耐性本作不做）',
+    mult: [0.4, 0.8, 1.2, 1.6, 2], statPre: { int: 3 }, lvDiv: 100, markKey: 'cloudPoisonUntil', markSec: 5,
+    desc: '在目標位置放毒雲（7×7）1~5 秒，每秒對範圍內敵人 MATK (40×Lv + INT×3)%×BaseLv/100，'
+        + '被毒雲打到的怪 5 秒內陷入雲毒（劇毒猛擊變痛）。（雲毒降毒耐性本作不做）',
   },
   so_striking: {
     id: 'so_striking', name: '打擊強化 Striking', maxLv: 5, type: 'buff_list', party: true,
@@ -1239,12 +1241,13 @@ const THIRD_SKILLS = {
     desc: '樂器或鞭子，消耗 5 支箭，打目標周圍：MATK (700+300×Lv)%×BaseLv/100。（官方屬性照箭，本作固定無屬性）',
   },
   wm_severe_rainstorm: {
-    id: 'wm_severe_rainstorm', name: '大暴雨 Severe Rainstorm', maxLv: 5, type: 'damage_aoe',
-    requiresWeapon: 'bow_instrument_whip', consumeAmmo: 10,
+    id: 'wm_severe_rainstorm', name: '大暴雨 Severe Rainstorm', maxLv: 5, type: 'field_phys_aoe', element: 'neutral',
+    requiresWeapon: 'bow_instrument_whip', consumeAmmo: 10, tickSec: 0.3, duration: [3.6],
     spCost: [80, 90, 100, 110, 120], cooldown: [5, 5.5, 6, 6.5, 7],
-    mult: [12, 24, 36, 48, 60], lvDiv: 100,
-    weaponMult: { instrument: [14.4, 28.8, 43.2, 57.6, 72], whip: [14.4, 28.8, 43.2, 57.6, 72] },
-    desc: '弓、樂器或鞭子，消耗 10 支箭，箭雨打範圍內敵人 12 次：每次 ATK 100×Lv%（樂器／鞭子 120×Lv%）×BaseLv/100（本作合成一次結算）。',
+    mult: [1, 2, 3, 4, 5], statPre: { dex: 1 / 300, agi: 1 / 200 }, lvDiv: 100,
+    weaponMult: { instrument: [1.2, 2.4, 3.6, 4.8, 6], whip: [1.2, 2.4, 3.6, 4.8, 6] },
+    desc: '弓、樂器或鞭子，消耗 10 支箭。箭雨持續 3.6 秒、每 0.3 秒打全場敵人一次（共 12 次）：'
+        + '每次 ATK 100×Lv%（樂器／鞭子 120×Lv%）×BaseLv/100。',
   },
   wm_poemofnetherworld: {
     id: 'wm_poemofnetherworld', name: '絕望之歌 Poem of Netherworld', maxLv: 5, type: 'ailment_aoe', ailment: 'stun',
@@ -1388,10 +1391,12 @@ const THIRD_SKILLS = {
     desc: '打範圍內所有敵人：ATK (700+100×Lv)%×BaseLv/100。消耗 1 個荊棘種子。',
   },
   gn_demonic_fire: {
-    id: 'gn_demonic_fire', name: '惡魔火焰 Demonic Fire', maxLv: 5, type: 'magic_aoe', element: 'fire',
-    spCost: [24, 28, 32, 36, 40], cooldown: [5], mult: [13, 18, 23.8, 30.4, 37.8],
+    id: 'gn_demonic_fire', name: '惡魔火焰 Demonic Fire', maxLv: 5, type: 'field_aoe_magic', element: 'fire',
+    fieldRadius: 2, fieldTickIntervalSec: 1, duration: [10, 12, 14, 16, 18],
+    spCost: [24, 28, 32, 36, 40], cooldown: [5], mult: [1.3, 1.5, 1.7, 1.9, 2.1],
     costItems: ['fire_bottle'], costQty: 1, payItems: true,
-    desc: '火海持續 10~18 秒，每秒 MATK (110+20×Lv)%（本作合成一次結算）。消耗 1 個火煙瓶。（著火本作沒有這個狀態）',
+    desc: '在目標位置燒出火海（5×5）10~18 秒，每秒對範圍內敵人 MATK (110+20×Lv)%，走出火海就不會被燒。消耗 1 個火煙瓶。'
+        + '（著火本作沒有這個狀態）',
   },
   gn_hells_plant: {
     id: 'gn_hells_plant', name: '地獄植物 Hell\'s Plant', maxLv: 5, type: 'damage_aoe',

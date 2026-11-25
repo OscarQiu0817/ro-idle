@@ -5719,6 +5719,7 @@ function tickFieldEffects() {
             // 暴風雪照官方是冰凍（fieldAilment，使用者 2026-11-16 回報看起來是暈眩）；其餘場地魔法維持暈眩
             if (f.stunChance && rng() * 100 < f.stunChance) { if (f.ailment === 'freeze') applyAilment(mon, monDef, 'freeze', { sec: f.stunSec || 1 }); else applyStun(mon, f.stunSec || 1, true); }
             if (f.knockback && mon.hp > 0) pushBack(mon, f.knockback);
+            if (f.mark && mon.hp > 0) mon[f.mark.key] = gameNow() + f.mark.sec * 1000;   // 雲殺：雲毒
             pushCombatLog(`  → 「${f.name}」對 ${monDef.name} 造成 ${dmg} 點傷害！`);
             // 場地魔法（隕石術、十字驅魔…）每一跳也照屬性上色
             if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, 'normal', f.element || 'holy');
@@ -12003,7 +12004,9 @@ function castSkillInner(skillId, opts) {
        1 秒心跳下也結算得完整。 */
     case 'field_phys_aoe': {
       const dur = Array.isArray(sk.duration) ? sk.duration[lv - 1] : sk.duration;
-      const mult = Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult;
+      const t0 = state.monsters && state.monsters[0];
+      const mult = (Array.isArray(sk.mult) ? sk.mult[lv - 1] : sk.mult)
+        * (t0 ? thirdSkillFactor(sk, lv, t0, MONSTERS[t0.defId]) : 1);   // 三轉倍率（大暴雨）
       state.activeFieldEffects = (state.activeFieldEffects || []).filter(f => f.skillId !== sk.id);
       state.activeFieldEffects.push({
         kind: 'alchemy_strike', skillId: sk.id, skillLv: lv, name: sk.name, mult, aoe: true,
@@ -12264,8 +12267,11 @@ function castSkillInner(skillId, opts) {
         : _castGround ? { d: _castGround.d, a: _castGround.a }   // 開始詠唱時鎖定的落點
         : (tgt && Number.isFinite(tgt.d) ? { d: tgt.d, a: tgt.a || 0 } : null);
       const row = skillCastRow(sk.id);
-      state.activeFieldEffects.push({ kind: 'aoe_holydmg', fxSkillId: sk.id, name: sk.name, mult, element: skElement || 'holy', stunChance, stunSec, ailment: sk.fieldAilment || 'stun', tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
-        center, radius: sk.fieldRadius || 0, knockback: row ? castLv(row.knockback, lv) || 0 : 0 });
+      // 三轉（使用者 2026-11-25：火海、毒雲改場地）：倍率加成在放下時算好，標記每一跳都掛
+      const fMult = mult * (tgt ? thirdSkillFactor(sk, lv, tgt, MONSTERS[tgt.defId]) : 1);
+      const mark = sk.markSec ? { key: sk.markKey || 'earthshakerUntil', sec: lvArr(sk.markSec, lv) } : null;
+      state.activeFieldEffects.push({ kind: 'aoe_holydmg', fxSkillId: sk.id, name: sk.name, mult: fMult, element: skElement || 'holy', stunChance, stunSec, ailment: sk.fieldAilment || 'stun', tickIntervalSec: tickSec, nextTickAt: gameNow(), endsAt: gameNow() + dur * 1000,
+        center, radius: sk.fieldRadius || 0, knockback: row ? castLv(row.knockback, lv) || 0 : 0, mark });
       logMsg(`✨ 「${sk.name}」Lv${lv} 發動！`);
       break;
     }
