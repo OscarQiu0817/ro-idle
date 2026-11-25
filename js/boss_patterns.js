@@ -48,7 +48,8 @@ const BOSS_PATTERNS = {};
      drain  打中多少補王多少  pri  優先度（3 招牌範圍技、2 特色技、1 普通附屬攻擊），塞不下時先留高的
      fx     借用特效（預設＝技能名小寫，對得上 SKILL_FX_PLAN 才播）
    自身行為（不畫紅圈）：self 'buff' 照官方增益值（MONSTER_SKILLS 的 buff／dur）；self 'heal' 回最大 HP 的 heal 比例。
-   null＝不做：只對單人減益或吸 SP，紅圈表達不出來。 */
+   null＝不做：只對單人減益或吸 SP，紅圈表達不出來。
+   normal＝不進輪替，王戰中照一般怪物技能放（js/engine.js monsterSkillFor）。 */
 const DEG = Math.PI / 180;
 const BOSS_OFFICIAL_SKILLS = {
   // ---- 落點範圍魔法（目標腳下的圈／連環轟炸） ----
@@ -110,7 +111,8 @@ const BOSS_OFFICIAL_SKILLS = {
   NPC_TELEKINESISATTACK: { use: 'sweep', elem: 'ghost', pri: 1 },
   NPC_UNDEADATTACK: { use: 'sweep', elem: 'undead', pri: 1 },
   // ---- 撲到目標身上（近身單體） ----
-  MC_MAMMONITE:     { use: 'share', pri: 2 },
+  // 單體技：不畫紅圈、閃不掉，照一般怪物技能打（看迴避、ATK×倍率，使用者 2026-11-26）
+  MC_MAMMONITE:     { normal: true },
   NPC_CRITICALSLASH: { use: 'pounce', pri: 1 },
   SM_BASH:          { use: 'pounce', dmg: 0.3, pri: 1 },
   NPC_GUIDEDATTACK: { use: 'jump', pri: 1 },
@@ -157,7 +159,7 @@ function bossOfficialPattern(defId, def) {
   const atk = [], self = [], seen = new Set();
   list.forEach((e, order) => {
     const map = BOSS_OFFICIAL_SKILLS[e.s];
-    if (!map || seen.has(e.s)) return;
+    if (!map || map.normal || seen.has(e.s)) return;
     seen.add(e.s);
     const fx = map.fx || e.s.toLowerCase();
     const base = { src: e.s, name: names[e.s] || e.s, fx: fxOk(fx) ? fx : null, order };

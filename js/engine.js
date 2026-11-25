@@ -649,6 +649,7 @@ function equippedDef() {
   ['head_top', 'head_mid', 'head_bottom', 'armor', 'shield', 'garment', 'footgear', 'accessory1', 'accessory2'].forEach(slot => {
     const id = getEquipBaseItemId(slot);
     const a = id ? ITEMS[id] : null;
+    if (a && a.type === 'weapon') return;   // 雙持左手武器放盾牌格：精煉算 ATK，不算防具精煉 DEF（使用者 2026-11-26）
     const baseDef = a && a.def ? a.def : 0;
     def += baseDef + getRefinementDefBonus(getRefinementLevel(slot));
   });
@@ -4072,9 +4073,12 @@ function monsterHealAmount(monDef, skillLv) {
 }
 
 function monsterSkillFor(mon, monDef) {
-  // 打王戰鬥（T51）：首領只用紅圈技能（js/boss_fight.js），原本的 pre-RE 技能停用
-  if (monDef && monDef.isBoss && typeof tickBossFight === 'function') return null;
-  const list = (typeof MONSTER_SKILLS !== 'undefined') && MONSTER_SKILLS[mon.defId];
+  let list = (typeof MONSTER_SKILLS !== 'undefined') && MONSTER_SKILLS[mon.defId];
+  // 打王戰鬥（T51）：首領只用紅圈技能（js/boss_fight.js），
+  // 例外是標了 normal 的單體技（金錢攻擊）：照一般技能放，看迴避（使用者 2026-11-26）
+  if (monDef && monDef.isBoss && typeof tickBossFight === 'function') {
+    list = (list || []).filter(e => typeof BOSS_OFFICIAL_SKILLS !== 'undefined' && BOSS_OFFICIAL_SKILLS[e.s] && BOSS_OFFICIAL_SKILLS[e.s].normal);
+  }
   if (!list || !list.length) return null;
   const now = gameNow();
   mon.skCd = mon.skCd || {};
@@ -6052,9 +6056,11 @@ const MELEE_SPAWN_BATCH_MAX = 3;
 /* 開了 BOSS 模式之後，每次補怪抽到 MVP 的機率（%）。
    圖鑑的「出沒地圖」也讀這個數字換算每張圖的出現率（#108），
    所以兩邊不會各寫各的。
-   20 → 5（使用者 2026-11-14：有了 MVP 點數，免得狂刷 MVP） */
+   20 → 5（使用者 2026-11-14：有了 MVP 點數，免得狂刷 MVP）
+   迷你王 20 → 10（使用者 2026-11-26：迷你王要比 MVP 常見，比照正版重生時間約 2:1）
+   兩個都是**每批**擲一次，不是每隻（以前逐隻擲，一批 3 隻時迷你王實際約 49%） */
 const MVP_SPAWN_CHANCE_PCT = 5;
-const MINIBOSS_SPAWN_CHANCE_PCT = 20;   // 迷你王維持 20%
+const MINIBOSS_SPAWN_CHANCE_PCT = 10;
 
 /* ---------------- 打寶模式（#110）----------------
 
@@ -7197,17 +7203,19 @@ function spawnMonster() {
     ? Math.min(room, 1 + Math.floor(rng() * MELEE_SPAWN_BATCH_MAX))
     : 1;
 
+  /* 首領每批只擲一次（使用者 2026-11-26），中了就當這批的第一隻。
+     場上已經有首領（MVP 或迷你王，任何一隻）就不擲（使用者 2026-11-08）。 */
+  const bossAlive = state.monsters.some(m => m.hp > 0 && MONSTERS[m.defId] && MONSTERS[m.defId].isBoss);
+  const bossHit = (bossAlive || !batch) ? [] : bossLists.filter(l => rng() * 100 < l.pct);
+
   for (let i = 0; i < batch; i++) {
     // MVP 帶小弟時會自己把空位填滿，所以每一輪都要重新確認還有沒有位置
     if (state.monsters.length >= maxMonsters) break;
-    /* BOSS 抽選（#147）。MVP 與迷你王各自 20%、各自檢查「同類還活著沒」——
+    /* BOSS 抽選（#147）。MVP 與迷你王各擲各的（機率見上方常數）——
        兩邊都中的時候不是各生一隻（一輪只有一個空位），而是從中選一個。
        這樣任一邊單獨開啟時的機率跟以前一模一樣，兩邊都開也不會變成 40%。 */
     let defId;
-    /* 場上已經有首領（MVP 或迷你王，任何一隻）就不再刷另一隻（使用者 2026-11-08）。
-       以前只擋「同一份名單的還活著」，MVP 與迷你王可以同時在場。 */
-    const bossAlive = state.monsters.some(m => m.hp > 0 && MONSTERS[m.defId] && MONSTERS[m.defId].isBoss);
-    const hit = bossAlive ? [] : bossLists.filter(l => rng() * 100 < l.pct);
+    const hit = i === 0 ? bossHit : [];
     if (hit.length) {
       const l = hit[Math.floor(rng() * hit.length)];
       defId = l[Math.floor(rng() * l.length)];
