@@ -9287,7 +9287,8 @@ function tickAllyFormation(dtMs) {
       a._adv = Math.max(0, Math.min(a._adv, t.d - 1 - base));
     }
     let need = -Infinity;
-    if (t && Number.isFinite(t.d) && !state.travel) {
+    // 趕路中停下來打擋路的怪，隊友也要往前走（以前趕路一律不走，近戰隊友打不到，使用者 2026-11-26）
+    if (t && Number.isFinite(t.d) && (!state.travel || hasFightTarget())) {
       need = withAlly(a, () => {
         const tt = state.monsters[0], rr = playerEngageRange();
         return tt && Number.isFinite(rr) ? tt.d - rr : -Infinity;
