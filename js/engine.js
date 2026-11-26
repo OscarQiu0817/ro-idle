@@ -9249,7 +9249,17 @@ function memberForward(m) {
 }
 function memberPos(m) {
   const f = memberForward(m), a = formationFacing();
-  const p = f >= 0 ? { d: f, a } : { d: -f, a: a + Math.PI };
+  let p = f >= 0 ? { d: f, a } : { d: -f, a: a + Math.PI };
+  /* 後排近戰隊友走上來打玩家面前的怪：直線上能站的位置剛好是玩家那格，會跟玩家疊在一起（使用者 2026-11-26）。
+     改站到目標斜前方（離目標 0.9 格、偏 60°，兩位隊友各站一邊），射程照樣夠 */
+  const owner = allyOwnerState(), t = owner.monsters && owner.monsters[0];
+  if (m !== owner && t && Number.isFinite(t.d) && Math.abs(f) < 0.5 && t.d < 3) {
+    const tx = t.d * Math.cos(t.a || 0), ty = t.d * Math.sin(t.a || 0);
+    const side = ((owner.allies || []).indexOf(m) % 2 ? 1 : -1) * Math.PI / 3;
+    const back = Math.atan2(-ty, -tx) + side;
+    const x = tx + 0.9 * Math.cos(back), y = ty + 0.9 * Math.sin(back);
+    p = { d: Math.hypot(x, y), a: Math.atan2(y, x) };
+  }
   // 打王閃避：隊友在站位位置上再加一個偏移（js/boss_fight.js）
   const o = m && m._dodgeOff;
   if (!o) return p;
@@ -13213,6 +13223,12 @@ function monsterDebuffStillUp(sk) {
 }
 function tryAutoCastSupportSkills() {
   if (!state.autoSupportSkills) return;
+  /* 過期或用完的護盾先清掉。以前只在被打到時才清，站後排、一直閃掉的人身上留著過期的光之障壁（還會存進存檔），
+     下面「身上還有就不放」永遠成立，結果一次都不放（使用者 2026-11-26） */
+  if (state.shields && state.shields.length) {
+    const now = gameNow();
+    state.shields = state.shields.filter(sh => now < sh.expiresAt && sh.remainingCharges > 0 && sh.remainingHp > 0);
+  }
   {
     for (const { sk, lv } of orderedSupportEntries()) {
       if (!state.autoSupportSkills[sk.id]) continue;
