@@ -183,7 +183,8 @@ function paperdollLookParts(who) {
     }
   }
   if (typeof costumeApplyViews === 'function') {   // 隊友的頭部服飾
-    const v = costumeApplyViews(hatViews, who);
+    // 要傳副本：沒穿服飾時會原樣回傳同一個陣列，下一行清空就把頭飾一起清掉（選角畫面、隊友沒頭飾，使用者 2026-11-26）
+    const v = costumeApplyViews(hatViews.slice(), who);
     hatViews.length = 0; v.forEach(x => hatViews.push(x));
   }
   let weaponCat = 'bare';
