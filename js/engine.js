@@ -5683,7 +5683,10 @@ function tickFieldEffects() {
       if (f.kind === 'selfheal') {
         const before = state.hp;
         state.hp = Math.min(state.maxHp, state.hp + Math.round(f.amount * healRecvMult()));
-        if (state.hp > before) logMsg(`💚 「${f.name}」持續恢復了 ${state.hp - before} 點HP。`);
+        if (state.hp > before) {
+          logMsg(`💚 「${f.name}」持續恢復了 ${state.hp - before} 點HP。`);
+          if (typeof showPlayerFloat === 'function') showPlayerFloat('+' + (state.hp - before), 'heal');
+        }
         /* 光耀之堂是範圍治療，站在裡面的隊友也該回血（#131）。
            倒地的不算——復活是天使之嘆息那條路，不能靠站在陣裡自己爬起來。 */
         if (f.party) {
@@ -5838,7 +5841,9 @@ function playerCombatStep(moveDt) {
       // 紅圈還在：走過去會踩進預警範圍就停著（不然閃出去又走回來，來回抖）
       const castHold = typeof bossWalkBlocked === 'function' && bossWalkBlocked(walkStep, tgt.a || 0);
       if (!playerImmobile() && !manualHold && !castHold) playerMoveBy(walkStep, tgt.a || 0);
-      state.attackAccumulator = 0;
+      // 這一拍就追進普攻射程（目標慢慢退、例如節慶怪被隊友打到在逃）：攻擊計時不清，
+      // 不然隊友一直打、怪一直退，玩家永遠在走（使用者 2026-11-26）
+      if (!(tgt.d <= engage + DIST_EPS && tgt.d <= playerAttackRange() + DIST_EPS)) state.attackAccumulator = 0;
     } else if (tgt && Number.isFinite(tgt.d) && tgt.d > playerAttackRange() + DIST_EPS) {
       state.attackAccumulator = 0;   // 站在技能射程上，普攻打不到
     }
@@ -12416,8 +12421,9 @@ function castSkillInner(skillId, opts) {
       if (sk.healParty) thirdHealParty(sk, lv, tgt);   // 燦爛聖光：全隊
       const who = tgt === state ? '' : `${tgt === allyOwnerState() ? '玩家' : (tgt._allyName || '隊友')} `;
       logMsg(`💚 「${sk.name}」Lv${lv} 為${who || '自己'}恢復了 ${amt} 點HP。`);
-      if (tgt === allyOwnerState() && tgt !== state && typeof showPlayerFloat === 'function') {
-        const prev = _allyActing; _allyActing = null;
+      // 綠字飄在被補的人身上（玩家或隊友）。以前另外從訊息抓「恢復了」再飄一次在怪頭上，隊友補玩家會跳兩次（使用者 2026-11-26）
+      if (typeof showPlayerFloat === 'function') {
+        const prev = _allyActing; _allyActing = tgt === allyOwnerState() ? null : tgt;
         try { showPlayerFloat('+' + amt, 'heal'); } finally { _allyActing = prev; }
       }
       break;
@@ -17424,10 +17430,6 @@ function logMsg(text, lane) {
         void playerSprite.offsetWidth;
         playerSprite.classList.add('attacking');
       }
-    }
-    const healMatch = text.match(/恢復了 (\d+) 點/);
-    if (healMatch) {
-      showDamageFloat('+' + healMatch[1], 'heal');
     }
     if (text.includes('擊敗了') && typeof triggerMonsterDie === 'function') {
       triggerMonsterDie();

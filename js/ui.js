@@ -386,6 +386,18 @@ function selectSlot(slot) {
   }
 }
 
+/* 一鍵更新（使用者 2026-11-26）：手機會一直留著舊版的 js（分頁沒真的重開、或瀏覽器快取），
+   新舊檔混在一起就會出現怪 bug。把頁面與所有程式、樣式重新抓一次蓋掉快取，再重新整理。
+   存檔在 localStorage，不受影響。 */
+async function forceUpdateGame(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '🔄 更新中…'; }
+  const urls = [location.pathname || './',
+    ...[...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src')),
+    ...[...document.querySelectorAll('link[rel="stylesheet"][href]')].map(l => l.getAttribute('href'))];
+  await Promise.all(urls.map(u => fetch(u, { cache: 'reload' }).catch(() => null)));
+  location.reload();
+}
+
 function deleteSlotConfirm(slot) {
   if (confirm('確定要刪除欄位 ' + (slot + 1) + ' 的存檔嗎？')) {
     localStorage.removeItem(getSlotKey(slot));
