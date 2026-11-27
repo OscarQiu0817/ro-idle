@@ -1989,6 +1989,13 @@ async function loadAnimFrames(key) {
   animFramesLoaded[key] = animFrameImages[key].length > 0;
 }
 
+/* 多段近戰技能：角色照段數連揮（使用者 2026-11-27：音速投擲要真的打八下）。
+   每一下的間隔跟白字錯開的間隔一樣，數字跟揮擊對得上。 */
+function playPlayerMultiSwing(hits) {
+  const n = Math.min(hits | 0, FLOAT_STAGGER_SLOTS);
+  if (n <= 1) return;
+  for (let i = 0; i < n; i++) setTimeout(() => playPlayerSheetAttack(FLOAT_STAGGER_MS), i * FLOAT_STAGGER_MS);
+}
 function playAttackAnim() {
   if (castingAnim) return;
   if (playPlayerSheetAttack()) return;
@@ -2240,13 +2247,34 @@ function skillSfxUrl(w) { return 'WAV/skill/' + w.split('/').map(encodeURICompon
 /* 這招有沒有官方音效（有的話 playSkillSound 就不再放通用的屬性音效，免得響兩聲） */
 const SKILL_FX_CUSTOM = ['mg_firebolt', 'mg_coldbolt', 'mg_lightningbolt', 'mg_fireball'];   // 手調特效的四招沿用原本的連發音效
 function skillHasPlanSfx(id) { return !SKILL_FX_CUSTOM.includes(id) && typeof SKILL_FX_PLAN !== 'undefined' && !!SKILL_FX_PLAN[id] && SKILL_FX_PLAN[id].some(L => L.wav && L.wav.length); }
+/* 角色身體的中心：外框比人物大很多，改量紙娃娃畫布裡實際有畫到的範圍（使用者 2026-11-27：音速投擲要在角色中心） */
+function fxBodyCenter(el) {
+  const c = el && el.querySelector && el.querySelector('#player-paper, .ally-paper');
+  if (!c || !c.width || !c.height) return null;
+  const r = c.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  let d;
+  try { d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; } catch (e) { return null; }
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    if (d[(y * c.width + x) * 4 + 3] < 40) continue;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  if (x1 < 0) return null;
+  return { x: r.left + (x0 + x1 + 1) / 2 * r.width / c.width, y: r.top + (y0 + y1 + 1) / 2 * r.height / c.height };
+}
+/* 官方特效表標成播在目標、但原作畫面是在施法者身上的（使用者 2026-11-27 回報）。打中的火花（hitEffectId）照舊播在怪身上 */
+const SKILL_FX_ON_CASTER = ['as_sonicblow'];
 // at：指定施法者＝目標的位置（打王的自身行為播在王身上）；不給就照玩家／隊友施法
 function playSkillPlanFx(sk, at) {
   if (typeof SKILL_FX_PLAN === 'undefined' || !SKILL_FX_PLAN[sk.id]) return;
   const cr = at || fxRectOf(fxCasterEl());
-  const offensive = typeof SKILL_ATTACK_TYPES !== 'undefined' && SKILL_ATTACK_TYPES.includes(sk.type) && sk.autoSlot !== 'support';
+  // 對怪放的就播在怪身上，不看它歸在攻擊欄還是輔助清單（天使之怒、挑釁這類減益以前播在自己身上，使用者 2026-11-27）
+  const offensive = typeof skillNeedsMonster === 'function' ? skillNeedsMonster(sk)
+    : (typeof SKILL_ATTACK_TYPES !== 'undefined' && SKILL_ATTACK_TYPES.includes(sk.type));
   const mon = state.monsters && state.monsters[0];
   const tr = !at && offensive && mon ? fxRectOf(monSlotAnchor(mon.id)) : cr;
+  const onCaster = SKILL_FX_ON_CASTER.includes(sk.id);
   for (const L of SKILL_FX_PLAN[sk.id]) {
     // 官方音效（scripts/gen_skill_sfx.py 轉成 WAV/skill/<路徑>.ogg）：照官方延遲，幾個版本隨機挑一個
     if (L.wav && L.wav.length) {
@@ -2254,7 +2282,7 @@ function playSkillPlanFx(sk, at) {
       setTimeout(() => playSfx(skillSfxUrl(w), 40), (L.delay || 0) + (L.wavDelay || 0));
     }
     if (L.play === 'sound') continue;
-    const r = L.at === 'caster' ? cr : (tr || cr);
+    const r = (L.at === 'caster' || (onCaster && L.key !== 'hitEffectId')) ? cr : (tr || cr);
     if (!r) continue;
     const x = r.left + r.width / 2;
     let y = L.at === 'ground' ? r.top + r.height * 0.9 : r.top + r.height * 0.55;
@@ -2268,6 +2296,14 @@ function playSkillPlanFx(sk, at) {
       // 場地魔法（暴風雪、隕石術…）的主特效對齊地上的範圍圈：圈心、圈寬（使用者 2026-11-16 回報對不上）
       if (sk.fieldRadius && m.str && m.ex && L.key !== 'hitEffectId') {
         playFieldFx(sk, name, m, times, once, L.delay || 0, x, y);
+        continue;
+      }
+      // 改播在施法者身上的（音速投擲）：特效範圍的中心對齊角色身體中心（使用者 2026-11-27：原作在角色中心，不是頭上）
+      if (onCaster && m.str && m.ex && L.key !== 'hitEffectId') {
+        const sc = m.sc || 0.6, bc = fxBodyCenter(fxCasterEl()) || { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        const cx = bc.x, cy = bc.y;
+        const ox = cx - (m.ex[0] + m.ex[2]) / 2 * sc, oy = cy - (m.ex[1] + m.ex[3]) / 2 * sc;
+        for (let k = 0; k < times; k++) playFxAnim(name, ox, oy, (L.delay || 0) + k * once);
         continue;
       }
       for (let k = 0; k < times; k++) playFxAnim(name, x, y, (L.delay || 0) + k * once);
@@ -2970,7 +3006,7 @@ function showDamageFloat(dmg, type, element) {
       el.style.top = (rect.top + rect.height * 0.28) + 'px';
       _lastFloatAnchor = { left: parseFloat(el.style.left), top: parseFloat(el.style.top), at: Date.now() };
     }
-    appendFloatLater(el, _floatDelayMs % 5);
+    appendFloatLater(el, _floatDelayMs % FLOAT_STAGGER_SLOTS);
     _floatDelayMs++;
     // 快速重置：200ms 後歸零（一次攻擊間隔）
     clearTimeout(el._resetTimer);
@@ -2985,33 +3021,37 @@ function showDamageFloat(dmg, type, element) {
     else return;
   }
   _liveFloats++;
-  setTimeout(() => { el.remove(); _liveFloats--; }, 1500 + 4 * FLOAT_STAGGER_MS);
+  setTimeout(() => { el.remove(); _liveFloats--; }, 1500 + (FLOAT_STAGGER_SLOTS - 1) * FLOAT_STAGGER_MS);
 }
 
 /* 白字出生點。黃字要接在它往上淡出的那段，不另找一個位置。 */
 let _lastFloatAnchor = null;
 
-/* 畫面上同時只留一顆黃字。新的要出來時，舊的立刻拿掉。 */
-let _comboTotalEl = null;
-let _comboTotalTimer = 0;
+/* 每隻怪頭上同時只留一顆黃字，新的出來舊的立刻拿掉。
+   範圍技一次打好幾隻，所以按怪分開記（使用者 2026-11-27）。 */
+const _comboTotals = new Map();   // monsterId → { el, timer }
 
 /* 多段攻擊的黃字合計。停在白字淡出的高度，不淡出，時間到直接消失。 */
 /* 黃字釘在那一隻怪的頭上。白字各自往右下拋，不帶著黃字一起走。 */
 function pinComboTotal(el) {
-  const node = el || _comboTotalEl;
-  if (!node) return;
+  if (!el) { _comboTotals.forEach(c => { if (c.el) pinComboTotal(c.el); }); return; }
+  const node = el;
   let target = node._monId != null ? monSlotAnchor(node._monId) : document.querySelector('.monster-slot.target');
   if (!target) return;   // 那隻已倒下：黃字停在原處
   const rect = target.getBoundingClientRect();
   node.style.left = (rect.left + rect.width / 2) + 'px';
   node.style.top = (rect.top - 4) + 'px';
 }
-function showComboTotal(monsterId, total) {
+function showComboTotal(monsterId, total, waitMs) {
   const n = Math.round(total);
   if (!(n > 0)) return;
-  clearTimeout(_comboTotalTimer);
-  _comboTotalTimer = setTimeout(() => {
-    if (_comboTotalEl) { _comboTotalEl.remove(); _comboTotalEl = null; }
+  const key = monsterId != null ? monsterId : '_';
+  const cur = _comboTotals.get(key) || {};
+  clearTimeout(cur.timer);
+  _comboTotals.set(key, cur);
+  // 等最後一段白字跳出來才出黃字
+  cur.timer = setTimeout(() => {
+    if (cur.el) { cur.el.remove(); cur.el = null; }
     const targetEl = monsterId != null ? monSlotAnchor(monsterId) : document.querySelector('.monster-slot.target');
     if (!targetEl) return;
     const el = document.createElement('div');
@@ -3021,14 +3061,13 @@ function showComboTotal(monsterId, total) {
     el.style.position = 'fixed';
     pinComboTotal(el);
     document.body.appendChild(el);
-    _comboTotalEl = el;
-    const mine = el;
-    _comboTotalTimer = setTimeout(() => {
-      if (_comboTotalEl !== mine) return;
-      mine.remove();
-      _comboTotalEl = null;
+    cur.el = el;
+    cur.timer = setTimeout(() => {
+      if (cur.el !== el) return;
+      el.remove();
+      _comboTotals.delete(key);
     }, 700);
-  }, 320);
+  }, waitMs || 320);
 }
 
 /* 一發技能拆成多段數字（二連矢、火箭術）。實際扣血仍是呼叫端算好的 total，這裡只拆顯示。 */
@@ -3048,7 +3087,7 @@ function showSkillHitNumbers(monsterId, total, hits, element, crit) {
     rest -= part;
     if (part > 0) showDamageFloatAt(monsterId, '-' + part, crit ? 'crit' : 'normal', element);
   }
-  showComboTotal(monsterId, sum);
+  showComboTotal(monsterId, sum, Math.min(n, FLOAT_STAGGER_SLOTS) * FLOAT_STAGGER_MS + 200);
 }
 
 /* 怪物圖集。images/mob_anim/<imgId>.png 一格一幀，index.json 標 idle／walk／hit／die。
@@ -3966,12 +4005,12 @@ function attackSwingMs(interval) {
   if (a) return Math.min(interval, a.frames * (a.delay || 100));
   return Math.min(interval, 400);
 }
-function playPlayerSheetAttack() {
+function playPlayerSheetAttack(intervalMs) {
   if (bfPaper && _pd.parts) {
     const act = paperdollActName('attack');
     const n = paperdollFrameCount(_pd.parts[0], act);
     if (!n) return false;
-    const swing = paperdollSwingTiming(act, n, state.attackInterval);
+    const swing = paperdollSwingTiming(act, n, intervalMs || state.attackInterval);
     _pd.act = act;
     _pd.t0 = Date.now();
     _pd.frame = -1;
@@ -4068,6 +4107,7 @@ const CRIT_NUM_HALF_H = 13;
    用延後塞進 DOM 而不是 animation-delay：delay 期間元素已經停在起點顯示，看起來還是同時。
    不再往上疊：各自往右下拋物線掉，時間錯開就分得開。 */
 const FLOAT_STAGGER_MS = 120;
+const FLOAT_STAGGER_SLOTS = 10;   // 連續數字最多錯開 10 格（音速投擲 8 段才不會疊在一起）
 function appendFloatLater(el, step, onShow) {
   const show = () => { document.body.appendChild(el); if (onShow) onShow(); };
   if (step) setTimeout(show, step * FLOAT_STAGGER_MS); else show();
@@ -5558,7 +5598,7 @@ function abSkillSectionsHtml() {
       const jd = JOB_TREE[jid];
       if (jd && jd.skills.some(s => s.id === id)) return jd.name;
     }
-    return '卡片';
+    return SKILLS[id] && SKILLS[id].runeStone ? '盧恩石' : '卡片';
   };
   /* 分類走引擎的 isAttackSkill()／isAutoSupportSkill()（#101）。
      這裡本來自己抄了一份類型白名單，跟引擎那份各走各的——
@@ -10530,6 +10570,8 @@ function renderVendingWindowInner() {
    外層鋪滿畫面但 `pointer-events:none`，只有中間的 frame 收事件，
    所以打怪照跑、旁邊的分頁照樣點得到，標題列可拖走。CSS 直接共用 `.wh-*`。 */
 function forgeAvailable() {
+  // 盧恩騎士學了盧恩精熟：鍛造視窗裡做盧恩石（js/runes.js）
+  if (typeof isRuneKnight === 'function' && isRuneKnight(state) && skillLv('rk_runemastery') > 0) return true;
   const hasMat = (state.unlockedMaterialCrafts || []).length > 0;
   const hasCraft = (state.unlockedCraftCategories || []).length > 0;
   if (!hasMat && !hasCraft) return false;
@@ -10584,6 +10626,11 @@ function refreshForgeIfChanged() {
   const parts = [state.gold, (state.unlockedMaterialCrafts || []).join('|'), (state.unlockedCraftCategories || []).join('|'), getCraftingSuccessChance()];
   Object.values(MATERIAL_CRAFT_RECIPES).forEach(r => r.consume.forEach(c => parts.push(getItemQty(c.item))));
   Object.values(WEAPON_CRAFT_RECIPES).forEach(r => r.mats.forEach(([id]) => parts.push(getItemQty(id))));
+  if (typeof RUNE_STONES !== 'undefined') {
+    parts.push(state.runeOre || '', skillLv('rk_runemastery'));
+    RUNE_ORES.forEach(o => parts.push(getItemQty(o.id)));
+    RUNE_STONES.forEach(r => { parts.push(getItemQty(r.stone)); r.mats.forEach(([id]) => parts.push(getItemQty(id))); });
+  }
   const sig = parts.join(',');
   if (sig === _forgeSig) return;
   _forgeSig = sig;
@@ -10643,10 +10690,54 @@ function showCraftingPanel() {
       html += '</div>';
     });
   }
-  if (!kinds.length && !(state.unlockedCraftCategories || []).length) {
+  const runeHtml = runeCraftPanelHtml();
+  html += runeHtml;
+  if (!kinds.length && !(state.unlockedCraftCategories || []).length && !runeHtml) {
     html += '<div class="empty-hint">還沒學會任何鍛造技能。</div>';
   }
   el.innerHTML = html;
+}
+/* 盧恩石製作（盧恩騎士，js/runes.js）：選一種原石，每顆盧恩石可做 1 次或 10 次 */
+function runeCraftPanelHtml() {
+  if (typeof RUNE_STONES === 'undefined' || !isRuneKnight(state)) return '';
+  const rm = skillLv('rk_runemastery');
+  if (!rm) return '';
+  const owned = RUNE_ORES.filter(o => getItemQty(o.id) > 0);
+  if (!state.runeOre || !RUNE_ORES.some(o => o.id === state.runeOre)) state.runeOre = (owned[0] || RUNE_ORES[0]).id;
+  const ore = state.runeOre;
+  const nm = id => (ITEMS[id] ? ITEMS[id].name : id);
+  let html = `<h3 class="panel-title">盧恩石製作　<span class="card-desc">盧恩精熟 Lv${rm}，一次做 ${rm >= 10 ? '2～6' : rm >= 5 ? '2～4' : '2'} 顆</span></h3>`;
+  html += '<div class="empty-hint">每次消耗 1 顆盧恩原石＋材料，失敗照樣消耗。原石越好成功率越高；一般、高級原石道具商人有賣。</div>';
+  html += '<div class="rune-ore-pick">原石：' + RUNE_ORES.map(o =>
+    `<button class="btn-small${o.id === ore ? ' active' : ''}" onclick="pickRuneOre('${o.id}')">${nm(o.id)}（${getItemQty(o.id)}）+${o.bonus}%</button>`).join(' ') + '</div>';
+  html += '<div class="card-list">';
+  RUNE_STONES.forEach(r => {
+    const def = ITEMS[r.stone] || {};
+    const locked = rm < r.rm;
+    const why = locked ? `需要盧恩精熟 Lv${r.rm}` : runeCraftBlockReason(r, ore);
+    const matText = r.mats.map(([id, n]) => `${nm(id)}x${n}（持有${getItemQty(id)}）`).join('、');
+    const sk = SKILLS[r.skill];
+    html += `<div class="card-row${why ? '' : ' enabled'}">
+      <div class="card-info">
+        <span class="card-icon"><img src="${itemImgSrc(r.stone)}" alt="" style="width:24px;height:24px" onerror="this.onerror=null;this.src='${placeholderImgSrc('item')}'"></span>
+        <div class="card-details">
+          <span class="card-name">${def.name || r.stone}（持有${getItemQty(r.stone)}）　<span class="card-desc">${locked ? '' : `成功率 ${runeCraftChance(r, ore)}%`}</span></span>
+          <span class="card-desc">${sk ? sk.name.split(' ')[0] : ''}｜需要：${matText}${why ? `｜<span class="warn">${why}</span>` : ''}</span>
+        </div>
+      </div>
+      <div class="rune-btns">
+        <button class="btn-small" ${why ? 'disabled' : ''} onclick="doCraftRune('${r.stone}', 1)">製作</button>
+        <button class="btn-small ghost" ${why ? 'disabled' : ''} onclick="doCraftRune('${r.stone}', 10)">×10</button>
+      </div>
+    </div>`;
+  });
+  return html + '</div>';
+}
+function pickRuneOre(id) { state.runeOre = id; showCraftingPanel(); }
+function doCraftRune(stone, times) {
+  craftRune(stone, state.runeOre, times);
+  showCraftingPanel();
+  renderTopBar();
 }
 function doCraftWeapon(itemId) {
   craftWeapon(itemId);

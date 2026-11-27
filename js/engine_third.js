@@ -224,6 +224,8 @@ function thirdBuffList(sk, lv) {
     if (e.type === 'hpdrain_sec') { b.hpDrainSec = v; b.spDrainPct = e.sp ? lvArr(e.sp, lv) : 0; b.flatBonus = 0; }
     if (e.type === 'ailimmune') { b.ailType = e.ail || 'all'; b.flatBonus = 0; }
     if (e.type === 'spflat_sec') { b.spFlatSec = v; b.flatBonus = 0; }
+    if (e.type === 'spgain_sec') { b.spGainSec = v; b.flatBonus = 0; }   // 豐饒：每秒回固定 SP
+    if (e.stat) b.stat = e.stat;   // statflat：單一素質
     if (e.type === 'hpflat_sec') { b.hpFlatSec = v; b.flatBonus = 0; }
     state.buffs.push(b);
     if (e.label) parts.push(e.label.replace('{v}', Math.round(v * 10) / 10));
@@ -236,6 +238,7 @@ function thirdBuffList(sk, lv) {
   if (sk.cureAll) { state.playerAil = {}; delete state.playerAilTick; }
   recomputeDerived(false);
   if (sk.healFull) state.hp = state.maxHp;
+  if (sk.hpRestorePct) state.hp = Math.min(state.maxHp, state.hp + Math.round(state.maxHp * sk.hpRestorePct / 100));   // 淨化
   if (sk.spRestorePct) state.sp = Math.min(state.maxSp, state.sp + state.maxSp * lvArr(sk.spRestorePct, lv) / 100);
   logMsg(`✨ 「${sk.name}」Lv${lv} 發動！${parts.join('、')}（${dur} 秒）`);
 }
@@ -249,6 +252,7 @@ function tickThirdJob() {
     if (b.hpPctSec && state.hp > 0) state.hp = Math.min(state.maxHp, state.hp + state.maxHp * b.hpPctSec / 100);
     if (b.spPctSec) state.sp = Math.min(state.maxSp, state.sp + state.maxSp * b.spPctSec / 100);
     if (b.spFlatSec) state.sp = Math.max(0, state.sp - b.spFlatSec);
+    if (b.spGainSec) state.sp = Math.min(state.maxSp, state.sp + b.spGainSec);
     if (b.hpFlatSec && state.hp > 0) state.hp = Math.min(state.maxHp, state.hp + b.hpFlatSec);
   }
   thirdCamouflageTick();
@@ -308,7 +312,7 @@ function thirdRageOnHit() {
 function suraStrike(id, lv, target, monDef, opts) {
   const sk = SKILLS[id];
   const m = lvArr(sk.mult, lv) * thirdSkillFactor(sk, lv, target, monDef);
-  return monkStrike(target, monDef, m, Object.assign({ name: sk.name }, opts || {}));
+  return monkStrike(target, monDef, m, Object.assign({ name: sk.name, hits: skillVisHits(sk, lv) }, opts || {}));
 }
 /* 雙龍腳（普攻觸發）→ 大纏崩墜（消耗氣球體，開 3 秒連段視窗給虎砲／羅剎破凰擊） */
 function suraDragonChain(target, monDef, forced) {

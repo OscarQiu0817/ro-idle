@@ -32,6 +32,8 @@ OUT_JS = os.path.join(ROOT, 'js', 'skill_fx_data.js')
 FRAME_MS = 33          # 輸出約 30fps（手調的四招）
 # 整批轉的其他技能：省容量（使用者 2026-11-14 要求先縮小再擴充）——15fps、最多 30 格、0.4 倍、品質 72
 BATCH_FRAME_MS, BATCH_MAX_FRAMES, BATCH_SCALE, BATCH_QUALITY = 66, 30, 0.4, 72
+# .str 是即時畫（js/str_player.js），縮放不影響檔案大小：統一 0.6 倍（使用者 2026-11-27）
+STR_SCALE = 0.6
 _tex_cache = {}
 
 
@@ -457,10 +459,10 @@ def main():
                         os.remove(old)
                     del meta[n]
             for n in HAND_STR:
-                meta[n] = str_meta(n, scale_of(n))
+                meta[n] = str_meta(n, STR_SCALE)
     if not meta:
         for n in HAND_STR:
-            meta[n] = str_meta(n, scale_of(n))
+            meta[n] = str_meta(n, STR_SCALE)
         render_spr('fireball', meta)
         render_bolt('fire', meta)
         render_bolt('cold', meta)
@@ -474,7 +476,7 @@ def main():
                 continue
             try:
                 if sh['kind'] == 'str':
-                    meta[n] = str_meta(sh['file'], BATCH_SCALE)
+                    meta[n] = str_meta(sh['file'], STR_SCALE)
                 elif sh['kind'] == 'spr':
                     render_spr(sh['file'], meta, out_name=n)
                 else:

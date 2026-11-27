@@ -912,6 +912,7 @@ function recomputeDerivedInner(fullHeal) {
 
   // 卡片賦予的技能（見 cardGrantedSkills 的註解）。要在被動技能那兩圈之前算好
   state.cardSkills = cardGrantedSkills();
+  if (typeof runeGrantedSkills === 'function') Object.assign(state.cardSkills, runeGrantedSkills());   // 盧恩石技能（js/runes.js）
 
   // 職業加成（跨職業累計繼承）
   const jobBonus = computeJobBonuses();
@@ -1031,6 +1032,7 @@ function recomputeDerivedInner(fullHeal) {
     }
     // 素質料理（官方 SC_STRFOOD…）：單一素質 +N
     if (b.type === 'foodstat') addSrc(buffSrc, buffFlat, b.stat, b.flatBonus || 0, label);
+    if (b.type === 'statflat' && b.stat) addSrc(buffSrc, buffFlat, b.stat, b.flatBonus || 0, label);   // 單一素質 +N（巨人成長 STR+30）
   });
   // 公會技能：偉大的統率力 STR、光榮的傷痕 VIT、冷靜的心 AGI、銳利的目光 DEX（js/guild.js）
   if (typeof guildStatBonus === 'function') {
@@ -4641,6 +4643,14 @@ function monkBladeStopActive() {
      ignoreDef  true＝完全不走減傷（浸透勁與阿修羅霸凰拳，官方就是無視防禦）
      defScale   >0 時傷害再隨目標的裝備防禦上升（浸透勁專用）
    回傳目標是否還活著，連段靠這個決定要不要往下接。 */
+/* 一招在畫面上拆成幾段數字（使用者 2026-11-27：音速投擲要跳 8 下＋黃字總和）。
+   段數照 rAthena HitCount（js/skill_hits_data.js），sk.visHits 可覆寫。只影響顯示，傷害照算一次。 */
+function skillVisHits(sk, lv) {
+  if (!sk) return 1;
+  const v = sk.visHits != null ? sk.visHits : (typeof SKILL_VIS_HITS !== 'undefined' ? SKILL_VIS_HITS[sk.id] : null);
+  const n = Array.isArray(v) ? v[Math.min(v.length, Math.max(1, lv || 1)) - 1] : v;
+  return Math.max(1, n | 0);
+}
 function monkStrike(target, monDef, mult, opts) {
   const o = opts || {};
   const em = getElementMultiplierVsMonster('neutral', monDef, target);
@@ -4656,7 +4666,11 @@ function monkStrike(target, monDef, mult, opts) {
     : mitigateDamage(raw, ...defOf(monDef, 1, false, target))) + raceFlatBonus(monDef) + (o.flat || 0);
   target.hp -= dmg;
   ailBreakOnDamage(target, monDef);
-  if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, 'normal');
+  if ((o.hits || 1) > 1 && typeof showSkillHitNumbers === 'function') {
+    showSkillHitNumbers(target.id, dmg, o.hits);
+    if (!_allyActing && typeof playPlayerMultiSwing === 'function') playPlayerMultiSwing(o.hits);   // 連擊：角色照段數連揮
+  }
+  else if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, 'normal');
   logMsg(`${o.icon || '👊'} 「${o.name}」造成 ${dmg} 點傷害！${o.suffix || ''}`);
   if (target.hp <= 0) { killMonster(monDef, target); return false; }
   return true;
@@ -4806,7 +4820,7 @@ function tryMonkCombo(target, monDef) {
   // 官方寫的是「近距離普通攻擊」，所以拿弓的時候整條鏈都不跑
   if (isBowWeapon(getEquipBaseItemId('weapon'))) return;
   if (rng() * 100 >= t.chance) return;
-  if (!monkStrike(target, monDef, t.mult, { name: t.name, suffix: `（${t.hits} 連擊）` })) return;
+  if (!monkStrike(target, monDef, t.mult, { name: t.name, suffix: `（${t.hits} 連擊）`, hits: t.hits })) return;
 
   const c = state.chainCombo;
   if (!c || rng() * 100 >= c.chance) return;
@@ -4814,7 +4828,7 @@ function tryMonkCombo(target, monDef) {
   const knuckle = weaponReqMet('knuckle');
   const cMult = c.mult * (knuckle ? c.knuckleMult : 1);
   const cHits = knuckle ? c.knuckleHits : c.hits;
-  if (!monkStrike(target, monDef, cMult, { name: c.name, suffix: `（${cHits} 連擊${knuckle ? '・拳套' : ''}）` })) return;
+  if (!monkStrike(target, monDef, cMult, { name: c.name, suffix: `（${cHits} 連擊${knuckle ? '・拳套' : ''}）`, hits: cHits })) return;
 
   const f = state.comboFinish;
   if (!f || rng() * 100 >= f.chance) return;
@@ -6929,7 +6943,8 @@ const DAMAGE_FIELD_TYPES = ['field_phys_aoe', 'field_aoe_magic', 'multi_dot_stun
 function skillDealsDamage(sk) { return !!sk && !['ground_zone', 'ground_icewall', 'debuff_single'].includes(sk.type) && (SKILL_ATTACK_TYPES.includes(sk.type) || DAMAGE_FIELD_TYPES.includes(sk.type)); }
 function autoSkillCastableNow(sk, lv) {
   return !state.casting && gameNow() >= (state.acdUntil || 0) && skillReady(sk.id) && state.sp >= skillSpCost(sk, lv)
-    && !groundUnitsFull(sk) && !(skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1, sk.goldFallback));
+    && !groundUnitsFull(sk) && !(skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1, sk.goldFallback))
+    && !(typeof runeSkipAuto === 'function' && runeSkipAuto(sk));   // 離線不吃盧恩石
 }
 /* 要扣觸媒的技能：costMinLv 以上才扣（火柱攻擊 Lv6 起吃藍礦石） */
 function skillItemCost(sk, lv) {
@@ -7630,6 +7645,7 @@ function playerAttackInner() {
   // 異常狀態：睡眠中的目標受到的傷害增加（官方規則）
   raw *= ailDmgTakenMult(target);
   raw *= thirdNextAttackMult();   // 強化衝擊（皇家禁衛隊）：下一次普攻
+  if (typeof runeNormalAttackMult === 'function') raw *= runeNormalAttackMult();   // 巨人成長、粉碎打擊（js/runes.js）
   raw *= thirdFearBreezeHits();   // 微風恐懼（遊俠）：弓普攻多打幾下
 
   // Apply monster debuff (provoke reduces defense)
@@ -7697,6 +7713,7 @@ function playerAttackInner() {
     tryMonkCombo(target, monDef);        // 武僧（#70）：六合拳 → 連環全身掌 → 猛龍誇強 → 阿修羅霸凰拳
     trySuraProcs(target, monDef);        // 修羅：雙龍腳 → 大纏崩墜、點穴-球
     thirdAttackProcs(target, monDef);    // 三轉（不限近戰）：座狼自動狼突擊
+    if (typeof runeAttackProcs === 'function') runeAttackProcs(target);   // 力量分享：觸發風暴衝擊
     trySageProcs(target, monDef);        // 賢者（#71）：自動念咒、念咒拆除、魔法效果解除、隨機技能、元素更換
     tryPaladinProcs(target, monDef);     // 聖殿十字軍（#74）：捨命攻擊的自傷追擊
     tryProfessorProcs(target, monDef);   // 智者（#76）：薄霧牆、心神互換、精神耗弱術、精神撼動
@@ -11447,7 +11464,7 @@ function castSkillInner(skillId, opts) {
   state._lastDmgMagic = useMag;   // 擊殺時分魔法／物理（魔法擊殺回 SP／HP 那批裝備）
 
   // 屬性相剋：技能屬性 vs 怪物屬性
-  const skElement = sk.element || 'none';
+  const skElement = (typeof runeSkillElement === 'function' && runeSkillElement(sk)) || sk.element || 'none';   // 龍之氣息吃盧恩石換屬性
   /* 卡片的「某屬性**魔法**傷害 +N%」（無頭騾：水/聖魔法 +20%）。
      跟 eleDmg_ 是兩件不同的事——那個看的是**怪物的屬性**（打水屬性的怪 +N%），
      這個看的是**自己這一發的屬性**，而且只算魔法。放在 mult 上跟 skillDmg_ 同理。 */
@@ -11580,9 +11597,11 @@ function castSkillInner(skillId, opts) {
       target.hp -= dmg;
       thirdSkillOnHit(sk, lv, target, def);   // 三轉：致命爪痕的傷口…
       // 單體技能以前完全不飄字（logMsg 的飄字規則只認「你…造成N點傷害」那種普攻句型）
-      const visHits = (sk.id === 'ac_double') ? 2
-        : (sk.id === 'mg_firebolt' || sk.id === 'mg_coldbolt' || sk.id === 'mg_lightningbolt') ? lv : 1;
+      const visHits = skillVisHits(sk, lv);
       if (typeof showSkillHitNumbers === 'function') showSkillHitNumbers(target.id, dmg, visHits, useMag ? skElement : null, skCrit);
+      // 近戰物理的多段技（音速投擲、十字斬…）：角色照段數連揮
+      if (visHits > 1 && !useMag && !isBowWeapon(getEquipBaseItemId('weapon')) && !_allyActing
+        && typeof playPlayerMultiSwing === 'function') playPlayerMultiSwing(visHits);
       else if (typeof showDamageFloatAt === 'function') showDamageFloatAt(target.id, '-' + dmg, skCrit ? 'crit' : 'normal', useMag ? skElement : null);
       logMsg(`⚡ 「${sk.name}」Lv${lv} 造成 ${dmg} 點傷害！${skCrit ? '（暴擊！）' : ''}`);
       // 物理技能也是拿武器打的，命中一樣放武器的命中音（法術有自己的音效）
@@ -11712,7 +11731,10 @@ function castSkillInner(skillId, opts) {
           }
         }
         pushCombatLog(`  → 對 ${monDef.name} 造成 ${dmg} 點傷害！${aoeCrit ? '（暴擊）' : ''}`);
-        if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, aoeCrit ? 'crit' : 'normal', useMag ? skElement : null);
+        // 範圍技也拆段：每隻怪各自跳 N 段＋黃字（最多 10 段，怒雷強擊 20 段 × 多隻會滿畫面）
+        const aoeHits = Math.min(10, skillVisHits(sk, lv));
+        if (aoeHits > 1 && typeof showSkillHitNumbers === 'function') showSkillHitNumbers(mon.id, dmg, aoeHits, useMag ? skElement : null, aoeCrit);
+        else if (typeof showDamageFloatAt === 'function') showDamageFloatAt(mon.id, '-' + dmg, aoeCrit ? 'crit' : 'normal', useMag ? skElement : null);
         if (mon.hp <= 0) killMonster(monDef, mon);
       }
       // 光獵：額外附加HIT加成buff
@@ -12243,15 +12265,19 @@ function castSkillInner(skillId, opts) {
       const capacityPct = Array.isArray(sk.shieldCapacityPct) ? sk.shieldCapacityPct[lv - 1] : sk.shieldCapacityPct;
       const capacityFlat = Array.isArray(sk.shieldCapacityFlat) ? sk.shieldCapacityFlat[lv - 1] : sk.shieldCapacityFlat;
       const capacity = capacityFlat != null ? capacityFlat : Math.round(state.maxHp * ((capacityPct || 0) / 100));
-      const charges = Array.isArray(sk.shieldCharges) ? sk.shieldCharges[lv - 1] : sk.shieldCharges;
+      let charges = Array.isArray(sk.shieldCharges) ? sk.shieldCharges[lv - 1] : sk.shieldCharges;
+      let cap = capacity;
+      // 千年盾：2～4 面（50%／30%／20%），每面 1000，合計一起擋
+      const shieldN = sk.shieldRoll ? (r => r < 0.2 ? 4 : r < 0.5 ? 3 : 2)(rng()) : 0;
+      if (shieldN) cap = shieldN * 1000;
       if (!state.shields) state.shields = [];
       state.shields = state.shields.filter(sh => sh.id !== sk.id);
       // blocks：'melee' 暗之障壁／'ranged' 光之障壁；shared：全隊同一面盾、共用次數
-      state.shields.push({ id: sk.id, remainingHp: capacity, remainingCharges: charges, expiresAt: gameNow() + dur * 1000,
+      state.shields.push({ id: sk.id, remainingHp: cap, remainingCharges: charges, expiresAt: gameNow() + dur * 1000,
         blocks: sk.shieldBlocks || null, shared: !!sk.shieldShared });
       const paid = skillItemCost(sk, lv) ? sagePay(sk.costItems, sk.costQty || 1, 0) : null;
       const what = sk.shieldBlocks === 'ranged' ? '遠程攻擊' : sk.shieldBlocks === 'melee' ? '近戰攻擊' : '攻擊';
-      logMsg(`🛡️ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！可擋${what} ${charges} 次${sk.shieldShared ? '（全隊共用）' : ''}`);
+      logMsg(`🛡️ 「${sk.name}」Lv${lv} 發動${paid ? `（消耗${paid.label}）` : ''}！${shieldN ? `${shieldN} 面盾，合計擋 ${cap} 傷害` : `可擋${what} ${charges} 次`}${sk.shieldShared ? '（全隊共用）' : ''}`);
       break;
     }
     /* 無視體型攻擊（#131）。官方是武器完全定義 Weapon Perfection：
@@ -13240,6 +13266,9 @@ function tryAutoCastSupportSkills() {
       const spCost = skillSpCost(sk, lv);
       if (state.sp < spCost) continue;
       if (!thirdSkillUsable(sk, lv)) continue;
+      // 要扣道具的（盧恩石、礦石）湊不出來就跳過，不然每秒跳一次「缺少○○」
+      if (skillItemCost(sk, lv) && !sageCanPay(sk.costItems, sk.costQty || 1, sk.goldFallback)) continue;
+      if (typeof runeSkipAuto === 'function' && runeSkipAuto(sk)) continue;
 
       /* 效果還在身上就不重放（等它消失後自動補）。以前這裡是一份 40 種類型的白名單，
          漏掉一種就會變成「每次冷卻好就重放一次」——生命體召喚持續 30 分鐘、冷卻 10 秒、
