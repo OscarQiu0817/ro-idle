@@ -78,9 +78,10 @@ function grantAttendance(idx) {
    池子用 boxEligible 同一套過濾（中文名、非時裝）。 */
 const GEAR_GACHA = [
   // [道具 id, 名稱, 圖, 商城點數, 篩選]
-  ['gacha_head_top', '頭上裝備轉蛋', 14800, 20, d => d.armorType === 'headgear' && /頭上/.test(d.desc || '')],
-  ['gacha_head_mid', '頭中裝備轉蛋', 12947, 20, d => d.armorType === 'headgear' && !/頭上/.test(d.desc || '') && /頭中/.test(d.desc || '')],
-  ['gacha_head_low', '頭下裝備轉蛋', 16228, 20, d => d.armorType === 'headgear' && !/頭上|頭中/.test(d.desc || '') && /頭下/.test(d.desc || '')],
+  // 佔多格的歸最上面那格（頭上＞頭中＞頭下）；位置用 headgearPos（說明沒寫的照 rAthena，使用者 2026-11-28）
+  ['gacha_head_top', '頭上裝備轉蛋', 14800, 20, d => d.armorType === 'headgear' && headgearPos(d).includes('t')],
+  ['gacha_head_mid', '頭中裝備轉蛋', 12947, 20, d => d.armorType === 'headgear' && headgearPos(d)[0] === 'm'],
+  ['gacha_head_low', '頭下裝備轉蛋', 16228, 20, d => d.armorType === 'headgear' && headgearPos(d) === 'b'],
   ['gacha_armor', '鎧甲轉蛋', 23766, 20, d => d.armorType === 'leather'],
   ['gacha_shield', '盾牌轉蛋', 23538, 20, d => d.armorType === 'shield'],
   ['gacha_garment', '披肩轉蛋', 617, 20, d => d.armorType === 'garment'],

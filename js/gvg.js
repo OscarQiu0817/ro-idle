@@ -395,6 +395,7 @@ function gvgSettle(live) {
     state.gold = (state.gold || 0) + d.gold;
     gvgLogPush(`💰 結算：${d.name}是你的，獲得 ${d.points} 商城點數＋${d.gold.toLocaleString()} 鋅幣`);
     logMsg(`🏰 攻城結算：${d.name}城主獎勵 ${d.points} 商城點數＋${d.gold.toLocaleString()} 鋅幣。`);
+    if (typeof openCastleChests === 'function') openCastleChests(d);   // 神器材料寶箱（js/godly_mats.js）
   });
   if (live && typeof broadcast === 'function') broadcast(`本日攻城結算：${parts.join('、')}`, 'gvg');
 }

@@ -8970,6 +8970,7 @@ function killMonster(def, monObj) {
     logMsg(`🃏 ${def.name} 掉落了稀有的 ${card.name}！（掉寶率 ${dropRateText(cardDrop.chance)}）`, 'loot');
   }
   if (typeof rollGachaShard === 'function') rollGachaShard(def);   // 轉蛋碎片（js/cash_shop.js）
+  if (typeof rollGodlyMat === 'function') rollGodlyMat(def);   // 神器材料（js/godly_mats.js）
   removeKilledFromField(monObj);
 }
 
@@ -14610,6 +14611,16 @@ function useItem(itemId) {
   }
   return false;
 }
+/* 頭飾佔哪些位置：回傳含 t（頭上）m（頭中）b（頭下）的字串。
+   說明有寫「頭上／頭中／頭下」就照說明；寫「上方」「中段」或沒寫的照 HEAD_POS（js/head_pos.js，rAthena Locations）。
+   都查不到當頭上。穿戴與部位轉蛋共用 */
+function headgearPos(def) {
+  if (!def) return '';
+  const d = def.desc || '';
+  const s = (d.includes('頭上') ? 't' : '') + (d.includes('頭中') ? 'm' : '') + (d.includes('頭下') ? 'b' : '');
+  if (s) return s;
+  return (typeof HEAD_POS !== 'undefined' && HEAD_POS[def.id]) || 't';
+}
 // 決定某個道具會裝到哪個欄位；equipItem（普通堆疊）跟 equipInstance（個體裝備）共用同一套判斷
 function resolveEquipSlotFor(itemId) {
   const def = ITEMS[itemId];
@@ -14631,11 +14642,10 @@ function resolveEquipSlotFor(itemId) {
   } else if (def.type === 'armor') {
     switch (def.armorType) {
       case 'headgear': {
-        // 根據物品描述中的「位置」決定頭部欄位（兼容簡繁體）
-        const pos = def.desc || '';
-        const hasTop = pos.includes('頭上');
-        const hasMid = pos.includes('頭中');
-        const hasBot = pos.includes('頭下');
+        const pos = headgearPos(def);
+        const hasTop = pos.includes('t');
+        const hasMid = pos.includes('m');
+        const hasBot = pos.includes('b');
         if (hasTop && !hasMid && !hasBot) slot = 'head_top';
         else if (hasMid && !hasTop && !hasBot) slot = 'head_mid';
         else if (hasBot && !hasTop && !hasMid) slot = 'head_bottom';
@@ -17163,6 +17173,8 @@ function computeOfflineProgress(minMs, opts) {
   });
   // 轉蛋碎片（js/cash_shop.js）：照出沒權重的期望值
   if (typeof gachaShardRate === 'function') pool.forEach(m => { const r = gachaShardRate(MONSTERS[m.id]); if (r > 0) addExp2(GACHA_SHARD, r * m.weight / totalWeight); });
+  // 神器材料（js/godly_mats.js）：打王的期望值
+  if (typeof offlineGodlyMatShare === 'function') offlineGodlyMatShare(lootBossList).forEach(([id, n]) => addExp2(id, n));
   // 尋找礦石：跟種族無關，四種礦石均分
   if (oreRate) {
     const ores = ['boody_red', 'crystal_blue', 'wind_of_verdure', 'yellow_live'];

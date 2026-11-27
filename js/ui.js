@@ -7216,6 +7216,10 @@ function codexOtherSourcesHtml(id) {
     const boxes = Object.values(ITEMS).filter(x => (x.boxOpen === 'any' || x.boxOpen === 'violet') && (boxPool(x.boxOpen).ids || []).includes(id));
     if (boxes.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">🎁 箱子</span><span class="codex-spot-name">${[...new Set(boxes.map(x => getItemDisplayName(x.id)))].map(shopEsc).join('、')}</span></div>`);
   }
+  if (typeof isGodlyMat === 'function' && isGodlyMat(id)) {
+    rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">🏰 攻城寶箱</span><span class="codex-spot-name">城主每天結算開 1～3 箱，每箱 ${Math.round(GODLY_CHEST_RATE * 100)}% 出一種神器材料</span></div>`);
+    rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">👑 打王</span><span class="codex-spot-name">MVP ${GODLY_MVP_RATE * 100}%、迷你王 ${GODLY_MINI_RATE * 100}% 掉一種神器材料</span></div>`);
+  }
   if (typeof GEAR_GACHA !== 'undefined' && ITEMS[id] && (ITEMS[id].type === 'armor' || ITEMS[id].type === 'weapon')) {
     const eggs = GEAR_GACHA.filter(([gid]) => (boxPool('gear_' + gid).ids || []).includes(id));
     if (eggs.length) rows.push(`<div class="codex-spot shop"><span class="codex-spot-mon">🎁 轉蛋</span><span class="codex-spot-name">${eggs.map(([gid]) => shopEsc(ITEMS[gid].name)).join('、')}</span></div>`);
